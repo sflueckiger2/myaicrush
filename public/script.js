@@ -58,7 +58,7 @@ function speakMessage(text) {
     // Filtrer les voix disponibles pour correspondre à la langue détectée
     const selectedVoice = voices.find(voice => voice.lang === targetLang) || voices[0]; // Voix par défaut si aucune ne correspond
 
-    // Appliquer la voix et les paramètres de tonalité
+    // Appliquer la voix et les paramètres de tonalité test git
     speech.voice = selectedVoice;
     speech.lang = targetLang;
     speech.pitch = 1.7; // Ton doux
