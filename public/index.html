@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyAICrush</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to My AI Crush ❤️</h1>
+    <p>Choose your crush :</p>
+
+    <!-- Options de chat -->
+    <div class="chat-options">
+      <div class="chat-card" onclick="startChat('Hanaé')">
+        <img src="images/hanae/hanae_profil_pic.jpg" alt="Hanaé">
+        <div class="card-content">
+          <h3>Hanaé</h3>
+          <p>Curious, charming, has a lot to offer you</p>
+        </div>
+      </div>
+      <div class="chat-card" onclick="startChat('Friendly AI')">
+        <img src="avatar2.png" alt="Friendly AI">
+        <div class="card-content">
+          <h3>Friendly AI</h3>
+          <p>Un ami à qui parler</p>
+        </div>
+      </div>
+      <div class="chat-card" onclick="startChat('Adventurous AI')">
+        <img src="avatar3.png" alt="Adventurous AI">
+        <div class="card-content">
+          <h3>Adventurous AI</h3>
+          <p>Un partenaire pour l'aventure</p>
+        </div>
+      </div>
+      <div class="chat-card" onclick="startChat('Mysterious AI')">
+        <img src="avatar4.png" alt="Mysterious AI">
+        <div class="card-content">
+          <h3>Mysterious AI</h3>
+          <p>Un compagnon énigmatique</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone de chat -->
+    <div id="chat-box" style="display: none;">
+      <div id="chat-header">
+        <img src="avatar-selected.png" alt="Profil Hanaé" class="chat-profile-pic">
+        <span id="chat-name">Hanaé</span>
+      </div>
+      <div id="messages"></div>
+      <div id="input-area">
+        <input type="text" id="user-input" placeholder="Écrivez votre message ici...">
+        <button id="send-btn">Envoyer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    function startChat(option) {
+      document.querySelector(".chat-options").style.display = "none";
+      document.getElementById("chat-box").style.display = "flex";
+
+      // Affiche le nom "Hanaé" pour le chat principal
+      document.getElementById("chat-name").textContent = option === "Hanaé" ? "Hanaé" : option;
+
+      // Mettre à jour l'image de profil selon l'option sélectionnée
+      document.querySelector(".chat-profile-pic").src = option === "Hanaé" ? "images/hanae/hanae_profil_pic.jpg" :
+                                                        option === "Friendly AI" ? "avatar2.png" :
+                                                        option === "Adventurous AI" ? "avatar3.png" : "avatar4.png";
+    }
+  </script>
+</body>
+</html>
