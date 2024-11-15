@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyAICrush</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Garder le header en haut de la page, en dehors de .container -->
+  <div class="header">
+    <h1>Welcome to My AI Crush ❤️</h1>
+    <p>Choose your crush :</p>
+  </div>
+
+  <!-- Conteneur principal pour les options de chat et le chat -->
+  <div class="container">
+    <!-- Options de chat -->
+    <div class="chat-options">
+      <div class="chat-card" onclick="startChat('Hanaé')">
+        <img src="images/hanae/hanae_profil_pic.jpg" alt="Hanaé">
+        <div class="card-content">
+          <h3>Hanaé</h3>
+          <p>Curious, charming, has a lot to offer you</p>
+        </div>
+      </div>
+      <div class="chat-card" onclick="startChat('Friendly AI')">
+        <img src="avatar2.png" alt="Friendly AI">
+        <div class="card-content">
+          <h3>Friendly AI</h3>
+          <p>Un ami à qui parler</p>
+        </div>
+      </div>
+      <div class="chat-card" onclick="startChat('Adventurous AI')">
+        <img src="avatar3.png" alt="Adventurous AI">
+        <div class="card-content">
+          <h3>Adventurous AI</h3>
+          <p>Un partenaire pour l'aventure</p>
+        </div>
+      </div>
+      <div class="chat-card" onclick="startChat('Mysterious AI')">
+        <img src="avatar4.png" alt="Mysterious AI">
+        <div class="card-content">
+          <h3>Mysterious AI</h3>
+          <p>Un compagnon énigmatique</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone de chat -->
+    <div id="chat-box" style="display: none;">
+      <div id="chat-header">
+        <button id="back-btn">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <img src="avatar-selected.png" alt="Profil Hanaé" class="chat-profile-pic">
+        <span id="chat-name">Hanaé</span>
+      </div>
+      <div id="messages"></div>
+      <div id="input-area">
+        <input type="text" id="user-input" placeholder="Écrivez votre message ici...">
+        <button id="send-btn">
+          <i class="fa fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
