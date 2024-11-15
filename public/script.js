@@ -15,60 +15,21 @@ function initializeVoices() {
   }
 }
 
-// Fonction pour ajouter un indicateur "is typing"
-function showTypingIndicator() {
-  const typingIndicator = document.createElement('div');
-  typingIndicator.classList.add('typing-indicator');
-  typingIndicator.textContent = 'Hanaé est en train d’écrire';
-  typingIndicator.id = 'typing-indicator';
-  messages.appendChild(typingIndicator);
-  messages.scrollTop = messages.scrollHeight;
-}
+// Fonction pour afficher la pop-up "Level up" ou "Level down"
+function showLevelUpdatePopup(message, type) {
+  const popup = document.createElement('div');
+  popup.classList.add('popup');
+  popup.textContent = message;
 
-// Fonction pour retirer l'indicateur "is typing"
-function hideTypingIndicator() {
-  const typingIndicator = document.getElementById('typing-indicator');
-  if (typingIndicator) {
-    typingIndicator.remove();
-  }
-}
+  // Définir la couleur de fond en fonction du type
+  popup.style.backgroundColor = type === 'up' ? 'green' : 'red';
 
-// Fonction pour détecter la langue du texte
-function detectLanguage(text) {
-  const sampleFrenchWords = /[àâçéèêëîïôûùüÿœ]| le | la | je | tu | vous | un | une /i;
-  const sampleSpanishWords = /[ñáéíóú]| el | la | tú | usted | un | una /i;
-  const sampleGermanWords = /ß| der | die | ich | du | wir | ein | eine /i;
-  const sampleJapaneseWords = /[\u3040-\u30FF]/; // Kanji, Hiragana, Katakana
-  
-  if (sampleFrenchWords.test(text)) return 'fr-FR';
-  if (sampleSpanishWords.test(text)) return 'es-ES';
-  if (sampleGermanWords.test(text)) return 'de-DE';
-  if (sampleJapaneseWords.test(text)) return 'ja-JP';
-  return 'en-US'; // Par défaut, anglais
-}
+  document.body.appendChild(popup);
 
-// Fonction pour faire parler Hanaé avec une voix adaptée à la langue détectée
-function speakMessage(text) {
-  if ('speechSynthesis' in window) {
-    const speech = new SpeechSynthesisUtterance(text);
-
-    // Détecter la langue du texte
-    const targetLang = detectLanguage(text);
-
-    // Filtrer les voix disponibles pour correspondre à la langue détectée
-    const selectedVoice = voices.find(voice => voice.lang === targetLang) || voices[0]; // Voix par défaut si aucune ne correspond
-
-    // Appliquer la voix et les paramètres de tonalité test git
-    speech.voice = selectedVoice;
-    speech.lang = targetLang;
-    speech.pitch = 1.7; // Ton doux
-    speech.rate = 1.1; // Vitesse plus lente
-
-    // Lire le message
-    speechSynthesis.speak(speech);
-  } else {
-    console.log("L'API Web Speech n'est pas supportée par ce navigateur.");
-  }
+  // Masquer la pop-up après quelques secondes
+  setTimeout(() => {
+    popup.remove();
+  }, 3000); // La pop-up disparaît après 3 secondes
 }
 
 // Fonction pour ajouter le message de l'utilisateur
@@ -77,13 +38,11 @@ function addUserMessage() {
 
   if (userMessage !== '') {
     const messageElement = document.createElement('div');
-    messageElement.textContent = `Vous: ${userMessage}`;
+    messageElement.textContent = `${userMessage}`;
     messageElement.classList.add('user-message');
     messages.appendChild(messageElement);
     userInput.value = '';
     messages.scrollTop = messages.scrollHeight;
-
-    showTypingIndicator();
 
     fetch('/message', {
       method: 'POST',
@@ -94,40 +53,29 @@ function addUserMessage() {
     })
     .then(response => response.json())
     .then(data => {
-      const typingDelay = Math.floor(Math.random() * 2000) + 3000;
-      setTimeout(() => {
-        hideTypingIndicator();
+      // Afficher la pop-up "Level up" ou "Level down" en fonction du type de mise à jour de niveau
+      if (data.levelUpdateMessage && data.levelUpdateType) {
+        showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+      }
 
-        if (data.imageUrl) {
-          addBotImageMessage(data.reply, data.imageUrl);
-        } else {
-          addBotMessage(data.reply);
-        }
-      }, typingDelay);
+      if (data.imageUrl) {
+        addBotImageMessage(data.reply, data.imageUrl);
+      } else {
+        addBotMessage(data.reply);
+      }
     })
     .catch(error => {
       console.error('Erreur:', error);
-      hideTypingIndicator();
       addBotMessage("Désolé, une erreur est survenue. Merci de réessayer.");
     });
   }
 }
 
-// Fonction pour ajouter un message de l'IA (texte seulement) avec un bouton de lecture
+// Fonction pour ajouter un message de l'IA
 function addBotMessage(botReply) {
   const botMessageElement = document.createElement('div');
   botMessageElement.classList.add('bot-message');
-
-  const messageText = document.createElement('span');
-  messageText.textContent = `IA: ${botReply}`;
-  botMessageElement.appendChild(messageText);
-
-  const audioButton = document.createElement('button');
-  audioButton.textContent = "🔊";
-  audioButton.classList.add('audio-button');
-  audioButton.onclick = () => speakMessage(botReply);
-  botMessageElement.appendChild(audioButton);
-
+  botMessageElement.textContent = botReply;
   messages.appendChild(botMessageElement);
   messages.scrollTop = messages.scrollHeight;
 }
@@ -136,16 +84,7 @@ function addBotMessage(botReply) {
 function addBotImageMessage(botReply, imageUrl) {
   const botMessageElement = document.createElement('div');
   botMessageElement.classList.add('bot-message');
-
-  const messageText = document.createElement('span');
-  messageText.textContent = `IA: ${botReply}`;
-  botMessageElement.appendChild(messageText);
-
-  const audioButton = document.createElement('button');
-  audioButton.textContent = "🔊";
-  audioButton.classList.add('audio-button');
-  audioButton.onclick = () => speakMessage(botReply);
-  botMessageElement.appendChild(audioButton);
+  botMessageElement.textContent = botReply;
 
   const imageElement = document.createElement('img');
   imageElement.src = imageUrl;
@@ -157,15 +96,42 @@ function addBotImageMessage(botReply, imageUrl) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+// Fonction pour démarrer le chat et basculer en mode plein écran
+function startChat(option) {
+  // Masquer les options de chat et afficher le chat-box
+  document.querySelector(".chat-options").style.display = "none";
+  document.getElementById("chat-box").style.display = "flex";
+
+  // Masquer le titre et agrandir le conteneur
+  document.querySelector(".header").classList.add("hidden");
+  document.querySelector(".container").classList.add("fullscreen");
+
+  // Affiche le nom "Hanaé" pour le chat principal
+  document.getElementById("chat-name").textContent = option === "Hanaé" ? "Hanaé" : option;
+
+  // Mettre à jour l'image de profil selon l'option sélectionnée
+  document.querySelector(".chat-profile-pic").src = option === "Hanaé" ? "images/hanae/hanae_profil_pic.jpg" :
+                                                    option === "Friendly AI" ? "avatar2.png" :
+                                                    option === "Adventurous AI" ? "avatar3.png" : "avatar4.png";
+}
+
+document.getElementById('back-btn').addEventListener('click', function() {
+  // Réaffiche les options de chat
+  document.querySelector('.chat-options').style.display = 'grid';
+
+  // Masque la zone de chat
+  document.getElementById('chat-box').style.display = 'none';
+
+  // Réaffiche le header
+  document.querySelector('.header').classList.remove('hidden');
+
+  // Retire le mode plein écran
+  document.querySelector('.container').classList.remove('fullscreen');
+});
+
+
 // Ajouter un événement au bouton d'envoi
 sendBtn.addEventListener('click', addUserMessage);
-
-// Permettre d'envoyer avec la touche Entrée
-userInput.addEventListener('keypress', function (e) {
-  if (e.key === 'Enter') {
-    addUserMessage();
-  }
-});
 
 // Charger les voix lors du chargement de la page
 initializeVoices();
