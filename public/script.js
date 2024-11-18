@@ -211,3 +211,27 @@ loadCharacters();
 
 // Ajuster la zone de saisie pour mobile
 adjustInputArea();
+function adjustForKeyboard() {
+  const inputArea = document.getElementById('input-area');
+  const chatBox = document.getElementById('chat-box');
+
+  // Écouter les changements de hauteur de la fenêtre (quand le clavier apparaît)
+  window.addEventListener('resize', () => {
+    const viewportHeight = window.innerHeight;
+
+    // Si la hauteur diminue (clavier affiché), ajuster la position
+    if (document.activeElement === userInput) {
+      chatBox.style.height = `${viewportHeight - 100}px`; // Ajuste la hauteur du chat-box
+      inputArea.style.bottom = '0';
+      inputArea.style.position = 'absolute';
+    } else {
+      // Retour à l'état normal si le clavier disparaît
+      chatBox.style.height = '100vh';
+      inputArea.style.position = 'fixed';
+      inputArea.style.bottom = '0';
+    }
+  });
+}
+
+// Appeler la fonction après le chargement de la page
+adjustForKeyboard();
