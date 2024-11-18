@@ -3,12 +3,10 @@ const sendBtn = document.getElementById('send-btn');
 const userInput = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 let voices = []; // Stocker les voix disponibles
+let characters = []; // Stocker les personnages chargés
 
-// Fonction pour charger et afficher les informations de la fiche de personnage en plein écran
-function openProfileModal(characterName) {
-  console.log(`Clic détecté : Chargement du personnage ${characterName}`); // Log de diagnostic
-
-  // Charger les données depuis le fichier characters.json
+// Charger les données des personnages depuis characters.json
+function loadCharacters() {
   fetch('/characters.json')
     .then(response => {
       if (!response.ok) {
@@ -17,31 +15,65 @@ function openProfileModal(characterName) {
       return response.json();
     })
     .then(data => {
-      console.log("Données chargées depuis characters.json :", data); // Log pour vérifier les données
-
-      // Trouver le personnage sélectionné dans les données
-      const character = data.find(char => char.name === characterName);
-
-      if (character) {
-        console.log(`Personnage trouvé : ${character.name}`); // Log pour vérifier si le personnage est trouvé
-
-        // Charger les informations dans le modal
-        document.getElementById("profile-image-full").src = character.photo;
-        document.getElementById("profile-name").textContent = character.name;
-        document.getElementById("profile-height").textContent = character.height;
-        document.getElementById("profile-measurements").textContent = character.measurements;
-        document.getElementById("profile-ethnicity").textContent = character.ethnicity;
-        document.getElementById("profile-interests").textContent = character.interests.join(", ");
-
-        // Afficher le modal
-        document.getElementById("profile-modal").style.display = "flex";
-      } else {
-        console.error("Personnage non trouvé dans characters.json"); // Log si le personnage n'est pas trouvé
-      }
+      characters = data; // Stocker les personnages pour une utilisation ultérieure
+      generateChatOptions(data);
     })
     .catch(error => {
-      console.error('Erreur lors du chargement des données ou de la recherche du personnage :', error);
+      console.error('Erreur lors du chargement des personnages :', error);
     });
+}
+
+// Générer dynamiquement les options de chat
+
+function generateChatOptions(characters) {
+  const chatOptions = document.querySelector('.chat-options');
+  chatOptions.innerHTML = ''; // Nettoyer le conteneur avant d'ajouter les options
+
+  characters.forEach(character => {
+    const card = document.createElement('div');
+    card.className = 'chat-card';
+    card.onclick = () => startChat(character.name);
+
+    const img = document.createElement('img');
+    img.src = character.photo; // Photo du personnage depuis le JSON
+    img.alt = character.name;
+
+    const content = document.createElement('div');
+    content.className = 'card-content';
+
+    const title = document.createElement('h3');
+    title.textContent = character.name;
+
+    const description = document.createElement('p');
+    description.textContent = character.description; // Utiliser le champ "description"
+
+    content.appendChild(title);
+    content.appendChild(description);
+    card.appendChild(img);
+    card.appendChild(content);
+    chatOptions.appendChild(card);
+  });
+}
+
+
+// Fonction pour charger et afficher les informations de la fiche de personnage en plein écran
+function openProfileModal(characterName) {
+  const character = characters.find(char => char.name === characterName);
+
+  if (character) {
+    // Charger les informations dans le modal
+    document.getElementById("profile-image-full").src = character.photo;
+    document.getElementById("profile-name").textContent = character.name;
+    document.getElementById("profile-height").textContent = character.height;
+    document.getElementById("profile-measurements").textContent = character.measurements;
+    document.getElementById("profile-ethnicity").textContent = character.ethnicity;
+    document.getElementById("profile-interests").textContent = character.interests.join(", ");
+
+    // Afficher le modal
+    document.getElementById("profile-modal").style.display = "flex";
+  } else {
+    console.error("Personnage non trouvé dans characters.json");
+  }
 }
 
 // Fonction pour fermer le modal de fiche de personnage
@@ -49,9 +81,10 @@ function closeProfileModal() {
   document.getElementById("profile-modal").style.display = "none";
 }
 
-// Ajouter un écouteur de clic sur la photo de profil dans le chat pour Hanaé
+// Ajouter un écouteur de clic sur la photo de profil dans le chat
 document.querySelector(".chat-profile-pic").addEventListener("click", function () {
-  openProfileModal("Hanaé"); // Appelle la fonction avec le nom "Hanaé" pour charger sa fiche
+  const currentCharacterName = document.getElementById("chat-name").textContent;
+  openProfileModal(currentCharacterName);
 });
 
 // Initialiser les voix avec intervalle pour les charger dans tous les navigateurs
@@ -147,28 +180,21 @@ function addBotImageMessage(botReply, imageUrl) {
 }
 
 // Fonction pour démarrer le chat et basculer en mode plein écran
-function startChat(option) {
-  // Masquer les options de chat et afficher le chat-box
-  document.querySelector(".chat-options").style.display = "none";
-  document.getElementById("chat-box").style.display = "flex";
+function startChat(characterName) {
+  const character = characters.find(c => c.name === characterName);
+  if (character) {
+    // Masquer les options de chat et afficher le chat-box
+    document.querySelector(".chat-options").style.display = "none";
+    document.getElementById("chat-box").style.display = "flex";
 
-  // Masquer le titre et agrandir le conteneur
-  document.querySelector(".header").classList.add("hidden");
-  document.querySelector(".container").classList.add("fullscreen");
+    // Masquer le titre et agrandir le conteneur
+    document.querySelector(".header").classList.add("hidden");
+    document.querySelector(".container").classList.add("fullscreen");
 
-  // Affiche le nom "Hanaé" pour le chat principal
-  document.getElementById("chat-name").textContent =
-    option === "Hanaé" ? "Hanaé" : option;
-
-  // Mettre à jour l'image de profil selon l'option sélectionnée
-  document.querySelector(".chat-profile-pic").src =
-    option === "Hanaé"
-      ? "images/hanae/hanae_profil_pic.jpg"
-      : option === "Friendly AI"
-      ? "avatar2.png"
-      : option === "Adventurous AI"
-      ? "avatar3.png"
-      : "avatar4.png";
+    // Mettre à jour le nom et l'image de profil dynamiquement
+    document.getElementById("chat-name").textContent = character.name;
+    document.querySelector(".chat-profile-pic").src = character.photo;
+  }
 }
 
 document.getElementById("back-btn").addEventListener("click", function () {
@@ -190,3 +216,33 @@ sendBtn.addEventListener("click", addUserMessage);
 
 // Charger les voix lors du chargement de la page
 initializeVoices();
+
+// Charger les personnages au démarrage
+loadCharacters();
+
+// Gestion du thème clair/sombre
+const themeToggleBtn = document.getElementById('theme-toggle');
+
+// Charger le thème depuis le localStorage si disponible
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+  document.body.classList.add(savedTheme);
+  updateThemeButtonText(savedTheme);
+}
+
+// Fonction pour basculer entre les thèmes
+themeToggleBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  
+  // Sauvegarder le thème dans localStorage
+  const currentTheme = document.body.classList.contains('dark-mode') ? 'dark-mode' : '';
+  localStorage.setItem('theme', currentTheme);
+
+  // Mettre à jour le texte du bouton
+  updateThemeButtonText(currentTheme);
+});
+
+// Fonction pour mettre à jour le texte du bouton
+function updateThemeButtonText(theme) {
+  themeToggleBtn.textContent = theme === 'dark-mode' ? 'Light Mode' : 'Dark Mode';
+}

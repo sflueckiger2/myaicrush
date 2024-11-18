@@ -8,44 +8,30 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  
+  <nav class="menu">
+    <button id="menu-toggle" class="menu-toggle">
+      <span class="hamburger"></span>
+    </button>
+    <ul id="menu-items" class="menu-items hidden">
+      <li><a href="index.html">Find your crush</a></li>
+      <li><a href="profile.html">Your profile</a></li>
+      <li><a href="premium.html">Premium</a></li>
+    </ul>
+  </nav>
+
   <!-- Garder le header en haut de la page, en dehors de .container -->
   <div class="header">
     <h1>Welcome to My AI Crush ❤️</h1>
     <p>Choose your crush :</p>
+    <button id="theme-toggle" class="theme-toggle">Dark Mode</button>
   </div>
 
   <!-- Conteneur principal pour les options de chat et le chat -->
   <div class="container">
     <!-- Options de chat -->
-    <div class="chat-options">
-      <div class="chat-card" onclick="startChat('Hanaé')">
-        <img src="images/hanae/hanae_profil_pic.jpg" alt="Hanaé">
-        <div class="card-content">
-          <h3>Hanaé</h3>
-          <p>Curious, charming, has a lot to offer you</p>
-        </div>
-      </div>
-      <div class="chat-card" onclick="startChat('Friendly AI')">
-        <img src="avatar2.png" alt="Friendly AI">
-        <div class="card-content">
-          <h3>Friendly AI</h3>
-          <p>Un ami à qui parler</p>
-        </div>
-      </div>
-      <div class="chat-card" onclick="startChat('Adventurous AI')">
-        <img src="avatar3.png" alt="Adventurous AI">
-        <div class="card-content">
-          <h3>Adventurous AI</h3>
-          <p>Un partenaire pour l'aventure</p>
-        </div>
-      </div>
-      <div class="chat-card" onclick="startChat('Mysterious AI')">
-        <img src="avatar4.png" alt="Mysterious AI">
-        <div class="card-content">
-          <h3>Mysterious AI</h3>
-          <p>Un compagnon énigmatique</p>
-        </div>
-      </div>
+    <div class="chat-options" id="chat-options">
+      <!-- Les cartes des personnages seront ajoutées ici dynamiquement -->
     </div>
 
     <!-- Conteneur pour les fiches de personnages -->
@@ -57,8 +43,8 @@
         <button id="back-btn">
           <i class="fa fa-arrow-left"></i>
         </button>
-        <img src="avatar-selected.png" alt="Profil Hanaé" class="chat-profile-pic">
-        <span id="chat-name">Hanaé</span>
+        <img id="chat-profile-pic" src="" alt="Profil sélectionné" class="chat-profile-pic">
+        <span id="chat-name">Nom de l'IA</span>
       </div>
       <div id="messages"></div>
       <div id="input-area">
@@ -69,20 +55,21 @@
       </div>
     </div>
   </div>
- <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
-<div id="profile-modal" class="modal" onclick="closeProfileModal()">
-  <div class="profile-content" onclick="event.stopPropagation()">
-    <img id="profile-image-full" src="" alt="Hanaé en grand" />
-    <h2 id="profile-name"></h2>
-    <p><strong>Taille :</strong> <span id="profile-height"></span></p>
-    <p><strong>Mesures :</strong> <span id="profile-measurements"></span></p>
-    <p><strong>Ethnie :</strong> <span id="profile-ethnicity"></span></p>
-    <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
+
+  <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
+  <div id="profile-modal" class="modal" onclick="closeProfileModal()">
+    <div class="profile-content" onclick="event.stopPropagation()">
+      <img id="profile-image-full" src="" alt="Profil complet" />
+      <h2 id="profile-name"></h2>
+      <p><strong>Taille :</strong> <span id="profile-height"></span></p>
+      <p><strong>Mesures :</strong> <span id="profile-measurements"></span></p>
+      <p><strong>Ethnie :</strong> <span id="profile-ethnicity"></span></p>
+      <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
+    </div>
   </div>
-</div>
-
-
 
   <script src="script.js"></script>
+  <script src="menu.js"></script>
+
 </body>
 </html>

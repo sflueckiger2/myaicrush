@@ -6,6 +6,9 @@ const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
 const PORT = 3000;
 
+// Charger les personnages depuis le fichier JSON
+const characters = require('./characters.json');
+
 console.log("Clé API OpenAI :", process.env.OPENAI_API_KEY);
 
 app.use(express.json());
@@ -19,7 +22,29 @@ app.get('/characters.json', (req, res) => {
 let conversationHistory = [];
 let userLevel = 1.0;
 let photoSentAtBigCrush = false; // Variable pour suivre l'envoi de la photo au niveau Big Crush
+let activeCharacter = characters[0]; // Par défaut, le premier personnage (Hanaé)
 
+// Fonction pour supprimer les accents
+function removeAccents(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Supprime les accents
+}
+
+// Fonction pour changer le personnage actif
+app.post('/setCharacter', (req, res) => {
+  const { name } = req.body;
+  const character = characters.find(c => c.name === name);
+
+  if (character) {
+    activeCharacter = character;
+    conversationHistory = []; // Réinitialiser l'historique pour un nouveau personnage
+    photoSentAtBigCrush = false; // Réinitialiser l'état d'envoi de photo
+    res.json({ success: true, message: `${name} est maintenant actif.` });
+  } else {
+    res.status(400).json({ success: false, message: "Personnage inconnu." });
+  }
+});
+
+// Ajouter un message à l'historique
 function addMessageToHistory(role, content) {
   if (content) {
     conversationHistory.push({ role, content });
@@ -29,22 +54,36 @@ function addMessageToHistory(role, content) {
   }
 }
 
-function getRandomHanaeImage() {
-  const imageDir = path.join(__dirname, 'public', 'images', `hanae${Math.floor(userLevel)}`);
-  const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
-  const randomImage = images[Math.floor(Math.random() * images.length)];
-  return `/images/hanae${Math.floor(userLevel)}/${randomImage}`;
+// Récupérer une image aléatoire pour le personnage actif
+function getRandomCharacterImage() {
+  const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase()); // Supprimer les accents
+  const levelFolder = `${sanitizedCharacterName}${Math.floor(userLevel)}`; // Exemple : "hanae1"
+  const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
+
+  try {
+    // Lire les fichiers dans le dossier
+    const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
+    if (images.length > 0) {
+      const randomImage = images[Math.floor(Math.random() * images.length)];
+      return `/images/${sanitizedCharacterName}/${levelFolder}/${randomImage}`;
+    } else {
+      console.error(`Erreur : Aucune image trouvée dans ${imageDir}`);
+      return null;
+    }
+  } catch (err) {
+    console.error(`Erreur : Le dossier ${imageDir} est introuvable ou inaccessible.`, err);
+    return null;
+  }
 }
 
+// Extraire le niveau de confort depuis la réponse du bot
 function extractComfortLevel(botReply) {
   const comfortMatch = botReply.match(/\[CONFORT:\s*(very comfortable|comfortable|neutral|uncomfortable|very uncomfortable)\]/i);
   return comfortMatch ? comfortMatch[1].toLowerCase() : "neutral";
 }
 
-// Fonction pour ajuster le niveau utilisateur en fonction du confort extrait
+// Ajuster le niveau de l'utilisateur en fonction du confort extrait
 function adjustUserLevel(comfortLevel) {
-  console.log(`Niveau de confort extrait : ${comfortLevel}`); // Log pour vérifier le confort extrait
-  
   let levelChange = 0;
   if (comfortLevel === 'very comfortable') {
     levelChange = 0.2;
@@ -60,9 +99,7 @@ function adjustUserLevel(comfortLevel) {
   userLevel = Math.max(1.0, userLevel + levelChange);
   userLevel = Math.round(userLevel * 10) / 10;
 
-  console.log(`Niveau utilisateur mis à jour : ${userLevel.toFixed(1)}`);
-
-  if (levelChange > 0) {
+  if (levelChange > 0 && userLevel > previousLevel) {
     if (userLevel === 1.1) return { message: "Level up : Little crush", type: "up" };
     if (userLevel === 1.2) return { message: "Level up : Big crush", type: "up" };
     if (userLevel === 1.3) return { message: "Level up : Perfect crush", type: "up" };
@@ -74,6 +111,7 @@ function adjustUserLevel(comfortLevel) {
   return null;
 }
 
+// Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {
   const userMessage = req.body.message;
 
@@ -84,36 +122,24 @@ app.post('/message', async (req, res) => {
   addMessageToHistory("user", userMessage);
 
   try {
-    let userLevelDescription = "";
-    if (userLevel >= 1.1 && userLevel < 1.2) {
-      userLevelDescription = "The user is at the Little Crush level.";
-    } else if (userLevel >= 1.2 && userLevel < 1.3) {
-      userLevelDescription = "The user is at the Big Crush level.";
-    } else if (userLevel >= 1.3) {
-      userLevelDescription = "The user is at the Perfect Crush level.";
-    }
+    const userLevelDescription = userLevel >= 1.1 ? `The user is at the ${userLevel >= 1.3 ? "Perfect Crush" : "Big Crush"} level.` : "";
+
+    const systemPrompt = `
+      Profil : ${activeCharacter.prompt.profile}
+      Temperament : ${activeCharacter.prompt.temperament}
+      Objective : ${activeCharacter.prompt.objective}
+
+      Level System:
+      - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
+      - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
+
+      ${userLevelDescription}
+
+      After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
+    `;
 
     const messages = [
-      {
-        role: "system",
-        content: `
-        Profil : You are Hanae, a woman, 25 years old, looking for a meaningful connection. You are 1M69 tall. You are a sports coach.
-You used to study medicine but you stopped to become a sports coach. You only had one boyfriend. You love your job and want to share your passion.
-
-        Temperament : calm, warm, curious, naughty, sporty, feminine, dreamy, kind, attentive. 
-
-        Objectif : 
-        You are looking for a lover with whom you can share moments of joy, but also intimate moments.
-
-        ${userLevelDescription}
-
-        Level System:
-        - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
-        - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message. Use this tag only when you are certain you want to share an image with the user.
-
-        After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect Hanaé's comfort level in the conversation based on the tone and content. Do not mention the tag in the message, only add it at the end for internal evaluation.
-      `
-      },
+      { role: "system", content: systemPrompt },
       ...conversationHistory
     ];
 
@@ -137,7 +163,7 @@ You used to study medicine but you stopped to become a sports coach. You only ha
 
     let botReply = response.data.choices[0].message.content;
     if (!botReply) {
-      return res.status(500).json({ reply: "Désolé, la réponse d'Hanaé n'a pas pu être obtenue." });
+      return res.status(500).json({ reply: "Désolé, la réponse n'a pas pu être obtenue." });
     }
 
     addMessageToHistory("assistant", botReply);
@@ -145,14 +171,13 @@ You used to study medicine but you stopped to become a sports coach. You only ha
     const comfortLevel = extractComfortLevel(botReply);
     const levelUpdate = adjustUserLevel(comfortLevel);
 
-    botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim(); // Supprimer la balise de confort pour l'utilisateur
+    botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim();
 
-    // Forcer l'envoi d'une photo uniquement si le niveau est Big Crush et que la photo n'a pas encore été envoyée
     let sendPhoto = botReply.includes("[PHOTO]");
     if (!sendPhoto && userLevel >= 1.2 && !photoSentAtBigCrush) {
       sendPhoto = true;
-      photoSentAtBigCrush = true; // Marquer la photo comme envoyée pour éviter les envois répétés
-      botReply += " [PHOTO]"; // Ajouter le tag pour déclencher l'envoi de la photo
+      photoSentAtBigCrush = true;
+      botReply += " [PHOTO]";
     }
 
     botReply = botReply.replace("[PHOTO]", "").trim();
@@ -160,10 +185,15 @@ You used to study medicine but you stopped to become a sports coach. You only ha
     const responseData = { reply: botReply };
     if (levelUpdate) {
       responseData.levelUpdateMessage = levelUpdate.message;
-      responseData.levelUpdateType = levelUpdate.type; // "up" ou "down"
+      responseData.levelUpdateType = levelUpdate.type;
     }
     if (sendPhoto) {
-      responseData.imageUrl = getRandomHanaeImage();
+      const imageUrl = getRandomCharacterImage();
+      if (imageUrl) {
+        responseData.imageUrl = imageUrl;
+      } else {
+        responseData.reply += " (Désolé, je n'ai pas d'image à partager pour l'instant.)";
+      }
     }
 
     res.json(responseData);
