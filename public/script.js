@@ -24,7 +24,6 @@ function loadCharacters() {
 }
 
 // Générer dynamiquement les options de chat
-
 function generateChatOptions(characters) {
   const chatOptions = document.querySelector('.chat-options');
   chatOptions.innerHTML = ''; // Nettoyer le conteneur avant d'ajouter les options
@@ -55,7 +54,6 @@ function generateChatOptions(characters) {
   });
 }
 
-
 // Fonction pour charger et afficher les informations de la fiche de personnage en plein écran
 function openProfileModal(characterName) {
   const character = characters.find(char => char.name === characterName);
@@ -79,6 +77,16 @@ function openProfileModal(characterName) {
 // Fonction pour fermer le modal de fiche de personnage
 function closeProfileModal() {
   document.getElementById("profile-modal").style.display = "none";
+}
+
+// Fonction pour gérer l'affichage du menu en fonction de l'état du chat
+function toggleMenuInChat(isChatOpen) {
+  const menu = document.querySelector('.menu');
+  if (isChatOpen) {
+    menu.classList.add('hidden'); // Cache le menu
+  } else {
+    menu.classList.remove('hidden'); // Affiche le menu
+  }
 }
 
 // Ajouter un écouteur de clic sur la photo de profil dans le chat
@@ -184,31 +192,37 @@ function startChat(characterName) {
   const character = characters.find(c => c.name === characterName);
   if (character) {
     // Masquer les options de chat et afficher le chat-box
-    document.querySelector(".chat-options").style.display = "none";
-    document.getElementById("chat-box").style.display = "flex";
+    document.querySelector(".chat-options").style.display = 'none';
+    document.getElementById("chat-box").style.display = 'flex';
 
     // Masquer le titre et agrandir le conteneur
-    document.querySelector(".header").classList.add("hidden");
-    document.querySelector(".container").classList.add("fullscreen");
+    document.querySelector(".header").classList.add('hidden');
+    document.querySelector(".container").classList.add('fullscreen');
 
     // Mettre à jour le nom et l'image de profil dynamiquement
     document.getElementById("chat-name").textContent = character.name;
     document.querySelector(".chat-profile-pic").src = character.photo;
+
+    // Cache le menu
+    toggleMenuInChat(true);
   }
 }
 
-document.getElementById("back-btn").addEventListener("click", function () {
+document.getElementById("back-btn").addEventListener("click", () => {
   // Réaffiche les options de chat
-  document.querySelector(".chat-options").style.display = "grid";
+  document.querySelector(".chat-options").style.display = 'grid';
 
   // Masque la zone de chat
-  document.getElementById("chat-box").style.display = "none";
+  document.getElementById("chat-box").style.display = 'none';
 
   // Réaffiche le header
-  document.querySelector(".header").classList.remove("hidden");
+  document.querySelector(".header").classList.remove('hidden');
 
   // Retire le mode plein écran
-  document.querySelector(".container").classList.remove("fullscreen");
+  document.querySelector(".container").classList.remove('fullscreen');
+
+  // Réaffiche le menu
+  toggleMenuInChat(false);
 });
 
 // Ajouter un événement au bouton d'envoi
@@ -219,30 +233,3 @@ initializeVoices();
 
 // Charger les personnages au démarrage
 loadCharacters();
-
-// Gestion du thème clair/sombre
-const themeToggleBtn = document.getElementById('theme-toggle');
-
-// Charger le thème depuis le localStorage si disponible
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme) {
-  document.body.classList.add(savedTheme);
-  updateThemeButtonText(savedTheme);
-}
-
-// Fonction pour basculer entre les thèmes
-themeToggleBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-  
-  // Sauvegarder le thème dans localStorage
-  const currentTheme = document.body.classList.contains('dark-mode') ? 'dark-mode' : '';
-  localStorage.setItem('theme', currentTheme);
-
-  // Mettre à jour le texte du bouton
-  updateThemeButtonText(currentTheme);
-});
-
-// Fonction pour mettre à jour le texte du bouton
-function updateThemeButtonText(theme) {
-  themeToggleBtn.textContent = theme === 'dark-mode' ? 'Light Mode' : 'Dark Mode';
-}
