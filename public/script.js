@@ -59,39 +59,45 @@ function openProfileModal(characterName) {
   const character = characters.find(char => char.name === characterName);
 
   if (character) {
-    // Charger les informations dans le modal
-    document.getElementById("profile-image-full").src = character.photo;
-    document.getElementById("profile-name").textContent = character.name;
-    document.getElementById("profile-height").textContent = character.height;
-    document.getElementById("profile-measurements").textContent = character.measurements;
-    document.getElementById("profile-ethnicity").textContent = character.ethnicity;
-    document.getElementById("profile-interests").textContent = character.interests.join(", ");
+    document.getElementById('profile-image-full').src = character.photo;
+    document.getElementById('profile-name').textContent = character.name;
+    document.getElementById('profile-height').textContent = character.height;
+    document.getElementById('profile-measurements').textContent = character.measurements;
+    document.getElementById('profile-ethnicity').textContent = character.ethnicity;
+    document.getElementById('profile-interests').textContent = character.interests.join(', ');
 
-    // Afficher le modal
-    document.getElementById("profile-modal").style.display = "flex";
+    document.getElementById('profile-modal').style.display = 'flex';
   } else {
-    console.error("Personnage non trouvé dans characters.json");
+    console.error('Personnage non trouvé dans characters.json');
   }
 }
 
 // Fonction pour fermer le modal de fiche de personnage
 function closeProfileModal() {
-  document.getElementById("profile-modal").style.display = "none";
+  document.getElementById('profile-modal').style.display = 'none';
 }
 
-// Fonction pour gérer l'affichage du menu en fonction de l'état du chat
-function toggleMenuInChat(isChatOpen) {
-  const menu = document.querySelector('.menu');
-  if (isChatOpen) {
-    menu.classList.add('hidden'); // Cache le menu
-  } else {
-    menu.classList.remove('hidden'); // Affiche le menu
-  }
+// Gestion de la zone de saisie pour mobile
+function adjustInputArea() {
+  const inputArea = document.getElementById('input-area');
+  window.addEventListener('resize', () => {
+    inputArea.style.bottom = '0'; // Réinitialise après redimensionnement
+  });
+
+  userInput.addEventListener('focus', () => {
+    inputArea.style.position = 'absolute'; // Gère l'apparition du clavier sur mobile
+    inputArea.style.bottom = '0';
+  });
+
+  userInput.addEventListener('blur', () => {
+    inputArea.style.position = 'fixed'; // Retourne à la position normale
+    inputArea.style.bottom = '0';
+  });
 }
 
 // Ajouter un écouteur de clic sur la photo de profil dans le chat
-document.querySelector(".chat-profile-pic").addEventListener("click", function () {
-  const currentCharacterName = document.getElementById("chat-name").textContent;
+document.querySelector('.chat-profile-pic').addEventListener('click', function () {
+  const currentCharacterName = document.getElementById('chat-name').textContent;
   openProfileModal(currentCharacterName);
 });
 
@@ -101,26 +107,9 @@ function initializeVoices() {
   if (!voices.length) {
     const interval = setInterval(() => {
       voices = speechSynthesis.getVoices();
-      if (voices.length) clearInterval(interval); // Arrêter une fois les voix chargées
+      if (voices.length) clearInterval(interval);
     }, 100); // Vérifier toutes les 100 ms jusqu'à ce que les voix soient chargées
   }
-}
-
-// Fonction pour afficher la pop-up "Level up" ou "Level down"
-function showLevelUpdatePopup(message, type) {
-  const popup = document.createElement('div');
-  popup.classList.add('popup');
-  popup.textContent = message;
-
-  // Définir la couleur de fond en fonction du type
-  popup.style.backgroundColor = type === 'up' ? 'green' : 'red';
-
-  document.body.appendChild(popup);
-
-  // Masquer la pop-up après quelques secondes
-  setTimeout(() => {
-    popup.remove();
-  }, 3000); // La pop-up disparaît après 3 secondes
 }
 
 // Fonction pour ajouter le message de l'utilisateur
@@ -144,11 +133,6 @@ function addUserMessage() {
     })
       .then(response => response.json())
       .then(data => {
-        // Afficher la pop-up "Level up" ou "Level down" en fonction du type de mise à jour de niveau
-        if (data.levelUpdateMessage && data.levelUpdateType) {
-          showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
-        }
-
         if (data.imageUrl) {
           addBotImageMessage(data.reply, data.imageUrl);
         } else {
@@ -157,7 +141,7 @@ function addUserMessage() {
       })
       .catch(error => {
         console.error('Erreur:', error);
-        addBotMessage("Désolé, une erreur est survenue. Merci de réessayer.");
+        addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.');
       });
   }
 }
@@ -179,7 +163,7 @@ function addBotImageMessage(botReply, imageUrl) {
 
   const imageElement = document.createElement('img');
   imageElement.src = imageUrl;
-  imageElement.alt = "Image générée par l'IA";
+  imageElement.alt = 'Image générée par l\'IA';
   imageElement.classList.add('generated-image');
   botMessageElement.appendChild(imageElement);
 
@@ -191,45 +175,39 @@ function addBotImageMessage(botReply, imageUrl) {
 function startChat(characterName) {
   const character = characters.find(c => c.name === characterName);
   if (character) {
-    // Masquer les options de chat et afficher le chat-box
-    document.querySelector(".chat-options").style.display = 'none';
-    document.getElementById("chat-box").style.display = 'flex';
+    document.querySelector('.chat-options').style.display = 'none';
+    document.getElementById('chat-box').style.display = 'flex';
 
-    // Masquer le titre et agrandir le conteneur
-    document.querySelector(".header").classList.add('hidden');
-    document.querySelector(".container").classList.add('fullscreen');
+    document.querySelector('.header').classList.add('hidden');
+    document.querySelector('.container').classList.add('fullscreen');
 
-    // Mettre à jour le nom et l'image de profil dynamiquement
-    document.getElementById("chat-name").textContent = character.name;
-    document.querySelector(".chat-profile-pic").src = character.photo;
+    document.getElementById('chat-name').textContent = character.name;
+    document.querySelector('.chat-profile-pic').src = character.photo;
 
-    // Cache le menu
-    toggleMenuInChat(true);
+    // Masquer le menu dans le chat
+    document.querySelector('.menu').classList.add('hidden');
   }
 }
 
-document.getElementById("back-btn").addEventListener("click", () => {
-  // Réaffiche les options de chat
-  document.querySelector(".chat-options").style.display = 'grid';
+// Gestion du bouton retour dans le chat
+document.getElementById('back-btn').addEventListener('click', function () {
+  document.querySelector('.chat-options').style.display = 'grid';
+  document.getElementById('chat-box').style.display = 'none';
+  document.querySelector('.header').classList.remove('hidden');
+  document.querySelector('.container').classList.remove('fullscreen');
 
-  // Masque la zone de chat
-  document.getElementById("chat-box").style.display = 'none';
-
-  // Réaffiche le header
-  document.querySelector(".header").classList.remove('hidden');
-
-  // Retire le mode plein écran
-  document.querySelector(".container").classList.remove('fullscreen');
-
-  // Réaffiche le menu
-  toggleMenuInChat(false);
+  // Réafficher le menu en quittant le chat
+  document.querySelector('.menu').classList.remove('hidden');
 });
 
 // Ajouter un événement au bouton d'envoi
-sendBtn.addEventListener("click", addUserMessage);
+sendBtn.addEventListener('click', addUserMessage);
 
 // Charger les voix lors du chargement de la page
 initializeVoices();
 
 // Charger les personnages au démarrage
 loadCharacters();
+
+// Ajuster la zone de saisie pour mobile
+adjustInputArea();
