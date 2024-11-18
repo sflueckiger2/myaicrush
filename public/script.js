@@ -4,6 +4,56 @@ const userInput = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 let voices = []; // Stocker les voix disponibles
 
+// Fonction pour charger et afficher les informations de la fiche de personnage en plein écran
+function openProfileModal(characterName) {
+  console.log(`Clic détecté : Chargement du personnage ${characterName}`); // Log de diagnostic
+
+  // Charger les données depuis le fichier characters.json
+  fetch('/characters.json')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP : ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("Données chargées depuis characters.json :", data); // Log pour vérifier les données
+
+      // Trouver le personnage sélectionné dans les données
+      const character = data.find(char => char.name === characterName);
+
+      if (character) {
+        console.log(`Personnage trouvé : ${character.name}`); // Log pour vérifier si le personnage est trouvé
+
+        // Charger les informations dans le modal
+        document.getElementById("profile-image-full").src = character.photo;
+        document.getElementById("profile-name").textContent = character.name;
+        document.getElementById("profile-height").textContent = character.height;
+        document.getElementById("profile-measurements").textContent = character.measurements;
+        document.getElementById("profile-ethnicity").textContent = character.ethnicity;
+        document.getElementById("profile-interests").textContent = character.interests.join(", ");
+
+        // Afficher le modal
+        document.getElementById("profile-modal").style.display = "flex";
+      } else {
+        console.error("Personnage non trouvé dans characters.json"); // Log si le personnage n'est pas trouvé
+      }
+    })
+    .catch(error => {
+      console.error('Erreur lors du chargement des données ou de la recherche du personnage :', error);
+    });
+}
+
+// Fonction pour fermer le modal de fiche de personnage
+function closeProfileModal() {
+  document.getElementById("profile-modal").style.display = "none";
+}
+
+// Ajouter un écouteur de clic sur la photo de profil dans le chat pour Hanaé
+document.querySelector(".chat-profile-pic").addEventListener("click", function () {
+  openProfileModal("Hanaé"); // Appelle la fonction avec le nom "Hanaé" pour charger sa fiche
+});
+
 // Initialiser les voix avec intervalle pour les charger dans tous les navigateurs
 function initializeVoices() {
   voices = speechSynthesis.getVoices();
@@ -47,27 +97,27 @@ function addUserMessage() {
     fetch('/message', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: userMessage })
+      body: JSON.stringify({ message: userMessage }),
     })
-    .then(response => response.json())
-    .then(data => {
-      // Afficher la pop-up "Level up" ou "Level down" en fonction du type de mise à jour de niveau
-      if (data.levelUpdateMessage && data.levelUpdateType) {
-        showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
-      }
+      .then(response => response.json())
+      .then(data => {
+        // Afficher la pop-up "Level up" ou "Level down" en fonction du type de mise à jour de niveau
+        if (data.levelUpdateMessage && data.levelUpdateType) {
+          showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+        }
 
-      if (data.imageUrl) {
-        addBotImageMessage(data.reply, data.imageUrl);
-      } else {
-        addBotMessage(data.reply);
-      }
-    })
-    .catch(error => {
-      console.error('Erreur:', error);
-      addBotMessage("Désolé, une erreur est survenue. Merci de réessayer.");
-    });
+        if (data.imageUrl) {
+          addBotImageMessage(data.reply, data.imageUrl);
+        } else {
+          addBotMessage(data.reply);
+        }
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+        addBotMessage("Désolé, une erreur est survenue. Merci de réessayer.");
+      });
   }
 }
 
@@ -107,31 +157,36 @@ function startChat(option) {
   document.querySelector(".container").classList.add("fullscreen");
 
   // Affiche le nom "Hanaé" pour le chat principal
-  document.getElementById("chat-name").textContent = option === "Hanaé" ? "Hanaé" : option;
+  document.getElementById("chat-name").textContent =
+    option === "Hanaé" ? "Hanaé" : option;
 
   // Mettre à jour l'image de profil selon l'option sélectionnée
-  document.querySelector(".chat-profile-pic").src = option === "Hanaé" ? "images/hanae/hanae_profil_pic.jpg" :
-                                                    option === "Friendly AI" ? "avatar2.png" :
-                                                    option === "Adventurous AI" ? "avatar3.png" : "avatar4.png";
+  document.querySelector(".chat-profile-pic").src =
+    option === "Hanaé"
+      ? "images/hanae/hanae_profil_pic.jpg"
+      : option === "Friendly AI"
+      ? "avatar2.png"
+      : option === "Adventurous AI"
+      ? "avatar3.png"
+      : "avatar4.png";
 }
 
-document.getElementById('back-btn').addEventListener('click', function() {
+document.getElementById("back-btn").addEventListener("click", function () {
   // Réaffiche les options de chat
-  document.querySelector('.chat-options').style.display = 'grid';
+  document.querySelector(".chat-options").style.display = "grid";
 
   // Masque la zone de chat
-  document.getElementById('chat-box').style.display = 'none';
+  document.getElementById("chat-box").style.display = "none";
 
   // Réaffiche le header
-  document.querySelector('.header').classList.remove('hidden');
+  document.querySelector(".header").classList.remove("hidden");
 
   // Retire le mode plein écran
-  document.querySelector('.container').classList.remove('fullscreen');
+  document.querySelector(".container").classList.remove("fullscreen");
 });
 
-
 // Ajouter un événement au bouton d'envoi
-sendBtn.addEventListener('click', addUserMessage);
+sendBtn.addEventListener("click", addUserMessage);
 
 // Charger les voix lors du chargement de la page
 initializeVoices();

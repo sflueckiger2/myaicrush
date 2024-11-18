@@ -9,7 +9,12 @@ const PORT = 3000;
 console.log("Clé API OpenAI :", process.env.OPENAI_API_KEY);
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public')); // Servir les fichiers du dossier "public"
+
+// Ajouter un middleware pour servir le fichier characters.json à partir de la racine
+app.get('/characters.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'characters.json'));
+});
 
 let conversationHistory = [];
 let userLevel = 1.0;
