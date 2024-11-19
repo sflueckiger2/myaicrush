@@ -111,6 +111,16 @@ function initializeVoices() {
   }
 }
 
+// Fonction pour défiler automatiquement vers le bas des messages
+function scrollToBottom() {
+  const messages = document.getElementById('messages');
+  messages.scrollTop = messages.scrollHeight;
+}
+// Fonction scroll
+function scrollToBottom() {
+  const messages = document.getElementById('messages');
+  messages.scrollTop = messages.scrollHeight;
+}
 // Fonction pour ajouter le message de l'utilisateur
 function addUserMessage() {
   const userMessage = userInput.value.trim();
@@ -121,7 +131,7 @@ function addUserMessage() {
     messageElement.classList.add('user-message');
     messages.appendChild(messageElement);
     userInput.value = '';
-    messages.scrollTop = messages.scrollHeight;
+    scrollToBottom(); // Défiler après l'ajout du message utilisateur
 
     fetch('/message', {
       method: 'POST',
@@ -142,13 +152,16 @@ function addUserMessage() {
         } else {
           addBotMessage(data.reply);
         }
+        scrollToBottom(); // Défiler après la réponse du bot
       })
       .catch(error => {
         console.error('Erreur:', error);
         addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.');
+        scrollToBottom(); // Défiler en cas d'erreur
       });
   }
 }
+
 
 // Fonction pour ajouter un message de l'IA
 function addBotMessage(botReply) {
