@@ -77,24 +77,6 @@ function closeProfileModal() {
   document.getElementById('profile-modal').style.display = 'none';
 }
 
-// Gestion de la zone de saisie pour mobile
-function adjustInputArea() {
-  const inputArea = document.getElementById('input-area');
-  window.addEventListener('resize', () => {
-    inputArea.style.bottom = '0'; // Réinitialise après redimensionnement
-  });
-
-  userInput.addEventListener('focus', () => {
-    inputArea.style.position = 'absolute'; // Gère l'apparition du clavier sur mobile
-    inputArea.style.bottom = '0';
-  });
-
-  userInput.addEventListener('blur', () => {
-    inputArea.style.position = 'fixed'; // Retourne à la position normale
-    inputArea.style.bottom = '0';
-  });
-}
-
 // Ajouter un écouteur de clic sur la photo de profil dans le chat
 document.querySelector('.chat-profile-pic').addEventListener('click', function () {
   const currentCharacterName = document.getElementById('chat-name').textContent;
@@ -200,38 +182,14 @@ document.getElementById('back-btn').addEventListener('click', function () {
   document.querySelector('.menu').classList.remove('hidden');
 });
 
-// Ajouter un événement au bouton d'envoi
-sendBtn.addEventListener('click', addUserMessage);
+// Modification ajoutée : Fermer le clavier et envoyer directement le message
+sendBtn.addEventListener('click', () => {
+  userInput.blur(); // Fermer le clavier sur mobile
+  addUserMessage(); // Envoyer immédiatement le message
+});
 
 // Charger les voix lors du chargement de la page
 initializeVoices();
 
 // Charger les personnages au démarrage
 loadCharacters();
-
-// Ajuster la zone de saisie pour mobile
-adjustInputArea();
-function adjustForKeyboard() {
-  const inputArea = document.getElementById('input-area');
-  const chatBox = document.getElementById('chat-box');
-
-  // Écouter les changements de hauteur de la fenêtre (quand le clavier apparaît)
-  window.addEventListener('resize', () => {
-    const viewportHeight = window.innerHeight;
-
-    // Si la hauteur diminue (clavier affiché), ajuster la position
-    if (document.activeElement === userInput) {
-      chatBox.style.height = `${viewportHeight - 100}px`; // Ajuste la hauteur du chat-box
-      inputArea.style.bottom = '0';
-      inputArea.style.position = 'absolute';
-    } else {
-      // Retour à l'état normal si le clavier disparaît
-      chatBox.style.height = '100vh';
-      inputArea.style.position = 'fixed';
-      inputArea.style.bottom = '0';
-    }
-  });
-}
-
-// Appeler la fonction après le chargement de la page
-adjustForKeyboard();
