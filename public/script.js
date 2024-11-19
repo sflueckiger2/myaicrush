@@ -54,6 +54,23 @@ function generateChatOptions(characters) {
   });
 }
 
+// Fonction pour afficher la pop-up "Level up" ou "Level down"
+function showLevelUpdatePopup(message, type) {
+  const popup = document.createElement('div');
+  popup.classList.add('popup');
+  popup.textContent = message;
+
+  // Définir la couleur de fond en fonction du type
+  popup.style.backgroundColor = type === 'up' ? 'green' : 'red';
+
+  document.body.appendChild(popup);
+
+  // Masquer la pop-up après quelques secondes
+  setTimeout(() => {
+    popup.remove();
+  }, 3000); // La pop-up disparaît après 3 secondes
+}
+
 // Fonction pour charger et afficher les informations de la fiche de personnage en plein écran
 function openProfileModal(characterName) {
   const character = characters.find(char => char.name === characterName);
@@ -115,6 +132,11 @@ function addUserMessage() {
     })
       .then(response => response.json())
       .then(data => {
+        // Afficher la pop-up si une mise à jour de niveau est détectée
+        if (data.levelUpdateMessage && data.levelUpdateType) {
+          showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+        }
+
         if (data.imageUrl) {
           addBotImageMessage(data.reply, data.imageUrl);
         } else {
@@ -182,7 +204,15 @@ document.getElementById('back-btn').addEventListener('click', function () {
   document.querySelector('.menu').classList.remove('hidden');
 });
 
-// Modification ajoutée : Fermer le clavier et envoyer directement le message
+// Modification ajoutée : Envoyer le message avec "Entrée"
+userInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Empêche le comportement par défaut de "Entrée"
+    addUserMessage(); // Envoie le message immédiatement
+  }
+});
+
+// Modification : Fermer le clavier et envoyer directement le message avec le bouton "Envoyer"
 sendBtn.addEventListener('click', () => {
   userInput.blur(); // Fermer le clavier sur mobile
   addUserMessage(); // Envoyer immédiatement le message

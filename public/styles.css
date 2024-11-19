@@ -489,3 +489,29 @@ p {
 .hidden {
   display: none;
 }
+
+/* Style pour le bouton de fermeture avec rond blanc */
+.close-modal-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #ffffff; /* Fond blanc pour le rond */
+  border: none;
+  font-size: 18px; /* Taille de la croix */
+  font-weight: bold;
+  color: #000000; /* Couleur noire pour la croix */
+  cursor: pointer;
+  width: 30px; /* Largeur du bouton */
+  height: 30px; /* Hauteur du bouton */
+  border-radius: 50%; /* Transforme en cercle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Ajout d'une ombre légère */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.close-modal-btn:hover {
+  background-color: #e91e63; /* Fond rose au survol */
+  color: #ffffff; /* Couleur blanche pour la croix au survol */
+}
