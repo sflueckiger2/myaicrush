@@ -22,20 +22,27 @@
   <!-- Contenu principal de la page -->
   <div class="container">
     <h1>Your Profile</h1>
-    <form>
-      <label for="username">Username:</label>
-      <input type="text" id="username" placeholder="Enter your username"><br><br>
 
-      <label for="password">Password:</label>
-      <input type="password" id="password" placeholder="Enter your password"><br><br>
+    <!-- Conteneur pour les utilisateurs connectés -->
+    <div id="profile-info" class="hidden">
+      <h2>Welcome, <span id="user-email"></span>!</h2>
+      <p>Your password: <span id="user-password"></span></p>
+      <button id="logout-button">Logout</button>
+    </div>
 
-      <label for="dark-mode">Enable Dark Mode:</label>
-      <input type="checkbox" id="dark-mode"><br><br>
+    <!-- Formulaire pour les utilisateurs non connectés -->
+    <form id="login-form">
+      <label for="login-email">Email:</label>
+      <input type="email" id="login-email" placeholder="Enter your email" required><br><br>
 
-      <button type="submit">Save</button>
+      <label for="login-password">Password:</label>
+      <input type="password" id="login-password" placeholder="Enter your password" required><br><br>
+
+      <button type="submit">Login</button>
     </form>
   </div>
 
   <script type="module" src="./scripts/menu.js"></script>
+  <script type="module" src="./scripts/profile.js"></script>
 </body>
 </html>
