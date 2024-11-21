@@ -1,7 +1,7 @@
 // chat.js
 import { scrollToBottom } from './utils.js';
 import { characters } from './data.js';
-import { showLevelUpdatePopup } from './ui.js';
+import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
 export function addUserMessage(userMessage, messagesContainer, scrollToBottomCallback) {
     if (userMessage.trim() !== '') {
@@ -75,18 +75,25 @@ export function addBotImageMessage(botReply, imageUrl, messagesContainer) {
 }
 // Fonction pour démarrer le chat et basculer en mode plein écran
 export function startChat(characterName) {
-    const character = characters.find(c => c.name === characterName);
-    if (character) {
-      document.querySelector('.chat-options').style.display = 'none';
-      document.getElementById('chat-box').style.display = 'flex';
-  
-      document.querySelector('.header').classList.add('hidden');
-      document.querySelector('.container').classList.add('fullscreen');
-  
-      document.getElementById('chat-name').textContent = character.name;
-      document.querySelector('.chat-profile-pic').src = character.photo;
-  
-      document.querySelector('.menu').classList.add('hidden');
-    }
+  const user = JSON.parse(localStorage.getItem('user')); // Vérifiez si l'utilisateur est connecté
+
+  if (!user) {
+    toggleSignupModal(true); // Affiche la modal si non connecté
+    return;
   }
-  
+
+  // Démarrer le chat si connecté
+  const character = characters.find(c => c.name === characterName);
+  if (character) {
+    document.querySelector('.chat-options').style.display = 'none';
+    document.getElementById('chat-box').style.display = 'flex';
+
+    document.querySelector('.header').classList.add('hidden');
+    document.querySelector('.container').classList.add('fullscreen');
+
+    document.getElementById('chat-name').textContent = character.name;
+    document.querySelector('.chat-profile-pic').src = character.photo;
+
+    document.querySelector('.menu').classList.add('hidden');
+  }
+}

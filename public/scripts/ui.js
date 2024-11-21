@@ -66,4 +66,13 @@ export function showLevelUpdatePopup(message, type) {
       document.querySelector('.menu').classList.remove('hidden');
     });
   }
+  export function toggleSignupModal(show) {
+    const signupModal = document.getElementById('signup-modal');
+    if (signupModal) {
+      signupModal.classList.toggle('hidden', !show); // Affiche ou masque selon le paramètre `show`
+    }
+  }
   
+  document.getElementById('close-signup-modal')?.addEventListener('click', () => {
+    toggleSignupModal(false); // Ferme la modal quand on clique sur "Cancel"
+  });
