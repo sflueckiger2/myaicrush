@@ -1,7 +1,10 @@
 const express = require('express');
+require('dotenv').config();
+
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Assurez-vous que STRIPE_SECRET_KEY est défini dans le fichier .env
 
 const app = express();
 const PORT = 4000;
@@ -86,12 +89,40 @@ app.post('/api/login', async (req, res) => {
             message: 'Login successful!',
             user: {
                 email: user.email,
-                password: user.password, // Optionnel selon les besoins (à éviter en production)
+                // password: user.password, // Ne renvoie pas le mot de passe en production
             },
         });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Route pour créer une session de paiement Stripe
+app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+        const { priceId } = req.body; // Récupère l'ID du prix Stripe depuis le frontend
+        if (!priceId) {
+            return res.status(400).json({ message: 'Price ID is required' });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            line_items: [
+                {
+                    price: priceId, // Utilise l'ID de prix fourni par Stripe
+                    quantity: 1,
+                },
+            ],
+            success_url: 'http://localhost:3000/success',
+            cancel_url: 'http://localhost:3000/cancel',
+        });
+
+        res.json({ url: session.url }); // Renvoie l'URL de la session Stripe
+    } catch (error) {
+        console.error('Error creating checkout session:', error);
+        res.status(500).json({ message: 'Failed to create checkout session' });
     }
 });
 
