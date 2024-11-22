@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.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); // Charge la clé secrète depuis .env
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Charge la clé secrète depuis .env
 
 async function createCheckoutSession(priceId) {
     try {
