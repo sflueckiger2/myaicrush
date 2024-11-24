@@ -21,6 +21,8 @@ app.get('/characters.json', (req, res) => {
 
 let conversationHistory = [];
 let userLevel = 1.0;
+let photoSentAtLittleCrush = false; // Variable pour suivre l'envoi de la photo au niveau Little Crush
+
 let photoSentAtBigCrush = false; // Variable pour suivre l'envoi de la photo au niveau Big Crush
 let activeCharacter = characters[0]; // Par défaut, le premier personnage (Hanaé)
 
@@ -37,6 +39,7 @@ app.post('/setCharacter', (req, res) => {
   if (character) {
     activeCharacter = character;
     conversationHistory = []; // Réinitialiser l'historique pour un nouveau personnage
+    photoSentAtLittleCrush = false; // Réinitialise l'état d'envoi de photo pour "Little Crush"
     photoSentAtBigCrush = false; // Réinitialiser l'état d'envoi de photo
     res.json({ success: true, message: `${name} est maintenant actif.` });
   } else {
@@ -173,7 +176,19 @@ app.post('/message', async (req, res) => {
 
     botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim();
 
+
+
     let sendPhoto = botReply.includes("[PHOTO]");
+
+    // Ici on dit à quel niveau il faut envoyer les photos (ça doit correspondre à little crush et big crish
+
+    if (!sendPhoto && userLevel >= 1.1 && !photoSentAtLittleCrush && !photoSentAtBigCrush) {
+      sendPhoto = true;
+      photoSentAtLittleCrush = true;
+      botReply += " [PHOTO]";
+    }
+    
+
     if (!sendPhoto && userLevel >= 1.2 && !photoSentAtBigCrush) {
       sendPhoto = true;
       photoSentAtBigCrush = true;
