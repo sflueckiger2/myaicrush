@@ -35,76 +35,26 @@ async function connectToDB() {
 
 connectToDB();
 
-// Route pour l'inscription
-app.post('/api/signup', async (req, res) => {
-    console.log('Data received from frontend:', req.body);
-
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await users.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // Ajouter un nouvel utilisateur
-        await users.insertOne({ email, password });
-        res.status(201).json({ message: 'User registered successfully!' });
-    } catch (error) {
-        console.error('Error during signup:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// Route pour la connexion
-app.post('/api/login', async (req, res) => {
-    console.log('Login attempt:', req.body);
-
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
-        // Vérifier si l'utilisateur existe et si le mot de passe correspond
-        const user = await users.findOne({ email, password });
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        // Réponse avec les informations de l'utilisateur (sans le mot de passe)
-        res.status(200).json({
-            message: 'Login successful!',
-            user: {
-                email: user.email,
-                // password: user.password, // Ne renvoie pas le mot de passe en production
-            },
-        });
-    } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {
+    console.log('Requête reçue sur /api/create-checkout-session'); // Log pour vérifier l’appel
+    console.log('Corps de la requête :', req.body); // Affiche le corps de la requête
+
     try {
         const { priceId } = req.body; // Récupère l'ID du prix Stripe depuis le frontend
+        console.log('Price ID reçu :', priceId); // Log le Price ID pour vérification
+
         if (!priceId) {
+            console.error('Erreur : Price ID manquant');
             return res.status(400).json({ message: 'Price ID is required' });
         }
+
+        // Vérifie que la clé API Stripe est bien chargée
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error('Erreur : Clé API Stripe non définie');
+            return res.status(500).json({ message: 'Stripe API key not configured' });
+        }
+        console.log('Clé API Stripe utilisée :', process.env.STRIPE_SECRET_KEY);
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -119,9 +69,10 @@ app.post('/api/create-checkout-session', async (req, res) => {
             cancel_url: 'http://localhost:3000/cancel',
         });
 
+        console.log('Session Checkout créée avec succès :', session.url); // Log l'URL de la session
         res.json({ url: session.url }); // Renvoie l'URL de la session Stripe
     } catch (error) {
-        console.error('Error creating checkout session:', error);
+        console.error('Erreur lors de la création de la session Stripe :', error.message); // Log l’erreur
         res.status(500).json({ message: 'Failed to create checkout session' });
     }
 });

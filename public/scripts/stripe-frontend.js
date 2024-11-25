@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function startCheckout() {
-    const priceId = 'price_1QNrZZAOSHX0SgbT2BcA3eYL'; // Remplace par ton ID de prix Stripe
+    const priceId = 'price_1QP4dCAOSHX0SgbTY5N4QrsW'; // Remplace par ton ID de prix Stripe
     try {
         const response = await fetch('http://localhost:4000/api/create-checkout-session', {
             method: 'POST',
