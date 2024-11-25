@@ -420,7 +420,7 @@ p {
 
 /* Bouton hamburger pour mobile */
 .menu-toggle {
-  display: none;
+  display: block;
   background: none;
   border: none;
   cursor: pointer;
@@ -489,6 +489,20 @@ p {
     display: block;
   }
 }
+/*Adaptation hamburger pour desktop*/
+
+@media (min-width: 768px) {
+  .menu-items {
+    display: none; /* Masqué par défaut sur desktop également */
+    flex-direction: column; /* Conserve la disposition en colonne */
+  }
+
+  .menu-toggle {
+    display: block; /* Le bouton hamburger reste visible */
+  }
+}
+
+
 .hidden {
   display: none;
 }
