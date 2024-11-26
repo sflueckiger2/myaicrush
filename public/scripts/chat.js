@@ -16,35 +16,60 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             console.warn('scrollToBottomCallback is not a function');
         }
 
-        fetch('/message', {
+        const user = JSON.parse(localStorage.getItem('user')); // Récupère les informations utilisateur
+        if (!user || !user.email) {
+            console.error('Utilisateur non connecté ou email manquant');
+            return;
+        }
+
+        // Appeler l'API pour vérifier si l'utilisateur est premium
+        fetch('http://localhost:4000/api/is-premium', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message: userMessage }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email }),
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.levelUpdateMessage && data.levelUpdateType) {
-                    showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                return response.json();
+            })
+            .then(({ isPremium }) => {
+                // Faire l'appel principal après avoir récupéré le statut premium
+                fetch('/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: userMessage }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.levelUpdateMessage && data.levelUpdateType) {
+                            showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+                        }
 
-                if (data.imageUrl) {
-                    addBotImageMessage(data.reply, data.imageUrl, messagesContainer);
-                } else {
-                    addBotMessage(data.reply, messagesContainer);
-                }
+                        if (data.imageUrl) {
+                            addBotImageMessage(data.reply, data.imageUrl, isPremium, messagesContainer);
+                        } else {
+                            addBotMessage(data.reply, messagesContainer);
+                        }
 
-                if (typeof scrollToBottomCallback === 'function') {
-                    scrollToBottomCallback();
-                }
+                        if (typeof scrollToBottomCallback === 'function') {
+                            scrollToBottomCallback();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de l\'envoi du message:', error);
+                        addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
+                        if (typeof scrollToBottomCallback === 'function') {
+                            scrollToBottomCallback();
+                        }
+                    });
             })
             .catch(error => {
-                console.error('Erreur:', error);
-                addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
-                if (typeof scrollToBottomCallback === 'function') {
-                    scrollToBottomCallback();
-                }
+                console.error('Erreur lors de la vérification du statut premium:', error);
+                addBotMessage('Erreur lors de la vérification du statut premium. Merci de réessayer.', messagesContainer);
             });
     }
 }
@@ -57,7 +82,7 @@ export function addBotMessage(botReply, messagesContainer) {
     scrollToBottom(messagesContainer);
 }
 
-export function addBotImageMessage(botReply, imageUrl, messagesContainer) {
+export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
     messageElement.textContent = botReply;
@@ -65,10 +90,6 @@ export function addBotImageMessage(botReply, imageUrl, messagesContainer) {
     const imageElement = document.createElement('img');
     imageElement.src = imageUrl;
     imageElement.alt = 'Image générée par l\'IA';
-
-    // Vérifie si l'utilisateur est premium
-    const user = JSON.parse(localStorage.getItem('user')); // Récupère les informations utilisateur
-    const isPremium = user?.isPremium || false; // Détermine si l'utilisateur est premium
 
     if (!isPremium) {
         imageElement.classList.add('blurred-image'); // Ajoute une classe pour flouter l'image
