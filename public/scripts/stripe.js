@@ -17,7 +17,7 @@ async function createCheckoutSession(priceId) {
             mode: 'subscription',
             line_items: [{ price: priceId, quantity: 1 }],
             success_url: 'http://localhost:3000/success',
-            cancel_url: 'http://localhost:3000/cancel',
+            cancel_url: 'http://localhost:3000/premium.html',
         });
 
         console.log('Session Checkout créée avec succès :', session.url); // Log l'URL de la session

@@ -14,6 +14,9 @@ const uri = "mongodb+srv://admin:Py%40965_Xl@cluster0.gn9ue.mongodb.net/MyAICrus
 
 const client = new MongoClient(uri);
 
+app.use(express.static('public')); // Servir les fichiers du dossier public
+
+
 app.use(cors({
     origin: 'http://localhost:3000', // Autoriser les requêtes du frontend
     methods: ['GET', 'POST'], // Autoriser uniquement GET et POST
@@ -119,8 +122,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                     quantity: 1,
                 },
             ],
-            success_url: 'http://localhost:3000/success',
-            cancel_url: 'http://localhost:3000/cancel',
+            success_url: 'http://localhost:3000/',
+            cancel_url: 'http://localhost:3000/premium.html',
         });
 
         console.log('Session Checkout créée avec succès :', session.url);
@@ -163,6 +166,8 @@ app.post('/api/is-premium', async (req, res) => {
         res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
     }
 });
+
+
 
 // Démarrer le serveur
 app.listen(PORT, () => {
