@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Profile</title>
@@ -21,12 +22,12 @@
 
   <!-- Contenu principal de la page -->
   <div class="container">
-    <h1>Your Profile</h1>
+    <h1 class="p-title">Your Profile</h1>
 
     <!-- Conteneur pour les utilisateurs connectés -->
     <div id="profile-info" class="hidden">
-      <h2>Welcome, <span id="user-email"></span>!</h2>
-      <p>Your password: <span id="user-password"></span></p>
+      <p class="p-description">You are connected with your email <span id="user-email"></span>. 🔒</h2>
+      <p></p>
       <button id="logout-button">Logout</button>
     </div>
 
@@ -41,6 +42,19 @@
       <button type="submit">Login</button>
     </form>
   </div>
+
+   <!-- Icônes de sécurité -->
+<div class="security-section">
+  <div class="security-item">
+    <i class="fas fa-lock"></i>
+    <p>100% Antivirus Secured</p>
+  </div>
+  <div class="security-item">
+    <i class="fas fa-mask"></i>
+    <p>Private & anonymous account</p>
+  </div>
+</div>
+
 
   <script type="module" src="./scripts/menu.js"></script>
   <script type="module" src="./scripts/profile.js"></script>

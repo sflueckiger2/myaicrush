@@ -588,13 +588,13 @@ p {
   padding: 20px;
 }
 
-.premium-title {
+.p-title {
   font-size: 2.5em;
   color: #e91e63;
   margin-bottom: 10px;
 }
 
-.premium-description {
+.p-description {
   font-size: 1.2em;
   color: #ffffff;
   margin-bottom: 30px;
@@ -603,30 +603,43 @@ p {
 
 /* Section des avantages */
 .premium-benefits {
-  display: flex;
-  flex-wrap: wrap; /* Permet de s'adapter sur mobile */
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 40px;
+  margin-top: 40px;
 }
 
-.benefit {
-  background-color: #393956;
-  padding: 20px;
-  border-radius: 10px;
-  width: 100%; /* Largeur 100% sur mobile */
-  max-width: 300px; /* Largeur max pour tablette et desktop */
+.benefit-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   text-align: left;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  display: inline-block;
 }
 
-.benefit h3 {
-  color: #e91e63;
-  margin-bottom: 10px;
-}
-
-.benefit p {
+.benefit-list li {
+  font-size: 1.1em;
   color: #d1d1e0;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+}
+
+.benefit-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #e91e63;
+  display: inline-block;
+  margin-right: 10px;
+  position: relative;
+}
+
+.benefit-icon::before {
+  content: '✔';
+  color: #ffffff;
+  font-size: 14px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* Section des prix */
@@ -635,6 +648,7 @@ p {
   flex-wrap: wrap; /* Permet de s'adapter sur mobile */
   justify-content: center;
   gap: 20px;
+  margin-bottom: 40px;
 }
 
 .pricing-card {
@@ -689,10 +703,6 @@ p {
     font-size: 1em; /* Réduit la taille de la description */
   }
 
-  .benefit {
-    width: 100%; /* Les avantages prennent toute la largeur */
-  }
-
   .pricing-card {
     width: 100%; /* Les cartes prennent toute la largeur */
   }
@@ -711,4 +721,77 @@ p {
     font-size: 0.9em; /* Réduit la taille des boutons */
     padding: 8px 16px;
   }
+}
+
+/* Section des icônes de sécurité */
+.security-section {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 20px 0;
+  margin: 0 20px; /* Ajoute une marge de 20px sur les côtés */
+  
+}
+
+.security-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #16ca00;
+  font-size: 1em;
+  text-align: center;
+}
+
+.security-item i {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.security-item p {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+/* Section des garanties */
+.guarantees-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  margin: 0 20px;
+  text-align: left;
+}
+
+.guarantee-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #16ca00; /* Couleur verte */
+}
+
+.shield-icon {
+  position: relative;
+  width: 15px;
+  height: 15px; /* Taille réduite du bouclier */
+}
+
+.shield-icon i {
+  font-size: 15px; /* Taille réduite de l'icône bouclier */
+  color: #16ca00; /* Couleur verte */
+}
+
+.check-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px; /* Taille ajustée du check */
+  color: #ffffff; /* Check blanc */
+  font-weight: bold;
+}
+
+.guarantee-item p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #d1d1e0; /* Couleur du texte */
 }
