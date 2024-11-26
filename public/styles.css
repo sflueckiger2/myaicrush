@@ -544,3 +544,31 @@ p {
   border-radius: 8px;
   color: white;
 }
+
+.blurred-image {
+  width: 100%; /* Même largeur que les images non floutées */
+  height: auto; /* Respecte le ratio de l'image */
+  max-width: 300px; /* Taille maximale adaptée */
+  border-radius: 8px; /* Coins arrondis comme pour les autres images */
+  margin-top: 10px; /* Espacement au-dessus */
+  border: 2px solid #444; /* Bordure pour la cohérence */
+  filter: blur(20px); /* Flou renforcé */
+  pointer-events: none; /* Empêche les interactions */
+  transition: filter 0.9s ease; /* Transition fluide pour déflouter */
+}
+
+
+.unlock-button {
+  margin-top: 10px;
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.unlock-button:hover {
+  background-color: #c2185b;
+}
