@@ -26,8 +26,22 @@
 
     <!-- Conteneur pour les utilisateurs connectés -->
     <div id="profile-info" class="hidden">
-      <p class="p-description">You are connected with your email <span id="user-email"></span>. 🔒</h2>
-      <p></p>
+      <p class="p-description">You are connected with your email <span id="user-email"></span>. 🔒</p>
+
+      <!-- Formulaire pour changer le mot de passe -->
+      <form id="change-password-form">
+        <label for="current-password">Current Password:</label>
+        <input type="password" id="current-password" placeholder="Enter your current password" required><br><br>
+
+        <label for="new-password">New Password:</label>
+        <input type="password" id="new-password" placeholder="Enter your new password" required><br><br>
+
+        <label for="confirm-password">Confirm New Password:</label>
+        <input type="password" id="confirm-password" placeholder="Confirm your new password" required><br><br>
+
+        <button type="submit" id="change-password-button">Change Password</button>
+      </form>
+
       <button id="logout-button">Logout</button>
     </div>
 
@@ -43,18 +57,17 @@
     </form>
   </div>
 
-   <!-- Icônes de sécurité -->
-<div class="security-section">
-  <div class="security-item">
-    <i class="fas fa-lock"></i>
-    <p>100% Antivirus Secured</p>
+  <!-- Icônes de sécurité -->
+  <div class="security-section">
+    <div class="security-item">
+      <i class="fas fa-lock"></i>
+      <p>100% Antivirus Secured</p>
+    </div>
+    <div class="security-item">
+      <i class="fas fa-mask"></i>
+      <p>Private & anonymous account</p>
+    </div>
   </div>
-  <div class="security-item">
-    <i class="fas fa-mask"></i>
-    <p>Private & anonymous account</p>
-  </div>
-</div>
-
 
   <script type="module" src="./scripts/menu.js"></script>
   <script type="module" src="./scripts/profile.js"></script>
