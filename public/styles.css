@@ -681,6 +681,35 @@ p {
   border: 2px solid #e91e63;
 }
 
+/* Boutons classiques*/
+/* Accordéon pour le formulaire de changement de mot de passe */
+/* Accordéon pour le formulaire de changement de mot de passe */
+#password-form-container {
+  max-height: 0; /* Masqué par défaut */
+  overflow: hidden; /* Cache le contenu dépassant */
+  transition: max-height 0.4s ease; /* Transition pour un effet fluide */
+}
+
+#password-form-container.visible {
+  max-height: 300px; /* Hauteur suffisante pour afficher le formulaire */
+}
+
+/* Boutons stylisés */
+.button {
+  background-color: #e91e63;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #c2185b;
+}
+
 /* Boutons de checkout */
 .checkout-button {
   background-color: #e91e63;
@@ -794,4 +823,14 @@ p {
   margin: 0;
   font-size: 0.9em;
   color: #d1d1e0; /* Couleur du texte */
+}
+.forgot-password-link {
+  font-size: 0.9em;
+  color: #e91e63;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
 }
