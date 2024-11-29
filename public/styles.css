@@ -834,3 +834,27 @@ p {
 .forgot-password-link:hover {
   text-decoration: underline;
 }
+
+#unsubscribe-container {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #393956;
+  color: white;
+  border-radius: 5px;
+  text-align: center;
+}
+
+#unsubscribe-container .button {
+  margin-top: 10px;
+  background-color: #e91e63;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+#unsubscribe-container .button:hover {
+  background-color: #c2185b;
+}

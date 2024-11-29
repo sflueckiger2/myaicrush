@@ -51,6 +51,12 @@
       <button class="button" id="logout-button">Logout</button>
     </div>
 
+    <div id="unsubscribe-container">
+      <h3>Cancel Your Premium Subscription</h3>
+      <button id="cancel-subscription-button" class="button">Cancel Subscription</button>
+    </div>
+    
+
     <!-- Formulaire pour les utilisateurs non connectés -->
     <form id="login-form">
       <label for="login-email">Email:</label>
@@ -62,6 +68,7 @@
       <button class="button" type="submit">Login</button>
     </form>
   </div>
+
 
   <!-- Icônes de sécurité -->
   <div class="security-section">
@@ -77,5 +84,7 @@
 
   <script type="module" src="./scripts/menu.js"></script>
   <script type="module" src="./scripts/profile.js"></script>
+  <script type="module" src="./scripts/stripe-frontend.js"></script>
+
 </body>
 </html>
