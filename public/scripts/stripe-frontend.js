@@ -1,10 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Boutons pour les différents plans
     const monthlyCheckoutButton = document.querySelector('#monthlyCheckoutButton');
     const annualCheckoutButton = document.querySelector('#annualCheckoutButton');
     const cancelSubscriptionButton = document.querySelector('#cancel-subscription-button');
 
-    // Ajouter les événements de clic aux boutons
     if (monthlyCheckoutButton) {
         monthlyCheckoutButton.addEventListener('click', () => {
             startCheckout('price_1QP4dCAOSHX0SgbTY5N4QrsW'); // Remplace par l'ID Stripe pour le plan mensuel
@@ -17,16 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gérer la désinscription
     if (cancelSubscriptionButton) {
         cancelSubscriptionButton.addEventListener('click', () => {
-            console.log('Cancel Subscription button clicked'); // Vérifie si le clic est détecté
             const confirmCancel = confirm('Are you sure you want to cancel your subscription?');
             if (confirmCancel) {
                 cancelSubscription();
             }
         });
     }
+
+    displaySubscriptionInfo(); // Affiche les infos d'abonnement dès le chargement
 });
 
 // Fonction pour démarrer le paiement Stripe
@@ -35,12 +33,12 @@ async function startCheckout(priceId) {
         const response = await fetch('http://localhost:4000/api/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ priceId }), // Envoie l'ID du prix choisi au backend
+            body: JSON.stringify({ priceId }),
         });
 
         const data = await response.json();
         if (data.url) {
-            window.location.href = data.url; // Redirige l'utilisateur vers Stripe Checkout
+            window.location.href = data.url;
         } else {
             console.error('Erreur lors de la création de la session Stripe:', data.message);
         }
@@ -52,7 +50,6 @@ async function startCheckout(priceId) {
 // Fonction pour annuler un abonnement Stripe
 async function cancelSubscription() {
     try {
-        // Récupère les informations de l'utilisateur depuis le localStorage
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.email) {
             alert('No user information found. Please log in first.');
@@ -62,16 +59,13 @@ async function cancelSubscription() {
         const response = await fetch('http://localhost:4000/api/cancel-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email }), // Envoie l'email au backend pour l'identification
+            body: JSON.stringify({ email: user.email }),
         });
 
         const data = await response.json();
         if (response.ok) {
             alert('Your subscription has been cancelled.');
-            // Mettre à jour le statut premium dans le localStorage
             localStorage.setItem('user', JSON.stringify({ ...user, isPremium: false }));
-
-            // Masquer l'encart de désinscription
             const unsubscribeContainer = document.querySelector('#unsubscribe-container');
             if (unsubscribeContainer) {
                 unsubscribeContainer.classList.add('hidden');
@@ -83,5 +77,40 @@ async function cancelSubscription() {
     } catch (error) {
         console.error('Erreur:', error);
         alert('An error occurred while cancelling the subscription. Please try again.');
+    }
+}
+
+// Fonction pour récupérer et afficher l'abonnement actuel
+async function displaySubscriptionInfo() {
+    try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.email) {
+            console.log('Utilisateur non connecté.');
+            return;
+        }
+
+        const response = await fetch('http://localhost:4000/api/get-user-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email }),
+        });
+
+        const data = await response.json();
+        const subscriptionContainer = document.querySelector('.profile-section.subscription');
+
+        if (response.ok) {
+            if (data.status === 'inactive') {
+                subscriptionContainer.innerHTML = '<p>You have no active subscription.</p>';
+            } else {
+                subscriptionContainer.innerHTML = `
+                    <p>Current subscription: ${data.subscription.amount} €/${data.subscription.interval}</p>
+                    ${data.status === 'cancelled' ? '<p>Your subscription is set to cancel at the end of the billing period.</p>' : ''}
+                `;
+            }
+        } else {
+            console.error('Erreur lors de la récupération de l\'abonnement:', data.message);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
     }
 }

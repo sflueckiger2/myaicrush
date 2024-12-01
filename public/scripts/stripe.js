@@ -2,17 +2,14 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Charge la cl
 
 // Fonction pour créer une session de paiement Stripe
 async function createCheckoutSession(priceId) {
-    console.log('createCheckoutSession appelé avec Price ID :', priceId); // Log le Price ID pour diagnostic
+    console.log('createCheckoutSession appelé avec Price ID :', priceId);
 
     try {
-        // Vérifie que la clé API Stripe est correctement chargée
         if (!process.env.STRIPE_SECRET_KEY) {
             console.error('Erreur : Clé API Stripe non définie dans .env');
             throw new Error('STRIPE_SECRET_KEY non définie');
         }
-        console.log('Clé API Stripe utilisée :', process.env.STRIPE_SECRET_KEY);
 
-        // Crée une session Stripe Checkout
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'subscription',
@@ -21,10 +18,10 @@ async function createCheckoutSession(priceId) {
             cancel_url: 'http://localhost:3000/premium.html',
         });
 
-        console.log('Session Checkout créée avec succès :', session.url); // Log l'URL de la session
+        console.log('Session Checkout créée avec succès :', session.url);
         return session;
     } catch (error) {
-        console.error('Erreur dans createCheckoutSession :', error.message); // Log des erreurs
+        console.error('Erreur dans createCheckoutSession :', error.message);
         throw new Error(error.message);
     }
 }
@@ -34,7 +31,6 @@ async function cancelSubscription(email) {
     try {
         console.log('Annulation d\'abonnement pour email :', email);
 
-        // Rechercher le client Stripe par email
         const customers = await stripe.customers.search({
             query: `email:'${email}'`,
         });
@@ -46,7 +42,6 @@ async function cancelSubscription(email) {
 
         const customer = customers.data[0];
 
-        // Récupérer les abonnements actifs
         const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active',
@@ -59,7 +54,6 @@ async function cancelSubscription(email) {
 
         const subscriptionId = subscriptions.data[0].id;
 
-        // Marquer l'abonnement pour annulation à la fin de la période actuelle
         const updatedSubscription = await stripe.subscriptions.update(subscriptionId, {
             cancel_at_period_end: true,
         });
@@ -75,4 +69,46 @@ async function cancelSubscription(email) {
     }
 }
 
-module.exports = { createCheckoutSession, cancelSubscription };
+// Fonction pour récupérer l'abonnement actuel de l'utilisateur
+async function getUserSubscription(email) {
+    try {
+        console.log('Recherche de l\'abonnement pour email :', email);
+
+        const customers = await stripe.customers.search({
+            query: `email:'${email}'`,
+        });
+
+        if (customers.data.length === 0) {
+            console.error('Client non trouvé pour cet email');
+            return { status: 'inactive', subscription: null };
+        }
+
+        const customer = customers.data[0];
+
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customer.id,
+        });
+
+        if (subscriptions.data.length === 0) {
+            console.log('Aucun abonnement trouvé pour cet utilisateur');
+            return { status: 'inactive', subscription: null };
+        }
+
+        const subscription = subscriptions.data[0];
+        const status = subscription.cancel_at_period_end ? 'cancelled' : subscription.status;
+
+        return {
+            status,
+            subscription: {
+                id: subscription.id,
+                amount: subscription.items.data[0].price.unit_amount / 100,
+                interval: subscription.items.data[0].price.recurring.interval,
+            },
+        };
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'abonnement :', error.message);
+        throw new Error(error.message);
+    }
+}
+
+module.exports = { createCheckoutSession, cancelSubscription, getUserSubscription };
