@@ -24,8 +24,19 @@
   <div class="container">
     <h1 class="p-title">Your Profile</h1>
 
+    <!-- Formulaire pour les utilisateurs non connectés -->
+    <form id="login-form" class="hidden">
+      <label for="login-email">Email:</label>
+      <input type="email" id="login-email" placeholder="Enter your email" required><br><br>
+
+      <label for="login-password">Password:</label>
+      <input type="password" id="login-password" placeholder="Enter your password" required><br><br>
+
+      <button class="button" type="submit">Login</button>
+    </form>
+
     <!-- Conteneur pour les utilisateurs connectés -->
-    <div id="profile-info">
+    <div id="profile-info" class="hidden">
       <p class="p-description">You are connected with your email <span id="user-email"></span>. 🔒</p>
       
       <!-- Section de gestion du compte -->
@@ -44,25 +55,14 @@
       <!-- Section d'abonnement -->
       <div class="profile-section subscription">
         <h2>Subscription</h2>
-        <div class="profile-buttons">
-            <button id="cancel-subscription-button" class="profile-button danger">
-                <i class="fas fa-times-circle"></i> Cancel Subscription
-            </button>
-        </div>
         <p class="subscription-info">Loading your subscription details...</p>
+        <div class="profile-buttons">
+          <button id="cancel-subscription-button" class="profile-button danger">
+            <i class="fas fa-times-circle"></i> Cancel Subscription
+          </button>
+        </div>
+      </div>
     </div>
-    
-
-    <!-- Formulaire pour les utilisateurs non connectés -->
-    <form id="login-form" class="hidden">
-      <label for="login-email">Email:</label>
-      <input type="email" id="login-email" placeholder="Enter your email" required><br><br>
-
-      <label for="login-password">Password:</label>
-      <input type="password" id="login-password" placeholder="Enter your password" required><br><br>
-
-      <button class="button" type="submit">Login</button>
-    </form>
   </div>
 
   <!-- Icônes de sécurité -->
