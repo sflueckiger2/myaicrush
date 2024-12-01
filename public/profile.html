@@ -25,40 +25,35 @@
     <h1 class="p-title">Your Profile</h1>
 
     <!-- Conteneur pour les utilisateurs connectés -->
-    <div id="profile-info" class="hidden">
+    <div id="profile-info">
       <p class="p-description">You are connected with your email <span id="user-email"></span>. 🔒</p>
+      
+      <!-- Section de gestion du compte -->
+      <div class="profile-section">
+        <h2>Account Management</h2>
+        <div class="profile-buttons">
+          <a href="password.html" class="profile-button">
+            <i class="fas fa-key"></i> Change Password
+          </a>
+          <button class="profile-button" id="logout-button">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
 
-      <!-- Bouton pour afficher/masquer le formulaire -->
-      <a href="password.html"><button class="button">Change Password</button></a><br>
-
-<!-- Formulaire pour changer le mot de passe (caché par défaut) -->
-<div id="password-form-container" class="hidden">
-  <form id="change-password-form">
-    <label for="current-password">Current Password:</label>
-    <input type="password" id="current-password" placeholder="Enter your current password" required><br><br>
-
-    <label for="new-password">New Password:</label>
-    <input type="password" id="new-password" placeholder="Enter your new password" required><br><br>
-
-    <label for="confirm-password">Confirm New Password:</label>
-    <input type="password" id="confirm-password" placeholder="Confirm your new password" required><br><br>
-
-    <button type="submit" id="change-password-button" class="button">Submit</button>
-  </form>
-</div>
-
-      <br>
-      <button class="button" id="logout-button">Logout</button>
+      <!-- Section d'abonnement -->
+      <div class="profile-section">
+        <h2>Subscription</h2>
+        <div class="profile-buttons">
+          <button id="cancel-subscription-button" class="profile-button danger">
+            <i class="fas fa-times-circle"></i> Cancel Subscription
+          </button>
+        </div>
+      </div>
     </div>
-
-    <div id="unsubscribe-container">
-      <h3>Cancel Your Premium Subscription</h3>
-      <button id="cancel-subscription-button" class="button">Cancel Subscription</button>
-    </div>
-    
 
     <!-- Formulaire pour les utilisateurs non connectés -->
-    <form id="login-form">
+    <form id="login-form" class="hidden">
       <label for="login-email">Email:</label>
       <input type="email" id="login-email" placeholder="Enter your email" required><br><br>
 
@@ -68,7 +63,6 @@
       <button class="button" type="submit">Login</button>
     </form>
   </div>
-
 
   <!-- Icônes de sécurité -->
   <div class="security-section">
@@ -85,6 +79,5 @@
   <script type="module" src="./scripts/menu.js"></script>
   <script type="module" src="./scripts/profile.js"></script>
   <script type="module" src="./scripts/stripe-frontend.js"></script>
-
 </body>
 </html>

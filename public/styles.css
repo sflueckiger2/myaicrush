@@ -858,3 +858,68 @@ p {
 #unsubscribe-container .button:hover {
   background-color: #c2185b;
 }
+
+/* Section Profil */
+
+/* Conteneur de la section profil */
+.profile-section {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #393956; /* Correspond à vos cartes actuelles */
+  border: 1px solid #444; /* Une bordure légère */
+  border-radius: 8px; /* Coins arrondis */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+}
+
+/* Titre des sections */
+.profile-section h2 {
+  font-size: 1.5rem;
+  color: #e91e63; /* Votre couleur principale */
+  margin-bottom: 10px;
+}
+
+/* Boutons dans les sections */
+.profile-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Style des boutons de profil */
+.profile-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 15px;
+  background-color: #e91e63; /* Votre couleur principale */
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.profile-button i {
+  margin-right: 10px;
+}
+
+.profile-button:hover {
+  background-color: #c2185b; /* Couleur au survol */
+  transform: scale(1.05);
+}
+
+/* Boutons spécifiques */
+.profile-button.danger {
+  background-color: #d81b60; /* Variation pour les actions sensibles */
+}
+
+.profile-button.danger:hover {
+  background-color: #b0003a;
+}
+
+/* Conteneur pour les utilisateurs connectés */
+#profile-info {
+  text-align: center;
+}
