@@ -35,6 +35,19 @@
       <button class="button" type="submit">Login</button>
     </form>
 
+    <!-- Formulaire d'inscription -->
+    <div id="signup-container" class="hidden">
+      <h2>Sign Up</h2>
+      <form id="signup-form">
+        <label for="signup-email">Email:</label>
+        <input type="email" id="signup-email" name="email" placeholder="Enter your email" required />
+        <label for="signup-password">Password:</label>
+        <input type="password" id="signup-password" name="password" placeholder="Enter your password" required />
+        <button type="submit" class="button">Sign Up</button>
+      </form>
+      <p id="signup-message"></p>
+    </div>
+
     <!-- Conteneur pour les utilisateurs connectés -->
     <div id="profile-info" class="hidden">
       <p class="p-description">You are connected with your email <span id="user-email"></span>. 🔒</p>

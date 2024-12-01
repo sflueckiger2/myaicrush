@@ -13,7 +13,6 @@ export function openProfileModal(characterName) {
     const profileEthnicity = document.getElementById('profile-ethnicity');
     const profileInterests = document.getElementById('profile-interests');
 
-    // Vérifier que les éléments existent avant d'y accéder
     if (profileModal && profileImage && profileName && profileHeight && profileMeasurements && profileEthnicity && profileInterests) {
       profileImage.src = character.photo;
       profileName.textContent = character.name;
@@ -45,6 +44,8 @@ export function closeProfileModal() {
 document.addEventListener('DOMContentLoaded', () => {
   const profileInfo = document.getElementById('profile-info');
   const loginForm = document.getElementById('login-form');
+  const signupContainer = document.getElementById('signup-container');
+  const signupForm = document.getElementById('signup-form');
   const userEmailSpan = document.getElementById('user-email');
   const logoutButton = document.getElementById('logout-button');
   const changePasswordForm = document.getElementById('change-password-form');
@@ -55,39 +56,78 @@ document.addEventListener('DOMContentLoaded', () => {
   if (user) {
     // Si l'utilisateur est connecté
     if (loginForm) loginForm.classList.add('hidden');
+    if (signupContainer) signupContainer.classList.add('hidden');
     if (profileInfo) profileInfo.classList.remove('hidden');
     if (userEmailSpan) userEmailSpan.textContent = user.email;
   } else {
     // Si l'utilisateur n'est pas connecté
     if (profileInfo) profileInfo.classList.add('hidden');
     if (loginForm) loginForm.classList.remove('hidden');
+    if (signupContainer) signupContainer.classList.remove('hidden');
   }
 
   // Gérer la soumission du formulaire de connexion
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (event) => {
+if (loginForm) {
+  loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
 
       try {
-        const response = await fetchRequest('/api/login', { email, password });
+          const response = await fetchRequest('/api/login', { email, password });
 
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem('user', JSON.stringify(data.user));
-          location.reload(); // Recharger la page
-        } else {
-          const errorData = await response.json();
-          alert(errorData.message || 'Login failed');
-        }
+          if (response.ok) {
+              const data = await response.json();
+              // Stocker l'utilisateur dans localStorage
+              localStorage.setItem('user', JSON.stringify(data.user));
+
+              // Rediriger vers index.html
+              window.location.href = 'index.html';
+          } else {
+              const errorData = await response.json();
+              alert(errorData.message || 'Login failed');
+          }
       } catch (error) {
-        console.error('Error during login:', error);
-        alert('An error occurred. Please try again.');
+          console.error('Error during login:', error);
+          alert('An error occurred. Please try again.');
       }
-    });
-  }
+  });
+}
+
+
+  // Gérer la soumission du formulaire d'inscription
+if (signupForm) {
+  signupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      try {
+          const response = await fetchRequest('/api/signup', { email, password });
+
+          if (response.ok) {
+              const data = await response.json();
+              alert(data.message || 'Signup successful!');
+              signupForm.reset(); // Réinitialise le formulaire
+
+              // Stocker l'utilisateur dans localStorage
+              localStorage.setItem('user', JSON.stringify({ email }));
+
+              // Rediriger vers index.html
+              window.location.href = 'index.html';
+          } else {
+              const errorData = await response.json();
+              alert(errorData.message || 'Signup failed');
+          }
+      } catch (error) {
+          console.error('Error during signup:', error);
+          alert('An error occurred. Please try again.');
+      }
+  });
+}
+
 
   // Gérer la déconnexion
   if (logoutButton) {
@@ -143,5 +183,3 @@ async function fetchRequest(url, body) {
     body: JSON.stringify(body),
   });
 }
-
-
