@@ -863,7 +863,8 @@ p {
 
 /* Conteneur de la section profil */
 .profile-section {
-  margin-top:10px;
+  margin: 20px 0;
+  padding: 15px;
   background-color: #393956; /* Correspond à vos cartes actuelles */
   border-radius: 8px; /* Coins arrondis */
 }
