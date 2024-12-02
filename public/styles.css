@@ -863,12 +863,16 @@ p {
 
 /* Conteneur de la section profil */
 .profile-section {
+  margin-top:10px;
+  background-color: #393956; /* Correspond à vos cartes actuelles */
+  border-radius: 8px; /* Coins arrondis */
+}
+.profile-sectionv2 {
   margin: 20px 0;
   padding: 15px;
   background-color: #393956; /* Correspond à vos cartes actuelles */
-  border: 1px solid #444; /* Une bordure légère */
   border-radius: 8px; /* Coins arrondis */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Légère ombre */
+  
 }
 
 /* Titre des sections */
