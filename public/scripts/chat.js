@@ -124,6 +124,13 @@ export function startChat(characterName) {
     setCharacter(characterName)
       .then(() => {
         console.log(`Personnage chargé côté serveur : ${characterName}`);
+        
+        // Réinitialiser l'historique des messages dans l'interface utilisateur
+        const messagesContainer = document.getElementById('messages');
+        if (messagesContainer) {
+          messagesContainer.innerHTML = ''; // Efface les messages affichés
+        }
+  
         // Ensuite, démarrez le chat normalement
         const character = characters.find(c => c.name === characterName);
         if (character) {
