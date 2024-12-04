@@ -120,25 +120,26 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
 // Fonction pour démarrer le chat et basculer en mode plein écran
 export function startChat(characterName) {
-    const user = JSON.parse(localStorage.getItem('user')); // Vérifiez si l'utilisateur est connecté
-
-    if (!user) {
-        toggleSignupModal(true); // Affiche la modal si non connecté
-        return;
-    }
-
-    // Démarrer le chat si connecté
-    const character = characters.find(c => c.name === characterName);
-    if (character) {
-        document.querySelector('.chat-options').style.display = 'none';
-        document.getElementById('chat-box').style.display = 'flex';
-
-        document.querySelector('.header').classList.add('hidden');
-        document.querySelector('.container').classList.add('fullscreen');
-
-        document.getElementById('chat-name').textContent = character.name;
-        document.querySelector('.chat-profile-pic').src = character.photo;
-
-        document.querySelector('.menu').classList.add('hidden');
-    }
-}
+    // Informer le serveur du personnage actif
+    setCharacter(characterName)
+      .then(() => {
+        console.log(`Personnage chargé côté serveur : ${characterName}`);
+        // Ensuite, démarrez le chat normalement
+        const character = characters.find(c => c.name === characterName);
+        if (character) {
+          document.querySelector('.chat-options').style.display = 'none';
+          document.getElementById('chat-box').style.display = 'flex';
+  
+          document.querySelector('.header').classList.add('hidden');
+          document.querySelector('.container').classList.add('fullscreen');
+  
+          document.getElementById('chat-name').textContent = character.name;
+          document.querySelector('.chat-profile-pic').src = character.photo;
+  
+          document.querySelector('.menu').classList.add('hidden');
+        }
+      })
+      .catch((error) => {
+        console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
+      });
+  }
