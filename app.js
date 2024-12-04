@@ -25,6 +25,8 @@ let photoSentAtLittleCrush = false; // Variable pour suivre l'envoi de la photo 
 
 let photoSentAtBigCrush = false; // Variable pour suivre l'envoi de la photo au niveau Big Crush
 let activeCharacter = characters[0]; // Par défaut, le premier personnage (Hanaé)
+console.log('Personnage actif au démarrage :', activeCharacter.name);
+
 
 // Fonction pour supprimer les accents
 function removeAccents(str) {
@@ -33,11 +35,13 @@ function removeAccents(str) {
 
 // Fonction pour changer le personnage actif
 app.post('/setCharacter', (req, res) => {
+  console.log('Requête reçue pour changer de personnage :', req.body); // Ajout
   const { name } = req.body;
   const character = characters.find(c => c.name === name);
 
   if (character) {
     activeCharacter = character;
+    console.log('Personnage actif modifié :', activeCharacter.name); // Ajouter ici
     conversationHistory = []; // Réinitialiser l'historique pour un nouveau personnage
     photoSentAtLittleCrush = false; // Réinitialise l'état d'envoi de photo pour "Little Crush"
     photoSentAtBigCrush = false; // Réinitialiser l'état d'envoi de photo

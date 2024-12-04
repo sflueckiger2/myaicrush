@@ -18,3 +18,22 @@ export async function loadCharacters() {
     return []; // Retourne un tableau vide en cas d'erreur
   }
 }
+// Fonction pour changer de personnage
+export async function setCharacter(name) {
+  try {
+    const response = await fetch('/setCharacter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }), // Le nom du personnage à envoyer
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      console.log('Personnage actif mis à jour côté serveur :', data.message);
+    } else {
+      console.error('Erreur serveur :', data.message);
+    }
+  } catch (error) {
+    console.error('Erreur lors de l’appel à /setCharacter :', error);
+  }
+}

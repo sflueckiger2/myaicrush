@@ -1,5 +1,5 @@
 import { scrollToBottom } from './utils.js';
-import { characters } from './data.js';
+import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
 export function addUserMessage(userMessage, messagesContainer, scrollToBottomCallback) {

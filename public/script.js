@@ -188,23 +188,7 @@ function addBotImageMessage(botReply, imageUrl) {
   messages.scrollTop = messages.scrollHeight;
 }
 
-// Fonction pour démarrer le chat et basculer en mode plein écran
-function startChat(characterName) {
-  const character = characters.find(c => c.name === characterName);
-  if (character) {
-    document.querySelector('.chat-options').style.display = 'none';
-    document.getElementById('chat-box').style.display = 'flex';
 
-    document.querySelector('.header').classList.add('hidden');
-    document.querySelector('.container').classList.add('fullscreen');
-
-    document.getElementById('chat-name').textContent = character.name;
-    document.querySelector('.chat-profile-pic').src = character.photo;
-
-    // Masquer le menu dans le chat
-    document.querySelector('.menu').classList.add('hidden');
-  }
-}
 
 // Gestion du bouton retour dans le chat
 document.getElementById('back-btn').addEventListener('click', function () {
