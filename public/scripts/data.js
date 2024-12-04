@@ -37,3 +37,19 @@ export async function setCharacter(name) {
     console.error('Erreur lors de l’appel à /setCharacter :', error);
   }
 }
+
+// fonction pour réinitialiser le niveau UTILISATEUR avec le BACK BUTTON
+export function resetUserLevel() {
+  fetch('/resetUserLevel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then((response) => {
+      if (response.ok) {
+        console.log('Niveau utilisateur réinitialisé à 1.0');
+      }
+    })
+    .catch((error) => {
+      console.error('Erreur lors de la réinitialisation du niveau utilisateur :', error);
+    });
+}

@@ -1,4 +1,6 @@
 import { startChat } from './chat.js';
+import { resetUserLevel } from './data.js';
+
 
 
 // ui.js
@@ -64,6 +66,10 @@ export function showLevelUpdatePopup(message, type) {
       document.querySelector('.header').classList.remove('hidden');
       document.querySelector('.container').classList.remove('fullscreen');
       document.querySelector('.menu').classList.remove('hidden');
+
+      // Réinitialiser le niveau utilisateur
+    resetUserLevel(); // Appeler la fonction pour remettre le niveau à 1.0
+
     });
   }
   export function toggleSignupModal(show) {

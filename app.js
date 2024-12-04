@@ -222,6 +222,17 @@ app.post('/message', async (req, res) => {
   }
 });
 
+// ENDPOINT pour réinitialiser le niveau UTILISATEUR BACK-BTN
+
+app.post('/resetUserLevel', (req, res) => {
+  userLevel = 1.0; // Réinitialiser le niveau utilisateur à 1.0
+  photoSentAtLittleCrush = false; // Réinitialise l'état des photos
+  photoSentAtBigCrush = false; // Réinitialise l'état des photos
+  console.log('Niveau utilisateur réinitialisé à 1.0');
+  res.json({ success: true, message: 'Niveau utilisateur réinitialisé.' });
+});
+
+
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });
