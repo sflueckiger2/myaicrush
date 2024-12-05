@@ -4,15 +4,146 @@ const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
+const { connectToDb, getDb } = require('./db');
+
+
 const PORT = 3000;
 
 // Charger les personnages depuis le fichier JSON
 const characters = require('./characters.json');
 
+// Configuration Google OAuth
+
+const { OAuth2Client } = require('google-auth-library');
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID; // Assurez-vous que ces variables sont dans votre fichier .env
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const REDIRECT_URI = 'http://localhost:3000/auth/google/callback'; // Mettez à jour si nécessaire
+
+const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+// Middleware pour rediriger vers Google pour l'authentification
+app.get('/auth/google', (req, res) => {
+  const authUrl = oAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['email', 'profile'],
+  });
+  res.redirect(authUrl);
+});
+
+// ENDPOINT GOOGLE AUTH
+// Callback pour gérer la réponse après l'authentification Google
+app.get('/auth/google/callback', async (req, res) => {
+  // Ajouter un middleware pour servir le fichier characters.json à partir de la racine
+app.get('/characters.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'characters.json'));
+});
+
+const { connectToDb } = require('./db');
+
+connectToDb().catch((error) => {
+  console.error('Erreur lors de la connexion à MongoDB :', error);
+  process.exit(1); // Quitte le processus si la connexion échoue
+});
+
+// Callback pour gérer la réponse après l'authentification Google
+app.get('/auth/google/callback', async (req, res) => {
+  const code = req.query.code;
+
+  try {
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
+
+    const ticket = await oAuth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    const userEmail = payload.email;
+    
+
+    const user = await addOrFindUser(userEmail);
+
+    req.session.user = user;
+    res.redirect('/');
+  } catch (error) {
+    console.error('Erreur lors de l\'authentification Google:', error);
+    res.status(500).send('Erreur d\'authentification');
+  }
+});
+
+// Fonction pour ajouter ou retrouver un utilisateur dans MongoDB
+async function addOrFindUser(email) {
+  const { getDb } = require('./db');
+  const db = getDb();
+  const userCollection = db.collection('users');
+
+  let user = await userCollection.findOne({ email });
+  if (!user) {
+    user = { email, createdAt: new Date() };
+    await userCollection.insertOne(user);
+  }
+
+  return user;
+}
+
+  const code = req.query.code;
+
+  try {
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
+
+    // Vérifier et extraire les informations utilisateur
+    const ticket = await oAuth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    // Obtenir les informations utilisateur
+    const userEmail = payload.email;
+    
+
+    // Stocker l'utilisateur dans MongoDB si nécessaire
+    const user = await addOrFindUser(userEmail);
+
+    // Sauvegarder l'utilisateur dans une session ou envoyer une réponse
+    req.session = { user }; // Si vous utilisez une gestion de session
+
+    console.log('Utilisateur Google authentifié :', user);
+
+    res.redirect('/profile.html'); // Redirigez vers la page profil ou autre
+  } catch (error) {
+    console.error('Erreur lors de l\'authentification Google:', error);
+    res.status(500).send('Erreur d\'authentification');
+  }
+});
+
+// Fonction pour ajouter ou retrouver un utilisateur dans MongoDB
+async function addOrFindUser(email) {
+  const db = require('./db').getDb(); // Assurez-vous d'avoir configuré une connexion MongoDB
+  const userCollection = db.collection('users');
+
+  let user = await userCollection.findOne({ email });
+  if (!user) {
+    user = { email, createdAt: new Date() };
+    await userCollection.insertOne(user);
+    console.log('Nouvel utilisateur ajouté :', email);
+  } else {
+    console.log('Utilisateur existant trouvé :', email);
+  }
+
+  return user;
+}
+
+
 console.log("Clé API OpenAI :", process.env.OPENAI_API_KEY);
 
 app.use(express.json());
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
+
+
+
 
 // Ajouter un middleware pour servir le fichier characters.json à partir de la racine
 app.get('/characters.json', (req, res) => {
@@ -60,6 +191,27 @@ function addMessageToHistory(role, content) {
     }
   }
 }
+
+// FONCTION POUR GOOGLE AUTH
+async function addOrFindUser(email) {
+  const db = getDb();
+  const usersCollection = db.collection('users');
+
+  // Vérifie si l'utilisateur existe déjà
+  let user = await usersCollection.findOne({ email });
+
+  if (!user) {
+    // Si l'utilisateur n'existe pas, ajoute-le
+    user = { email, createdAt: new Date() };
+    await usersCollection.insertOne(user);
+    console.log(`Nouvel utilisateur ajouté : ${email}`);
+  } else {
+    console.log(`Utilisateur existant trouvé : ${email}`);
+  }
+
+  return user;
+}
+
 
 // Récupérer une image aléatoire pour le personnage actif
 function getRandomCharacterImage() {
@@ -238,6 +390,11 @@ app.post('/resetUserLevel', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`Serveur lancé sur http://localhost:${PORT}`);
+// Connecter à la base de données avant de démarrer le serveur
+connectToDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Serveur lancé sur http://localhost:${PORT}`);
+  });
+}).catch((err) => {
+  console.error('Erreur de connexion à la base de données :', err);
 });
