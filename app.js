@@ -176,7 +176,10 @@ app.post('/message', async (req, res) => {
     addMessageToHistory("assistant", botReply);
 
     const comfortLevel = extractComfortLevel(botReply);
+
     const levelUpdate = adjustUserLevel(comfortLevel);
+    console.log('Level update:', levelUpdate); // Vérifie si un message est généré
+
 
     botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim();
 
@@ -205,6 +208,8 @@ app.post('/message', async (req, res) => {
     if (levelUpdate) {
       responseData.levelUpdateMessage = levelUpdate.message;
       responseData.levelUpdateType = levelUpdate.type;
+      
+
     }
     if (sendPhoto) {
       const imageUrl = getRandomCharacterImage();
