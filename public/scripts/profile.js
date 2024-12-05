@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
           const data = await response.json();
-          alert(data.message || 'Signup successful!');
+          
           signupForm.reset(); // Réinitialise le formulaire
           localStorage.setItem('user', JSON.stringify({ email })); // Stocker l'utilisateur
           window.location.href = 'index.html'; // Rediriger vers la page principale

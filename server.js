@@ -10,7 +10,7 @@ const app = express();
 const PORT = 4000;
 
 // MongoDB connection string
-const uri = "mongodb+srv://admin:Py%40965_Xl@cluster0.gn9ue.mongodb.net/MyAICrush?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGO_URI;
 
 const client = new MongoClient(uri);
 
@@ -60,7 +60,7 @@ app.post('/api/signup', async (req, res) => {
 
         // Ajouter un nouvel utilisateur
         await users.insertOne({ email, password });
-        res.status(201).json({ message: 'User registered successfully!' });
+        res.status(201).json({ email });
     } catch (error) {
         console.error('Error during signup:', error);
         res.status(500).json({ message: 'Internal server error' });
