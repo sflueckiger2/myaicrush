@@ -36,7 +36,7 @@ export function showLevelUpdatePopup(message, type) {
     characters.forEach(character => {
       const card = document.createElement('div');
       card.className = 'chat-card';
-      card.onclick = () => startChat(character.name);
+      card.addEventListener('click', () => startChat(character.name));
   
       const img = document.createElement('img');
       img.src = character.photo; // Photo du personnage depuis le JSON

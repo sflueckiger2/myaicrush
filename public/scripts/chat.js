@@ -2,6 +2,12 @@ import { scrollToBottom } from './utils.js';
 import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
+// Vérifie si l'utilisateur est connecté
+function isUserLoggedIn() {
+    const user = JSON.parse(localStorage.getItem('user')); // Vérifie la présence de données utilisateur dans le localStorage
+    return user !== null && user.email; // Vérifie que l'utilisateur a un email valide
+}
+
 export function addUserMessage(userMessage, messagesContainer, scrollToBottomCallback) {
     if (userMessage.trim() !== '') {
         const messageElement = document.createElement('div');
@@ -120,33 +126,40 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
 // Fonction pour démarrer le chat et basculer en mode plein écran
 export function startChat(characterName) {
+    // Vérifie si l'utilisateur est connecté
+    if (!isUserLoggedIn()) {
+        // Redirige vers la page de connexion si l'utilisateur n'est pas connecté
+        window.location.href = 'profile.html';
+        return;
+    }
+
     // Informer le serveur du personnage actif
     setCharacter(characterName)
-      .then(() => {
-        console.log(`Personnage chargé côté serveur : ${characterName}`);
-        
-        // Réinitialiser l'historique des messages dans l'interface utilisateur
-        const messagesContainer = document.getElementById('messages');
-        if (messagesContainer) {
-          messagesContainer.innerHTML = ''; // Efface les messages affichés
-        }
-  
-        // Ensuite, démarrez le chat normalement
-        const character = characters.find(c => c.name === characterName);
-        if (character) {
-          document.querySelector('.chat-options').style.display = 'none';
-          document.getElementById('chat-box').style.display = 'flex';
-  
-          document.querySelector('.header').classList.add('hidden');
-          document.querySelector('.container').classList.add('fullscreen');
-  
-          document.getElementById('chat-name').textContent = character.name;
-          document.querySelector('.chat-profile-pic').src = character.photo;
-  
-          document.querySelector('.menu').classList.add('hidden');
-        }
-      })
-      .catch((error) => {
-        console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
-      });
-  }
+        .then(() => {
+            console.log(`Personnage chargé côté serveur : ${characterName}`);
+
+            // Réinitialiser l'historique des messages dans l'interface utilisateur
+            const messagesContainer = document.getElementById('messages');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = ''; // Efface les messages affichés
+            }
+
+            // Ensuite, démarrez le chat normalement
+            const character = characters.find(c => c.name === characterName);
+            if (character) {
+                document.querySelector('.chat-options').style.display = 'none';
+                document.getElementById('chat-box').style.display = 'flex';
+
+                document.querySelector('.header').classList.add('hidden');
+                document.querySelector('.container').classList.add('fullscreen');
+
+                document.getElementById('chat-name').textContent = character.name;
+                document.querySelector('.chat-profile-pic').src = character.photo;
+
+                document.querySelector('.menu').classList.add('hidden');
+            }
+        })
+        .catch((error) => {
+            console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
+        });
+}
