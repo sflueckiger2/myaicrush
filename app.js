@@ -51,14 +51,16 @@ app.get('/auth/google/callback', async (req, res) => {
       const user = await addOrFindUser(userEmail);
 
       console.log('Utilisateur Google authentifié :', user);
+     
 
       // Générer une réponse HTML avec un script pour stocker l'utilisateur dans localStorage
       res.send(`
           <script>
               localStorage.setItem('user', JSON.stringify(${JSON.stringify(user)}));
-              window.location.href = '/profile.html';
+              window.location.href = '/index.html';
           </script>
       `);
+       
   } catch (error) {
       console.error("Erreur lors de l'authentification Google:", error);
       res.status(500).send('Erreur d\'authentification');
