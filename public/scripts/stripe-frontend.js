@@ -5,13 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (monthlyCheckoutButton) {
         monthlyCheckoutButton.addEventListener('click', () => {
-            startCheckout('price_1QP4dCAOSHX0SgbTY5N4QrsW'); // Remplace par l'ID Stripe pour le plan mensuel
+            handleCheckout('price_1QP4dCAOSHX0SgbTY5N4QrsW'); // Remplace par l'ID Stripe pour le plan mensuel
         });
     }
 
     if (annualCheckoutButton) {
         annualCheckoutButton.addEventListener('click', () => {
-            startCheckout('price_1QPRXpAOSHX0SgbT8GfUUtvL'); // Remplace par l'ID Stripe pour le plan annuel
+            handleCheckout('price_1QPRXpAOSHX0SgbT8GfUUtvL'); // Remplace par l'ID Stripe pour le plan annuel
         });
     }
 
@@ -26,6 +26,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     displaySubscriptionInfo(); // Affiche les infos d'abonnement dès le chargement
 });
+
+// Fonction pour vérifier l'utilisateur et démarrer le paiement Stripe
+function handleCheckout(priceId) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user.email) {
+        alert('Please log in to continue.');
+        window.location.href = 'profile.html'; // Redirige vers la page de connexion
+        return;
+    }
+    // Si l'utilisateur est connecté, démarre le paiement Stripe
+    startCheckout(priceId);
+}
 
 // Fonction pour démarrer le paiement Stripe
 async function startCheckout(priceId) {
