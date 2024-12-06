@@ -33,108 +33,39 @@ app.get('/auth/google', (req, res) => {
 // ENDPOINT GOOGLE AUTH
 // Callback pour gérer la réponse après l'authentification Google
 app.get('/auth/google/callback', async (req, res) => {
-  // Ajouter un middleware pour servir le fichier characters.json à partir de la racine
-app.get('/characters.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'characters.json'));
-});
-
-const { connectToDb } = require('./db');
-
-connectToDb().catch((error) => {
-  console.error('Erreur lors de la connexion à MongoDB :', error);
-  process.exit(1); // Quitte le processus si la connexion échoue
-});
-
-// Callback pour gérer la réponse après l'authentification Google
-app.get('/auth/google/callback', async (req, res) => {
   const code = req.query.code;
 
   try {
-    const { tokens } = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(tokens);
+      const { tokens } = await oAuth2Client.getToken(code);
+      oAuth2Client.setCredentials(tokens);
 
-    const ticket = await oAuth2Client.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
+      const ticket = await oAuth2Client.verifyIdToken({
+          idToken: tokens.id_token,
+          audience: CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
 
-    const userEmail = payload.email;
-    
+      const userEmail = payload.email;
 
-    const user = await addOrFindUser(userEmail);
+      // Ajouter ou récupérer l'utilisateur dans MongoDB
+      const user = await addOrFindUser(userEmail);
 
-    req.session.user = user;
-    res.redirect('/');
+      console.log('Utilisateur Google authentifié :', user);
+
+      // Générer une réponse HTML avec un script pour stocker l'utilisateur dans localStorage
+      res.send(`
+          <script>
+              localStorage.setItem('user', JSON.stringify(${JSON.stringify(user)}));
+              window.location.href = '/profile.html';
+          </script>
+      `);
   } catch (error) {
-    console.error('Erreur lors de l\'authentification Google:', error);
-    res.status(500).send('Erreur d\'authentification');
+      console.error("Erreur lors de l'authentification Google:", error);
+      res.status(500).send('Erreur d\'authentification');
   }
 });
 
-// Fonction pour ajouter ou retrouver un utilisateur dans MongoDB
-async function addOrFindUser(email) {
-  const { getDb } = require('./db');
-  const db = getDb();
-  const userCollection = db.collection('users');
 
-  let user = await userCollection.findOne({ email });
-  if (!user) {
-    user = { email, createdAt: new Date() };
-    await userCollection.insertOne(user);
-  }
-
-  return user;
-}
-
-  const code = req.query.code;
-
-  try {
-    const { tokens } = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(tokens);
-
-    // Vérifier et extraire les informations utilisateur
-    const ticket = await oAuth2Client.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-
-    // Obtenir les informations utilisateur
-    const userEmail = payload.email;
-    
-
-    // Stocker l'utilisateur dans MongoDB si nécessaire
-    const user = await addOrFindUser(userEmail);
-
-    // Sauvegarder l'utilisateur dans une session ou envoyer une réponse
-    req.session = { user }; // Si vous utilisez une gestion de session
-
-    console.log('Utilisateur Google authentifié :', user);
-
-    res.redirect('/profile.html'); // Redirigez vers la page profil ou autre
-  } catch (error) {
-    console.error('Erreur lors de l\'authentification Google:', error);
-    res.status(500).send('Erreur d\'authentification');
-  }
-});
-
-// Fonction pour ajouter ou retrouver un utilisateur dans MongoDB
-async function addOrFindUser(email) {
-  const db = require('./db').getDb(); // Assurez-vous d'avoir configuré une connexion MongoDB
-  const userCollection = db.collection('users');
-
-  let user = await userCollection.findOne({ email });
-  if (!user) {
-    user = { email, createdAt: new Date() };
-    await userCollection.insertOne(user);
-    console.log('Nouvel utilisateur ajouté :', email);
-  } else {
-    console.log('Utilisateur existant trouvé :', email);
-  }
-
-  return user;
-}
 
 
 console.log("Clé API OpenAI :", process.env.OPENAI_API_KEY);
@@ -197,20 +128,19 @@ async function addOrFindUser(email) {
   const db = getDb();
   const usersCollection = db.collection('users');
 
-  // Vérifie si l'utilisateur existe déjà
   let user = await usersCollection.findOne({ email });
 
   if (!user) {
-    // Si l'utilisateur n'existe pas, ajoute-le
-    user = { email, createdAt: new Date() };
-    await usersCollection.insertOne(user);
-    console.log(`Nouvel utilisateur ajouté : ${email}`);
+      user = { email, createdAt: new Date() }; // Pas de champ "name"
+      await usersCollection.insertOne(user);
+      console.log(`Nouvel utilisateur ajouté : ${email}`);
   } else {
-    console.log(`Utilisateur existant trouvé : ${email}`);
+      console.log(`Utilisateur existant trouvé : ${email}`);
   }
 
   return user;
 }
+
 
 
 // Récupérer une image aléatoire pour le personnage actif
