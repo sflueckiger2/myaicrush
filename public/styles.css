@@ -958,8 +958,11 @@ form input::placeholder {
 
 #signup-container a,
 #signin-container a {
-  color: #3399ff;
+  color: rgb(39 40 44);
   text-decoration: none;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #signup-container a:hover,
@@ -1000,4 +1003,14 @@ form input::placeholder {
 .google-logo {
   height: 20px;
   width: 20px;
+}
+#show-signin{
+  color : #e91e63!important;
+  text-decoration: underline!important;
+
+}
+#show-signup{
+  color : #e91e63!important;
+  text-decoration: underline!important;
+  
 }
