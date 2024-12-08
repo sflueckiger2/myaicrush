@@ -2,6 +2,8 @@ import { scrollToBottom } from './utils.js';
 import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
+let firstPhotoSent = false;
+
 // Vérifie si l'utilisateur est connecté
 function isUserLoggedIn() {
     const user = JSON.parse(localStorage.getItem('user')); // Vérifie la présence de données utilisateur dans le localStorage
@@ -97,9 +99,8 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     imageElement.src = imageUrl;
     imageElement.alt = 'Image générée par l\'IA';
 
-    if (!isPremium) {
-        imageElement.classList.add('blurred-image'); // Ajoute une classe pour flouter l'image
-
+    if (!isPremium && firstPhotoSent) {
+        imageElement.classList.add('blurred-image'); // Floute l'image si ce n'est pas la première photo
         // Ajoute un bouton "Unlock"
         const unlockButton = document.createElement('button');
         unlockButton.textContent = 'Unlock';
@@ -118,11 +119,16 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     } else {
         imageElement.classList.add('clear-image'); // Classe pour les images normales
         messageElement.appendChild(imageElement);
+
+        if (!firstPhotoSent) {
+            firstPhotoSent = true; // Marquer que la première photo a été envoyée
+        }
     }
 
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
+
 
 // Fonction pour démarrer le chat et basculer en mode plein écran
 export function startChat(characterName) {
