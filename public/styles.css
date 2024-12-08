@@ -1014,3 +1014,15 @@ form input::placeholder {
   text-decoration: underline!important;
   
 }
+
+.premium-link {
+  color: #007bff;
+  text-decoration: underline;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.premium-link:hover {
+  color: #0056b3;
+  text-decoration: none;
+}

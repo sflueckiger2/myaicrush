@@ -47,10 +47,17 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             .then(({ isPremium }) => {
                 // Limite les messages si l'utilisateur n'est pas premium
                 if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
-                    addBotMessage(
-                        "You have reached your daily message limit. Upgrade to premium for unlimited messages.",
-                        messagesContainer
-                    );
+                    const premiumMessage = document.createElement('div');
+                    premiumMessage.innerHTML = `
+                        You have reached your daily message limit. 
+                        <a href="premium.html" class="premium-link">Upgrade to premium</a> for unlimited messages.
+                    `;
+                    premiumMessage.classList.add('bot-message');
+                    messagesContainer.appendChild(premiumMessage);
+
+                    if (typeof scrollToBottomCallback === 'function') {
+                        scrollToBottomCallback();
+                    }
                     return;
                 }
 
