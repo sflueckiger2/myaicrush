@@ -3,6 +3,8 @@ import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
 let firstPhotoSent = false;
+let dailyMessageCount = 0;
+const DAILY_MESSAGE_LIMIT = 20;
 
 // Vérifie si l'utilisateur est connecté
 function isUserLoggedIn() {
@@ -30,7 +32,7 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             return;
         }
 
-        // Appeler l'API pour vérifier si l'utilisateur est premium
+        // Vérifier si l'utilisateur est premium avant de continuer
         fetch('http://localhost:4000/api/is-premium', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -43,6 +45,15 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 return response.json();
             })
             .then(({ isPremium }) => {
+                // Limite les messages si l'utilisateur n'est pas premium
+                if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
+                    addBotMessage(
+                        "You have reached your daily message limit. Upgrade to premium for unlimited messages.",
+                        messagesContainer
+                    );
+                    return;
+                }
+
                 // Faire l'appel principal après avoir récupéré le statut premium
                 fetch('/message', {
                     method: 'POST',
@@ -61,6 +72,10 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                             addBotImageMessage(data.reply, data.imageUrl, isPremium, messagesContainer);
                         } else {
                             addBotMessage(data.reply, messagesContainer);
+                        }
+
+                        if (!isPremium) {
+                            dailyMessageCount++; // Augmente le compteur si l'utilisateur n'est pas premium
                         }
 
                         if (typeof scrollToBottomCallback === 'function') {
@@ -128,7 +143,6 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
-
 
 // Fonction pour démarrer le chat et basculer en mode plein écran
 export function startChat(characterName) {

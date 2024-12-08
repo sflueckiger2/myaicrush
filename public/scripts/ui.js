@@ -3,6 +3,8 @@ import { resetUserLevel } from './data.js';
 
 
 
+
+
 // ui.js
 export function showLevelUpdatePopup(message, type) {
     const popup = document.createElement('div');
