@@ -3,8 +3,24 @@ import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
 let firstPhotoSent = false;
-let dailyMessageCount = 0;
+let dailyMessageCount = parseInt(localStorage.getItem('dailyMessageCount')) || 0;
 const DAILY_MESSAGE_LIMIT = 20;
+let lastMessageDate = localStorage.getItem('lastMessageDate') || new Date().toISOString().split('T')[0];
+
+// VERIFIE SI LE JOUR A CHANGE
+
+function resetDailyLimitIfNewDay() {
+    const today = new Date().toISOString().split('T')[0];
+    if (lastMessageDate !== today) {
+        dailyMessageCount = 0;
+        lastMessageDate = today;
+        localStorage.setItem('dailyMessageCount', dailyMessageCount);
+        localStorage.setItem('lastMessageDate', lastMessageDate);
+    }
+}
+resetDailyLimitIfNewDay(); // Appelle cette fonction au démarrage
+
+
 
 // Vérifie si l'utilisateur est connecté
 function isUserLoggedIn() {
@@ -46,7 +62,9 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             })
             .then(({ isPremium }) => {
                 // Limite les messages si l'utilisateur n'est pas premium
-                if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
+                resetDailyLimitIfNewDay(); // Vérifie si c'est une nouvelle journée
+if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
+
                     const premiumMessage = document.createElement('div');
                     premiumMessage.innerHTML = `
                         You have reached your daily message limit. 
@@ -83,6 +101,8 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 
                         if (!isPremium) {
                             dailyMessageCount++; // Augmente le compteur si l'utilisateur n'est pas premium
+                            localStorage.setItem('dailyMessageCount', dailyMessageCount);
+
                         }
 
                         if (typeof scrollToBottomCallback === 'function') {
