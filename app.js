@@ -86,8 +86,8 @@ app.get('/characters.json', (req, res) => {
 let conversationHistory = [];
 let userLevel = 1.0;
 let photoSentAtLittleCrush = false; // Variable pour suivre l'envoi de la photo au niveau Little Crush
-
 let photoSentAtBigCrush = false; // Variable pour suivre l'envoi de la photo au niveau Big Crush
+let photoSentAtPerfectCrush = false;
 let activeCharacter = characters[0]; // Par défaut, le premier personnage (Hanaé)
 console.log('Personnage actif au démarrage :', activeCharacter.name);
 
@@ -147,12 +147,20 @@ async function addOrFindUser(email) {
 
 // Récupérer une image aléatoire pour le personnage actif
 function getRandomCharacterImage() {
-  const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase()); // Supprimer les accents
-  const levelFolder = `${sanitizedCharacterName}${Math.floor(userLevel)}`; // Exemple : "hanae1"
+  const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase());
+  let levelFolder;
+
+  if (userLevel < 1.2) {
+    levelFolder = `${sanitizedCharacterName}1`;
+  } else if (userLevel < 1.3) {
+    levelFolder = `${sanitizedCharacterName}2`;
+  } else {
+    levelFolder = `${sanitizedCharacterName}3`;
+  }
+
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
 
   try {
-    // Lire les fichiers dans le dossier
     const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
     if (images.length > 0) {
       const randomImage = images[Math.floor(Math.random() * images.length)];
@@ -166,6 +174,7 @@ function getRandomCharacterImage() {
     return null;
   }
 }
+
 
 // Extraire le niveau de confort depuis la réponse du bot
 function extractComfortLevel(botReply) {
@@ -273,18 +282,19 @@ app.post('/message', async (req, res) => {
 
     // Ici on dit à quel niveau il faut envoyer les photos (ça doit correspondre à little crush et big crish
 
-    if (!sendPhoto && userLevel >= 1.1 && !photoSentAtLittleCrush && !photoSentAtBigCrush) {
-      sendPhoto = true;
-      photoSentAtLittleCrush = true;
-      botReply += " [PHOTO]";
+    if (!sendPhoto) {
+      if (userLevel >= 1.1 && userLevel < 1.2 && !photoSentAtLittleCrush) {
+        sendPhoto = true;
+        photoSentAtLittleCrush = true;
+      } else if (userLevel >= 1.2 && userLevel < 1.3 && !photoSentAtBigCrush) {
+        sendPhoto = true;
+        photoSentAtBigCrush = true;
+      } else if (userLevel >= 1.3 && !photoSentAtPerfectCrush) {
+        sendPhoto = true;
+        photoSentAtPerfectCrush = true;
+      }
     }
     
-
-    if (!sendPhoto && userLevel >= 1.2 && !photoSentAtBigCrush) {
-      sendPhoto = true;
-      photoSentAtBigCrush = true;
-      botReply += " [PHOTO]";
-    }
 
     botReply = botReply.replace("[PHOTO]", "").trim();
 
@@ -317,7 +327,8 @@ app.post('/resetUserLevel', (req, res) => {
   userLevel = 1.0; // Réinitialiser le niveau utilisateur à 1.0
   photoSentAtLittleCrush = false; // Réinitialise l'état des photos
   photoSentAtBigCrush = false; // Réinitialise l'état des photos
-  console.log('Niveau utilisateur réinitialisé à 1.0');
+  photoSentAtBigCrush = false; // Réinitialise l'état des photos
+  photoSentAtPerfectCrush = false;
   res.json({ success: true, message: 'Niveau utilisateur réinitialisé.' });
 });
 
