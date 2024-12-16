@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
 const { connectToDb, getDb } = require('./db');
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
 
 
 const PORT = 3000;
@@ -55,10 +57,10 @@ app.get('/auth/google/callback', async (req, res) => {
 
       // Générer une réponse HTML avec un script pour stocker l'utilisateur dans localStorage
       res.send(`
-          <script>
-              localStorage.setItem('user', JSON.stringify(${JSON.stringify(user)}));
-              window.location.href = '/index.html';
-          </script>
+        <script>
+            localStorage.setItem('user', JSON.stringify(${JSON.stringify(user)}));
+            window.location.href = '${BASE_URL}/index.html';
+        </script>
       `);
        
   } catch (error) {
