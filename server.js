@@ -4,7 +4,7 @@ require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Assurez-vous que STRIPE_SECRET_KEY est défini dans le fichier .env
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -101,9 +101,72 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Route pour créer une session de paiement Stripe
+app.post('/api/create-checkout-session', async (req, res) => {
+    console.log('Requête reçue sur /api/create-checkout-session');
+    console.log('Corps de la requête :', req.body);
 
+    try {
+        const { priceId } = req.body; // Récupère l'ID du prix Stripe depuis le frontend
+        console.log('Price ID reçu :', priceId);
 
+        if (!priceId) {
+            return res.status(400).json({ message: 'Price ID is required' });
+        }
 
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            line_items: [
+                {
+                    price: priceId, // Utilise l'ID de prix fourni par Stripe
+                    quantity: 1,
+                },
+            ],
+            success_url: 'http://localhost:3000/',
+            cancel_url: 'http://localhost:3000/premium.html',
+        });
+
+        console.log('Session Checkout créée avec succès :', session.url);
+        res.json({ url: session.url }); // Renvoie l'URL de la session Stripe
+    } catch (error) {
+        console.error('Error creating checkout session:', error.message);
+        res.status(500).json({ message: 'Failed to create checkout session' });
+    }
+});
+
+// Route pour vérifier si un utilisateur est premium
+app.post('/api/is-premium', async (req, res) => {
+    console.log('Requête reçue pour vérifier le statut premium');
+    const { email } = req.body; // On suppose que tu passes l'email de l'utilisateur dans la requête
+
+    try {
+        // Rechercher un client Stripe avec cet email
+        const customers = await stripe.customers.search({
+            query: email:'${email}',
+        });
+
+        if (customers.data.length === 0) {
+            console.log('Aucun client trouvé pour cet email');
+            return res.json({ isPremium: false });
+        }
+
+        // Vérifier les abonnements actifs du client
+        const customer = customers.data[0];
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customer.id,
+            status: 'active',
+        });
+
+        const isPremium = subscriptions.data.length > 0; // Premium si au moins un abonnement actif
+        console.log(Statut premium pour ${email} :, isPremium);
+
+        res.json({ isPremium });
+    } catch (error) {
+        console.error('Erreur lors de la vérification du statut premium :', error.message);
+        res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
+    }
+});
 
 // Route pour changer le mot de passe
 app.post('/api/change-password', async (req, res) => {
@@ -177,12 +240,12 @@ app.post('/api/forgot-password', async (req, res) => {
     );
 
     // Envoie l'email avec le lien de réinitialisation
-    const resetUrl = `http://localhost:3000/reset-password.html?token=${resetToken}`;
+    const resetUrl = http://localhost:3000/reset-password.html?token=${resetToken};
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Password Reset Request',
-      text: `You requested a password reset. Click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.`,
+      text: You requested a password reset. Click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.,
     });
 
     res.status(200).json({ message: 'Reset link sent to your email.' });
@@ -232,17 +295,46 @@ app.post('/api/reset-password', async (req, res) => {
 
   const { cancelSubscription, createCheckoutSession } = require('./public/scripts/stripe.js'); // Import de la logique Stripe
 
+app.post('/api/cancel-subscription', async (req, res) => {
+    const { email } = req.body;
 
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    try {
+        const result = await cancelSubscription(email); // Appel direct à la fonction Stripe
+        res.status(200).json(result); // Retourne la réponse directement
+    } catch (error) {
+        res.status(500).json({ message: error.message }); // Retourne une erreur formatée
+    }
+});
 
 // ROUTE POUR AFFICHER LES ABOS
   
 // Import de la fonction pour récupérer les abonnements
 const { getUserSubscription } = require('./public/scripts/stripe.js');
 
+// Route pour récupérer les informations d'abonnement d'un utilisateur
+app.post('/api/get-user-subscription', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    try {
+        const subscriptionInfo = await getUserSubscription(email); // Appel de la fonction Stripe
+        res.status(200).json(subscriptionInfo); // Envoie les informations d'abonnement au frontend
+    } catch (error) {
+        console.error('Erreur lors de la récupération des informations d\'abonnement :', error.message);
+        res.status(500).json({ message: 'Erreur lors de la récupération des informations d\'abonnement' });
+    }
+});
 
 
 
 // Démarrer le serveur
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(Server is running on http://localhost:${PORT});
 });
