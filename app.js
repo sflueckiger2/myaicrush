@@ -6,14 +6,75 @@ const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-
 const PORT = process.env.PORT || 3000;
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
+const { cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js'); // Import des fonctions Stripe
 
 
-// Route de test
-app.get('/api/test', (req, res) => {
-  console.log('Route /api/test appelée');
-  res.status(200).json({ message: 'API is working on Render!' });
+// Route pour créer une session Stripe Checkout
+app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+        const { priceId } = req.body;
+        if (!priceId) {
+            return res.status(400).json({ message: 'Price ID is required' });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: `${process.env.BASE_URL}/premium-success`,
+            cancel_url: `${process.env.BASE_URL}/premium.html`,
+        });
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error('Error creating checkout session:', error.message);
+        res.status(500).json({ message: 'Failed to create checkout session' });
+    }
+});
+
+// Route pour vérifier si un utilisateur est premium
+app.post('/api/is-premium', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const customers = await stripe.customers.search({ query: `email:'${email}'` });
+        if (customers.data.length === 0) return res.json({ isPremium: false });
+
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customers.data[0].id,
+            status: 'active',
+        });
+
+        res.json({ isPremium: subscriptions.data.length > 0 });
+    } catch (error) {
+        console.error('Error checking premium status:', error.message);
+        res.status(500).json({ message: 'Error checking premium status' });
+    }
+});
+
+// Route pour annuler un abonnement
+app.post('/api/cancel-subscription', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const result = await cancelSubscription(email);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error cancelling subscription:', error.message);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Route pour récupérer les abonnements d'un utilisateur
+app.post('/api/get-user-subscription', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const subscriptionInfo = await getUserSubscription(email);
+        res.status(200).json(subscriptionInfo);
+    } catch (error) {
+        console.error('Error fetching subscription info:', error.message);
+        res.status(500).json({ message: 'Error fetching subscription info' });
+    }
 });
 
 
