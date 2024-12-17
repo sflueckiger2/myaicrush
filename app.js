@@ -8,11 +8,14 @@ const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
 
+
 // Route de test
 app.get('/api/test', (req, res) => {
   console.log('Route /api/test appelée');
   res.status(200).json({ message: 'API is working on Render!' });
 });
+
+
 
 // Charger les personnages depuis le fichier JSON
 const characters = require('./characters.json');
@@ -341,7 +344,7 @@ app.post('/resetUserLevel', (req, res) => {
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {
   app.listen(PORT, () => {
-    console.log(`Serveur lancé sur http://localhost:${PORT}`);
+    console.log(`Serveur lancé sur le port {PORT}`);
   });
 }).catch((err) => {
   console.error('Erreur de connexion à la base de données :', err);
