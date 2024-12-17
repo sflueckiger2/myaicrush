@@ -6,10 +6,8 @@ const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const PORT = process.env.PORT || 3000;
 
-
-
-const PORT = 3000;
 
 // Charger les personnages depuis le fichier JSON
 const characters = require('./characters.json');
