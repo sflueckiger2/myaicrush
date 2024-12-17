@@ -331,6 +331,10 @@ app.post('/api/get-user-subscription', async (req, res) => {
     }
 });
 
+// Route de test pour vérifier que le serveur fonctionne
+app.get('/api/test', (req, res) => {
+    res.status(200).json({ message: 'API is working on Render!' });
+});
 
 // Démarrer le serveur
 app.listen(PORT, () => {
