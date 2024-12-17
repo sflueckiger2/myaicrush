@@ -9,10 +9,8 @@ let db; // Variable pour stocker l'instance de la base de données
 async function connectToDb() {
   if (!db) {
     try {
-      const client = new MongoClient(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true, // Recommandé pour MongoDB Atlas
-      });
+      const client = new MongoClient(uri);
+
       await client.connect();
       db = client.db(dbName);
       console.log(`Connecté à la base de données : ${dbName}`);
