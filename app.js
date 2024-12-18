@@ -11,11 +11,29 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
 app.use(express.json());
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 const { createCheckoutSession, cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js');
+const { MongoClient } = require('mongodb'); // Import de MongoClient
+
+// MongoDB connection string
+const uri = process.env.MONGO_URI;
+const client = new MongoClient(uri);
+
+// Connexion à MongoDB
+async function connectToDB() {
+    try {
+        await client.connect();
+        console.log('Connected to MongoDB Atlas!');
+    } catch (error) {
+        console.error('Error connecting to MongoDB:', error);
+        process.exit(1); // Quitte l'application si la connexion échoue
+    }
+}
+
+// Appeler la fonction pour se connecter
+connectToDB();
 
 
 //ROUTE pour l'inscription via email classique 
 
-// Route pour l'inscription
 app.post('/api/signup', async (req, res) => {
   console.log('Requête reçue pour l\'inscription:', req.body);
 
@@ -79,6 +97,37 @@ app.post('/api/login', async (req, res) => {
       });
   } catch (error) {
       console.error('Erreur lors de la connexion:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+//ROUTE POUR CHANGER MDP EMAIL CLASSIQUE
+
+// Route pour changer le mot de passe
+app.post('/api/change-password', async (req, res) => {
+  console.log('Password change request received:', req.body);
+
+  const { email, currentPassword, newPassword } = req.body;
+
+  if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  try {
+      const database = client.db('MyAICrush');
+      const users = database.collection('users');
+
+      // Vérifier si l'utilisateur existe et si le mot de passe actuel est correct
+      const user = await users.findOne({ email, password: currentPassword });
+      if (!user) {
+          return res.status(401).json({ message: 'Invalid current password' });
+      }
+
+      // Mettre à jour le mot de passe
+      await users.updateOne({ email }, { $set: { password: newPassword } });
+      res.status(200).json({ message: 'Password changed successfully!' });
+  } catch (error) {
+      console.error('Error changing password:', error);
       res.status(500).json({ message: 'Internal server error' });
   }
 });

@@ -44,34 +44,7 @@ connectToDB();
 
 
 
-// Route pour changer le mot de passe
-app.post('/api/change-password', async (req, res) => {
-    console.log('Password change request received:', req.body);
 
-    const { email, currentPassword, newPassword } = req.body;
-
-    if (!email || !currentPassword || !newPassword) {
-        return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
-        // Vérifier si l'utilisateur existe et si le mot de passe actuel est correct
-        const user = await users.findOne({ email, password: currentPassword });
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid current password' });
-        }
-
-        // Mettre à jour le mot de passe
-        await users.updateOne({ email }, { $set: { password: newPassword } });
-        res.status(200).json({ message: 'Password changed successfully!' });
-    } catch (error) {
-        console.error('Error changing password:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
 
 //route pour mdp oublié email 
 
