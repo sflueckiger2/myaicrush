@@ -48,6 +48,42 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
+// ROUTE POUR LA CONNEXION AVEC EMAIL CLASSIQUE
+
+// Route pour la connexion
+app.post('/api/login', async (req, res) => {
+  console.log('Tentative de connexion:', req.body);
+
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+      const db = getDb(); // Utilise la connexion MongoDB existante
+      const users = db.collection('users');
+
+      // Vérifie si l'utilisateur existe et si le mot de passe correspond
+      const user = await users.findOne({ email, password });
+      if (!user) {
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Réponse avec les informations de l'utilisateur (sans le mot de passe)
+      res.status(200).json({
+          message: 'Login successful!',
+          user: {
+              email: user.email,
+          },
+      });
+  } catch (error) {
+      console.error('Erreur lors de la connexion:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {
   console.log('Requête reçue sur /api/create-checkout-session');
