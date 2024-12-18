@@ -102,38 +102,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-// Route pour vérifier si un utilisateur est premium
-app.post('/api/is-premium', async (req, res) => {
-    console.log('Requête reçue pour vérifier le statut premium');
-    const { email } = req.body; // On suppose que tu passes l'email de l'utilisateur dans la requête
-
-    try {
-        // Rechercher un client Stripe avec cet email
-        const customers = await stripe.customers.search({
-            query: email:'${email}',
-        });
-
-        if (customers.data.length === 0) {
-            console.log('Aucun client trouvé pour cet email');
-            return res.json({ isPremium: false });
-        }
-
-        // Vérifier les abonnements actifs du client
-        const customer = customers.data[0];
-        const subscriptions = await stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'active',
-        });
-
-        const isPremium = subscriptions.data.length > 0; // Premium si au moins un abonnement actif
-        console.log(Statut premium pour ${email} :, isPremium);
-
-        res.json({ isPremium });
-    } catch (error) {
-        console.error('Erreur lors de la vérification du statut premium :', error.message);
-        res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
-    }
-});
 
 // Route pour changer le mot de passe
 app.post('/api/change-password', async (req, res) => {

@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
 app.use(express.json());
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
-const { getUserSubscription } = require('./public/scripts/stripe.js');
+const { createCheckoutSession, cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js');
 
 
 
@@ -71,6 +71,30 @@ app.post('/api/get-user-subscription', async (req, res) => {
   }
 });
 
+//ROUTE POUR VERIFIER SI PREMIUM
+
+// Route pour vérifier si un utilisateur est premium
+app.post('/api/is-premium', async (req, res) => {
+  console.log('Requête reçue pour vérifier le statut premium');
+  const { email } = req.body;
+
+  if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+      // Appel à la fonction getUserSubscription pour vérifier l'abonnement
+      const subscriptionInfo = await getUserSubscription(email);
+
+      const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
+      console.log(`Statut premium pour ${email}:`, isPremium);
+
+      res.json({ isPremium });
+  } catch (error) {
+      console.error('Erreur lors de la vérification du statut premium:', error.message);
+      res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
+  }
+});
 
 
 // Charger les personnages depuis le fichier JSON
