@@ -1,4 +1,6 @@
 // auth.js
+const BASE_URL = window.location.origin; // URL dynamique
+
 
 // Fonction pour ouvrir la modal d'inscription
 export function openSignupModal() {
@@ -39,13 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('signup-password').value.trim();
 
             try {
-                const response = await fetch('http://localhost:4000/api/signup', {
+                const response = await fetch(`${BASE_URL}/api/signup`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                      'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ email, password }),
-                });
+                  });
+                  
 
                 if (!response.ok) {
                     const errorData = await response.json();

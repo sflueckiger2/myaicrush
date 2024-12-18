@@ -189,7 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Fonction générique pour effectuer des requêtes fetch
 async function fetchRequest(url, body) {
-  return await fetch(`http://localhost:4000${url}`, {
+  const BASE_URL = window.location.origin; // URL dynamique
+  return await fetch(`${BASE_URL}${url}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -197,3 +198,4 @@ async function fetchRequest(url, body) {
     body: JSON.stringify(body),
   });
 }
+
