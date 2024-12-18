@@ -12,6 +12,7 @@ app.use(express.json());
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 const { createCheckoutSession, cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js');
 const { MongoClient } = require('mongodb'); // Import de MongoClient
+const bcrypt = require('bcrypt');
 
 // MongoDB connection string
 const uri = process.env.MONGO_URI;
@@ -34,44 +35,42 @@ connectToDB();
 
 //ROUTE pour l'inscription via email classique 
 
+
 app.post('/api/signup', async (req, res) => {
-  console.log('Requête reçue pour l\'inscription:', req.body);
+    const { email, password } = req.body;
 
-  const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  // Vérifier que les champs requis sont présents
-  if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required.' });
-  }
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
 
-  try {
-      const db = getDb(); // Récupère la connexion à la base
-      const usersCollection = db.collection('users');
+        // Vérifier si l'utilisateur existe déjà
+        const existingUser = await users.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
 
-      // Vérifier si l'utilisateur existe déjà
-      const existingUser = await usersCollection.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({ message: 'User already exists.' });
-      }
+        // Générer un hash pour le mot de passe
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // Ajouter un nouvel utilisateur
-      await usersCollection.insertOne({ email, password });
-      console.log(`Nouvel utilisateur inscrit : ${email}`);
+        // Ajouter l'utilisateur avec le mot de passe haché
+        await users.insertOne({ email, password: hashedPassword });
 
-      // Retourner une réponse réussie
-      res.status(201).json({ message: 'User successfully registered!', email });
-  } catch (error) {
-      console.error('Erreur lors de l\'inscription:', error);
-      res.status(500).json({ message: 'Internal server error' });
-  }
+        res.status(201).json({ message: 'User created successfully!' });
+    } catch (error) {
+        console.error('Error during signup:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
+
 
 // ROUTE POUR LA CONNEXION AVEC EMAIL CLASSIQUE
 
-// Route pour la connexion
 app.post('/api/login', async (req, res) => {
-  console.log('Tentative de connexion:', req.body);
-
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -79,12 +78,18 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-      const db = getDb(); // Utilise la connexion MongoDB existante
-      const users = db.collection('users');
+      const database = client.db('MyAICrush');
+      const users = database.collection('users');
 
-      // Vérifie si l'utilisateur existe et si le mot de passe correspond
-      const user = await users.findOne({ email, password });
+      // Rechercher l'utilisateur par email
+      const user = await users.findOne({ email });
       if (!user) {
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Comparer le mot de passe fourni avec le mot de passe haché stocké
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
           return res.status(401).json({ message: 'Invalid email or password' });
       }
 
@@ -96,40 +101,52 @@ app.post('/api/login', async (req, res) => {
           },
       });
   } catch (error) {
-      console.error('Erreur lors de la connexion:', error);
+      console.error('Error during login:', error);
       res.status(500).json({ message: 'Internal server error' });
   }
 });
 
+
 //ROUTE POUR CHANGER MDP EMAIL CLASSIQUE
 
-// Route pour changer le mot de passe
+
 app.post('/api/change-password', async (req, res) => {
-  console.log('Password change request received:', req.body);
+    console.log('Password change request received:', req.body);
 
-  const { email, currentPassword, newPassword } = req.body;
+    const { email, currentPassword, newPassword } = req.body;
 
-  if (!email || !currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'All fields are required' });
-  }
+    if (!email || !currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
 
-  try {
-      const database = client.db('MyAICrush');
-      const users = database.collection('users');
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
 
-      // Vérifier si l'utilisateur existe et si le mot de passe actuel est correct
-      const user = await users.findOne({ email, password: currentPassword });
-      if (!user) {
-          return res.status(401).json({ message: 'Invalid current password' });
-      }
+        // Rechercher l'utilisateur par email
+        const user = await users.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-      // Mettre à jour le mot de passe
-      await users.updateOne({ email }, { $set: { password: newPassword } });
-      res.status(200).json({ message: 'Password changed successfully!' });
-  } catch (error) {
-      console.error('Error changing password:', error);
-      res.status(500).json({ message: 'Internal server error' });
-  }
+        // Vérifier si le mot de passe actuel est correct
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid current password' });
+        }
+
+        // Générer un hash pour le nouveau mot de passe
+        const saltRounds = 10;
+        const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Mettre à jour le mot de passe dans la base de données
+        await users.updateOne({ email }, { $set: { password: hashedNewPassword } });
+
+        res.status(200).json({ message: 'Password changed successfully!' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 
