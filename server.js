@@ -230,20 +230,7 @@ app.post('/api/reset-password', async (req, res) => {
 
   const { cancelSubscription, createCheckoutSession } = require('./public/scripts/stripe.js'); // Import de la logique Stripe
 
-app.post('/api/cancel-subscription', async (req, res) => {
-    const { email } = req.body;
 
-    if (!email) {
-        return res.status(400).json({ message: 'Email is required' });
-    }
-
-    try {
-        const result = await cancelSubscription(email); // Appel direct à la fonction Stripe
-        res.status(200).json(result); // Retourne la réponse directement
-    } catch (error) {
-        res.status(500).json({ message: error.message }); // Retourne une erreur formatée
-    }
-});
 
 // ROUTE POUR AFFICHER LES ABOS
   

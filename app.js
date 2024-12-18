@@ -96,6 +96,25 @@ app.post('/api/is-premium', async (req, res) => {
   }
 });
 
+// ROUTE POUR ANNULER ABO STRIPE
+
+// Route pour annuler un abonnement Stripe
+app.post('/api/cancel-subscription', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+      const result = await cancelSubscription(email);
+      res.status(200).json(result); // Retourne la réponse directement
+  } catch (error) {
+      console.error('Erreur lors de l\'annulation de l\'abonnement :', error.message);
+      res.status(500).json({ message: error.message });
+  }
+});
+
 
 // Charger les personnages depuis le fichier JSON
 const characters = require('./characters.json');
