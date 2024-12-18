@@ -47,11 +47,12 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
         .then(({ isPremium }) => {
             if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
                 addBotMessage(
-                    "You have reached your daily message limit. Upgrade to premium for unlimited messages.",
+                    `You have reached your daily message limit. <a href="premium.html" style="color: blue; text-decoration: underline;">Upgrade to premium</a> for unlimited messages.`,
                     messagesContainer
                 );
                 return;
             }
+            
 
             // Appel principal au serveur
             fetch(`${BASE_URL}/message`, {
@@ -94,11 +95,12 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 
 export function addBotMessage(botReply, messagesContainer) {
     const messageElement = document.createElement('div');
-    messageElement.textContent = botReply;
     messageElement.classList.add('bot-message');
+    messageElement.innerHTML = botReply; // Utiliser innerHTML pour rendre le HTML dynamique
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
+
 
 export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer) {
     const messageElement = document.createElement('div');
