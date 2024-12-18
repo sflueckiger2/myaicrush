@@ -101,39 +101,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Route pour créer une session de paiement Stripe
-app.post('/api/create-checkout-session', async (req, res) => {
-    console.log('Requête reçue sur /api/create-checkout-session');
-    console.log('Corps de la requête :', req.body);
-
-    try {
-        const { priceId } = req.body; // Récupère l'ID du prix Stripe depuis le frontend
-        console.log('Price ID reçu :', priceId);
-
-        if (!priceId) {
-            return res.status(400).json({ message: 'Price ID is required' });
-        }
-
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'subscription',
-            line_items: [
-                {
-                    price: priceId, // Utilise l'ID de prix fourni par Stripe
-                    quantity: 1,
-                },
-            ],
-            success_url: 'http://localhost:3000/',
-            cancel_url: 'http://localhost:3000/premium.html',
-        });
-
-        console.log('Session Checkout créée avec succès :', session.url);
-        res.json({ url: session.url }); // Renvoie l'URL de la session Stripe
-    } catch (error) {
-        console.error('Error creating checkout session:', error.message);
-        res.status(500).json({ message: 'Failed to create checkout session' });
-    }
-});
 
 // Route pour vérifier si un utilisateur est premium
 app.post('/api/is-premium', async (req, res) => {

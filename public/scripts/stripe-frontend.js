@@ -1,3 +1,6 @@
+// Définir l'URL de base dynamiquement (s'applique à localhost ou Render)
+const BASE_URL = window.location.origin;
+
 document.addEventListener('DOMContentLoaded', () => {
     const monthlyCheckoutButton = document.querySelector('#monthlyCheckoutButton');
     const annualCheckoutButton = document.querySelector('#annualCheckoutButton');
@@ -42,7 +45,7 @@ function handleCheckout(priceId) {
 // Fonction pour démarrer le paiement Stripe
 async function startCheckout(priceId) {
     try {
-        const response = await fetch('http://localhost:4000/api/create-checkout-session', {
+        const response = await fetch(`${BASE_URL}/api/create-checkout-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ priceId }),
@@ -53,9 +56,11 @@ async function startCheckout(priceId) {
             window.location.href = data.url;
         } else {
             console.error('Erreur lors de la création de la session Stripe:', data.message);
+            alert('An error occurred while creating the Stripe session.');
         }
     } catch (error) {
         console.error('Erreur:', error);
+        alert('Failed to connect to Stripe. Please try again later.');
     }
 }
 
@@ -68,7 +73,7 @@ async function cancelSubscription() {
             return;
         }
 
-        const response = await fetch('http://localhost:4000/api/cancel-subscription', {
+        const response = await fetch(`${BASE_URL}/api/cancel-subscription`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: user.email }),
@@ -101,7 +106,7 @@ async function displaySubscriptionInfo() {
             return;
         }
 
-        const response = await fetch('http://localhost:4000/api/get-user-subscription', {
+        const response = await fetch(`${BASE_URL}/api/get-user-subscription`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: user.email }),
