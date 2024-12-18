@@ -51,16 +51,18 @@ async function startCheckout(priceId) {
             body: JSON.stringify({ priceId }),
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create checkout session');
+        }
+
         const data = await response.json();
         if (data.url) {
             window.location.href = data.url;
-        } else {
-            console.error('Erreur lors de la création de la session Stripe:', data.message);
-            alert('An error occurred while creating the Stripe session.');
         }
     } catch (error) {
         console.error('Erreur:', error);
-        alert('Failed to connect to Stripe. Please try again later.');
+        alert('An error occurred while creating the Stripe session. Please try again.');
     }
 }
 
@@ -79,17 +81,18 @@ async function cancelSubscription() {
             body: JSON.stringify({ email: user.email }),
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to cancel subscription');
+        }
+
         const data = await response.json();
-        if (response.ok) {
-            alert('Your subscription has been cancelled.');
-            localStorage.setItem('user', JSON.stringify({ ...user, isPremium: false }));
-            const unsubscribeContainer = document.querySelector('#unsubscribe-container');
-            if (unsubscribeContainer) {
-                unsubscribeContainer.classList.add('hidden');
-            }
-        } else {
-            console.error('Erreur lors de l\'annulation de l\'abonnement:', data.message);
-            alert(data.message || 'Failed to cancel subscription.');
+        alert('Your subscription has been cancelled.');
+        localStorage.setItem('user', JSON.stringify({ ...user, isPremium: false }));
+
+        const unsubscribeContainer = document.querySelector('#unsubscribe-container');
+        if (unsubscribeContainer) {
+            unsubscribeContainer.classList.add('hidden');
         }
     } catch (error) {
         console.error('Erreur:', error);
@@ -112,20 +115,21 @@ async function displaySubscriptionInfo() {
             body: JSON.stringify({ email: user.email }),
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch subscription info');
+        }
+
         const data = await response.json();
         const subscriptionContainer = document.querySelector('.profile-section.subscription');
 
-        if (response.ok) {
-            if (data.status === 'inactive') {
-                subscriptionContainer.innerHTML = '<p>You have no active subscription.</p>';
-            } else {
-                subscriptionContainer.innerHTML = `
-                    <p>Current subscription: ${data.subscription.amount} €/${data.subscription.interval}</p>
-                    ${data.status === 'cancelled' ? '<p>Your subscription is set to cancel at the end of the billing period.</p>' : ''}
-                `;
-            }
+        if (data.status === 'inactive') {
+            subscriptionContainer.innerHTML = '<p>You have no active subscription.</p>';
         } else {
-            console.error('Erreur lors de la récupération de l\'abonnement:', data.message);
+            subscriptionContainer.innerHTML = `
+                <p>Current subscription: ${data.subscription.amount} €/${data.subscription.interval}</p>
+                ${data.status === 'cancelled' ? '<p>Your subscription is set to cancel at the end of the billing period.</p>' : ''}
+            `;
         }
     } catch (error) {
         console.error('Erreur:', error);

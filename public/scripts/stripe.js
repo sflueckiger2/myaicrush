@@ -10,12 +10,14 @@ async function createCheckoutSession(priceId) {
             throw new Error('STRIPE_SECRET_KEY non définie');
         }
 
+        const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; // Utilise l'URL dynamique
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'subscription',
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: 'http://localhost:3000/',
-            cancel_url: 'http://localhost:3000/premium.html',
+            success_url: `${BASE_URL}/premium-success`,
+            cancel_url: `${BASE_URL}/premium.html`,
         });
 
         console.log('Session Checkout créée avec succès :', session.url);
@@ -97,6 +99,7 @@ async function getUserSubscription(email) {
         const subscription = subscriptions.data[0];
         const status = subscription.cancel_at_period_end ? 'cancelled' : subscription.status;
 
+        console.log('Abonnement trouvé avec succès pour email :', email);
         return {
             status,
             subscription: {

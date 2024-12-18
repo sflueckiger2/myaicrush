@@ -282,22 +282,6 @@ app.post('/api/cancel-subscription', async (req, res) => {
 // Import de la fonction pour récupérer les abonnements
 const { getUserSubscription } = require('./public/scripts/stripe.js');
 
-// Route pour récupérer les informations d'abonnement d'un utilisateur
-app.post('/api/get-user-subscription', async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) {
-        return res.status(400).json({ message: 'Email is required' });
-    }
-
-    try {
-        const subscriptionInfo = await getUserSubscription(email); // Appel de la fonction Stripe
-        res.status(200).json(subscriptionInfo); // Envoie les informations d'abonnement au frontend
-    } catch (error) {
-        console.error('Erreur lors de la récupération des informations d\'abonnement :', error.message);
-        res.status(500).json({ message: 'Erreur lors de la récupération des informations d\'abonnement' });
-    }
-});
 
 
 

@@ -10,6 +10,9 @@ const PORT = process.env.PORT || 3000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
 app.use(express.json());
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
+const { getUserSubscription } = require('./public/scripts/stripe.js');
+
+
 
 
 // Route pour créer une session de paiement Stripe
@@ -50,6 +53,23 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 });
 
+// ROUTE afficher l'abo
+
+app.post('/api/get-user-subscription', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+      const subscriptionInfo = await getUserSubscription(email);
+      res.status(200).json(subscriptionInfo);
+  } catch (error) {
+      console.error('Error fetching subscription info:', error.message);
+      res.status(500).json({ message: 'Error fetching subscription info' });
+  }
+});
 
 
 
