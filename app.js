@@ -13,7 +13,40 @@ app.use(express.static('public')); // Servir les fichiers du dossier "public"
 const { createCheckoutSession, cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js');
 
 
+//ROUTE pour l'inscription via email classique 
 
+// Route pour l'inscription
+app.post('/api/signup', async (req, res) => {
+  console.log('Requête reçue pour l\'inscription:', req.body);
+
+  const { email, password } = req.body;
+
+  // Vérifier que les champs requis sont présents
+  if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required.' });
+  }
+
+  try {
+      const db = getDb(); // Récupère la connexion à la base
+      const usersCollection = db.collection('users');
+
+      // Vérifier si l'utilisateur existe déjà
+      const existingUser = await usersCollection.findOne({ email });
+      if (existingUser) {
+          return res.status(400).json({ message: 'User already exists.' });
+      }
+
+      // Ajouter un nouvel utilisateur
+      await usersCollection.insertOne({ email, password });
+      console.log(`Nouvel utilisateur inscrit : ${email}`);
+
+      // Retourner une réponse réussie
+      res.status(201).json({ message: 'User successfully registered!', email });
+  } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {

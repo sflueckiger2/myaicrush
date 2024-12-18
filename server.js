@@ -39,34 +39,7 @@ async function connectToDB() {
 
 connectToDB();
 
-// Route pour l'inscription
-app.post('/api/signup', async (req, res) => {
-    console.log('Data received from frontend:', req.body);
 
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await users.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // Ajouter un nouvel utilisateur
-        await users.insertOne({ email, password });
-        res.status(201).json({ email });
-    } catch (error) {
-        console.error('Error during signup:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
 
 // Route pour la connexion
 app.post('/api/login', async (req, res) => {
