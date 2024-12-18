@@ -9,6 +9,8 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
 app.use(express.json());
+app.use(express.static('public')); // Servir les fichiers du dossier "public"
+
 
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {
@@ -114,8 +116,6 @@ app.get('/auth/google/callback', async (req, res) => {
 
 console.log("Clé API OpenAI :", process.env.OPENAI_API_KEY);
 
-app.use(express.json());
-app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
 
 
