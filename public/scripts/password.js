@@ -1,3 +1,6 @@
+// Définir l'URL de base dynamiquement (s'applique à localhost ou Render)
+const BASE_URL = window.location.origin;
+
 document.addEventListener('DOMContentLoaded', () => {
     const changePasswordForm = document.getElementById('change-password-form');
   
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
   
-          const response = await fetch('http://localhost:4000/api/change-password', {
+          const response = await fetch(`${BASE_URL}/api/change-password`, { // Utilise BASE_URL ici
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -48,9 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-    
-// script pour le mot de passe oublié 
-
+// Script pour le mot de passe oublié
 document.addEventListener('DOMContentLoaded', () => {
     const forgotPasswordLink = document.getElementById('forgot-password-link');
     
@@ -76,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('email').value;
   
         try {
-          const response = await fetch('http://localhost:4000/api/forgot-password', {
+          const response = await fetch(`${BASE_URL}/api/forgot-password`, { // Utilise BASE_URL ici
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -97,4 +98,3 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
-  
