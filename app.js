@@ -439,6 +439,8 @@ function adjustUserLevel(comfortLevel) {
   userLevel = Math.max(1.0, userLevel + levelChange);
   userLevel = Math.round(userLevel * 10) / 10;
 
+  console.log(`Comfort Level: ${comfortLevel}, Level Change: ${levelChange}, New Level: ${userLevel}, Previous Level: ${previousLevel}`);
+
   if (levelChange > 0 && userLevel > previousLevel) {
     if (userLevel === 1.1) return { message: "Level up : Little crush", type: "up" };
     if (userLevel === 1.7) return { message: "Level up : Big crush", type: "up" };
@@ -516,7 +518,8 @@ app.post('/message', async (req, res) => {
     const comfortLevel = extractComfortLevel(botReply);
 
     const levelUpdate = adjustUserLevel(comfortLevel);
-    console.log('After Level Adjustment:');
+     // Log si un level update est généré
+     console.log('Level Update:', levelUpdate);
 console.log('User Level:', userLevel);
 console.log('Photo Sent States:', {
     LittleCrush: photoSentAtLittleCrush,
@@ -594,7 +597,7 @@ app.post('/resetUserLevel', (req, res) => {
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {
   app.listen(PORT, () => {
-    console.log(`Serveur lancé sur le port {PORT}`);
+    console.log(`Serveur lancé sur le port ${PORT}`);
   });
 }).catch((err) => {
   console.error('Erreur de connexion à la base de données :', err);
