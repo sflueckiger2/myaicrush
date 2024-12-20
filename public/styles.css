@@ -161,6 +161,7 @@ p {
   border-radius: 50%;
   margin-right: 10px;
   border: 2px solid #e91e63;
+  object-fit: cover; /* Maintient le ratio de l'image */
 }
 
 #chat-name {
