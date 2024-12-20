@@ -390,13 +390,13 @@ function getRandomCharacterImage() {
   const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase());
   let levelFolder;
 
-  if (userLevel < 1.2) {
-    levelFolder = `${sanitizedCharacterName}1`;
-  } else if (userLevel < 1.3) {
-    levelFolder = `${sanitizedCharacterName}2`;
-  } else {
-    levelFolder = `${sanitizedCharacterName}3`;
-  }
+  if (userLevel < 1.7) {
+    levelFolder = `${sanitizedCharacterName}1`; // Little Crush
+} else if (userLevel < 2.2) {
+    levelFolder = `${sanitizedCharacterName}2`; // Big Crush
+} else {
+    levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
+}
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
 
@@ -441,11 +441,11 @@ function adjustUserLevel(comfortLevel) {
 
   if (levelChange > 0 && userLevel > previousLevel) {
     if (userLevel === 1.1) return { message: "Level up : Little crush", type: "up" };
-    if (userLevel === 1.2) return { message: "Level up : Big crush", type: "up" };
-    if (userLevel === 1.3) return { message: "Level up : Perfect crush", type: "up" };
+    if (userLevel === 1.7) return { message: "Level up : Big crush", type: "up" };
+    if (userLevel === 2.2) return { message: "Level up : Perfect crush", type: "up" };
   } else if (levelChange < 0 && previousLevel > userLevel) {
     if (userLevel < 1.2) return { message: "Level down : Little crush", type: "down" };
-    if (userLevel < 1.3) return { message: "Level down : Big crush", type: "down" };
+    if (userLevel < 1.8) return { message: "Level down : Big crush", type: "down" };
   }
 
   return null;
@@ -462,7 +462,12 @@ app.post('/message', async (req, res) => {
   addMessageToHistory("user", userMessage);
 
   try {
-    const userLevelDescription = userLevel >= 1.1 ? `The user is at the ${userLevel >= 1.3 ? "Perfect Crush" : "Big Crush"} level.` : "";
+    const userLevelDescription = userLevel >= 1.1 
+    ? `The user is at the ${
+        userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
+    } level.`
+    : "";
+
 
     const systemPrompt = `
       Profil : ${activeCharacter.prompt.profile}
@@ -511,7 +516,13 @@ app.post('/message', async (req, res) => {
     const comfortLevel = extractComfortLevel(botReply);
 
     const levelUpdate = adjustUserLevel(comfortLevel);
-    console.log('Level update:', levelUpdate); // Vérifie si un message est généré
+    console.log('After Level Adjustment:');
+console.log('User Level:', userLevel);
+console.log('Photo Sent States:', {
+    LittleCrush: photoSentAtLittleCrush,
+    BigCrush: photoSentAtBigCrush,
+    PerfectCrush: photoSentAtPerfectCrush,
+});
 
 
     botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim();
@@ -523,17 +534,24 @@ app.post('/message', async (req, res) => {
     // Ici on dit à quel niveau il faut envoyer les photos (ça doit correspondre à little crush et big crish
 
     if (!sendPhoto) {
-      if (userLevel >= 1.1 && userLevel < 1.2 && !photoSentAtLittleCrush) {
-        sendPhoto = true;
-        photoSentAtLittleCrush = true;
-      } else if (userLevel >= 1.2 && userLevel < 1.3 && !photoSentAtBigCrush) {
-        sendPhoto = true;
-        photoSentAtBigCrush = true;
-      } else if (userLevel >= 1.3 && !photoSentAtPerfectCrush) {
-        sendPhoto = true;
-        photoSentAtPerfectCrush = true;
+      if (userLevel >= 1.1 && userLevel < 1.7 && !photoSentAtLittleCrush) {
+          sendPhoto = true;
+          photoSentAtLittleCrush = true;
+          photoSentAtBigCrush = false; // Réinitialise les autres
+          photoSentAtPerfectCrush = false;
+      } else if (userLevel >= 1.7 && userLevel < 2.2 && !photoSentAtBigCrush) {
+          sendPhoto = true;
+          photoSentAtBigCrush = true;
+          photoSentAtLittleCrush = false;
+          photoSentAtPerfectCrush = false;
+      } else if (userLevel >= 2.2 && !photoSentAtPerfectCrush) {
+          sendPhoto = true;
+          photoSentAtPerfectCrush = true;
+          photoSentAtLittleCrush = false;
+          photoSentAtBigCrush = false;
       }
-    }
+  }
+  
     
 
     botReply = botReply.replace("[PHOTO]", "").trim();
