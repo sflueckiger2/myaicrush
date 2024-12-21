@@ -4,7 +4,7 @@ import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 
 let firstPhotoSent = false;
 let dailyMessageCount = 0;
-const DAILY_MESSAGE_LIMIT = 20;
+const DAILY_MESSAGE_LIMIT = 10;
 
 // Définir dynamiquement l'URL de base
 const BASE_URL = window.location.origin;
