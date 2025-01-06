@@ -122,11 +122,10 @@ p {
 #chat-box {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-  background-color: #2e2e44;
-  border-radius: 8px;
+  justify-content: flex-start;
+  height: 100vh; /* Prend toute la hauteur par défaut */
+  overflow-y: auto; /* Permet de faire défiler le contenu si nécessaire */
+  position: relative; /* Permet des ajustements dynamiques */
 }
 
 /* En-tête du chat */
@@ -172,15 +171,16 @@ p {
 
 /* Style des messages */
 #messages {
-  flex: 1;
-  overflow-y: auto;
+  display: flex; /* Active le Flexbox */
+  flex-direction: column; /* Empile les messages verticalement */
+  gap: 10px; /* Ajoute un espacement entre chaque message */
+  flex: 1; /* Prend tout l'espace disponible entre l'en-tête et la zone de saisie */
+  overflow-y: auto; /* Permet le défilement vertical si nécessaire */
   padding: 10px;
-  background-color: #2e2e44;
-  border-radius: 8px;
-  box-sizing: border-box;
-  margin-bottom: 80px; /* Garde de l'espace pour la barre d'entrée */
-}
-
+  background-color: #2e2e44; /* Couleur de fond */
+  border-radius: 8px; /* Coins arrondis */
+  margin-bottom: 10px;
+  padding-bottom: 80px; /* Maintient un espace en bas pour la saisie */
 }
 .user-message, .bot-message {
   max-width: 70%;
@@ -192,7 +192,7 @@ p {
   word-wrap: break-word;
 }
 
-.user-message {
+.user-message {no
   background-color: #e91e63;
   color: #ffffff;
   align-self: flex-end;
@@ -209,7 +209,7 @@ p {
 
 /* Zone de saisie */
 #input-area {
-  position: sticky;
+  position: fixed; /* Fixe en bas par défaut */
   bottom: 0;
   width: 100%;
   background-color: #2e2e44;
@@ -217,8 +217,7 @@ p {
   display: flex;
   gap: 10px;
   align-items: center;
-  z-index: 1000;
-  box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000; /* Toujours visible au-dessus */
 }
 
 #user-input {
