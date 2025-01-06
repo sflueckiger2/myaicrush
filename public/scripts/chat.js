@@ -137,7 +137,26 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     scrollToBottom(messagesContainer);
 }
 
-// fonction is typing 
+// fonction resize clavier
+
+function adjustChatHeight() {
+    const chatBox = document.getElementById('chat-box');
+  
+    if (!chatBox) return;
+  
+    // Calculer la hauteur visible du viewport
+    const viewportHeight = window.innerHeight;
+  
+    // Appliquer la hauteur dynamique
+    chatBox.style.height = `${viewportHeight}px`;
+  }
+  
+  // Appeler la fonction au chargement initial
+  adjustChatHeight();
+  
+  // Réagir aux changements de taille de la fenêtre (clavier qui s'affiche)
+  window.addEventListener('resize', adjustChatHeight);
+  
 
 export function startChat(characterName) {
     if (!isUserLoggedIn()) {

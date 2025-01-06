@@ -126,6 +126,7 @@ p {
   height: 100vh; /* Prend toute la hauteur par défaut */
   overflow-y: auto; /* Permet de faire défiler le contenu si nécessaire */
   position: relative; /* Permet des ajustements dynamiques */
+  transition: height 0.3s ease; /* Transition fluide pour le changement de hauteur */
 }
 
 /* En-tête du chat */
@@ -192,8 +193,8 @@ p {
   word-wrap: break-word;
 }
 
-.user-message {no
-  background-color: #e91e63;
+.user-message {
+  background-color: #e91e63!important;
   color: #ffffff;
   align-self: flex-end;
   text-align: right;
