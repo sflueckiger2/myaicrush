@@ -123,9 +123,10 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  height: 100vh; /* Prend toute la hauteur par défaut */
+  height: 100%; /* S'assure que le chat occupe tout l'écran disponible */
   overflow-y: auto; /* Permet de faire défiler le contenu si nécessaire */
   position: relative; /* Permet des ajustements dynamiques */
+  overflow: hidden; /* Empêche le débordement */
 }
 
 /* En-tête du chat */
@@ -182,6 +183,8 @@ p {
   margin-bottom: 10px;
   padding-bottom: 80px; /* Maintient un espace en bas pour la saisie */
   flex-grow: 1; /* Permet de s'adapter à l'espace disponible */
+  box-sizing: border-box; /* Pour inclure le padding dans la hauteur totale */
+
 }
 .user-message, .bot-message {
   max-width: 70%;
@@ -210,7 +213,7 @@ p {
 
 /* Zone de saisie */
 #input-area {
-  position: fixed; /* Fixe en bas par défaut */
+  position: sticky; /* Rend la barre d'entrée toujours visible */
   bottom: 0;
   width: 100%;
   background-color: #2e2e44;
