@@ -137,6 +137,10 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     scrollToBottom(messagesContainer);
 }
 
+// fonction is typing 
+
+
+
 export function startChat(characterName) {
     if (!isUserLoggedIn()) {
         window.location.href = 'profile.html';

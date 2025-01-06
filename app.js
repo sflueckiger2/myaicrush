@@ -571,14 +571,14 @@ console.log('Photo Sent States:', {
       if (imageUrl) {
         responseData.imageUrl = imageUrl;
       } else {
-        responseData.reply += " (Désolé, je n'ai pas d'image à partager pour l'instant.)";
+        responseData.reply += " (sorry, i dont have pic for you)";
       }
     }
 
     res.json(responseData);
   } catch (error) {
     console.error("Erreur lors de l'appel à l'API OpenAI:", error.response ? error.response.data : error.message);
-    res.status(500).json({ reply: "Désolé, une erreur est survenue." });
+    res.status(500).json({ reply: "Sorry, an error has occurred." });
   }
 });
 
