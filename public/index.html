@@ -25,7 +25,6 @@
   <div class="header">
     <h1>Welcome to My AI Crush❤️</h1>
     <p>Choose your crush :</p>
-    
   </div>
 
   <!-- Conteneur principal pour les options de chat et le chat -->
@@ -47,9 +46,18 @@
         <img id="chat-profile-pic" src="" alt="Profil sélectionné" class="chat-profile-pic">
         <span id="chat-name">Nom de l'IA</span>
       </div>
+      
       <div id="messages"></div>
+
+      <!-- Indicateur de saisie -->
+      <div id="typing-indicator" class="hidden">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+
       <div id="input-area">
-        <input type="text" id="user-input" placeholder="write your message here...">
+        <input type="text" id="user-input" placeholder="Write your message here...">
         <button id="send-btn">
           <i class="fa fa-paper-plane"></i>
         </button>
@@ -60,8 +68,8 @@
   <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
   <div id="profile-modal" class="modal" onclick="closeProfileModal()">
     <div class="profile-content" onclick="event.stopPropagation()">
-       <!-- Bouton pour fermer -->
-    <button id="close-modal-btn" class="close-modal-btn">&times;</button>
+      <!-- Bouton pour fermer -->
+      <button id="close-modal-btn" class="close-modal-btn">&times;</button>
       <img id="profile-image-full" src="" alt="Profil complet" />
       <h2 id="profile-name"></h2><br>
       <p><strong>Size :</strong> <span id="profile-height"></span></p>
@@ -73,22 +81,21 @@
 
   <!-- Formulaire d'inscription -->
   <div id="signup-modal" class="hidden">
-  <div id="signup-container">
-    <h2>Sign Up</h2>
-    <form id="signup-form">
-      <label for="signup-email">Email:</label>
-      <input type="email" id="signup-email" name="email" required />
-      <label for="signup-password">Password:</label>
-      <input type="password" id="signup-password" name="password" required />
-      <button type="submit">Sign Up</button>
-    </form>
-    <p id="signup-message"></p>
-  </div> 
-</div>
+    <div id="signup-container">
+      <h2>Sign Up</h2>
+      <form id="signup-form">
+        <label for="signup-email">Email:</label>
+        <input type="email" id="signup-email" name="email" required />
+        <label for="signup-password">Password:</label>
+        <input type="password" id="signup-password" name="password" required />
+        <button type="submit">Sign Up</button>
+      </form>
+      <p id="signup-message"></p>
+    </div> 
+  </div>
+  
   <script type="module" src="./scripts/main.js"></script>
   <script type="module" src="./scripts/menu.js"></script>
-
-  
 
 </body>
 </html>

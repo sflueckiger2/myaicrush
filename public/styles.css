@@ -260,30 +260,55 @@ p {
   border: 2px solid #444;
 }
 
-.typing-indicator {
+/* Style de l'indicateur de saisie */
+#typing-indicator {
   display: flex;
   align-items: center;
-  margin-top: 5px;
-  color: #b0b0c3;
-  font-style: italic;
+  gap: 5px;
+  padding: 10px;
+  margin: 10px 0;
 }
 
-.typing-indicator::after {
-  content: '...';
-  animation: typing 1s steps(3) infinite;
+#typing-indicator.hidden {
+  display: none; /* Masquer par défaut */
 }
 
-@keyframes typing {
-  0%, 100% {
-    content: '';
+#typing-indicator .dot {
+  width: 8px;
+  height: 8px;
+  background-color: #e91e63;
+  border-radius: 50%;
+  animation: typingAnimation 1.5s infinite;
+}
+
+#typing-indicator .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+#typing-indicator .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+#typing-indicator .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingAnimation {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.8);
   }
   50% {
-    content: '.';
+    opacity: 1;
+    transform: scale(1);
   }
-  75% {
-    content: '..';
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
   }
 }
+
+
 
 /* Responsive design for larger screens */
 @media (min-width: 600px) {

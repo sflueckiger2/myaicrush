@@ -137,6 +137,40 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     scrollToBottom(messagesContainer);
 }
 
+// fonction is typing 
+
+const typingIndicator = document.getElementById('typing-indicator');
+
+// Fonction pour afficher l'indicateur de saisie
+function showTypingIndicator() {
+  typingIndicator.classList.remove('hidden');
+}
+
+// Fonction pour masquer l'indicateur de saisie
+function hideTypingIndicator() {
+  typingIndicator.classList.add('hidden');
+}
+
+// Simuler l'indicateur pendant que l'IA répond
+function simulateTypingDelay(messageDelay = 2000) {
+  showTypingIndicator();
+  setTimeout(() => {
+    hideTypingIndicator();
+    // Simuler l'ajout d'un message de l'IA après le délai
+    addBotMessage("Ceci est une réponse de l'IA après la saisie !");
+  }, messageDelay);
+}
+
+// Exemple d'utilisation : Ajouter après l'envoi d'un message utilisateur
+document.getElementById('send-btn').addEventListener('click', () => {
+  const userMessage = userInput.value.trim();
+  if (userMessage !== '') {
+    addUserMessage();
+    simulateTypingDelay(); // Simule la saisie pendant 2 secondes
+  }
+});
+
+
 // fonction resize clavier
 
 function adjustChatHeight() {
