@@ -23,9 +23,7 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
         messagesContainer.appendChild(messageElement);
 
         if (typeof scrollToBottomCallback === 'function') {
-            scrollToBottomCallback();
-        } else {
-            console.warn('scrollToBottomCallback is not a function');
+            scrollToBottomCallback(messagesContainer);
         }
 
         const user = JSON.parse(localStorage.getItem('user'));
@@ -33,6 +31,9 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             console.error('Utilisateur non connecté ou email manquant');
             return;
         }
+
+        // Afficher l'indicateur de saisie
+        simulateTypingIndicator(messagesContainer);
 
         // Vérifier si l'utilisateur est premium
         fetch(`${BASE_URL}/api/is-premium`, {
@@ -52,7 +53,6 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 );
                 return;
             }
-            
 
             // Appel principal au serveur
             fetch(`${BASE_URL}/message`, {
@@ -62,6 +62,8 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             })
             .then(response => response.json())
             .then(data => {
+                hideTypingIndicator(); // Masque l'indicateur après réception de la réponse
+
                 if (data.levelUpdateMessage && data.levelUpdateType) {
                     showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
                 }
@@ -75,23 +77,23 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 if (!isPremium) dailyMessageCount++;
 
                 if (typeof scrollToBottomCallback === 'function') {
-                    scrollToBottomCallback();
+                    scrollToBottomCallback(messagesContainer);
                 }
             })
             .catch(error => {
                 console.error('Erreur lors de l\'envoi du message:', error);
+                hideTypingIndicator(); // Masque en cas d'erreur
                 addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
-                if (typeof scrollToBottomCallback === 'function') {
-                    scrollToBottomCallback();
-                }
             });
         })
         .catch(error => {
             console.error('Erreur lors de la vérification du statut premium:', error);
+            hideTypingIndicator(); // Masque en cas d'erreur
             addBotMessage('Erreur lors de la vérification du statut premium. Merci de réessayer.', messagesContainer);
         });
     }
 }
+
 
 export function addBotMessage(botReply, messagesContainer) {
     const messageElement = document.createElement('div');
@@ -137,29 +139,7 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     scrollToBottom(messagesContainer);
 }
 
-// fonction is typing 
 
-const typingIndicator = document.getElementById('typing-indicator');
-
-// Fonction pour afficher l'indicateur de saisie
-function showTypingIndicator() {
-  typingIndicator.classList.remove('hidden');
-}
-
-// Fonction pour masquer l'indicateur de saisie
-function hideTypingIndicator() {
-  typingIndicator.classList.add('hidden');
-}
-
-// Simuler l'indicateur pendant que l'IA répond
-function simulateTypingDelay(messageDelay = 2000) {
-  showTypingIndicator();
-  setTimeout(() => {
-    hideTypingIndicator();
-    // Simuler l'ajout d'un message de l'IA après le délai
-    addBotMessage("Ceci est une réponse de l'IA après la saisie !");
-  }, messageDelay);
-}
 
 // Exemple d'utilisation : Ajouter après l'envoi d'un message utilisateur
 document.getElementById('send-btn').addEventListener('click', () => {
@@ -221,4 +201,84 @@ export function startChat(characterName) {
     .catch((error) => {
         console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
+}
+
+//fonctions is typing
+
+function showTypingIndicator(messagesContainer) {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (!typingIndicator) {
+        console.error('Typing indicator not found.');
+        return;
+    }
+    typingIndicator.classList.remove('hidden'); // Affiche l'indicateur
+    messagesContainer.appendChild(typingIndicator); // Ajoute l'indicateur dans le conteneur des messages
+    scrollToBottom(messagesContainer); // Fait défiler vers le bas
+}
+
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (!typingIndicator) {
+        console.error('Typing indicator not found.');
+        return;
+    }
+    typingIndicator.classList.add('hidden'); // Masque l'indicateur
+}
+
+
+function simulateTypingIndicator(messagesContainer, delay = 2000) {
+    showTypingIndicator(messagesContainer); // Affiche l'indicateur
+    setTimeout(() => {
+        hideTypingIndicator(); // Masque après le délai
+    }, delay);
+}
+
+export function resetChatState() {
+    // Effacer l'historique des messages affichés
+    const messagesContainer = document.getElementById('messages');
+    if (messagesContainer) {
+        messagesContainer.innerHTML = '';
+    } else {
+        console.warn('Messages container not found.');
+    }
+
+    // Réinitialiser les événements du chat
+    if (typeof resetChatEventListeners === 'function') {
+        resetChatEventListeners();
+    } else {
+        console.error('resetChatEventListeners is not defined.');
+    }
+
+    // Vérifier si l'indicateur de saisie existe
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.classList.add('hidden'); // Masquer si présent
+    } else {
+        console.warn('Typing indicator not found. Recreating it...');
+        recreateTypingIndicator(); // Recrée l'indicateur si nécessaire
+    }
+
+    console.log('Chat state has been reset.');
+}
+
+function recreateTypingIndicator() {
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = 'typing-indicator';
+    typingIndicator.classList.add('hidden'); // Masqué par défaut
+
+    // Ajouter les trois points pour l'effet "is typing"
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('span');
+        dot.classList.add('dot');
+        typingIndicator.appendChild(dot);
+    }
+
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox) {
+        chatBox.appendChild(typingIndicator);
+        console.log('Typing indicator recreated.');
+    } else {
+        console.error('Chat box not found. Unable to append typing indicator.');
+    }
 }

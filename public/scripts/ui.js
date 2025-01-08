@@ -1,4 +1,4 @@
-import { startChat } from './chat.js';
+import { startChat, resetChatState } from './chat.js';
 import { resetUserLevel } from './data.js';
 
 
@@ -63,21 +63,26 @@ export function showLevelUpdatePopup(message, type) {
 
   export function setupBackButton() {
     document.getElementById('back-btn').addEventListener('click', function () {
-      document.querySelector('.chat-options').style.display = 'grid';
-      document.getElementById('chat-box').style.display = 'none';
-      document.querySelector('.header').classList.remove('hidden');
-      document.querySelector('.container').classList.remove('fullscreen');
-      document.querySelector('.menu').classList.remove('hidden');
+        document.querySelector('.chat-options').style.display = 'grid';
+        document.getElementById('chat-box').style.display = 'none';
+        document.querySelector('.header').classList.remove('hidden');
+        document.querySelector('.container').classList.remove('fullscreen');
+        document.querySelector('.menu').classList.remove('hidden');
 
-      // Réinitialiser le niveau utilisateur
-    resetUserLevel(); // Appeler la fonction pour remettre le niveau à 1.0
+        // Réinitialiser le niveau utilisateur
+        resetUserLevel(); // Appeler la fonction pour remettre le niveau à 1.0
 
+        // Réinitialiser l'état du chat
+        resetChatState();
     });
-  }
+}
+
+
+
   export function toggleSignupModal(show) {
     const signupModal = document.getElementById('signup-modal');
     if (signupModal) {
-      signupModal.classList.toggle('hidden', !show); // Affiche ou masque selon le paramètre `show`
+      signupModal.classList.toggle('hidden', !show); // Affiche ou masque selon le paramètre show
     }
   }
   

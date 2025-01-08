@@ -1,5 +1,7 @@
-// utils.js
 export function scrollToBottom(container) {
-    container.scrollTop = container.scrollHeight;
+  if (container) {
+      container.scrollTop = container.scrollHeight;
+  } else {
+      console.warn('Container for scrolling is undefined.');
   }
-  
+}
