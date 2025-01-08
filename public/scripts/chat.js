@@ -142,13 +142,19 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
 
 // Exemple d'utilisation : Ajouter après l'envoi d'un message utilisateur
-document.getElementById('send-btn').addEventListener('click', () => {
-  const userMessage = userInput.value.trim();
-  if (userMessage !== '') {
-    addUserMessage();
-    simulateTypingDelay(); // Simule la saisie pendant 2 secondes
-  }
-});
+const sendBtn = document.getElementById('send-btn');
+if (sendBtn) {
+    sendBtn.addEventListener('click', () => {
+        const userMessage = userInput.value.trim();
+        if (userMessage !== '') {
+            addUserMessage();
+            simulateTypingDelay(); // Simule la saisie pendant 2 secondes
+        }
+    });
+} else {
+    console.warn("send-btn n'est pas présent sur cette page.");
+}
+
 
 
 // fonction resize clavier
