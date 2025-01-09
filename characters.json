@@ -3,7 +3,7 @@
     "name": "Hanaé",
     "photo": "images/hanae/hanae1/hanae_profil_pic_vdef.jpg",
     "height": "170 cm",
-    "measurements": "Soft and generous",
+    "measurements": "Slim and warm, nice round shapes",
     "ethnicity": "Hanaé is a committed Yoga teacher. She is looking for a man who will listen to her and make her have some crazy times",
     "interests": ["Yoga", "Travel", "Reading"],
     "description": "Curious, charming and passionate about Yoga and travel.",
@@ -23,8 +23,7 @@
     "name": "Mimo",
     "photo": "images/mimo/mimo1/momo_profil_pic.jpg",
     "height": "170 cm",
-    "measurements": "90-60-90",
-    "ethnicity": "Asian",
+    "measurements": "Young, ",
     "interests": ["Medium", "Science-Fiction", "Esotericism"],
     "description": "Curious, charming and passionate about books and travel.",
     "prompt": {
