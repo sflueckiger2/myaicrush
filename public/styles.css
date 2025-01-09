@@ -56,7 +56,7 @@ body {
 
 /* Style du titre */
 h1 {
-  color: #e91e63;
+  color: #d81b60;
   font-size: 24px;
   margin-bottom: 10px;
 }
@@ -71,7 +71,7 @@ p {
 /* Style pour la section des options de chat */
 .chat-options {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: (2, 1fr);
   gap: 15px;
 }
 
@@ -109,7 +109,7 @@ p {
 
 .card-content h3 {
   font-size: 1.2em;
-  color: #e91e63;
+  color: #d81b60;
   margin-bottom: 5px;
 }
 
@@ -161,13 +161,13 @@ p {
   height: 50px;
   border-radius: 50%;
   margin-right: 10px;
-  border: 2px solid #e91e63;
+  border: 2px solid #d81b60;
   object-fit: cover; /* Maintient le ratio de l'image */
 }
 
 #chat-name {
   font-size: 1.2em;
-  color: #e91e63;
+  color: #d81b60;
 }
 
 /* Style des messages */
@@ -194,7 +194,7 @@ p {
 }
 
 .user-message {
-  background-color: #e91e63!important;
+  background-color: #d81b60!important;
   color: #ffffff;
   align-self: flex-end;
   text-align: right;
@@ -231,7 +231,7 @@ p {
 }
 
 #send-btn {
-  background-color: #e91e63;
+  background-color: #d81b60;
   border: none;
   padding: 10px;
   border-radius: 50%;
@@ -276,7 +276,7 @@ p {
 #typing-indicator .dot {
   width: 8px;
   height: 8px;
-  background-color: #e91e63;
+  background-color: #d81b60;
   border-radius: 50%;
   animation: typingAnimation 1.5s infinite;
 }
@@ -326,7 +326,7 @@ p {
 .audio-button {
   background: none;
   border: none;
-  color: #e91e63;
+  color: #d81b60;
   font-size: 1.2em;
   cursor: pointer;
   margin-left: 10px;
@@ -416,7 +416,7 @@ p {
   left: 0;
   width: 100%;
   z-index: 1000; /* Le place au-dessus des autres éléments */
-  background-color: #2b2b3d;
+
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 10px 0;
   
@@ -444,7 +444,7 @@ p {
 }
 
 .menu-items li a:hover {
-  background-color: #e91e63;
+  background-color: #d81b60;
   color: #ffffff;
   border-radius: 5px;
 }
@@ -560,7 +560,7 @@ p {
 }
 
 .close-modal-btn:hover {
-  background-color: #e91e63; /* Fond rose au survol */
+  background-color: #d81b60; /* Fond rose au survol */
   color: #ffffff; /* Couleur blanche pour la croix au survol */
 }
 #signup-modal {
@@ -591,7 +591,7 @@ p {
 
 .unlock-button {
   margin-top: 10px;
-  background-color: #e91e63;
+  background-color: #d81b60;
   color: white;
   border: none;
   padding: 5px 10px;
@@ -621,7 +621,7 @@ p {
 
 .p-title {
   font-size: 2.5em;
-  color: #e91e63;
+  color: #d81b60;
   margin-bottom: 10px;
 }
 
@@ -657,7 +657,7 @@ p {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: #e91e63;
+  background-color: #d81b60;
   display: inline-block;
   margin-right: 10px;
   position: relative;
@@ -694,7 +694,7 @@ p {
 
 .pricing-card h2 {
   font-size: 1.5em;
-  color: #e91e63;
+  color: #d81b60;
 }
 
 .pricing-card .price {
@@ -709,7 +709,7 @@ p {
 }
 
 .pricing-card.popular {
-  border: 2px solid #e91e63;
+  border: 2px solid #d81b60;
 }
 
 /* Boutons classiques*/
@@ -727,7 +727,7 @@ p {
 
 /* Boutons stylisés */
 .button {
-  background-color: #e91e63;
+  background-color: #d81b60;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -743,7 +743,7 @@ p {
 
 /* Boutons de checkout */
 .checkout-button {
-  background-color: #e91e63;
+  background-color: #d81b60;
   color: #ffffff;
   padding: 10px 20px;
   font-size: 1em;
@@ -857,7 +857,7 @@ p {
 }
 .forgot-password-link {
   font-size: 0.9em;
-  color: #e91e63;
+  color: #d81b60;
   text-decoration: none;
   cursor: pointer;
 }
@@ -877,7 +877,7 @@ p {
 
 #unsubscribe-container .button {
   margin-top: 10px;
-  background-color: #e91e63;
+  background-color: #d81b60;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -910,7 +910,7 @@ p {
 /* Titre des sections */
 .profile-section h2 {
   font-size: 1.5rem;
-  color: #e91e63; /* Votre couleur principale */
+  color: #d81b60; /* Votre couleur principale */
   margin-bottom: 10px;
 }
 
@@ -927,7 +927,7 @@ p {
   align-items: center;
   justify-content: flex-start;
   padding: 10px 15px;
-  background-color: #e91e63; /* Votre couleur principale */
+  background-color: #d81b60; /* Votre couleur principale */
   color: #ffffff;
   border: none;
   border-radius: 5px;
@@ -1036,12 +1036,12 @@ form input::placeholder {
   width: 20px;
 }
 #show-signin{
-  color : #e91e63!important;
+  color : #d81b60!important;
   text-decoration: underline!important;
 
 }
 #show-signup{
-  color : #e91e63!important;
+  color : #d81b60!important;
   text-decoration: underline!important;
   
 }
