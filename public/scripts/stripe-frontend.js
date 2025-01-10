@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (monthlyCheckoutButton) {
         monthlyCheckoutButton.addEventListener('click', () => {
-            handleCheckout('price_1QP4dCAOSHX0SgbTY5N4QrsW'); // Remplace par l'ID Stripe pour le plan mensuel
+            handleCheckout('price_1QP4NsAOSHX0SgbTbXleafxi'); // Remplace par l'ID Stripe pour le plan mensuel
         });
     }
 
     if (annualCheckoutButton) {
         annualCheckoutButton.addEventListener('click', () => {
-            handleCheckout('price_1QPRXpAOSHX0SgbT8GfUUtvL'); // Remplace par l'ID Stripe pour le plan annuel
+            handleCheckout('price_1QP4QUAOSHX0SgbTgievpp1a'); // Remplace par l'ID Stripe pour le plan annuel
         });
     }
 
