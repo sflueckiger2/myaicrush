@@ -465,11 +465,10 @@ app.post('/message', async (req, res) => {
 
   try {
     const userLevelDescription = userLevel >= 1.1 
-    ? `The user is at the ${
-        userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
-    } level.`
-    : "";
-
+      ? `The user is at the ${
+          userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
+        } level.`
+      : "";
 
     const systemPrompt = `
       Profil : ${activeCharacter.prompt.profile}
@@ -487,7 +486,7 @@ app.post('/message', async (req, res) => {
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...conversationHistory
+      ...conversationHistory,
     ];
 
     const response = await axios.post(
@@ -499,7 +498,7 @@ app.post('/message', async (req, res) => {
         temperature: 0.7,
         top_p: 0.9,
         frequency_penalty: 0.7,
-        presence_penalty: 0.5
+        presence_penalty: 0.5,
       },
       {
         headers: {
@@ -515,63 +514,54 @@ app.post('/message', async (req, res) => {
 
     addMessageToHistory("assistant", botReply);
 
+    // Extraire le confort et mettre à jour le niveau utilisateur
     const comfortLevel = extractComfortLevel(botReply);
-
     const levelUpdate = adjustUserLevel(comfortLevel);
-     // Log si un level update est généré
-     console.log('Level Update:', levelUpdate);
-console.log('User Level:', userLevel);
-console.log('Photo Sent States:', {
-    LittleCrush: photoSentAtLittleCrush,
-    BigCrush: photoSentAtBigCrush,
-    PerfectCrush: photoSentAtPerfectCrush,
-});
 
-
+    // Nettoyer le message pour supprimer la mention de confort
     botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim();
-
-
 
     let sendPhoto = botReply.includes("[PHOTO]");
 
-    // Ici on dit à quel niveau il faut envoyer les photos (ça doit correspondre à little crush et big crish
-
+    // Vérification du niveau pour l'envoi des photos
     if (!sendPhoto) {
       if (userLevel >= 1.1 && userLevel < 1.7 && !photoSentAtLittleCrush) {
-          sendPhoto = true;
-          photoSentAtLittleCrush = true;
-          photoSentAtBigCrush = false; // Réinitialise les autres
-          photoSentAtPerfectCrush = false;
+        sendPhoto = true;
+        photoSentAtLittleCrush = true;
+        photoSentAtBigCrush = false; // Réinitialise les autres
+        photoSentAtPerfectCrush = false;
       } else if (userLevel >= 1.7 && userLevel < 2.2 && !photoSentAtBigCrush) {
-          sendPhoto = true;
-          photoSentAtBigCrush = true;
-          photoSentAtLittleCrush = false;
-          photoSentAtPerfectCrush = false;
+        sendPhoto = true;
+        photoSentAtBigCrush = true;
+        photoSentAtLittleCrush = false;
+        photoSentAtPerfectCrush = false;
       } else if (userLevel >= 2.2 && !photoSentAtPerfectCrush) {
-          sendPhoto = true;
-          photoSentAtPerfectCrush = true;
-          photoSentAtLittleCrush = false;
-          photoSentAtBigCrush = false;
+        sendPhoto = true;
+        photoSentAtPerfectCrush = true;
+        photoSentAtLittleCrush = false;
+        photoSentAtBigCrush = false;
       }
-  }
-  
-    
+    }
 
+    // Nettoyer la balise photo avant d'envoyer la réponse
     botReply = botReply.replace("[PHOTO]", "").trim();
 
+    // Préparer la réponse JSON
     const responseData = { reply: botReply };
+
+    // Ajouter le message de mise à jour de niveau (le cas échéant)
     if (levelUpdate) {
       responseData.levelUpdateMessage = levelUpdate.message;
       responseData.levelUpdateType = levelUpdate.type;
-      
-
     }
+
+    // Ajouter une image si une photo doit être envoyée
     if (sendPhoto) {
       const imageUrl = getRandomCharacterImage();
       if (imageUrl) {
         responseData.imageUrl = imageUrl;
       } else {
-        responseData.reply += " (sorry, i dont have pic for you)";
+        responseData.reply += " (sorry, I don't have a picture for you)";
       }
     }
 
@@ -581,6 +571,7 @@ console.log('Photo Sent States:', {
     res.status(500).json({ reply: "Sorry, an error has occurred." });
   }
 });
+
 
 // ENDPOINT pour réinitialiser le niveau UTILISATEUR BACK-BTN
 
