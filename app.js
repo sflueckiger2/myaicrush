@@ -519,7 +519,8 @@ app.post('/message', async (req, res) => {
     const levelUpdate = adjustUserLevel(comfortLevel);
 
     // Nettoyer le message pour supprimer la mention de confort
-    botReply = botReply.replace(/\[CONFORT:.*?\]/, "").trim();
+    botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
+
 
     let sendPhoto = botReply.includes("[PHOTO]");
 
