@@ -233,12 +233,18 @@ function hideTypingIndicator() {
 }
 
 
-function simulateTypingIndicator(messagesContainer, delay = 2000) {
+function simulateTypingIndicator(messagesContainer) {
+    // Générer un délai aléatoire entre 2 et 4 secondes
+    const delay = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000;
+
     showTypingIndicator(messagesContainer); // Affiche l'indicateur
+
+    // Masque l'indicateur après le délai
     setTimeout(() => {
-        hideTypingIndicator(); // Masque après le délai
+        hideTypingIndicator();
     }, delay);
 }
+
 
 export function resetChatState() {
     // Effacer l'historique des messages affichés
