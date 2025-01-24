@@ -16,7 +16,7 @@ async function createCheckoutSession(priceId) {
             payment_method_types: ['card'],
             mode: 'subscription',
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${BASE_URL}/premium-success`,
+            success_url: `${BASE_URL}/confirmation.html`,
             cancel_url: `${BASE_URL}/premium.html`,
         });
 
