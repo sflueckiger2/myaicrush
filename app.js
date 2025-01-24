@@ -164,7 +164,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       }
 
       // Dynamiser les URLs avec BASE_URL
-      const successUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/premium-success`;
+      const successUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html`;
       const cancelUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/premium.html`;
 
       const session = await stripe.checkout.sessions.create({
