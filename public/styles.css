@@ -1057,3 +1057,35 @@ form input::placeholder {
   color: #0056b3;
   text-decoration: none;
 }
+
+/* pied de page */
+.footer {
+  text-align: center;
+  padding: 15px 0;
+ 
+  font-size: 0.9em;
+  color: #d1d1e0; /* Texte dans un gris clair */
+  margin-top: 20px;
+}
+
+.footer p {
+  margin: 5px 0;
+}
+
+.footer-link {
+  color: #d81b60; /* Utilisation de la couleur principale */
+  text-decoration: none;
+  margin: 0 5px;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #ff5f7a; /* Couleur légèrement plus vive au survol */
+  text-decoration: underline;
+}
+
+.footer span {
+  color: #d1d1e0; /* Couleur du séparateur "|" */
+  margin: 0 5px;
+}
+
