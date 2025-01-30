@@ -442,12 +442,12 @@ function adjustUserLevel(comfortLevel) {
   console.log(`Comfort Level: ${comfortLevel}, Level Change: ${levelChange}, New Level: ${userLevel}, Previous Level: ${previousLevel}`);
 
   if (levelChange > 0 && userLevel > previousLevel) {
-    if (userLevel === 1.1) return { message: "Level up : Little crush", type: "up" };
-    if (userLevel === 1.7) return { message: "Level up : Big crush", type: "up" };
-    if (userLevel === 2.2) return { message: "Level up : Perfect crush", type: "up" };
+    if (userLevel === 1.1) return { message: "Bravo, tu lui plaît.", type: "up" };
+    if (userLevel === 1.7) return { message: "Elle est folle de toi ", type: "up" };
+    if (userLevel === 2.2) return { message: "Wow, tu es son crush parfait !", type: "up" };
   } else if (levelChange < 0 && previousLevel > userLevel) {
-    if (userLevel < 1.2) return { message: "Level down : Little crush", type: "down" };
-    if (userLevel < 1.8) return { message: "Level down : Big crush", type: "down" };
+    if (userLevel < 1.2) return { message: "Tu baisses dans son estime", type: "down" };
+    if (userLevel < 1.8) return { message: "Elle n'a pas aimé ta réponse", type: "down" };
   }
 
   return null;
