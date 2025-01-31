@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Menu Hamburger -->
+  <nav class="menu">
+    <button id="menu-toggle" class="menu-toggle">
+      <span class="hamburger"></span>
+    </button>
+    <ul id="menu-items" class="menu-items hidden">
+      <li><a href="index.html">Find your crush</a></li>
+      <li><a href="profile.html">Your profile</a></li>
+      <li><a href="premium.html">Premium</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="container premium-page">
+    <h1 class="p-title">Go Premium</h1>
+    <p class="p-description">
+      Unlock unlimited conversations, premium photos, and exclusive content with your favorite AI crush.
+    </p>
+
+    <!-- Section des plans -->
+    <div class="pricing-section">
+      <div class="pricing-card">
+        <h2>Monthly Plan</h2>
+        <p class="price">$9.90/month</p>
+        <p>Billed monthly, cancel anytime.</p>
+        <button id="monthlyCheckoutButton" class="checkout-button">Get Monthly Plan</button>
+      </div>
+      <div class="pricing-card popular">
+        <h2>Annual Plan</h2>
+        <p class="price">$6.58/month</p>
+        <p>Save 35% with our yearly plan!</p>
+        <button id="annualCheckoutButton" class="checkout-button">Get Annual Plan</button>
+      </div>
+    </div>
+
+  <!-- Section des garanties -->
+<div class="guarantees-section">
+  <div class="guarantee-item">
+    <div class="shield-icon">
+      <i class="fas fa-shield-alt"></i>
+      <span class="check-icon">✔</span>
+    </div>
+    <p>No adult transactions on your bank</p>
+  </div>
+  <div class="guarantee-item">
+    <div class="shield-icon">
+      <i class="fas fa-shield-alt"></i>
+      <span class="check-icon">✔</span>
+    </div>
+    <p>Cancel at any time, without any fees</p>
+  </div>
+</div>
+
+
+    <!-- Section des avantages -->
+    <div class="premium-benefits">
+      <ul class="benefit-list">
+        <li><span class="benefit-icon"></span> Unlimited chat messages</li>
+        <li><span class="benefit-icon"></span> Remove image blur</li>
+        <li><span class="benefit-icon"></span> Unlimited images</li>
+        <li><span class="benefit-icon"></span> Unlock nudes</li>
+        <li><span class="benefit-icon"></span> Unlock all AI characters</li>
+        <li><span class="benefit-icon"></span> New AI Character every month</li>
+        <li><span class="benefit-icon"></span> No history of your messages</li>
+
+      </ul>
+    </div>
+  </div>
+ <!-- Icônes de sécurité -->
+<div class="security-section">
+  <div class="security-item">
+    <i class="fas fa-lock"></i>
+    <p>100% Antivirus Secured</p>
+  </div>
+  <div class="security-item">
+    <i class="fas fa-mask"></i>
+    <p>Privacy in Bank Statement</p>
+  </div>
+</div>
+
+
+
+
+  <!-- Inclure les fichiers JavaScript -->
+  <script type="module" src="./scripts/menu.js"></script>
+  <script type="module" src="./scripts/stripe-frontend.js"></script>
+</body>
+</html>

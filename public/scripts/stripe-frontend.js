@@ -124,11 +124,11 @@ async function displaySubscriptionInfo() {
         const subscriptionContainer = document.querySelector('.profile-section.subscription');
 
         if (data.status === 'inactive') {
-            subscriptionContainer.innerHTML = '<p>You have no active subscription.</p>';
+            subscriptionContainer.innerHTML = '<p>Aucun abonnement actif.</p>';
         } else {
             subscriptionContainer.innerHTML = `
-                <p>Current subscription: ${data.subscription.amount} €/${data.subscription.interval}</p>
-                ${data.status === 'cancelled' ? '<p>Your subscription is set to cancel at the end of the billing period.</p>' : ''}
+                <p>Abonnement actuel : ${data.subscription.amount} €/${data.subscription.interval}</p>
+                ${data.status === 'cancelled' ? '<p>Ton abonnement sera annulé à la fin de la période de facturation.</p>' : ''}
             `;
         }
     } catch (error) {

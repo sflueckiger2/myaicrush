@@ -50,7 +50,7 @@ app.post('/api/signup', async (req, res) => {
         // Vérifier si l'utilisateur existe déjà
         const existingUser = await users.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'Un compte avec cet email existe déjà' });
         }
 
         // Générer un hash pour le mot de passe
