@@ -40,6 +40,8 @@ export function closeProfileModal() {
   }
 }
 
+
+if (window.location.pathname.includes('profile.html')) {
 // Gérer l'état de connexion pour la page profile.html
 document.addEventListener('DOMContentLoaded', () => {
   const profileInfo = document.getElementById('profile-info');
@@ -186,6 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+}
+
 
 // Fonction générique pour effectuer des requêtes fetch
 async function fetchRequest(url, body) {

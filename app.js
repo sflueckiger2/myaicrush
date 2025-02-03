@@ -84,13 +84,13 @@ app.post('/api/login', async (req, res) => {
       // Rechercher l'utilisateur par email
       const user = await users.findOne({ email });
       if (!user) {
-          return res.status(401).json({ message: 'Invalid email or password' });
+          return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
 
       // Comparer le mot de passe fourni avec le mot de passe haché stocké
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-          return res.status(401).json({ message: 'Invalid email or password' });
+          return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
 
       // Réponse avec les informations de l'utilisateur (sans le mot de passe)
