@@ -385,35 +385,79 @@ async function addOrFindUser(email) {
 
 
 
-// Récupérer une image aléatoire pour le personnage actif
-function getRandomCharacterImage() {
+// Récupérer une image aléatoire pour le personnage actif (Base64)
+
+
+const sharp = require('sharp');
+
+async function getRandomCharacterImage(isPremium, userLevel) {
   const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase());
   let levelFolder;
 
   if (userLevel < 1.7) {
     levelFolder = `${sanitizedCharacterName}1`; // Little Crush
-} else if (userLevel < 2.2) {
+  } else if (userLevel < 2.2) {
     levelFolder = `${sanitizedCharacterName}2`; // Big Crush
-} else {
+  } else {
     levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
-}
+  }
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
+  console.log(`📂 Chemin du dossier image : ${imageDir}`);
 
   try {
+    // Vérifier que le dossier existe
+    if (!fs.existsSync(imageDir)) {
+      console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
+      return null;
+    }
+
+    // Lire les fichiers dans le dossier
     const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
-    if (images.length > 0) {
-      const randomImage = images[Math.floor(Math.random() * images.length)];
-      return `/images/${sanitizedCharacterName}/${levelFolder}/${randomImage}`;
-    } else {
-      console.error(`Erreur : Aucune image trouvée dans ${imageDir}`);
+    if (images.length === 0) {
+      console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
+      return null;
+    }
+
+    // Sélectionner une image au hasard
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    const imagePath = path.join(imageDir, randomImage);
+    console.log("📸 Image sélectionnée :", imagePath);
+
+    // Vérifier si le fichier existe
+    if (!fs.existsSync(imagePath)) {
+      console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
+      return null;
+    }
+
+    // Charger l'image avec sharp
+    try {
+      const image = sharp(imagePath);
+      console.log("✅ Image chargée avec sharp :", imagePath);
+
+      let processedImage;
+      if (!isPremium && userLevel >= 1.1) {
+        console.log("💨 Application du floutage sur l'image...");
+        processedImage = await image.blur(10).toBuffer();
+      } else {
+        processedImage = await image.toBuffer();
+      }
+
+      console.log("✅ Image traitée avec succès.");
+      return {
+        image: `data:image/jpeg;base64,${processedImage.toString('base64')}`,
+        blurred: !isPremium,
+      };
+    } catch (err) {
+      console.error(`❌ Erreur lors du traitement de l'image avec sharp :`, err);
       return null;
     }
   } catch (err) {
-    console.error(`Erreur : Le dossier ${imageDir} est introuvable ou inaccessible.`, err);
+    console.error(`❌ Erreur générale lors de la récupération ou du traitement de l'image :`, err);
     return null;
   }
 }
+
 
 
 // Extraire le niveau de confort depuis la réponse du bot
@@ -455,15 +499,26 @@ function adjustUserLevel(comfortLevel) {
 
 // Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {
-  const userMessage = req.body.message;
-
-  if (!userMessage) {
-    return res.status(400).json({ reply: "Votre message est vide. Veuillez envoyer un message valide." });
-  }
-
-  addMessageToHistory("user", userMessage);
+  console.log("📩 Requête reçue sur /message", req.body); // Log du message reçu
 
   try {
+    const userMessage = req.body.message;
+
+    if (!userMessage) {
+      console.error("❌ Erreur : message vide");
+      return res.status(400).json({ reply: "Votre message est vide. Veuillez envoyer un message valide." });
+    }
+
+    console.log("💬 Message utilisateur :", userMessage);
+
+    addMessageToHistory("user", userMessage);
+
+    // Vérification du statut premium (ajoute ici une vraie logique si nécessaire)
+    const isPremium = true; // Tu peux remplacer cette valeur par un vrai check premium
+    console.log("🌟 Statut premium:", isPremium);
+    console.log("📊 Niveau utilisateur:", userLevel);
+
+    // Préparer le prompt pour OpenAI
     const userLevelDescription = userLevel >= 1.1 
       ? `The user is at the ${
           userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
@@ -481,13 +536,16 @@ app.post('/message', async (req, res) => {
 
       ${userLevelDescription}
 
-    After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
+      After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
     `;
 
+    // Construire le contexte du chat pour OpenAI
     const messages = [
       { role: "system", content: systemPrompt },
       ...conversationHistory,
     ];
+
+    console.log("📡 Envoi du prompt à OpenAI...");
 
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
@@ -512,66 +570,73 @@ app.post('/message', async (req, res) => {
       return res.status(500).json({ reply: "Désolé, la réponse n'a pas pu être obtenue." });
     }
 
+    console.log("🤖 Réponse reçue d'OpenAI :", botReply);
+
     addMessageToHistory("assistant", botReply);
 
-    // Extraire le confort et mettre à jour le niveau utilisateur
+    // Extraire le niveau de confort et ajuster le niveau utilisateur
     const comfortLevel = extractComfortLevel(botReply);
     const levelUpdate = adjustUserLevel(comfortLevel);
 
-    // Nettoyer le message pour supprimer la mention de confort
+    // Nettoyer le message de la mention de confort
     botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
 
-
+    // Déterminer si une photo doit être envoyée
     let sendPhoto = botReply.includes("[PHOTO]");
-
-    // Vérification du niveau pour l'envoi des photos
     if (!sendPhoto) {
       if (userLevel >= 1.1 && userLevel < 1.7 && !photoSentAtLittleCrush) {
         sendPhoto = true;
         photoSentAtLittleCrush = true;
-        photoSentAtBigCrush = false; // Réinitialise les autres
-        photoSentAtPerfectCrush = false;
       } else if (userLevel >= 1.7 && userLevel < 2.2 && !photoSentAtBigCrush) {
         sendPhoto = true;
         photoSentAtBigCrush = true;
-        photoSentAtLittleCrush = false;
-        photoSentAtPerfectCrush = false;
       } else if (userLevel >= 2.2 && !photoSentAtPerfectCrush) {
         sendPhoto = true;
         photoSentAtPerfectCrush = true;
-        photoSentAtLittleCrush = false;
-        photoSentAtBigCrush = false;
       }
     }
 
-    // Nettoyer la balise photo avant d'envoyer la réponse
+    // Nettoyer le tag PHOTO avant d'envoyer la réponse
     botReply = botReply.replace("[PHOTO]", "").trim();
 
     // Préparer la réponse JSON
-    const responseData = { reply: botReply };
+    let responseData = { reply: botReply };
 
-    // Ajouter le message de mise à jour de niveau (le cas échéant)
     if (levelUpdate) {
       responseData.levelUpdateMessage = levelUpdate.message;
       responseData.levelUpdateType = levelUpdate.type;
     }
 
-    // Ajouter une image si une photo doit être envoyée
+    // Ajouter une image encodée en Base64 si une photo doit être envoyée
     if (sendPhoto) {
-      const imageUrl = getRandomCharacterImage();
-      if (imageUrl) {
-        responseData.imageUrl = imageUrl;
+      console.log("📸 Envoi d'une image...");
+
+      const imageResult = await getRandomCharacterImage(isPremium, userLevel);
+
+      if (imageResult && imageResult.image) {
+        responseData.imageUrl = imageResult.image; // Image encodée en Base64
+        console.log("✅ Image envoyée avec succès.");
+
+        if (imageResult.blurred) {
+          responseData.reply += " (Image floutée)";
+        } else {
+          responseData.reply += " (Image normale)";
+        }
       } else {
-        responseData.reply += " (sorry, I don't have a picture for you)";
+        console.error("⚠️ Aucune image trouvée !");
+        responseData.reply += " (Désolé, aucune image disponible)";
       }
     }
 
+    console.log("🚀 Réponse envoyée :", responseData);
     res.json(responseData);
+
   } catch (error) {
-    console.error("Erreur lors de l'appel à l'API OpenAI:", error.response ? error.response.data : error.message);
-    res.status(500).json({ reply: "Sorry, an error has occurred." });
+    console.error("❌ ERREUR dans l'endpoint /message :", error);
+    res.status(500).json({ reply: "Erreur interne du serveur." });
   }
 });
+
 
 
 // ENDPOINT pour réinitialiser le niveau UTILISATEUR BACK-BTN
