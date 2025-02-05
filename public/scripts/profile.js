@@ -40,58 +40,139 @@ export function closeProfileModal() {
   }
 }
 
-
+// Gérer l'état de connexion et le formulaire sur profile.html uniquement
 if (window.location.pathname.includes('profile.html')) {
-// Gérer l'état de connexion pour la page profile.html
+  document.addEventListener('DOMContentLoaded', () => {
+    const profileInfo = document.getElementById('profile-info');
+    const loginForm = document.getElementById('login-form');
+    const signinContainer = document.getElementById('signin-container');
+    const signupContainer = document.getElementById('signup-container');
+    const signupForm = document.getElementById('signup-form');
+    const userEmailSpan = document.getElementById('user-email');
+    const logoutButton = document.getElementById('logout-button');
+    const changePasswordForm = document.getElementById('change-password-form');
+
+    // Vérifier si l'utilisateur est connecté
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (user) {
+      if (loginForm) loginForm.classList.add('hidden');
+      if (signupContainer) signupContainer.classList.add('hidden');
+      if (profileInfo) profileInfo.classList.remove('hidden');
+      if (userEmailSpan) userEmailSpan.textContent = user.email;
+    } else {
+      if (profileInfo) profileInfo.classList.add('hidden');
+      if (loginForm) loginForm.classList.remove('hidden');
+      if (signupContainer) signupContainer.classList.remove('hidden');
+    }
+
+    // Gérer la déconnexion
+    if (logoutButton) {
+      logoutButton.addEventListener('click', () => {
+        localStorage.removeItem('user');
+        location.reload();
+      });
+    }
+
+    // Gérer la soumission du formulaire de changement de mot de passe
+    if (changePasswordForm) {
+      changePasswordForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        if (newPassword !== confirmPassword) {
+          alert("New password and confirmation do not match!");
+          return;
+        }
+
+        try {
+          const response = await fetchRequest('/api/change-password', {
+            email: user.email,
+            currentPassword,
+            newPassword,
+          });
+
+          if (response.ok) {
+            alert("Password successfully changed!");
+            changePasswordForm.reset();
+          } else {
+            const errorData = await response.json();
+            alert(errorData.message || 'Failed to change password.');
+          }
+        } catch (error) {
+          console.error('Error changing password:', error);
+          alert('An error occurred. Please try again.');
+        }
+      });
+    }
+  });
+}
+
+// Gérer la navigation entre "Sign In" et "Sign Up" sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {
-  const profileInfo = document.getElementById('profile-info');
-  const loginForm = document.getElementById('login-form');
-  const signinContainer = document.getElementById('signin-container');
-  const signupContainer = document.getElementById('signup-container');
-  const signupForm = document.getElementById('signup-form');
-  const userEmailSpan = document.getElementById('user-email');
-  const logoutButton = document.getElementById('logout-button');
-  const changePasswordForm = document.getElementById('change-password-form');
-
-  // Vérifier si l'utilisateur est connecté
-  const user = JSON.parse(localStorage.getItem('user'));
-
-  if (user) {
-    // Si l'utilisateur est connecté
-    if (loginForm) loginForm.classList.add('hidden');
-    if (signupContainer) signupContainer.classList.add('hidden');
-    if (profileInfo) profileInfo.classList.remove('hidden');
-    if (userEmailSpan) userEmailSpan.textContent = user.email;
-  } else {
-    // Si l'utilisateur n'est pas connecté
-    if (profileInfo) profileInfo.classList.add('hidden');
-    if (loginForm) loginForm.classList.remove('hidden');
-    if (signupContainer) signupContainer.classList.remove('hidden');
-  }
-
-  // Gestion de la navigation entre "Sign In" et "Sign Up"
   const showSigninLink = document.getElementById('show-signin');
   const showSignupLink = document.getElementById('show-signup');
+  const signinContainer = document.getElementById('signin-container');
+  const signupContainer = document.getElementById('signup-container');
 
-  if (showSigninLink) {
+  if (showSigninLink && signinContainer && signupContainer) {
     showSigninLink.addEventListener('click', (e) => {
       e.preventDefault();
       console.log('Switching to Sign In form');
-      signupContainer.classList.add('hidden');
-      signinContainer.classList.remove('hidden');
+      signupContainer.style.display = 'none';  // On cache l'inscription
+      signinContainer.style.display = 'block'; // On montre la connexion
     });
   }
 
-  if (showSignupLink) {
+  if (showSignupLink && signinContainer && signupContainer) {
     showSignupLink.addEventListener('click', (e) => {
       e.preventDefault();
       console.log('Switching to Sign Up form');
-      signinContainer.classList.add('hidden');
-      signupContainer.classList.remove('hidden');
+      signinContainer.style.display = 'none';  // On cache la connexion
+      signupContainer.style.display = 'block'; // On montre l'inscription
     });
   }
+});
 
-  // Gérer la soumission du formulaire de connexion
+
+// Gérer la soumission du formulaire d'inscription sur toutes les pages
+document.addEventListener('DOMContentLoaded', () => {
+  const signupForm = document.getElementById('signup-form');
+
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      try {
+        const response = await fetchRequest('/api/signup', { email, password });
+
+        if (response.ok) {
+          const data = await response.json();
+          signupForm.reset(); // Réinitialise le formulaire
+          localStorage.setItem('user', JSON.stringify({ email })); // Stocker l'utilisateur
+          window.location.href = 'index.html'; // Rediriger vers la page principale
+        } else {
+          const errorData = await response.json();
+          alert(errorData.message || 'Signup failed');
+        }
+      } catch (error) {
+        console.error('Error during signup:', error);
+        alert('An error occurred. Please try again.');
+      }
+    });
+  }
+});
+
+// Gérer la soumission du formulaire de connexion sur toutes les pages
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('login-form');
+
   if (loginForm) {
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -116,90 +197,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // Gérer la soumission du formulaire d'inscription
-  if (signupForm) {
-    signupForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-
-      try {
-        const response = await fetchRequest('/api/signup', { email, password });
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          signupForm.reset(); // Réinitialise le formulaire
-          localStorage.setItem('user', JSON.stringify({ email })); // Stocker l'utilisateur
-          window.location.href = 'index.html'; // Rediriger vers la page principale
-        } else {
-          const errorData = await response.json();
-          alert(errorData.message || 'Signup failed');
-        }
-      } catch (error) {
-        console.error('Error during signup:', error);
-        alert('An error occurred. Please try again.');
-      }
-    });
-  }
-
-  // Gérer la déconnexion
-  if (logoutButton) {
-    logoutButton.addEventListener('click', () => {
-      localStorage.removeItem('user');
-      location.reload(); // Recharger la page
-    });
-  }
-
-  // Gérer la soumission du formulaire de changement de mot de passe
-  if (changePasswordForm) {
-    changePasswordForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const currentPassword = document.getElementById('current-password').value;
-      const newPassword = document.getElementById('new-password').value;
-      const confirmPassword = document.getElementById('confirm-password').value;
-
-      if (newPassword !== confirmPassword) {
-        alert("New password and confirmation do not match!");
-        return;
-      }
-
-      try {
-        const response = await fetchRequest('/api/change-password', {
-          email: user.email,
-          currentPassword,
-          newPassword,
-        });
-
-        if (response.ok) {
-          alert("Password successfully changed!");
-          changePasswordForm.reset();
-        } else {
-          const errorData = await response.json();
-          alert(errorData.message || 'Failed to change password.');
-        }
-      } catch (error) {
-        console.error('Error changing password:', error);
-        alert('An error occurred. Please try again.');
-      }
-    });
-  }
 });
-}
-
 
 // Fonction générique pour effectuer des requêtes fetch
 async function fetchRequest(url, body) {
-  const BASE_URL = window.location.origin; // URL dynamique
+  const BASE_URL = window.location.origin;
   return await fetch(`${BASE_URL}${url}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
-
