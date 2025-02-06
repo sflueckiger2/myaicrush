@@ -26,6 +26,7 @@ const bcrypt = require('bcrypt');
 const sharp = require('sharp');
 const crypto = require('crypto');
 const imageTokens = new Map(); // Stocker les images temporairement
+let firstFreeImageSent = new Map(); // Stocke les utilisateurs qui ont déjà reçu une image non floutée
 
 
 // Générer un token sécurisé pour accéder à l'image
@@ -420,51 +421,66 @@ async function addOrFindUser(email) {
 
 
 
-// ✅ Nouvelle fonction sécurisée
-async function getRandomCharacterImage(isPremium, userLevel) {
+async function getRandomCharacterImage(email, isPremium, userLevel) {
   const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase());
   let levelFolder;
 
   if (userLevel < 1.7) {
-      levelFolder = `${sanitizedCharacterName}1`; // Little Crush
+    levelFolder = `${sanitizedCharacterName}1`; // Little Crush
   } else if (userLevel < 2.2) {
-      levelFolder = `${sanitizedCharacterName}2`; // Big Crush
+    levelFolder = `${sanitizedCharacterName}2`; // Big Crush
   } else {
-      levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
+    levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
   }
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
   console.log(`📂 Chemin du dossier image : ${imageDir}`);
 
   try {
-      if (!fs.existsSync(imageDir)) {
-          console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
-          return null;
-      }
-
-      const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
-      if (images.length === 0) {
-          console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
-          return null;
-      }
-
-      const randomImage = images[Math.floor(Math.random() * images.length)];
-      const imagePath = path.join(imageDir, randomImage);
-      console.log("📸 Image sélectionnée :", imagePath);
-
-      if (!fs.existsSync(imagePath)) {
-          console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
-          return null;
-      }
-
-      const isBlurred = !isPremium && userLevel >= 1.1;
-      return { token: generateImageToken(imagePath, isBlurred) };
-
-  } catch (err) {
-      console.error(`❌ Erreur lors de la récupération de l'image :`, err);
+    if (!fs.existsSync(imageDir)) {
+      console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
       return null;
+    }
+
+    const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
+    if (images.length === 0) {
+      console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
+      return null;
+    }
+
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    const imagePath = path.join(imageDir, randomImage);
+    console.log("📸 Image sélectionnée :", imagePath);
+
+    if (!fs.existsSync(imagePath)) {
+      console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
+      return null;
+    }
+
+    // ✅ Vérifier si c'est la première image envoyée à l'utilisateur non premium
+    let isBlurred = !isPremium;
+    console.log(`📧 Vérification pour ${email} - Premium : ${isPremium}`);
+    
+    if (!isPremium) {
+      if (!firstFreeImageSent.has(email)) {
+        console.log("🎁 Première image claire offerte à :", email);
+        isBlurred = false; // Pas de flou pour la première image
+        firstFreeImageSent.set(email, true); // Marquer qu'une image claire a déjà été envoyée
+      } else {
+        console.log("🔒 Image floutée car l'utilisateur a déjà reçu une image gratuite :", email);
+      }
+    }
+
+    console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
+    
+    return { token: generateImageToken(imagePath, isBlurred) };
+  } catch (err) {
+    console.error(`❌ Erreur lors de la récupération de l'image :`, err);
+    return null;
   }
 }
+
+
 
 
 app.get('/get-image/:token', async (req, res) => {
@@ -660,7 +676,12 @@ app.post('/message', async (req, res) => {
     if (sendPhoto) {
       console.log("📸 Envoi d'une image...");
   
-      const imageResult = await getRandomCharacterImage(isPremium, userLevel);
+      console.log("📧 Email transmis à getRandomCharacterImage :", email);
+console.log("🌟 Statut premium :", isPremium);
+
+const imageResult = await getRandomCharacterImage(email, isPremium, userLevel);
+
+
   
       if (imageResult && imageResult.token) {
           responseData.imageUrl = `/get-image/${imageResult.token}`; // Lien sécurisé

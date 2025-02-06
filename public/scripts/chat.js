@@ -114,7 +114,6 @@ export function addBotMessage(botReply, messagesContainer) {
     scrollToBottom(messagesContainer);
 }
 
-
 export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
@@ -122,12 +121,18 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
     const imageElement = document.createElement('img');
     imageElement.src = `${BASE_URL}${imageUrl}`; // Charge l’image via l’endpoint sécurisé
-
     imageElement.alt = 'Image générée par l\'IA';
+    imageElement.classList.add('chat-image'); // 🔥 Ajout d'une classe pour éviter le dépassement
 
-    if (!isPremium) {  // Si l'utilisateur n'est PAS premium
-        imageElement.classList.add('blurred-image'); 
-    
+    // Vérifier si c'est la première image envoyée à un non-premium
+    if (!isPremium && !firstPhotoSent) {
+        console.log("🎁 Première image non floutée affichée !");
+        firstPhotoSent = true; // Marquer qu'une image a été envoyée sans flou
+        messageElement.appendChild(imageElement);
+    } else if (!isPremium) {
+        console.log("💨 Image floutée affichée pour un utilisateur non premium.");
+        imageElement.classList.add('blurred-image');
+
         // Ajouter le bouton "Unlock"
         const unlockButton = document.createElement('button');
         unlockButton.textContent = 'Unlock';
@@ -135,23 +140,25 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
         unlockButton.onclick = () => {
             window.location.href = '/premium.html'; // Rediriger vers la page premium
         };
-    
+
         // Conteneur pour l'image + bouton
         const imageContainer = document.createElement('div');
         imageContainer.classList.add('image-container');
         imageContainer.appendChild(imageElement);
         imageContainer.appendChild(unlockButton); // Ajouter le bouton
-    
+
         messageElement.appendChild(imageContainer);
-    } else {  // Si l'utilisateur EST premium
+    } else {
+        console.log("🌟 Image claire affichée pour un premium.");
         imageElement.classList.add('clear-image');
         messageElement.appendChild(imageElement);
     }
-    
 
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
+
+
 
 
 

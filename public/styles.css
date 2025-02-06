@@ -1091,3 +1091,16 @@ form input::placeholder {
   margin: 0 5px;
 }
 
+
+.chat-image {
+  max-width: 100%;  /* Empêche l’image de dépasser */
+  height: auto;
+  border-radius: 10px;
+}
+
+.image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
