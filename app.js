@@ -33,6 +33,9 @@ async function connectToDB() {
 connectToDB();
 
 
+
+
+
 //ROUTE pour l'inscription via email classique 
 
 
@@ -616,16 +619,12 @@ app.post('/message', async (req, res) => {
       if (imageResult && imageResult.image) {
         responseData.imageUrl = imageResult.image; // Image encodée en Base64
         console.log("✅ Image envoyée avec succès.");
-
-        if (imageResult.blurred) {
-          responseData.reply += " (Image floutée)";
-        } else {
-          responseData.reply += " (Image normale)";
-        }
-      } else {
+        // Aucune mention ajoutée, ni "Image floutée" ni "Image normale"
+    } else {
         console.error("⚠️ Aucune image trouvée !");
-        responseData.reply += " (Désolé, aucune image disponible)";
-      }
+        responseData.reply += " (Désolé, aucune image disponible)"; // Conserver ce message
+    }
+    
     }
 
     console.log("🚀 Réponse envoyée :", responseData);
