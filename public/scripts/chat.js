@@ -12,6 +12,8 @@ const BASE_URL = window.location.origin;
 // Vérifie si l'utilisateur est connecté
 function isUserLoggedIn() {
     const user = JSON.parse(localStorage.getItem('user')); 
+    console.log("🔍 Utilisateur récupéré depuis localStorage :", user);
+
     return user !== null && user.email; 
 }
 
@@ -35,6 +37,11 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
         // Afficher l'indicateur de saisie
         simulateTypingIndicator(messagesContainer);
 
+        console.log("📨 Envoi du message avec :", { 
+            message: userMessage, 
+            email: user?.email // Vérifie si email est défini
+        });
+        
         // Vérifier si l'utilisateur est premium
         fetch(`${BASE_URL}/api/is-premium`, {
             method: 'POST',
@@ -58,8 +65,12 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             fetch(`${BASE_URL}/message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage }),
+                body: JSON.stringify({ 
+                    message: userMessage, 
+                    email: user?.email // 🔥 Ajoute l'email ici !
+                }),
             })
+            
             .then(response => response.json())
             .then(data => {
                 hideTypingIndicator(); // Masque l'indicateur après réception de la réponse
@@ -110,30 +121,33 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     messageElement.textContent = botReply;
 
     const imageElement = document.createElement('img');
-    imageElement.src = imageUrl;
+    imageElement.src = `${BASE_URL}${imageUrl}`; // Charge l’image via l’endpoint sécurisé
+
     imageElement.alt = 'Image générée par l\'IA';
 
-    if (!isPremium && firstPhotoSent) {
+    if (!isPremium) {  // Si l'utilisateur n'est PAS premium
         imageElement.classList.add('blurred-image'); 
+    
+        // Ajouter le bouton "Unlock"
         const unlockButton = document.createElement('button');
         unlockButton.textContent = 'Unlock';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
-            window.location.href = '/premium.html';
+            window.location.href = '/premium.html'; // Rediriger vers la page premium
         };
-
+    
+        // Conteneur pour l'image + bouton
         const imageContainer = document.createElement('div');
         imageContainer.classList.add('image-container');
         imageContainer.appendChild(imageElement);
-        imageContainer.appendChild(unlockButton);
-
+        imageContainer.appendChild(unlockButton); // Ajouter le bouton
+    
         messageElement.appendChild(imageContainer);
-    } else {
+    } else {  // Si l'utilisateur EST premium
         imageElement.classList.add('clear-image');
         messageElement.appendChild(imageElement);
-
-        if (!firstPhotoSent) firstPhotoSent = true;
     }
+    
 
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);

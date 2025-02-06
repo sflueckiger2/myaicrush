@@ -9,10 +9,37 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
 app.use(express.json());
-app.use(express.static('public')); // Servir les fichiers du dossier "public"
+// Middleware pour servir les fichiers statiques, sauf pour les images
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+      if (filePath.includes('/images/')) {
+          // Bloque l'accès direct aux images
+          res.status(403).send('Access Denied');
+      }
+  }
+}));
+
+
 const { createCheckoutSession, cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js');
 const { MongoClient } = require('mongodb'); // Import de MongoClient
 const bcrypt = require('bcrypt');
+const sharp = require('sharp');
+const crypto = require('crypto');
+const imageTokens = new Map(); // Stocker les images temporairement
+
+
+// Générer un token sécurisé pour accéder à l'image
+function generateImageToken(imagePath, isBlurred) {
+  const token = crypto.randomBytes(20).toString('hex');
+  imageTokens.set(token, { imagePath, isBlurred });
+
+  // Supprimer le token après 10 minutes
+  setTimeout(() => imageTokens.delete(token), 10 * 60 * 1000);
+
+  return token;
+}
+
+
 
 // MongoDB connection string
 const uri = process.env.MONGO_URI;
@@ -391,75 +418,87 @@ async function addOrFindUser(email) {
 // Récupérer une image aléatoire pour le personnage actif (Base64)
 
 
-const sharp = require('sharp');
 
+
+// ✅ Nouvelle fonction sécurisée
 async function getRandomCharacterImage(isPremium, userLevel) {
   const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase());
   let levelFolder;
 
   if (userLevel < 1.7) {
-    levelFolder = `${sanitizedCharacterName}1`; // Little Crush
+      levelFolder = `${sanitizedCharacterName}1`; // Little Crush
   } else if (userLevel < 2.2) {
-    levelFolder = `${sanitizedCharacterName}2`; // Big Crush
+      levelFolder = `${sanitizedCharacterName}2`; // Big Crush
   } else {
-    levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
+      levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
   }
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
   console.log(`📂 Chemin du dossier image : ${imageDir}`);
 
   try {
-    // Vérifier que le dossier existe
-    if (!fs.existsSync(imageDir)) {
-      console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
-      return null;
-    }
-
-    // Lire les fichiers dans le dossier
-    const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
-    if (images.length === 0) {
-      console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
-      return null;
-    }
-
-    // Sélectionner une image au hasard
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-    const imagePath = path.join(imageDir, randomImage);
-    console.log("📸 Image sélectionnée :", imagePath);
-
-    // Vérifier si le fichier existe
-    if (!fs.existsSync(imagePath)) {
-      console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
-      return null;
-    }
-
-    // Charger l'image avec sharp
-    try {
-      const image = sharp(imagePath);
-      console.log("✅ Image chargée avec sharp :", imagePath);
-
-      let processedImage;
-      if (!isPremium && userLevel >= 1.1) {
-        console.log("💨 Application du floutage sur l'image...");
-        processedImage = await image.blur(10).toBuffer();
-      } else {
-        processedImage = await image.toBuffer();
+      if (!fs.existsSync(imageDir)) {
+          console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
+          return null;
       }
 
-      console.log("✅ Image traitée avec succès.");
-      return {
-        image: `data:image/jpeg;base64,${processedImage.toString('base64')}`,
-        blurred: !isPremium,
-      };
-    } catch (err) {
-      console.error(`❌ Erreur lors du traitement de l'image avec sharp :`, err);
-      return null;
-    }
+      const images = fs.readdirSync(imageDir).filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
+      if (images.length === 0) {
+          console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
+          return null;
+      }
+
+      const randomImage = images[Math.floor(Math.random() * images.length)];
+      const imagePath = path.join(imageDir, randomImage);
+      console.log("📸 Image sélectionnée :", imagePath);
+
+      if (!fs.existsSync(imagePath)) {
+          console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
+          return null;
+      }
+
+      const isBlurred = !isPremium && userLevel >= 1.1;
+      return { token: generateImageToken(imagePath, isBlurred) };
+
   } catch (err) {
-    console.error(`❌ Erreur générale lors de la récupération ou du traitement de l'image :`, err);
-    return null;
+      console.error(`❌ Erreur lors de la récupération de l'image :`, err);
+      return null;
   }
 }
+
+
+app.get('/get-image/:token', async (req, res) => {
+  const { token } = req.params;
+  const imageData = imageTokens.get(token);
+
+  if (!imageData) {
+      return res.status(403).send('Access Denied');
+  }
+
+  const { imagePath, isBlurred } = imageData;
+  console.log(`📸 Chargement sécurisé de l'image : ${imagePath} (Floutée : ${isBlurred})`);
+
+  try {
+      let image = sharp(imagePath);
+
+      // Applique un flou si nécessaire
+      if (isBlurred) {
+          console.log("💨 Application du flou côté serveur...");
+          image = image.blur(50);
+      }
+
+      const imageBuffer = await image.toBuffer();
+      res.writeHead(200, {
+          'Content-Type': 'image/jpeg',
+          'Cache-Control': 'no-store', // Empêche la mise en cache
+      });
+      res.end(imageBuffer, 'binary');
+  } catch (error) {
+      console.error("❌ Erreur lors du chargement de l'image :", error);
+      res.status(500).send("Erreur lors du chargement de l'image.");
+  }
+});
+
 
 
 
@@ -502,24 +541,31 @@ function adjustUserLevel(comfortLevel) {
 
 // Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {
-  console.log("📩 Requête reçue sur /message", req.body); // Log du message reçu
+  console.log("📥 Requête reçue - Body :", req.body);
+
 
   try {
-    const userMessage = req.body.message;
+    const { message, email } = req.body;
 
-    if (!userMessage) {
-      console.error("❌ Erreur : message vide");
-      return res.status(400).json({ reply: "Votre message est vide. Veuillez envoyer un message valide." });
+    if (!message || !email) {
+      console.error("❌ Erreur : message ou email manquant !");
+      return res.status(400).json({ reply: "Votre message ou votre email est manquant." });
     }
 
-    console.log("💬 Message utilisateur :", userMessage);
+    console.log("💬 Message utilisateur :", message);
+    console.log("📧 Email utilisateur :", email);
 
-    addMessageToHistory("user", userMessage);
+    // Vérification du statut premium via `/api/is-premium`
+    const premiumResponse = await fetch(`${BASE_URL}/api/is-premium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
 
-    // Vérification du statut premium (ajoute ici une vraie logique si nécessaire)
-    const isPremium = true; // Tu peux remplacer cette valeur par un vrai check premium
-    console.log("🌟 Statut premium:", isPremium);
-    console.log("📊 Niveau utilisateur:", userLevel);
+    const { isPremium } = await premiumResponse.json();
+    console.log("🌟 Statut premium vérifié :", isPremium);
+
+    addMessageToHistory("user", message);
 
     // Préparer le prompt pour OpenAI
     const userLevelDescription = userLevel >= 1.1 
@@ -610,23 +656,21 @@ app.post('/message', async (req, res) => {
       responseData.levelUpdateType = levelUpdate.type;
     }
 
-    // Ajouter une image encodée en Base64 si une photo doit être envoyée
+    // Ajouter une image sécurisée si une photo doit être envoyée
     if (sendPhoto) {
       console.log("📸 Envoi d'une image...");
-
+  
       const imageResult = await getRandomCharacterImage(isPremium, userLevel);
-
-      if (imageResult && imageResult.image) {
-        responseData.imageUrl = imageResult.image; // Image encodée en Base64
-        console.log("✅ Image envoyée avec succès.");
-        // Aucune mention ajoutée, ni "Image floutée" ni "Image normale"
-    } else {
-        console.error("⚠️ Aucune image trouvée !");
-        responseData.reply += " (Désolé, aucune image disponible)"; // Conserver ce message
+  
+      if (imageResult && imageResult.token) {
+          responseData.imageUrl = `/get-image/${imageResult.token}`; // Lien sécurisé
+          console.log("✅ Image envoyée avec succès.");
+      } else {
+          console.error("⚠️ Aucune image trouvée !");
+          responseData.reply += " (Désolé, aucune image disponible)";
+      }
     }
-    
-    }
-
+  
     console.log("🚀 Réponse envoyée :", responseData);
     res.json(responseData);
 
@@ -635,6 +679,7 @@ app.post('/message', async (req, res) => {
     res.status(500).json({ reply: "Erreur interne du serveur." });
   }
 });
+
 
 
 
