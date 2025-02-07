@@ -10,16 +10,7 @@ const PORT = process.env.PORT || 3000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
 app.use(express.json());
 // Middleware pour servir les fichiers statiques, sauf pour les images
-app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, filePath) => {
-    if (filePath.includes('/images/')) {
-      console.log("🔒 Accès direct bloqué pour les images :", filePath);
-      res.status(403).send('Access Denied');
-    } else {
-      res.set('Cache-Control', 'public, max-age=31536000'); // Mise en cache pour JS/CSS
-    }
-  }
-}));
+app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
 
 
