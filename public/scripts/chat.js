@@ -312,6 +312,6 @@ function recreateTypingIndicator() {
         chatBox.appendChild(typingIndicator);
         console.log('Typing indicator recreated.');
     } else {
-        console.error('Chat box not found. Unable to append typing indicator.');
+        console.error('Chat box not found. ');
     }
 }
