@@ -12,6 +12,9 @@ app.use(express.json());
 // Middleware pour servir les fichiers statiques, sauf pour les images
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
+app.use('/images', express.static(path.join(__dirname, 'public/images'), {
+  maxAge: '30d' // Cache pendant 30 jours
+}));
 
 
 
@@ -491,7 +494,7 @@ app.get('/get-image/:token', async (req, res) => {
     const { imagePath, isBlurred } = imageData;
     console.log(`📸 Chargement de l'image : ${imagePath} (Floutée : ${isBlurred})`);
 
-    let image = sharp(imagePath);
+    let image = sharp(imagePath).resize({ width: 800 }).jpeg({ quality: 70 }); // Optimisation
 
     if (isBlurred) {
       console.log("💨 Application du flou...");
@@ -501,7 +504,7 @@ app.get('/get-image/:token', async (req, res) => {
     const imageBuffer = await image.toBuffer();
     res.writeHead(200, {
       'Content-Type': 'image/jpeg',
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=604800, immutable', // Cache efficace
     });
     res.end(imageBuffer, 'binary'); // Une seule réponse ici
   } catch (error) {
@@ -511,6 +514,7 @@ app.get('/get-image/:token', async (req, res) => {
     }
   }
 });
+
 
 
 
