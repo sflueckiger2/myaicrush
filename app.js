@@ -587,7 +587,7 @@ app.post('/message', async (req, res) => {
     });
 
     const { isPremium } = await premiumResponse.json();
-    console.log("🌟 Statut premium vérifié :", isPremium);
+    console.log("🌟 Statut premium OK :", isPremium);
 
     addMessageToHistory("user", message);
 
