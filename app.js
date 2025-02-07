@@ -12,12 +12,16 @@ app.use(express.json());
 // Middleware pour servir les fichiers statiques, sauf pour les images
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
-      if (filePath.includes('/images/')) {
-          // Bloque l'accès direct aux images
-          res.status(403).send('Access Denied');
-      }
+    if (filePath.includes('/images/')) {
+      console.log("🔒 Accès direct bloqué pour les images :", filePath);
+      res.status(403).send('Access Denied');
+    } else {
+      res.set('Cache-Control', 'public, max-age=31536000'); // Mise en cache pour JS/CSS
+    }
   }
 }));
+
+
 
 
 const { createCheckoutSession, cancelSubscription, getUserSubscription } = require('./public/scripts/stripe.js');
@@ -484,36 +488,40 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
 
 
 app.get('/get-image/:token', async (req, res) => {
-  const { token } = req.params;
-  const imageData = imageTokens.get(token);
-
-  if (!imageData) {
-      return res.status(403).send('Access Denied');
-  }
-
-  const { imagePath, isBlurred } = imageData;
-  console.log(`📸 Chargement sécurisé de l'image : ${imagePath} (Floutée : ${isBlurred})`);
-
   try {
-      let image = sharp(imagePath);
+    const { token } = req.params;
+    const imageData = imageTokens.get(token);
 
-      // Applique un flou si nécessaire
-      if (isBlurred) {
-          console.log("💨 Application du flou côté serveur...");
-          image = image.blur(50);
-      }
+    if (!imageData) {
+      console.error("❌ Image token invalide ou expiré.");
+      return res.status(403).send('Access Denied'); // Répondre une seule fois
+    }
 
-      const imageBuffer = await image.toBuffer();
-      res.writeHead(200, {
-          'Content-Type': 'image/jpeg',
-          'Cache-Control': 'no-store', // Empêche la mise en cache
-      });
-      res.end(imageBuffer, 'binary');
+    const { imagePath, isBlurred } = imageData;
+    console.log(`📸 Chargement de l'image : ${imagePath} (Floutée : ${isBlurred})`);
+
+    let image = sharp(imagePath);
+
+    if (isBlurred) {
+      console.log("💨 Application du flou...");
+      image = image.blur(50);
+    }
+
+    const imageBuffer = await image.toBuffer();
+    res.writeHead(200, {
+      'Content-Type': 'image/jpeg',
+      'Cache-Control': 'no-store',
+    });
+    res.end(imageBuffer, 'binary'); // Une seule réponse ici
   } catch (error) {
-      console.error("❌ Erreur lors du chargement de l'image :", error);
+    console.error("❌ Erreur lors du chargement de l'image :", error);
+    if (!res.headersSent) {
       res.status(500).send("Erreur lors du chargement de l'image.");
+    }
   }
 });
+
+
 
 
 
