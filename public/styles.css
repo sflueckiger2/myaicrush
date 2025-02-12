@@ -1104,3 +1104,25 @@ form input::placeholder {
   align-items: center;
   gap: 8px;
 }
+
+.pink{
+  color : #d81b60!important;
+  text-decoration: underline!important;
+margin:auto;
+}
+
+/* Styles pour les images envoyées par l'IA */
+img.chat-image {
+  max-width: 100%; /* Empêche l'image de dépasser la largeur du conteneur */
+  height: auto; /* Maintient les proportions */
+  display: block; /* Évite les espaces vides sous l'image */
+  margin: 10px auto; /* Centre l'image */
+  border-radius: 8px; /* Arrondi les bords pour un meilleur rendu */
+}
+
+/* Limite la taille des images sur ordinateur */
+@media screen and (min-width: 768px) {
+  img.chat-image {
+    max-width: 400px; /* Fixe une largeur maximale pour les écrans larges */
+  }
+}
