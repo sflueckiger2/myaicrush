@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <link rel="preload" as="fetch" href="characters.json" type="application/json" crossorigin="anonymous">
-
-
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="icon" href="/images/market/logo.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyAICrush</title>
   <link rel="stylesheet" href="styles.css">
+
+  <!-- ✅ Préchargement de l'image -->
+  <link rel="preload" as="image" href="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp" type="image/webp">
+
   <!-- Google Analytics (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
@@ -19,8 +19,6 @@
       dataLayer.push(arguments);
     }
     gtag('js', new Date());
-
-    // Configure Google Analytics avec ton ID
     gtag('config', 'G-FJ5S0H9B1R');
   </script>
 </head>
@@ -31,8 +29,8 @@
       <span class="hamburger"></span>
     </button>
     <ul id="menu-items" class="menu-items hidden">
-      <li><a href="index.html">Choisis ta partenaire</a></li>
-      <li><a href="profile.html">Ton profil</a></li>
+      <li><a href="index.html">Find your crush</a></li>
+      <li><a href="profile.html">Your profile</a></li>
       <li><a href="premium.html">Premium</a></li>
       <li><a href="contact.html">Contact</a></li>
     </ul>
@@ -40,16 +38,14 @@
 
   <!-- Garder le header en haut de la page, en dehors de .container -->
   <div class="header">
-    <br><h1>Choisis ta partenaire :</h1>
-    <p class="p-description">Gagne sa confiance et passe un moment inoubliable avec elle.</p>
+    <br><h1>Choose Your Crush :</h1>
+    <p class="p-description">Become her "perfect crush", and unlock unforgettable moments together</p>
   </div>
 
   <!-- Conteneur principal pour les options de chat et le chat -->
   <div class="container">
     <!-- Options de chat -->
-    <div class="chat-options" id="chat-options">
-      <!-- Les cartes des personnages seront ajoutées ici dynamiquement -->
-    </div>
+    <div class="chat-options" id="chat-options"></div>
 
     <!-- Conteneur pour les fiches de personnages -->
     <div id="character-cards-container"></div>
@@ -60,7 +56,14 @@
         <button id="back-btn">
           <i class="fa fa-arrow-left"></i>
         </button>
-        <img id="chat-profile-pic" loading="lazy" src="" alt="Profil sélectionné" class="chat-profile-pic">
+
+        <!-- ✅ Affichage d'une image temporaire pendant le chargement -->
+        <img id="chat-profile-pic" 
+             src="images/loading-placeholder.webp" 
+             data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
+             alt="Profil sélectionné" 
+             class="chat-profile-pic lazyload">
+
         <span id="chat-name">Nom de l'IA</span>
       </div>
       
@@ -74,7 +77,7 @@
       </div>
 
       <div id="input-area">
-        <input type="text" id="user-input" placeholder="Écris ton message ici...">
+        <input type="text" id="user-input" placeholder="Write your message here...">
         <button id="send-btn">
           <i class="fa fa-paper-plane"></i>
         </button>
@@ -85,42 +88,42 @@
   <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
   <div id="profile-modal" class="modal" onclick="closeProfileModal()">
     <div class="profile-content" onclick="event.stopPropagation()">
-      <!-- Bouton pour fermer -->
       <button id="close-modal-btn" class="close-modal-btn">&times;</button>
-      <img id="profile-image-full" loading="lazy" src="" alt="Profil complet" />
+      <img id="profile-image-full" src="images/loading-placeholder.webp" alt="Profil complet" />
       <h2 id="profile-name"></h2><br>
-      <p><strong>Taille :</strong> <span id="profile-height"></span></p>
-      <p><strong>Forme :</strong> <span id="profile-measurements"></span></p>
-      <p><strong>Profil :</strong> <span id="profile-ethnicity"></span></p>
+      <p><strong>Size :</strong> <span id="profile-height"></span></p>
+      <p><strong>Shape :</strong> <span id="profile-measurements"></span></p>
+      <p><strong>Profile :</strong> <span id="profile-ethnicity"></span></p>
       <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
     </div>
   </div>
 
-  <!-- Formulaire d'inscription -->
-  <div id="signup-modal" class="hidden">
-    <div id="signup-container">
-      <h2>Inscription</h2>
-      <form id="signup-form">
-        <label for="signup-email">Email :</label>
-        <input type="email" id="signup-email" name="email" required />
-        <label for="signup-password">Mot de passe :</label>
-        <input type="password" id="signup-password" name="password" required />
-        <button type="submit">S'inscrire</button>
-      </form>
-      <p id="signup-message"></p>
-    </div> 
-  </div>
-
   <!-- Pied de page -->
   <footer class="footer">
-    <p>&copy; 2025 MyAICrush. Tous droits réservés.</p>
-    
-      <a href="privacy-policy.html">Politique de Confidentialité</a>
-      <a href="terms-and-conditions.html">Conditions Générales</a>
-    
+    <p>&copy; 2025 MyAICrush. All rights reserved.</p>
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="terms-and-conditions.html">Terms & Conditions</a>
   </footer>
   
   <script type="module" src="./scripts/main.js"></script>
   <script type="module" src="./scripts/menu.js"></script>
+
+  <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const chatProfilePic = document.getElementById("chat-profile-pic");
+      if (chatProfilePic) {
+        const actualSrc = chatProfilePic.getAttribute("data-src");
+        if (actualSrc) {
+          const img = new Image();
+          img.src = actualSrc;
+          img.onload = function() {
+            chatProfilePic.src = actualSrc;
+          };
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
