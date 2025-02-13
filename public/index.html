@@ -23,7 +23,7 @@
   </script>
 </head>
 <body>
-  
+ 
   <nav class="menu">
     <button id="menu-toggle" class="menu-toggle">
       <span class="hamburger"></span>
@@ -36,39 +36,46 @@
     </ul>
   </nav>
 
+  <!-- Garder le header en haut de la page, en dehors de .container -->
   <div class="header">
     <br><h1>Choose Your Crush :</h1>
     <p class="p-description">Become her "perfect crush", and unlock unforgettable moments together</p>
   </div>
 
+  <!-- Conteneur principal pour les options de chat et le chat -->
   <div class="container">
+    <!-- Options de chat -->
     <div class="chat-options" id="chat-options"></div>
+
+    <!-- Conteneur pour les fiches de personnages -->
     <div id="character-cards-container"></div>
+
+    <!-- Zone de chat -->
     <div id="chat-box" style="display: none;">
       <div id="chat-header">
         <button id="back-btn">
           <i class="fa fa-arrow-left"></i>
         </button>
-        
-        <!-- ✅ Image avec priorisation et chargement immédiat -->
+
+        <!-- ✅ Affichage d'une image temporaire pendant le chargement -->
         <img id="chat-profile-pic" 
              src="images/loading-placeholder.webp" 
              data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
              alt="Profil sélectionné" 
-             class="chat-profile-pic lazyload"
-             fetchpriority="high"
-             loading="eager"
-             decoding="async">
-        
+             class="chat-profile-pic lazyload">
+
         <span id="chat-name">Nom de l'IA</span>
       </div>
       
       <div id="messages"></div>
+
+      <!-- Indicateur de saisie -->
       <div id="typing-indicator" class="hidden">
         <span class="dot"></span>
         <span class="dot"></span>
         <span class="dot"></span>
       </div>
+
       <div id="input-area">
         <input type="text" id="user-input" placeholder="Write your message here...">
         <button id="send-btn">
@@ -78,6 +85,20 @@
     </div>
   </div>
 
+  <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
+  <div id="profile-modal" class="modal" onclick="closeProfileModal()">
+    <div class="profile-content" onclick="event.stopPropagation()">
+      <button id="close-modal-btn" class="close-modal-btn">&times;</button>
+      <img id="profile-image-full" src="images/loading-placeholder.webp" alt="Profil complet" />
+      <h2 id="profile-name"></h2><br>
+      <p><strong>Size :</strong> <span id="profile-height"></span></p>
+      <p><strong>Shape :</strong> <span id="profile-measurements"></span></p>
+      <p><strong>Profile :</strong> <span id="profile-ethnicity"></span></p>
+      <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
+    </div>
+  </div>
+
+  <!-- Pied de page -->
   <footer class="footer">
     <p>&copy; 2025 MyAICrush. All rights reserved.</p>
     <a href="privacy-policy.html">Privacy Policy</a>
@@ -87,7 +108,7 @@
   <script type="module" src="./scripts/main.js"></script>
   <script type="module" src="./scripts/menu.js"></script>
 
-  <!-- ✅ Script pour charger l'image après le DOM chargé -->
+  <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       const chatProfilePic = document.getElementById("chat-profile-pic");
@@ -103,5 +124,6 @@
       }
     });
   </script>
+
 </body>
 </html>
