@@ -390,8 +390,10 @@ p {
   justify-content: center;
   align-items: center;
   z-index: 1000; /* Pour qu'il soit au-dessus de tout */
+  overflow-y: auto; /* Permet le scroll si besoin */
 }
 
+/* Limite la hauteur pour éviter que le contenu dépasse l'écran */
 .profile-content {
   background-color: #2b2b3d;
   padding: 20px;
@@ -400,6 +402,17 @@ p {
   color: #ffffff;
   max-width: 400px;
   width: 90%;
+  max-height: 80vh; /* Hauteur max pour ne pas dépasser l’écran */
+  overflow-y: auto; /* Active le scroll vertical si le contenu est trop long */
+}
+
+/* Ajustements sur mobile pour maximiser l'affichage */
+@media (max-width: 768px) {
+  .profile-content {
+    max-width: 95%;
+    max-height: 85vh; /* Augmente un peu la hauteur sur mobile */
+    padding: 15px;
+  }
 }
 
 .profile-content img {
@@ -407,6 +420,7 @@ p {
   border-radius: 10px;
   margin-bottom: 15px;
 }
+
 /* Style du menu */
 
 /* Style général du menu */
