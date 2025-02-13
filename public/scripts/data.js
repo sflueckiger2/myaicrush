@@ -5,19 +5,26 @@ export let characters = []; // Déclare characters comme une variable exportable
 // Fonction pour charger les personnages depuis le serveur
 export async function loadCharacters() {
   try {
-    const response = await fetch('/characters.json'); // Récupère le fichier JSON
+    const response = await fetch('/characters.json', { cache: "force-cache" }); // Optimisation du cache
     if (!response.ok) {
       throw new Error(`Erreur HTTP : ${response.status}`);
     }
     const data = await response.json(); // Convertit la réponse en JSON
     characters = data; // Met à jour la variable globale characters
-    generateChatOptions(data); // Appelle generateChatOptions avec les personnages
-    return data; // Retourne les données chargées
+
+    // Afficher immédiatement les options du chat
+    generateChatOptions(data);
+
+    // Précharger les images
+    preloadImages(data);
+
+    return data;
   } catch (error) {
     console.error('Erreur lors du chargement des personnages :', error);
     return []; // Retourne un tableau vide en cas d'erreur
   }
 }
+
 // Fonction pour changer de personnage
 export async function setCharacter(name) {
   try {
@@ -38,7 +45,7 @@ export async function setCharacter(name) {
   }
 }
 
-// fonction pour réinitialiser le niveau UTILISATEUR avec le BACK BUTTON
+// Fonction pour réinitialiser le niveau UTILISATEUR avec le BACK BUTTON
 export function resetUserLevel() {
   fetch('/resetUserLevel', {
     method: 'POST',
@@ -52,4 +59,13 @@ export function resetUserLevel() {
     .catch((error) => {
       console.error('Erreur lors de la réinitialisation du niveau utilisateur :', error);
     });
+}
+
+// ✅ Fonction pour **précharger** toutes les images des personnages
+function preloadImages(characters) {
+  characters.forEach(character => {
+    const img = new Image();
+    img.src = character.photo; // Charge l'image immédiatement
+    img.loading = "eager"; // Demande un chargement prioritaire
+  });
 }
