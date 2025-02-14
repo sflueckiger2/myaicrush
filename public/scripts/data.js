@@ -5,7 +5,8 @@ export let characters = []; // Déclare characters comme une variable exportable
 // Fonction pour charger les personnages depuis le serveur
 export async function loadCharacters() {
   try {
-    const response = await fetch('/characters.json', { cache: "force-cache" }); // Optimisation du cache
+    const response = await fetch(`/characters.json?t=${new Date().getTime()}`);
+
     if (!response.ok) {
       throw new Error(`Erreur HTTP : ${response.status}`);
     }
