@@ -1,5 +1,6 @@
 require('dotenv').config(); // Charger les variables d'environnement
 const express = require('express');
+
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
@@ -181,12 +182,13 @@ app.post('/api/change-password', async (req, res) => {
 
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {
-  console.log('Requête reçue sur /api/create-checkout-session');
+  console.log('📡 Requête reçue sur /api/create-checkout-session');
   console.log('Corps de la requête :', req.body);
 
   try {
-      const { priceId } = req.body; // Récupère l'ID du prix Stripe depuis le frontend
-      console.log('Price ID reçu :', priceId);
+      const { priceId, email } = req.body; // Récupère l'ID du prix Stripe et l'email utilisateur
+      console.log('💳 Price ID reçu :', priceId);
+      console.log('📧 Email reçu :', email);
 
       if (!priceId) {
           return res.status(400).json({ message: 'Price ID is required' });
@@ -196,9 +198,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
       const successUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html`;
       const cancelUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/premium.html`;
 
+      // ✅ Création de la session de paiement Stripe (avec email pour le suivi)
       const session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
+          customer_email: email, // 🔥 Ajout de l'email pour le suivi Facebook
           line_items: [
               {
                   price: priceId, // Utilise l'ID de prix fourni par Stripe
@@ -209,13 +213,65 @@ app.post('/api/create-checkout-session', async (req, res) => {
           cancel_url: cancelUrl,
       });
 
-      console.log('Session Checkout créée avec succès :', session.url);
+      console.log('✅ Session Checkout créée avec succès :', session.url);
+
       res.json({ url: session.url }); // Renvoie l'URL de la session Stripe
+
   } catch (error) {
-      console.error('Error creating checkout session:', error.message);
+      console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
       res.status(500).json({ message: 'Failed to create checkout session' });
   }
 });
+
+
+// ROUTE pour envoyer les données purchase à facebook 
+
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  try {
+      const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      
+      if (event.type === 'checkout.session.completed') {
+          const session = event.data.object;
+          const email = session.customer_email;
+
+          console.log("💰 Paiement réussi pour :", email);
+
+          // 🔥 Hachage de l'email pour Facebook
+          const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+
+          // 🔥 Envoi de l’événement "Purchase" à Facebook
+          const payload = {
+              data: [
+                  {
+                      event_name: "Purchase",
+                      event_time: Math.floor(Date.now() / 1000),
+                      user_data: {
+                          em: hashedEmail
+                      },
+                      custom_data: {
+                          value: session.amount_total / 100, // Montant du paiement
+                          currency: session.currency.toUpperCase()
+                      },
+                      action_source: "website"
+                  }
+              ],
+              access_token: FACEBOOK_ACCESS_TOKEN
+          };
+
+          await axios.post(FB_API_URL, payload);
+          console.log("📡 Événement 'Purchase' envoyé à Facebook pour :", email);
+      }
+
+      res.json({ received: true });
+
+  } catch (error) {
+      console.error('❌ Erreur lors du traitement du webhook Stripe:', error.message);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+  }
+});
+
 
 // ROUTE afficher l'abo
 
@@ -718,6 +774,67 @@ app.post('/resetUserLevel', (req, res) => {
   photoSentAtPerfectCrush = false;
   res.json({ success: true, message: 'Niveau utilisateur réinitialisé.' });
 });
+
+
+// ROUTE PIXEL & API FACEBOOK
+
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const FACEBOOK_PIXEL_ID = process.env.FACEBOOK_PIXEL_ID;
+const FB_API_URL = `https://graph.facebook.com/v17.0/${FACEBOOK_PIXEL_ID}/events`;
+
+app.post('/api/signup', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+      const database = client.db('MyAICrush');
+      const users = database.collection('users');
+
+      // Vérifier si l'utilisateur existe déjà
+      const existingUser = await users.findOne({ email });
+      if (existingUser) {
+          return res.status(400).json({ message: 'Un compte avec cet email existe déjà' });
+      }
+
+      // Générer un hash pour le mot de passe
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Ajouter l'utilisateur avec le mot de passe haché
+      await users.insertOne({ email, password: hashedPassword });
+
+      console.log("✅ Nouvel utilisateur inscrit :", email);
+
+      // 🔥 Envoyer l'événement "CompleteRegistration" à Facebook
+      const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+
+      const payload = {
+          data: [
+              {
+                  event_name: "CompleteRegistration",
+                  event_time: Math.floor(Date.now() / 1000),
+                  user_data: {
+                      em: hashedEmail // Email haché obligatoire pour Facebook
+                  },
+                  action_source: "website"
+              }
+          ],
+          access_token: FACEBOOK_ACCESS_TOKEN
+      };
+
+      await axios.post(FB_API_URL, payload);
+      console.log("📡 Événement 'CompleteRegistration' envoyé à Facebook pour :", email);
+
+      res.status(201).json({ message: 'User created successfully!' });
+  } catch (error) {
+      console.error('❌ Erreur lors de l\'inscription:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 
 // Connecter à la base de données avant de démarrer le serveur

@@ -45,10 +45,22 @@ function handleCheckout(priceId) {
 // Fonction pour démarrer le paiement Stripe
 async function startCheckout(priceId) {
     try {
+        const user = JSON.parse(localStorage.getItem('user')); // Récupère les infos utilisateur
+        if (!user || !user.email) {
+            alert('Please log in to continue.');
+            window.location.href = 'profile.html';
+            return;
+        }
+
+        console.log("📡 Envoi de la requête à Stripe avec :", {
+            priceId: priceId,
+            email: user.email // 🔥 Ajout de l'email ici
+        });
+
         const response = await fetch(`${BASE_URL}/api/create-checkout-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ priceId }),
+            body: JSON.stringify({ priceId, email: user.email }) // 🔥 Envoi de l'email
         });
 
         if (!response.ok) {
@@ -57,14 +69,17 @@ async function startCheckout(priceId) {
         }
 
         const data = await response.json();
+        console.log("📩 Réponse Stripe :", data);
+
         if (data.url) {
-            window.location.href = data.url;
+            window.location.href = data.url; // Redirection vers Stripe
         }
     } catch (error) {
-        console.error('Erreur:', error);
+        console.error('❌ Erreur Stripe:', error);
         alert('An error occurred while creating the Stripe session. Please try again.');
     }
 }
+
 
 // Fonction pour annuler un abonnement Stripe
 async function cancelSubscription() {
