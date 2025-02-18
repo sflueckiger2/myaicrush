@@ -776,7 +776,7 @@ app.post('/resetUserLevel', (req, res) => {
 });
 
 
-// ROUTE PIXEL & API FACEBOOK
+// ROUTE PIXEL & API FACEBOOK inscription gratuite
 
 const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
 const FACEBOOK_PIXEL_ID = process.env.FACEBOOK_PIXEL_ID;
@@ -806,34 +806,39 @@ app.post('/api/signup', async (req, res) => {
       // Ajouter l'utilisateur avec le mot de passe haché
       await users.insertOne({ email, password: hashedPassword });
 
-      console.log("✅ Nouvel utilisateur inscrit :", email);
+      console.log("✅ Inscription réussie pour :", email);
 
-      // 🔥 Envoyer l'événement "CompleteRegistration" à Facebook
+      // 🔥 Hachage de l'email pour Facebook (SHA-256)
       const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 
+      // 🔥 Envoi de l’événement "CompleteRegistration" à Facebook
       const payload = {
           data: [
               {
                   event_name: "CompleteRegistration",
                   event_time: Math.floor(Date.now() / 1000),
                   user_data: {
-                      em: hashedEmail // Email haché obligatoire pour Facebook
+                      em: hashedEmail
                   },
                   action_source: "website"
               }
           ],
-          access_token: FACEBOOK_ACCESS_TOKEN
+          access_token: process.env.FACEBOOK_ACCESS_TOKEN
       };
 
-      await axios.post(FB_API_URL, payload);
-      console.log("📡 Événement 'CompleteRegistration' envoyé à Facebook pour :", email);
+      console.log("📡 Envoi de l'événement CompleteRegistration à Facebook :", payload);
+
+      await axios.post("https://graph.facebook.com/v17.0/YOUR_PIXEL_ID/events", payload);
+      console.log("✅ Événement 'CompleteRegistration' envoyé à Facebook !");
 
       res.status(201).json({ message: 'User created successfully!' });
+
   } catch (error) {
       console.error('❌ Erreur lors de l\'inscription:', error);
       res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 
