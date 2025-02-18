@@ -211,8 +211,16 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
           console.log("💰 Paiement réussi pour :", email);
 
-          // 🔥 Hachage de l'email pour Facebook
-          const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+          if (!email) {
+              console.error("❌ Aucun email trouvé dans la session Stripe !");
+              return res.status(400).json({ message: "No email found in Stripe session." });
+          }
+
+          // 🔥 Hachage de l'email pour Facebook (SHA-256)
+          const hashedEmail = require('crypto')
+              .createHash("sha256")
+              .update(email.trim().toLowerCase())
+              .digest("hex");
 
           // 🔥 Envoi de l’événement "Purchase" à Facebook
           const payload = {
@@ -224,26 +232,35 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
                           em: hashedEmail
                       },
                       custom_data: {
-                          value: session.amount_total / 100, // Montant du paiement
+                          value: session.amount_total / 100, // 💳 Montant du paiement (converti en euros)
                           currency: session.currency.toUpperCase()
                       },
                       action_source: "website"
                   }
               ],
-              access_token: FACEBOOK_ACCESS_TOKEN
+              access_token: process.env.FACEBOOK_ACCESS_TOKEN
           };
 
-          await axios.post(FB_API_URL, payload);
-          console.log("📡 Événement 'Purchase' envoyé à Facebook pour :", email);
+          console.log("📡 Envoi de l'événement Purchase à Facebook :", JSON.stringify(payload, null, 2));
+
+          // 🔥 Envoi à Facebook
+          const fbResponse = await require('axios').post(
+              `https://graph.facebook.com/v17.0/${process.env.FACEBOOK_PIXEL_ID}/events`,
+              payload
+          );
+
+          console.log("✅ Événement 'Purchase' envoyé à Facebook avec succès !", fbResponse.data);
       }
 
       res.json({ received: true });
 
   } catch (error) {
-      console.error('❌ Erreur lors du traitement du webhook Stripe:', error.message);
+      console.error('❌ Erreur lors du traitement du webhook:', error.message);
       res.status(400).send(`Webhook Error: ${error.message}`);
   }
 });
+
+
 
 
 // ROUTE afficher l'abo
