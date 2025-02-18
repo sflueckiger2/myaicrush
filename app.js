@@ -25,6 +25,11 @@ const bcrypt = require('bcrypt');
 const sharp = require('sharp');
 const crypto = require('crypto');
 const imageTokens = new Map(); // Stocker les images temporairement
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const FACEBOOK_PIXEL_ID = process.env.FACEBOOK_PIXEL_ID;
+const FB_API_URL = `https://graph.facebook.com/v17.0/${FACEBOOK_PIXEL_ID}/events`;
+
+
 let firstFreeImageSent = new Map(); // Stocke les utilisateurs qui ont déjà reçu une image non floutée
 
 
@@ -64,38 +69,6 @@ connectToDB();
 
 
 //ROUTE pour l'inscription via email classique 
-
-
-app.post('/api/signup', async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await users.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Un compte avec cet email existe déjà' });
-        }
-
-        // Générer un hash pour le mot de passe
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        // Ajouter l'utilisateur avec le mot de passe haché
-        await users.insertOne({ email, password: hashedPassword });
-
-        res.status(201).json({ message: 'User created successfully!' });
-    } catch (error) {
-        console.error('Error during signup:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
 
 
 // ROUTE POUR LA CONNEXION AVEC EMAIL CLASSIQUE
@@ -778,9 +751,8 @@ app.post('/resetUserLevel', (req, res) => {
 
 // ROUTE PIXEL & API FACEBOOK inscription gratuite
 
-const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
-const FACEBOOK_PIXEL_ID = process.env.FACEBOOK_PIXEL_ID;
-const FB_API_URL = `https://graph.facebook.com/v17.0/${FACEBOOK_PIXEL_ID}/events`;
+
+
 
 app.post('/api/signup', async (req, res) => {
   const { email, password } = req.body;
@@ -823,13 +795,17 @@ app.post('/api/signup', async (req, res) => {
                   action_source: "website"
               }
           ],
-          access_token: process.env.FACEBOOK_ACCESS_TOKEN
+          access_token: FACEBOOK_ACCESS_TOKEN
       };
 
       console.log("📡 Envoi de l'événement CompleteRegistration à Facebook :", payload);
 
-      await axios.post("https://graph.facebook.com/v17.0/YOUR_PIXEL_ID/events", payload);
-      console.log("✅ Événement 'CompleteRegistration' envoyé à Facebook !");
+      try {
+          const response = await axios.post(FB_API_URL, payload);
+          console.log("✅ Événement 'CompleteRegistration' envoyé à Facebook avec succès !", response.data);
+      } catch (error) {
+          console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
+      }
 
       res.status(201).json({ message: 'User created successfully!' });
 
@@ -838,6 +814,7 @@ app.post('/api/signup', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 
