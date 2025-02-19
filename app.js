@@ -214,8 +214,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
 
 
-// ROUTE pour envoyer les données purchase à facebook 
-
+// ROUTE Webhook Stripe pour envoyer les données "Purchase" à Facebook
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   console.log("📡 Webhook Stripe reçu !");
 
@@ -225,23 +224,22 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       return res.status(400).send("Webhook Error: Signature missing");
   }
 
-  console.log("📝 Signature Stripe reçue :", sig);
-  console.log("🔑 Clé Webhook Stripe :", process.env.STRIPE_WEBHOOK_SECRET);
-
   let event;
   try {
+      // ✅ Vérification de la signature et conversion du payload en JSON
       event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-      console.log("✅ Webhook Stripe validé :", event);
+      console.log("✅ Webhook Stripe validé :", JSON.stringify(event, null, 2));
+
   } catch (err) {
       console.error("❌ Erreur lors de la validation du webhook :", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Vérifier que l'événement est bien un paiement complété
+  // 💳 Vérifier que l'événement est bien un paiement réussi
   if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const email = session.customer_email;
-      const amount = session.amount_total / 100; // Conversion en euros
+      const amount = session.amount_total / 100; // Convertir en euros
       const currency = session.currency.toUpperCase();
 
       console.log(`💰 Paiement réussi pour ${email} - Montant : ${amount} ${currency}`);
@@ -275,6 +273,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
   res.json({ received: true });
 });
+
 
 
 
