@@ -156,7 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const data = await response.json();
           signupForm.reset(); // Réinitialise le formulaire
           localStorage.setItem('user', JSON.stringify({ email })); // Stocker l'utilisateur
-          window.location.href = 'index.html'; // Rediriger vers la page principale
+
+          // 🚀 Vérifier si c'est un nouvel utilisateur
+          if (data.isNewUser) {
+            window.location.href = 'confirmation-lead.html'; // Page de confirmation
+          } else {
+            window.location.href = 'index.html'; // Page d'accueil normale
+          }
+
         } else {
           const errorData = await response.json();
           alert(errorData.message || 'Signup failed');
@@ -168,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 // Gérer la soumission du formulaire de connexion sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {

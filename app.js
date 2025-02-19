@@ -381,20 +381,29 @@ app.get('/auth/google/callback', async (req, res) => {
 
       const userEmail = payload.email;
 
-      // Ajouter ou récupérer l'utilisateur dans MongoDB
-      const user = await addOrFindUser(userEmail);
+      // Vérifier si l'utilisateur existe déjà dans la base de données
+      const database = client.db('MyAICrush');
+      const usersCollection = database.collection('users');
 
-      console.log('Utilisateur Google authentifié :', user);
-     
+      const existingUser = await usersCollection.findOne({ email: userEmail });
+      const isNewUser = !existingUser;
 
-      // Générer une réponse HTML avec un script pour stocker l'utilisateur dans localStorage
+      if (!existingUser) {
+          await usersCollection.insertOne({ email: userEmail, createdAt: new Date() });
+      }
+
+      console.log('Utilisateur Google authentifié :', userEmail);
+
+      // Déterminer l'URL de redirection
+      const redirectUrl = isNewUser ? `${BASE_URL}/confirmation-lead.html` : `${BASE_URL}/index.html`;
+
+      // Réponse HTML avec un script pour stocker l'utilisateur dans localStorage et rediriger
       res.send(`
         <script>
-            localStorage.setItem('user', JSON.stringify(${JSON.stringify(user)}));
-            window.location.href = '${BASE_URL}/index.html';
+            localStorage.setItem('user', JSON.stringify({ email: "${userEmail}" }));
+            window.location.href = '${redirectUrl}';
         </script>
       `);
-       
   } catch (error) {
       console.error("Erreur lors de l'authentification Google:", error);
       res.status(500).send('Erreur d\'authentification');
@@ -801,9 +810,12 @@ app.post('/api/signup', async (req, res) => {
 
       // Vérifier si l'utilisateur existe déjà
       const existingUser = await users.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({ message: 'Un compte avec cet email existe déjà' });
-      }
+const isNewUser = !existingUser;
+
+if (existingUser) {
+    return res.status(400).json({ message: 'Un compte avec cet email existe déjà', isNewUser: false });
+}
+
 
       // Générer un hash pour le mot de passe
       const saltRounds = 10;
@@ -841,7 +853,8 @@ app.post('/api/signup', async (req, res) => {
           console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
       }
 
-      res.status(201).json({ message: 'User created successfully!' });
+      res.status(201).json({ message: 'User created successfully!', isNewUser: true });
+
 
   } catch (error) {
       console.error('❌ Erreur lors de l\'inscription:', error);
