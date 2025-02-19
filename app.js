@@ -8,8 +8,21 @@ const app = express(); // Initialiser l'instance d'Express
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe SDK
+
+
+// ✅ Sélection dynamique de la clé Stripe
+const stripeMode = process.env.STRIPE_MODE || "live"; // "live" par défaut
+const stripeSecretKey = stripeMode === "live"
+    ? process.env.STRIPE_SECRET_KEY_LIVE
+    : process.env.STRIPE_SECRET_KEY_TEST;
+    
+const stripe = require('stripe')(stripeSecretKey); // ✅ Initialisation correcte de Stripe
+console.log(`🚀 Stripe en mode : ${stripeMode.toUpperCase()}`);
+console.log(`🔑 Clé Stripe utilisée : ${stripeSecretKey.startsWith("sk_live") ? "LIVE" : "TEST"}`);
+
 app.use(express.json());
+
+
 // Middleware pour servir les fichiers statiques, sauf pour les images
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
@@ -159,36 +172,38 @@ app.post('/api/create-checkout-session', async (req, res) => {
   console.log('Corps de la requête :', req.body);
 
   try {
-      const { priceId, email } = req.body; // Récupère l'ID du prix Stripe et l'email utilisateur
-      console.log('💳 Price ID reçu :', priceId);
-      console.log('📧 Email reçu :', email);
+      const { planType, email } = req.body;
 
-      if (!priceId) {
-          return res.status(400).json({ message: 'Price ID is required' });
+      if (!planType) {
+          return res.status(400).json({ message: "Invalid plan type." });
       }
 
-      // Dynamiser les URLs avec BASE_URL
-      const successUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html`;
-      const cancelUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/premium.html`;
+      console.log('📦 Plan sélectionné :', planType);
+      console.log('📧 Email reçu :', email);
 
-      // ✅ Création de la session de paiement Stripe (avec email pour le suivi)
+      // Sélectionne l'ID de prix en fonction du mode Stripe et du plan choisi
+      const priceId = process.env.STRIPE_MODE === "live"
+          ? (planType === "monthly" ? process.env.STRIPE_PRICE_ID_LIVE_MONTHLY : process.env.STRIPE_PRICE_ID_LIVE_ANNUAL)
+          : (planType === "monthly" ? process.env.STRIPE_PRICE_ID_TEST_MONTHLY : process.env.STRIPE_PRICE_ID_TEST_ANNUAL);
+
+      if (!priceId) {
+          throw new Error(`❌ Error: No valid price ID found for plan type: ${planType}`);
+      }
+
+      console.log('💳 Price ID utilisé :', priceId);
+
+      // Création de la session Stripe
       const session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
-          customer_email: email, // 🔥 Ajout de l'email pour le suivi Facebook
-          line_items: [
-              {
-                  price: priceId, // Utilise l'ID de prix fourni par Stripe
-                  quantity: 1,
-              },
-          ],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
+          customer_email: email,
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html`,
+          cancel_url: `${process.env.BASE_URL || 'http://localhost:3000'}/premium.html`
       });
 
       console.log('✅ Session Checkout créée avec succès :', session.url);
-
-      res.json({ url: session.url }); // Renvoie l'URL de la session Stripe
+      res.json({ url: session.url });
 
   } catch (error) {
       console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
@@ -197,68 +212,70 @@ app.post('/api/create-checkout-session', async (req, res) => {
 });
 
 
+
+
 // ROUTE pour envoyer les données purchase à facebook 
 
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  console.log("📡 Webhook Stripe reçu !");
+
   const sig = req.headers['stripe-signature'];
-
-  try {
-      const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-      
-      if (event.type === 'checkout.session.completed') {
-          const session = event.data.object;
-          const email = session.customer_email;
-
-          console.log("💰 Paiement réussi pour :", email);
-
-          if (!email) {
-              console.error("❌ Aucun email trouvé dans la session Stripe !");
-              return res.status(400).json({ message: "No email found in Stripe session." });
-          }
-
-          // 🔥 Hachage de l'email pour Facebook (SHA-256)
-          const hashedEmail = require('crypto')
-              .createHash("sha256")
-              .update(email.trim().toLowerCase())
-              .digest("hex");
-
-          // 🔥 Envoi de l’événement "Purchase" à Facebook
-          const payload = {
-              data: [
-                  {
-                      event_name: "Purchase",
-                      event_time: Math.floor(Date.now() / 1000),
-                      user_data: {
-                          em: hashedEmail
-                      },
-                      custom_data: {
-                          value: session.amount_total / 100, // 💳 Montant du paiement (converti en euros)
-                          currency: session.currency.toUpperCase()
-                      },
-                      action_source: "website"
-                  }
-              ],
-              access_token: process.env.FACEBOOK_ACCESS_TOKEN
-          };
-
-          console.log("📡 Envoi de l'événement Purchase à Facebook :", JSON.stringify(payload, null, 2));
-
-          // 🔥 Envoi à Facebook
-          const fbResponse = await require('axios').post(
-              `https://graph.facebook.com/v17.0/${process.env.FACEBOOK_PIXEL_ID}/events`,
-              payload
-          );
-
-          console.log("✅ Événement 'Purchase' envoyé à Facebook avec succès !", fbResponse.data);
-      }
-
-      res.json({ received: true });
-
-  } catch (error) {
-      console.error('❌ Erreur lors du traitement du webhook:', error.message);
-      res.status(400).send(`Webhook Error: ${error.message}`);
+  if (!sig) {
+      console.error("❌ Erreur : Signature Stripe manquante !");
+      return res.status(400).send("Webhook Error: Signature missing");
   }
+
+  console.log("📝 Signature Stripe reçue :", sig);
+  console.log("🔑 Clé Webhook Stripe :", process.env.STRIPE_WEBHOOK_SECRET);
+
+  let event;
+  try {
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      console.log("✅ Webhook Stripe validé :", event);
+  } catch (err) {
+      console.error("❌ Erreur lors de la validation du webhook :", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Vérifier que l'événement est bien un paiement complété
+  if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const email = session.customer_email;
+      const amount = session.amount_total / 100; // Conversion en euros
+      const currency = session.currency.toUpperCase();
+
+      console.log(`💰 Paiement réussi pour ${email} - Montant : ${amount} ${currency}`);
+
+      // 🔥 Hachage de l'email pour Facebook
+      const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+
+      // 🔥 Construction du payload Facebook
+      const payload = {
+          data: [
+              {
+                  event_name: "Purchase",
+                  event_time: Math.floor(Date.now() / 1000),
+                  user_data: { em: hashedEmail },
+                  custom_data: { value: amount, currency: currency },
+                  action_source: "website"
+              }
+          ],
+          access_token: process.env.FACEBOOK_ACCESS_TOKEN
+      };
+
+      console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
+
+      try {
+          const fbResponse = await axios.post(FB_API_URL, payload);
+          console.log("✅ Événement 'Purchase' envoyé à Facebook avec succès !", fbResponse.data);
+      } catch (error) {
+          console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
+      }
+  }
+
+  res.json({ received: true });
 });
+
 
 
 

@@ -1,6 +1,22 @@
 // Définir l'URL de base dynamiquement (s'applique à localhost ou Render)
 const BASE_URL = window.location.origin;
 
+// Détecter le mode Stripe en fonction du backend
+const STRIPE_MODE = window.STRIPE_MODE || "live"; // Mode "live" par défaut
+
+// Récupération des IDs de prix en fonction du mode Stripe
+const STRIPE_PRICE_ID_MONTHLY = STRIPE_MODE === "live"
+    ? "price_1QP4NsAOSHX0SgbTbXleafxi" // Live Monthly
+    : "price_1QP4dCAOSHX0SgbTY5N4QrsW"; // Test Monthly
+
+const STRIPE_PRICE_ID_ANNUAL = STRIPE_MODE === "live"
+    ? "price_1QP4QUAOSHX0SgbTgievpp1a" // Live Annual
+    : "price_1QPRXpAOSHX0SgbT8GfUUtvL"; // Test Annual
+
+console.log(`🚀 Mode Stripe actif : ${STRIPE_MODE.toUpperCase()}`);
+console.log(`💰 ID Prix Mensuel : ${STRIPE_PRICE_ID_MONTHLY || "❌ Non défini"}`);
+console.log(`💰 ID Prix Annuel : ${STRIPE_PRICE_ID_ANNUAL || "❌ Non défini"}`);
+
 document.addEventListener('DOMContentLoaded', () => {
     const monthlyCheckoutButton = document.querySelector('#monthlyCheckoutButton');
     const annualCheckoutButton = document.querySelector('#annualCheckoutButton');
@@ -8,13 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (monthlyCheckoutButton) {
         monthlyCheckoutButton.addEventListener('click', () => {
-            handleCheckout('price_1QP4NsAOSHX0SgbTbXleafxi'); // Remplace par l'ID Stripe pour le plan mensuel
+            handleCheckout(STRIPE_PRICE_ID_MONTHLY, "monthly");
         });
     }
 
     if (annualCheckoutButton) {
         annualCheckoutButton.addEventListener('click', () => {
-            handleCheckout('price_1QP4QUAOSHX0SgbTgievpp1a'); // Remplace par l'ID Stripe pour le plan annuel
+            handleCheckout(STRIPE_PRICE_ID_ANNUAL, "annual");
         });
     }
 
@@ -31,36 +47,46 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fonction pour vérifier l'utilisateur et démarrer le paiement Stripe
-function handleCheckout(priceId) {
+function handleCheckout(priceId, planType) {
     const user = JSON.parse(localStorage.getItem('user'));
+
     if (!user || !user.email) {
-        alert('Please log in to continue.');
-        window.location.href = 'profile.html'; // Redirige vers la page de connexion
+        alert('Veuillez vous connecter pour continuer.');
+        window.location.href = 'profile.html';
         return;
     }
-    // Si l'utilisateur est connecté, démarre le paiement Stripe
-    startCheckout(priceId);
+
+    if (!priceId) {
+        alert('Erreur : ID de prix non défini.');
+        return;
+    }
+
+    console.log(`🛒 Tentative d'achat pour ${planType} avec Price ID: ${priceId}`);
+    
+    // Démarrer le paiement Stripe avec l'ID du prix et l'email
+    startCheckout(priceId, user.email, planType);
 }
 
 // Fonction pour démarrer le paiement Stripe
-async function startCheckout(priceId) {
+async function startCheckout(priceId, email, planType) {
     try {
-        const user = JSON.parse(localStorage.getItem('user')); // Récupère les infos utilisateur
-        if (!user || !user.email) {
-            alert('Please log in to continue.');
-            window.location.href = 'profile.html';
-            return;
+        if (!priceId) {
+            throw new Error('❌ Error: Price ID is missing.');
+        }
+        if (!email) {
+            throw new Error('❌ Error: User email is missing.');
         }
 
         console.log("📡 Envoi de la requête à Stripe avec :", {
-            priceId: priceId,
-            email: user.email // 🔥 Ajout de l'email ici
+            priceId,
+            email,
+            planType
         });
 
         const response = await fetch(`${BASE_URL}/api/create-checkout-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ priceId, email: user.email }) // 🔥 Envoi de l'email
+            body: JSON.stringify({ priceId, email, planType }) // 🔥 Envoi de l'email et du plan
         });
 
         if (!response.ok) {
@@ -75,11 +101,10 @@ async function startCheckout(priceId) {
             window.location.href = data.url; // Redirection vers Stripe
         }
     } catch (error) {
-        console.error('❌ Erreur Stripe:', error);
-        alert('An error occurred while creating the Stripe session. Please try again.');
+        console.error('❌ Erreur Stripe:', error.message);
+        alert(error.message || 'An error occurred while creating the Stripe session. Please try again.');
     }
 }
-
 
 // Fonction pour annuler un abonnement Stripe
 async function cancelSubscription() {
@@ -110,7 +135,7 @@ async function cancelSubscription() {
             unsubscribeContainer.classList.add('hidden');
         }
     } catch (error) {
-        console.error('Erreur:', error);
+        console.error('❌ Erreur:', error);
         alert('An error occurred while cancelling the subscription. Please try again.');
     }
 }
@@ -147,6 +172,6 @@ async function displaySubscriptionInfo() {
             `;
         }
     } catch (error) {
-        console.error('Erreur:', error);
+        console.error('❌ Erreur:', error);
     }
 }
