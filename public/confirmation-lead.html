@@ -5,8 +5,29 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmation d'achat</title>
+  <title>Merci pour ton inscription !</title>
   <link rel="stylesheet" href="styles.css">
+
+<!-- Meta Pixel Facebook -->
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window,document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '955861022940111');
+  fbq('track', 'Lead');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Lead&noscript=1"
+/></noscript>
+
+
+
 
 </head>
 <body>
@@ -25,19 +46,23 @@
 
   <!-- Contenu principal -->
   <div class="container confirmation-page">
-    <h1 class="p-title">Merci pour ton achat</h1>
+    
     <p class="p-description">
-      Tu as débloqué toutes les fonctionnalités premium.
+      Cher passionné des IA,
     </p>
     <p class="p-description">
-      Tu peux maintenant profiter de conversations illimitées avec tes IA préférés.
+      Tu viens de t'inscrire gratuitement à MyAiCrush. Tu peux désormais accéder à tes premières conversations avec nos IA les plus mignonnes.
+    </p>
+    <p class="p-description">
+      Clique sur le bouton ci-dessous pour démarrer ta première discussion.
     </p>
 
     <!-- Bouton pour retourner à la page d'accueil -->
     <div class="action-section">
-      <button id="startChatButton" class="checkout-button" onclick="window.location.href='index.html'">
+      <button id="startChatButton" class="checkout-button" onclick="window.location.href=window.location.origin + '/index.html'">
         Commencer à discuter
-      </button>
+    </button>
+    
     </div>
   </div>
 

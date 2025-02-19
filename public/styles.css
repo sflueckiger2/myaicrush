@@ -641,11 +641,11 @@ p {
 }
 
 .p-description {
-  font-size: 1.2em;
+  font-size: 1.1em;
   color: #ffffff;
   margin-bottom: 30px;
   padding: 0 10px; /* Ajout de padding pour éviter le débordement sur mobile */
-  
+text-align: left;
 }
 
 /* Section des avantages */
