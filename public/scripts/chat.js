@@ -135,7 +135,7 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
         // Ajouter le bouton "Unlock"
         const unlockButton = document.createElement('button');
-        unlockButton.textContent = 'Unlock';
+        unlockButton.textContent = 'Voir la photo';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
             window.location.href = '/premium.html'; // Rediriger vers la page premium
