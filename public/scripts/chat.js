@@ -55,7 +55,7 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
         .then(({ isPremium }) => {
             if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
                 addBotMessage(
-                    `You have reached your daily message limit. <a href="premium.html" style="color: blue; text-decoration: underline;">Upgrade to premium</a> for unlimited messages.`,
+                    `Tu as dépassé ta limite de messages gratuits. <a href="premium.html" style="color: blue; text-decoration: underline;">Deviens un membre Premium</a> pour débloquer les messages illimités.`,
                     messagesContainer
                 );
                 return;
