@@ -5,6 +5,8 @@ const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
+
+
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
@@ -19,6 +21,68 @@ const stripeSecretKey = stripeMode === "live"
 const stripe = require('stripe')(stripeSecretKey); // ✅ Initialisation correcte de Stripe
 console.log(`🚀 Stripe en mode : ${stripeMode.toUpperCase()}`);
 console.log(`🔑 Clé Stripe utilisée : ${stripeSecretKey.startsWith("sk_live") ? "LIVE" : "TEST"}`);
+
+// ROUTE Webhook Stripe pour envoyer les données "Purchase" à Facebook
+
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  console.log("📡 Webhook Stripe reçu !");
+
+  const sig = req.headers['stripe-signature'];
+  if (!sig) {
+      console.error("❌ Erreur : Signature Stripe manquante !");
+      return res.status(400).send("Webhook Error: Signature missing");
+  }
+
+  let event;
+  try {
+      // ✅ Stripe attend un Buffer ici (raw body), pas un objet JSON parsé
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      console.log("✅ Webhook Stripe validé :", JSON.stringify(event, null, 2));
+
+  } catch (err) {
+      console.error("❌ Erreur lors de la validation du webhook :", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // 💳 Vérifier que l'événement est bien un paiement réussi
+  if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const email = session.customer_email;
+      const amount = session.amount_total / 100; // Convertir en euros
+      const currency = session.currency.toUpperCase();
+
+      console.log(`💰 Paiement réussi pour ${email} - Montant : ${amount} ${currency}`);
+
+      // 🔥 Hachage de l'email pour Facebook
+      const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+
+      // 🔥 Construction du payload Facebook
+      const payload = {
+          data: [
+              {
+                  event_name: "Purchase",
+                  event_time: Math.floor(Date.now() / 1000),
+                  user_data: { em: hashedEmail },
+                  custom_data: { value: amount, currency: currency },
+                  action_source: "website"
+              }
+          ],
+          access_token: process.env.FACEBOOK_ACCESS_TOKEN
+      };
+
+      console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
+
+      try {
+          const fbResponse = await axios.post(FB_API_URL, payload);
+          console.log("✅ Événement 'Purchase' envoyé à Facebook avec succès !", fbResponse.data);
+      } catch (error) {
+          console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
+      }
+  }
+
+  res.json({ received: true });
+});
+
 
 app.use(express.json());
 
@@ -214,65 +278,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
 
 
-// ROUTE Webhook Stripe pour envoyer les données "Purchase" à Facebook
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  console.log("📡 Webhook Stripe reçu !");
 
-  const sig = req.headers['stripe-signature'];
-  if (!sig) {
-      console.error("❌ Erreur : Signature Stripe manquante !");
-      return res.status(400).send("Webhook Error: Signature missing");
-  }
 
-  let event;
-  try {
-      // ✅ Vérification de la signature et conversion du payload en JSON
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-      console.log("✅ Webhook Stripe validé :", JSON.stringify(event, null, 2));
 
-  } catch (err) {
-      console.error("❌ Erreur lors de la validation du webhook :", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // 💳 Vérifier que l'événement est bien un paiement réussi
-  if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      const email = session.customer_email;
-      const amount = session.amount_total / 100; // Convertir en euros
-      const currency = session.currency.toUpperCase();
-
-      console.log(`💰 Paiement réussi pour ${email} - Montant : ${amount} ${currency}`);
-
-      // 🔥 Hachage de l'email pour Facebook
-      const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
-
-      // 🔥 Construction du payload Facebook
-      const payload = {
-          data: [
-              {
-                  event_name: "Purchase",
-                  event_time: Math.floor(Date.now() / 1000),
-                  user_data: { em: hashedEmail },
-                  custom_data: { value: amount, currency: currency },
-                  action_source: "website"
-              }
-          ],
-          access_token: process.env.FACEBOOK_ACCESS_TOKEN
-      };
-
-      console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
-
-      try {
-          const fbResponse = await axios.post(FB_API_URL, payload);
-          console.log("✅ Événement 'Purchase' envoyé à Facebook avec succès !", fbResponse.data);
-      } catch (error) {
-          console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
-      }
-  }
-
-  res.json({ received: true });
-});
 
 
 
