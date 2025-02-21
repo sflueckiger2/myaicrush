@@ -58,17 +58,18 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
       // 🔥 Construction du payload Facebook
       const payload = {
-          data: [
-              {
-                  event_name: "Purchase",
-                  event_time: Math.floor(Date.now() / 1000),
-                  user_data: { em: hashedEmail },
-                  custom_data: { value: amount, currency: currency },
-                  action_source: "website"
-              }
-          ],
-          access_token: process.env.FACEBOOK_ACCESS_TOKEN
-      };
+        data: [
+            {
+                event_name: "Purchase",
+                event_time: Math.floor(Date.now() / 1000),
+                event_id: `purchase_${Date.now()}`, // ✅ ID unique pour dédoublonnage
+                user_data: { em: hashedEmail },
+                custom_data: { value: amount, currency: currency },
+                action_source: "server"
+            }
+        ],
+        access_token: process.env.FACEBOOK_ACCESS_TOKEN
+    };
 
       console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
 

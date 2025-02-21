@@ -68,9 +68,24 @@
   s.parentNode.insertBefore(t,s)}(window, document,'script',
   'https://connect.facebook.net/en_US/fbevents.js');
 
-  fbq('init', '955861022940111'); // Remplace avec ton vrai Pixel ID
-  fbq('track', 'Purchase', {value: 50, currency: 'EUR'}); // Met à jour la valeur et la devise
+  fbq('init', '955861022940111'); // ✅ Remplace avec ton vrai Pixel ID
+
+  // 🔥 Génération d'un eventID unique basé sur la date et stocké pour l'API
+  var purchaseEventID = 'purchase_' + Date.now();
+
+  // ✅ Envoi de l'événement "Purchase" avec eventID pour le dédoublonnage
+  fbq('track', 'Purchase', {
+    value: 50,
+    currency: 'EUR'
+  }, {
+    eventID: purchaseEventID // ✅ Assure le même eventID entre Pixel et API
+  });
+
+  // ✅ Optionnel : Stocker cet eventID dans une variable globale pour l'API
+  window.fbqPurchaseEventID = purchaseEventID;
+
 </script>
+
 <noscript>
   <img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Purchase&noscript=1"/>
