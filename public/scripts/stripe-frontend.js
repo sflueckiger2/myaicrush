@@ -10,7 +10,7 @@ const STRIPE_PRICE_ID_MONTHLY = STRIPE_MODE === "live"
     : "price_1QP4dCAOSHX0SgbTY5N4QrsW"; // Test Monthly
 
 const STRIPE_PRICE_ID_ANNUAL = STRIPE_MODE === "live"
-    ? "price_1QP4QUAOSHX0SgbTgievpp1a" // Live Annual
+    ? "price_1QvL1KAOSHX0SgbTExLhbLgG" // Live Annual
     : "price_1QPRXpAOSHX0SgbT8GfUUtvL"; // Test Annual
 
 console.log(`🚀 Mode Stripe actif : ${STRIPE_MODE.toUpperCase()}`);

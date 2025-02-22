@@ -48,12 +48,18 @@
         <p>Facturé chaque mois, annule quand tu veux.</p>
         <button id="monthlyCheckoutButton" class="checkout-button">Choisir le plan mensuel</button>
       </div>
-      <div class="pricing-card popular">
+      <div class="pricing-card popular" style="position: relative;">
+        <!-- Bandeau -50% -->
+        <div class="discount-banner">
+          -50% de réduction !
+        </div>
+        
         <h2>Abonnement Annuel</h2>
-        <p class="price">6,58€/mois</p>
-        <p>Économise 35% avec notre abonnement annuel !</p>
+        <p class="price">4,95€/mois</p>
+        <p>Économise 50% avec notre abonnement annuel !</p>
         <button id="annualCheckoutButton" class="checkout-button">Choisir le plan annuel</button>
       </div>
+      
     </div>
 
 
@@ -88,7 +94,7 @@
 <script>
   window.STRIPE_MODE = "live"; // live ou test selon ton besoin
   window.STRIPE_PRICE_ID_LIVE_MONTHLY = "price_1QP4NsAOSHX0SgbTbXleafxi";
-  window.STRIPE_PRICE_ID_LIVE_ANNUAL = "price_1QP4QUAOSHX0SgbTgievpp1a";
+  window.STRIPE_PRICE_ID_LIVE_ANNUAL = "price_1QvL1KAOSHX0SgbTExLhbLgG";
   window.STRIPE_PRICE_ID_TEST_MONTHLY = "price_1QP4dCAOSHX0SgbTY5N4QrsW";
   window.STRIPE_PRICE_ID_TEST_ANNUAL = "price_1QPRXpAOSHX0SgbT8GfUUtvL";
 </script>
