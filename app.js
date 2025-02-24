@@ -399,6 +399,10 @@ app.get('/auth/google/callback', async (req, res) => {
 
       if (!existingUser) {
           await usersCollection.insertOne({ email: userEmail, createdAt: new Date() });
+          console.log(`✅ Nouvel utilisateur Google ajouté : ${userEmail}`);
+
+          // ✅ Ajout à Brevo pour les nouveaux utilisateurs
+          await addUserToBrevo(userEmail);
       }
 
       console.log('Utilisateur Google authentifié :', userEmail);
@@ -418,6 +422,7 @@ app.get('/auth/google/callback', async (req, res) => {
       res.status(500).send('Erreur d\'authentification');
   }
 });
+
 
 
 
@@ -800,11 +805,57 @@ app.post('/resetUserLevel', (req, res) => {
   res.json({ success: true, message: 'Niveau utilisateur réinitialisé.' });
 });
 
+// Fonction pour ajouter a BREVO
+async function addUserToBrevo(email) {
+  const API_KEY = process.env.BREVO_API_KEY;
+  const LIST_ID = process.env.BREVO_LIST_ID;
+
+  try {
+      const response = await axios.post(
+          "https://api.brevo.com/v3/contacts",
+          {
+              email: email,
+              listIds: [parseInt(LIST_ID)]
+          },
+          {
+              headers: {
+                  "api-key": API_KEY,
+                  "Content-Type": "application/json"
+              }
+          }
+      );
+      console.log("✅ Utilisateur ajouté à Brevo :", response.data);
+  } catch (error) {
+      console.error("❌ Erreur lors de l'ajout à Brevo :", error.response?.data || error.message);
+  }
+}
+
 
 // ROUTE PIXEL & API FACEBOOK inscription gratuite
 
+async function addUserToBrevo(email) {
+  const API_KEY = process.env.BREVO_API_KEY;
+  const LIST_ID = process.env.BREVO_LIST_ID;
 
-
+  try {
+      const response = await axios.post(
+          "https://api.brevo.com/v3/contacts",
+          {
+              email: email,
+              listIds: [parseInt(LIST_ID)]
+          },
+          {
+              headers: {
+                  "api-key": API_KEY,
+                  "Content-Type": "application/json"
+              }
+          }
+      );
+      console.log("✅ Utilisateur ajouté à Brevo :", response.data);
+  } catch (error) {
+      console.error("❌ Erreur lors de l'ajout à Brevo :", error.response?.data || error.message);
+  }
+}
 
 app.post('/api/signup', async (req, res) => {
   const { email, password } = req.body;
@@ -819,12 +870,11 @@ app.post('/api/signup', async (req, res) => {
 
       // Vérifier si l'utilisateur existe déjà
       const existingUser = await users.findOne({ email });
-const isNewUser = !existingUser;
+      const isNewUser = !existingUser;
 
-if (existingUser) {
-    return res.status(400).json({ message: 'Un compte avec cet email existe déjà', isNewUser: false });
-}
-
+      if (existingUser) {
+          return res.status(400).json({ message: 'Un compte avec cet email existe déjà', isNewUser: false });
+      }
 
       // Générer un hash pour le mot de passe
       const saltRounds = 10;
@@ -835,6 +885,9 @@ if (existingUser) {
 
       console.log("✅ Inscription réussie pour :", email);
 
+      // ✅ Ajout à Brevo
+      await addUserToBrevo(email);
+
       // 🔥 Hachage de l'email pour Facebook (SHA-256)
       const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 
@@ -844,9 +897,7 @@ if (existingUser) {
               {
                   event_name: "CompleteRegistration",
                   event_time: Math.floor(Date.now() / 1000),
-                  user_data: {
-                      em: hashedEmail
-                  },
+                  user_data: { em: hashedEmail },
                   action_source: "website"
               }
           ],
@@ -864,12 +915,12 @@ if (existingUser) {
 
       res.status(201).json({ message: 'User created successfully!', isNewUser: true });
 
-
   } catch (error) {
       console.error('❌ Erreur lors de l\'inscription:', error);
       res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 
