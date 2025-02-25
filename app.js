@@ -2,6 +2,7 @@ require('dotenv').config(); // Charger les variables d'environnement
 const express = require('express');
 
 const axios = require('axios');
+const dns = require('dns');
 const path = require('path');
 const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
@@ -107,6 +108,39 @@ const imageTokens = new Map(); // Stocker les images temporairement
 const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
 const FACEBOOK_PIXEL_ID = process.env.FACEBOOK_PIXEL_ID;
 const FB_API_URL = `https://graph.facebook.com/v17.0/${FACEBOOK_PIXEL_ID}/events`;
+
+
+// Liste noire des domaines jetables
+const disposableDomains = [
+  "yopmail.com", "tempmail.com", "10minutemail.com", "mailinator.com", "guerrillamail.com"
+];
+
+// Vérifier si l'email a un format correct
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Vérifier si le domaine de l'email accepte les emails (DNS MX Record)
+async function isDisposableOrInvalidEmail(email) {
+  return new Promise((resolve) => {
+      const domain = email.split('@')[1];
+
+      // Vérifier si c'est un email jetable
+      if (disposableDomains.includes(domain)) {
+          return resolve(false);
+      }
+
+      // Vérification DNS pour s'assurer que le domaine peut recevoir des emails
+      dns.resolveMx(domain, (err, addresses) => {
+          if (err || !addresses || addresses.length === 0) {
+              resolve(false);
+          } else {
+              resolve(true);
+          }
+      });
+  });
+}
 
 
 let firstFreeImageSent = new Map(); // Stocke les utilisateurs qui ont déjà reçu une image non floutée
@@ -857,69 +891,83 @@ async function addUserToBrevo(email) {
   }
 }
 
+
+
+
+// ✅ ROUTE SIGNUP AVEC VÉRIFICATION D'EMAIL
 app.post('/api/signup', async (req, res) => {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-  }
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  try {
-      const database = client.db('MyAICrush');
-      const users = database.collection('users');
+    if (!isValidEmail(email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
+    }
 
-      // Vérifier si l'utilisateur existe déjà
-      const existingUser = await users.findOne({ email });
-      const isNewUser = !existingUser;
+    const isValidDomain = await isDisposableOrInvalidEmail(email);
+    if (!isValidDomain) {
+        return res.status(400).json({ message: 'Adresse email invalide' });
+    }
 
-      if (existingUser) {
-          return res.status(400).json({ message: 'Un compte avec cet email existe déjà', isNewUser: false });
-      }
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
 
-      // Générer un hash pour le mot de passe
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
+        // Vérifier si l'utilisateur existe déjà
+        const existingUser = await users.findOne({ email });
+        const isNewUser = !existingUser;
 
-      // Ajouter l'utilisateur avec le mot de passe haché
-      await users.insertOne({ email, password: hashedPassword });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Un compte avec cet email existe déjà', isNewUser: false });
+        }
 
-      console.log("✅ Inscription réussie pour :", email);
+        // Générer un hash pour le mot de passe
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // ✅ Ajout à Brevo
-      await addUserToBrevo(email);
+        // Ajouter l'utilisateur avec le mot de passe haché
+        await users.insertOne({ email, password: hashedPassword });
 
-      // 🔥 Hachage de l'email pour Facebook (SHA-256)
-      const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+        console.log("✅ Inscription réussie pour :", email);
 
-      // 🔥 Envoi de l’événement "CompleteRegistration" à Facebook
-      const payload = {
-          data: [
-              {
-                  event_name: "CompleteRegistration",
-                  event_time: Math.floor(Date.now() / 1000),
-                  user_data: { em: hashedEmail },
-                  action_source: "website"
-              }
-          ],
-          access_token: FACEBOOK_ACCESS_TOKEN
-      };
+        // ✅ Ajout à Brevo
+        await addUserToBrevo(email);
 
-      console.log("📡 Envoi de l'événement CompleteRegistration à Facebook :", payload);
+        // 🔥 Hachage de l'email pour Facebook (SHA-256)
+        const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 
-      try {
-          const response = await axios.post(FB_API_URL, payload);
-          console.log("✅ Événement 'CompleteRegistration' envoyé à Facebook avec succès !", response.data);
-      } catch (error) {
-          console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
-      }
+        // 🔥 Envoi de l’événement "CompleteRegistration" à Facebook
+        const payload = {
+            data: [
+                {
+                    event_name: "CompleteRegistration",
+                    event_time: Math.floor(Date.now() / 1000),
+                    user_data: { em: hashedEmail },
+                    action_source: "website"
+                }
+            ],
+            access_token: FACEBOOK_ACCESS_TOKEN
+        };
 
-      res.status(201).json({ message: 'User created successfully!', isNewUser: true });
+        console.log("📡 Envoi de l'événement CompleteRegistration à Facebook :", payload);
 
-  } catch (error) {
-      console.error('❌ Erreur lors de l\'inscription:', error);
-      res.status(500).json({ message: 'Internal server error' });
-  }
+        try {
+            const response = await axios.post(FB_API_URL, payload);
+            console.log("✅ Événement 'CompleteRegistration' envoyé à Facebook avec succès !", response.data);
+        } catch (error) {
+            console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
+        }
+
+        res.status(201).json({ message: 'User created successfully!', isNewUser: true });
+
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'inscription:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
+
 
 
 
