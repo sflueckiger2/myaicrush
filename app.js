@@ -592,7 +592,11 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
 
     console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
     
-    return { token: generateImageToken(imagePath, isBlurred) };
+    return { 
+      token: generateImageToken(imagePath, isBlurred), 
+      isBlurred: isBlurred // ✅ On ajoute bien isBlurred dans l'objet retourné
+  };
+  
   } catch (err) {
     console.error(`❌ Erreur lors de la récupération de l'image :`, err);
     return null;
@@ -808,13 +812,16 @@ const imageResult = await getRandomCharacterImage(email, isPremium, userLevel);
 
 
   
-      if (imageResult && imageResult.token) {
-          responseData.imageUrl = `/get-image/${imageResult.token}`; // Lien sécurisé
-          console.log("✅ Image envoyée avec succès.");
-      } else {
-          console.error("⚠️ Aucune image trouvée !");
-          responseData.reply += " (Désolé, aucune image disponible)";
-      }
+if (imageResult && imageResult.token) {
+  responseData.imageUrl = `/get-image/${imageResult.token}`; // Lien sécurisé
+  responseData.isBlurred = imageResult.isBlurred; // ✅ Ajout de l'information isBlurred dans la réponse
+  console.log(`✅ Image envoyée avec succès. Floutée: ${imageResult.isBlurred}`);
+}
+else {
+  console.error("⚠️ Aucune image trouvée !");
+  responseData.reply += " (Désolé, aucune image disponible)";
+}
+
     }
   
     console.log("🚀 Réponse envoyée :", responseData);

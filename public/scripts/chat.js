@@ -17,6 +17,7 @@ function isUserLoggedIn() {
     return user !== null && user.email; 
 }
 
+
 export function addUserMessage(userMessage, messagesContainer, scrollToBottomCallback) {
     if (userMessage.trim() !== '') {
         const messageElement = document.createElement('div');
@@ -70,9 +71,9 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                     email: user?.email // 🔥 Ajoute l'email ici !
                 }),
             })
-            
             .then(response => response.json())
             .then(data => {
+                console.log("🔍 Réponse reçue du serveur :", data); // ✅ Vérification de isBlurred
                 hideTypingIndicator(); // Masque l'indicateur après réception de la réponse
 
                 if (data.levelUpdateMessage && data.levelUpdateType) {
@@ -80,7 +81,10 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 }
 
                 if (data.imageUrl) {
-                    addBotImageMessage(data.reply, data.imageUrl, isPremium, messagesContainer);
+                    console.log(`📌 Image reçue : ${data.imageUrl} - Floutée : ${data.isBlurred}`);
+
+                    // ✅ Passe l'info "isBlurred" si elle est envoyée par le backend
+                    addBotImageMessage(data.reply, data.imageUrl, isPremium, messagesContainer, data.isBlurred);
                 } else {
                     addBotMessage(data.reply, messagesContainer);
                 }
@@ -106,6 +110,8 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 }
 
 
+
+
 export function addBotMessage(botReply, messagesContainer) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
@@ -114,49 +120,55 @@ export function addBotMessage(botReply, messagesContainer) {
     scrollToBottom(messagesContainer);
 }
 
-export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer) {
+
+export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer, isBlurredFromBackend = null) {
+    console.log("🖼️ Ajout d'une image au chat...");
+    console.log(`📌 Image URL reçue : ${imageUrl}`);
+    console.log(`🔎 isBlurred reçu du backend : ${isBlurredFromBackend}`);
+
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
     messageElement.textContent = botReply;
 
     const imageElement = document.createElement('img');
-    imageElement.src = `${BASE_URL}${imageUrl}`; // Charge l’image via l’endpoint sécurisé
+    imageElement.src = `${BASE_URL}${imageUrl}`;
     imageElement.alt = 'Image générée par l\'IA';
-    imageElement.classList.add('chat-image'); // 🔥 Ajout d'une classe pour éviter le dépassement
+    imageElement.classList.add('chat-image');
 
-    // Vérifier si c'est la première image envoyée à un non-premium
-    if (!isPremium && !firstPhotoSent) {
-        console.log("🎁 Première image non floutée affichée !");
-        firstPhotoSent = true; // Marquer qu'une image a été envoyée sans flou
-        messageElement.appendChild(imageElement);
-    } else if (!isPremium) {
-        console.log("💨 Image floutée affichée pour un utilisateur non premium.");
-        imageElement.classList.add('blurred-image');
+    // 🔥 Déterminer si l'image est réellement floutée
+    let isBlurred = isBlurredFromBackend !== null ? isBlurredFromBackend : imageUrl.includes('/get-image/');
 
-        // Ajouter le bouton "Unlock"
+    console.log(`📌 Image est floutée ? ${isBlurred}`);
+
+    // ✅ Afficher le bouton seulement si l'image est vraiment floutée
+    if (!isPremium && isBlurred) {
+        console.log("💨 Image détectée comme floutée, ajout du bouton Unlock.");
+        
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('image-container');
+
+        // ✅ Ajouter le bouton Unlock
         const unlockButton = document.createElement('button');
         unlockButton.textContent = 'Voir la photo';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
-            window.location.href = '/premium.html'; // Rediriger vers la page premium
+            window.location.href = '/premium.html';
         };
 
-        // Conteneur pour l'image + bouton
-        const imageContainer = document.createElement('div');
-        imageContainer.classList.add('image-container');
         imageContainer.appendChild(imageElement);
-        imageContainer.appendChild(unlockButton); // Ajouter le bouton
-
+        imageContainer.appendChild(unlockButton);
         messageElement.appendChild(imageContainer);
     } else {
-        console.log("🌟 Image claire affichée pour un premium.");
-        imageElement.classList.add('clear-image');
+        console.log("🌟 Image claire affichée, pas de bouton.");
         messageElement.appendChild(imageElement);
     }
 
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
+
+
+
 
 
 
@@ -224,11 +236,14 @@ export function startChat(characterName) {
 
             document.querySelector('.menu').classList.add('hidden');
         }
+        
     })
     .catch((error) => {
         console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
 }
+
+
 
 //fonctions is typing
 
@@ -315,3 +330,4 @@ function recreateTypingIndicator() {
         console.error('Chat box not found. ');
     }
 }
+
