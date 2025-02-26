@@ -576,11 +576,11 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
       return null;
     }
 
-    // ✅ Vérifier si c'est la première image envoyée à l'utilisateur non premium
-    let isBlurred = !isPremium;
-    console.log(`📧 Vérification pour ${email} - Premium : ${isPremium}`);
-    
-    if (!isPremium) {
+    // ✅ Nouvelle règle : Si l'utilisateur n'est pas premium et a un niveau > 1.6, l'image est toujours floutée
+    let isBlurred = !isPremium || (userLevel > 1.6);
+    console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
+
+    if (!isPremium && userLevel <= 1.6) {
       if (!firstFreeImageSent.has(email)) {
         console.log("🎁 Première image claire offerte à :", email);
         isBlurred = false; // Pas de flou pour la première image
@@ -598,6 +598,7 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
     return null;
   }
 }
+
 
 
 
