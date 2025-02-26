@@ -577,7 +577,24 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
     }
 
     // ✅ Nouvelle règle : Si l'utilisateur n'est pas premium et a un niveau > 1.6, l'image est toujours floutée
-    let isBlurred = !isPremium || (userLevel > 1.6);
+    // Par défaut, pas de flou pour les abonnés premium
+let isBlurred = false; 
+
+if (!isPremium) { // Appliquer les règles de floutage SEULEMENT pour les non-premium
+    if (userLevel > 1.6) {
+        isBlurred = true; // Flouter pour les niveaux élevés
+    } else if (!firstFreeImageSent.has(email)) {
+        console.log("🎁 Première image claire offerte à :", email);
+        firstFreeImageSent.set(email, true);
+    } else {
+        console.log("🔒 Image floutée car l'utilisateur a déjà reçu une image gratuite :", email);
+        isBlurred = true;
+    }
+}
+
+console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
+console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
+
     console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
 
     if (!isPremium && userLevel <= 1.6) {
