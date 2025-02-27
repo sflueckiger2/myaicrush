@@ -26,25 +26,41 @@ export async function loadCharacters() {
   }
 }
 
-// Fonction pour changer de personnage
+// Fonction pour changer de personnage avec gestion multi-utilisateurs
 export async function setCharacter(name) {
   try {
+    const user = JSON.parse(localStorage.getItem('user')); // 🔥 Récupère l'utilisateur connecté
+    if (!user || !user.email) {
+      console.error("❌ Erreur : utilisateur non connecté !");
+      return;
+    }
+
     const response = await fetch('/setCharacter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }), // Le nom du personnage à envoyer
+      body: JSON.stringify({ 
+        name, 
+        email: user.email // 🔥 Envoi de l'email pour lier le personnage
+      }),
     });
 
     const data = await response.json();
     if (response.ok) {
-      console.log('Personnage actif mis à jour côté serveur :', data.message);
+      console.log('✅ Personnage actif mis à jour côté serveur :', data.message);
+      
+      // 🔥 Stocker le personnage dans localStorage pour éviter les erreurs après un refresh
+      localStorage.setItem('activeCharacter', JSON.stringify({ name }));
     } else {
-      console.error('Erreur serveur :', data.message);
+      console.error('❌ Erreur serveur :', data.message);
     }
   } catch (error) {
-    console.error('Erreur lors de l’appel à /setCharacter :', error);
+    console.error('❌ Erreur lors de l’appel à /setCharacter :', error);
   }
 }
+
+
+
+
 
 // Fonction pour réinitialiser le niveau UTILISATEUR avec le BACK BUTTON
 export function resetUserLevel() {

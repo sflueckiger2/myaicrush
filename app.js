@@ -477,8 +477,13 @@ let userLevel = 1.0;
 let photoSentAtLittleCrush = false; // Variable pour suivre l'envoi de la photo au niveau Little Crush
 let photoSentAtBigCrush = false; // Variable pour suivre l'envoi de la photo au niveau Big Crush
 let photoSentAtPerfectCrush = false;
-let activeCharacter = characters[0]; // Par défaut, le premier personnage (Hanaé)
-console.log('Personnage actif au démarrage :', activeCharacter.name);
+
+
+const userCharacters = new Map(); // ✅ Associe chaque email à un personnage
+const userConversationHistory = new Map();
+const userPhotoStatus = new Map();
+
+
 
 
 // Fonction pour supprimer les accents
@@ -487,21 +492,35 @@ function removeAccents(str) {
 }
 
 // Fonction pour changer le personnage actif
+// Fonction pour changer le personnage actif
 app.post('/setCharacter', (req, res) => {
-  console.log('Requête reçue pour changer de personnage :', req.body); // Ajout
-  const { name } = req.body;
-  const character = characters.find(c => c.name === name);
+  console.log('🔄 Requête reçue pour changer de personnage :', req.body);
 
-  if (character) {
-    activeCharacter = character;
-    console.log('Personnage actif modifié :', activeCharacter.name); // Ajouter ici
-    conversationHistory = []; // Réinitialiser l'historique pour un nouveau personnage
-    photoSentAtLittleCrush = false; // Réinitialise l'état d'envoi de photo pour "Little Crush"
-    photoSentAtBigCrush = false; // Réinitialiser l'état d'envoi de photo
-    res.json({ success: true, message: `${name} est maintenant actif.` });
-  } else {
-    res.status(400).json({ success: false, message: "Personnage inconnu." });
+  const { email, name } = req.body;
+  if (!email || !name) {
+      return res.status(400).json({ success: false, message: "Email et personnage requis." });
   }
+
+  const character = characters.find(c => c.name === name);
+  if (!character) {
+      return res.status(400).json({ success: false, message: "Personnage inconnu." });
+  }
+
+  // ✅ Stocker le personnage pour cet utilisateur uniquement
+  userCharacters.set(email, character);
+  console.log(`✅ Personnage défini pour ${email} : ${character.name}`);
+
+  // ✅ Réinitialiser l'historique de conversation uniquement pour cet utilisateur
+  userConversationHistory.set(email, []);
+
+  // ✅ Réinitialiser le statut d'envoi des photos pour cet utilisateur
+  userPhotoStatus.set(email, {
+      photoSentAtLittleCrush: false,
+      photoSentAtBigCrush: false,
+      photoSentAtPerfectCrush: false
+  });
+
+  res.json({ success: true, message: `${name} est maintenant actif.` });
 });
 
 // Ajouter un message à l'historique
@@ -540,85 +559,85 @@ async function addOrFindUser(email) {
 
 
 async function getRandomCharacterImage(email, isPremium, userLevel) {
-  const sanitizedCharacterName = removeAccents(activeCharacter.name.toLowerCase());
+  const userCharacter = userCharacters.get(email); // 🔥 Récupère le personnage spécifique de cet utilisateur
+  if (!userCharacter) {
+      console.error(`❌ Erreur : Aucun personnage défini pour ${email}`);
+      return null;
+  }
+
+  const sanitizedCharacterName = removeAccents(userCharacter.name.toLowerCase());
   let levelFolder;
 
   if (userLevel < 1.7) {
-    levelFolder = `${sanitizedCharacterName}1`; // Little Crush
+      levelFolder = `${sanitizedCharacterName}1`; // Little Crush
   } else if (userLevel < 2.2) {
-    levelFolder = `${sanitizedCharacterName}2`; // Big Crush
+      levelFolder = `${sanitizedCharacterName}2`; // Big Crush
   } else {
-    levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
+      levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
   }
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
-  console.log(`📂 Chemin du dossier image : ${imageDir}`);
+  console.log(`📂 Chemin du dossier image pour ${email} : ${imageDir}`);
 
   try {
-    if (!fs.existsSync(imageDir)) {
-      console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
-      return null;
-    }
-
-    const images = fs.readdirSync(imageDir).filter(file => file.match(/\.(jpg|jpeg|png|webp)$/i));
-
-    if (images.length === 0) {
-      console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
-      return null;
-    }
-
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-    const imagePath = path.join(imageDir, randomImage);
-    console.log("📸 Image sélectionnée :", imagePath);
-
-    if (!fs.existsSync(imagePath)) {
-      console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
-      return null;
-    }
-
-    // ✅ Nouvelle règle : Si l'utilisateur n'est pas premium et a un niveau > 1.6, l'image est toujours floutée
-    // Par défaut, pas de flou pour les abonnés premium
-let isBlurred = false; 
-
-if (!isPremium) { // Appliquer les règles de floutage SEULEMENT pour les non-premium
-    if (userLevel > 1.6) {
-        isBlurred = true; // Flouter pour les niveaux élevés
-    } else if (!firstFreeImageSent.has(email)) {
-        console.log("🎁 Première image claire offerte à :", email);
-        firstFreeImageSent.set(email, true);
-    } else {
-        console.log("🔒 Image floutée car l'utilisateur a déjà reçu une image gratuite :", email);
-        isBlurred = true;
-    }
-}
-
-console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
-console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
-
-    console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
-
-    if (!isPremium && userLevel <= 1.6) {
-      if (!firstFreeImageSent.has(email)) {
-        console.log("🎁 Première image claire offerte à :", email);
-        isBlurred = false; // Pas de flou pour la première image
-        firstFreeImageSent.set(email, true); // Marquer qu'une image claire a déjà été envoyée
-      } else {
-        console.log("🔒 Image floutée car l'utilisateur a déjà reçu une image gratuite :", email);
+      if (!fs.existsSync(imageDir)) {
+          console.error(`❌ Le dossier ${imageDir} n'existe pas.`);
+          return null;
       }
-    }
 
-    console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
-    
-    return { 
-      token: generateImageToken(imagePath, isBlurred), 
-      isBlurred: isBlurred // ✅ On ajoute bien isBlurred dans l'objet retourné
-  };
-  
+      const images = fs.readdirSync(imageDir).filter(file => file.match(/\.(jpg|jpeg|png|webp)$/i));
+
+      if (images.length === 0) {
+          console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
+          return null;
+      }
+
+      const randomImage = images[Math.floor(Math.random() * images.length)];
+      const imagePath = path.join(imageDir, randomImage);
+      console.log(`📸 Image sélectionnée pour ${email} : ${imagePath}`);
+
+      if (!fs.existsSync(imagePath)) {
+          console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
+          return null;
+      }
+
+      // ✅ Par défaut, les abonnés premium voient les images nettes
+      let isBlurred = false; 
+
+      if (!isPremium) { // 🔥 Appliquer les règles de floutage SEULEMENT pour les non-premium
+          const userPhotoData = userPhotoStatus.get(email) || { photoSentAtLittleCrush: false };
+
+          if (userLevel > 1.6) {
+              isBlurred = true; // Flouter pour les niveaux élevés
+          } else if (!firstFreeImageSent.has(email)) {
+              console.log(`🎁 Première image claire offerte à ${email}`);
+              firstFreeImageSent.set(email, true);
+          } else {
+              console.log(`🔒 Image floutée car ${email} a déjà reçu une image gratuite`);
+              isBlurred = true;
+          }
+
+          // 🔥 Mise à jour de l'état d'envoi de la photo
+          userPhotoStatus.set(email, {
+              ...userPhotoData,
+              photoSentAtLittleCrush: true
+          });
+      }
+
+      console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
+      console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
+
+      return { 
+          token: generateImageToken(imagePath, isBlurred), 
+          isBlurred: isBlurred // ✅ On ajoute bien isBlurred dans l'objet retourné
+      };
+
   } catch (err) {
-    console.error(`❌ Erreur lors de la récupération de l'image :`, err);
-    return null;
+      console.error(`❌ Erreur lors de la récupération de l'image pour ${email} :`, err);
+      return null;
   }
 }
+
 
 
 
@@ -736,10 +755,15 @@ app.post('/message', async (req, res) => {
         } level.`
       : "";
 
+      const userCharacter = userCharacters.get(email);
+if (!userCharacter) {
+    console.error(`❌ Aucun personnage actif trouvé pour ${email}`);
+    return res.status(400).json({ reply: "Aucun personnage sélectionné." });
+}
     const systemPrompt = `
-      Profil : ${activeCharacter.prompt.profile}
-      Temperament : ${activeCharacter.prompt.temperament}
-      Objective : ${activeCharacter.prompt.objective}
+      Profil : ${userCharacter.prompt.profile}
+      Temperament : ${userCharacter.prompt.temperament}
+      Objective : ${userCharacter.prompt.objective}
 
       Level System:
       - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
