@@ -524,14 +524,23 @@ app.post('/setCharacter', (req, res) => {
 });
 
 // Ajouter un message à l'historique
-function addMessageToHistory(role, content) {
-  if (content) {
-    conversationHistory.push({ role, content });
-    if (conversationHistory.length > 15) {
-      conversationHistory.shift();
-    }
+function addMessageToHistory(email, role, content) {
+  if (!content) return;
+
+  if (!userConversationHistory.has(email)) {
+    userConversationHistory.set(email, []);
   }
+
+  const history = userConversationHistory.get(email);
+  history.push({ role, content });
+
+  if (history.length > 15) {
+    history.shift(); // ✅ Garde seulement les 15 derniers messages
+  }
+
+  userConversationHistory.set(email, history);
 }
+
 
 // FONCTION POUR GOOGLE AUTH
 async function addOrFindUser(email) {
@@ -751,7 +760,8 @@ app.post('/message', async (req, res) => {
     const { isPremium } = await premiumResponse.json();
     console.log("🌟 Statut premium OK :", isPremium);
 
-    addMessageToHistory("user", message);
+    addMessageToHistory(email, "user", message);
+
 
     // Préparer le prompt pour OpenAI
     userLevel = userLevels.get(email) || 1.0;
@@ -783,10 +793,12 @@ if (!userCharacter) {
     `;
 
     // Construire le contexte du chat pour OpenAI
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...conversationHistory,
-    ];
+    const conversationHistory = userConversationHistory.get(email) || [];
+const messages = [
+  { role: "system", content: systemPrompt },
+  ...conversationHistory, // ✅ Utilisation de l'historique propre à l'utilisateur
+];
+
 
     console.log("📡 Envoi du prompt à OpenAI...");
 
@@ -815,7 +827,8 @@ if (!userCharacter) {
 
     console.log("🤖 Réponse reçue d'OpenAI :", botReply);
 
-    addMessageToHistory("assistant", botReply);
+    addMessageToHistory(email, "assistant", botReply);
+
 
     // Extraire le niveau de confort et ajuster le niveau utilisateur
     const comfortLevel = extractComfortLevel(botReply);
