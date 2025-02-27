@@ -85,7 +85,7 @@
 
   // ✅ Envoi de l'événement "Purchase" avec eventID pour le dédoublonnage
   fbq('track', 'Purchase', {
-    value: 50,
+    value: 10,
     currency: 'EUR'
   }, {
     eventID: purchaseEventID // ✅ Assure le même eventID entre Pixel et API
