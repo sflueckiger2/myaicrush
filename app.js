@@ -473,7 +473,7 @@ app.get('/characters.json', (req, res) => {
 });
 
 let conversationHistory = [];
-let userLevel = 1.0;
+const userLevels = new Map(); // 🔥 Stocke le niveau de chaque utilisateur
 let photoSentAtLittleCrush = false; // Variable pour suivre l'envoi de la photo au niveau Little Crush
 let photoSentAtBigCrush = false; // Variable pour suivre l'envoi de la photo au niveau Big Crush
 let photoSentAtPerfectCrush = false;
@@ -566,6 +566,10 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
   }
 
   const sanitizedCharacterName = removeAccents(userCharacter.name.toLowerCase());
+  
+  userLevel = userLevels.get(email) || 1.0;
+
+
   let levelFolder;
 
   if (userLevel < 1.7) {
@@ -690,7 +694,7 @@ function extractComfortLevel(botReply) {
 }
 
 // Ajuster le niveau de l'utilisateur en fonction du confort extrait
-function adjustUserLevel(comfortLevel) {
+function adjustUserLevel(email, comfortLevel) {
   let levelChange = 0;
   if (comfortLevel === 'very comfortable') {
     levelChange = 0.2;
@@ -702,23 +706,24 @@ function adjustUserLevel(comfortLevel) {
     levelChange = -0.2;
   }
 
-  const previousLevel = userLevel;
-  userLevel = Math.max(1.0, userLevel + levelChange);
-  userLevel = Math.round(userLevel * 10) / 10;
+  const previousLevel = userLevels.get(email) || 1.0; // 🔥 Récupère le niveau spécifique
+  const newLevel = Math.max(1.0, previousLevel + levelChange); // 🔥 Met à jour correctement
+  userLevels.set(email, newLevel); // ✅ Stocke le nouveau niveau utilisateur
 
-  console.log(`Comfort Level: ${comfortLevel}, Level Change: ${levelChange}, New Level: ${userLevel}, Previous Level: ${previousLevel}`);
+  console.log(`📈 [${email}] Confort: ${comfortLevel}, Changement: ${levelChange}, Nouveau Niveau: ${newLevel}, Ancien Niveau: ${previousLevel}`);
 
-  if (levelChange > 0 && userLevel > previousLevel) {
-    if (userLevel === 1.1) return { message: "Bravo, tu lui plaît.", type: "up" };
-    if (userLevel === 1.7) return { message: "Elle est folle de toi ", type: "up" };
-    if (userLevel === 2.2) return { message: "Wow, tu es son crush parfait !", type: "up" };
-  } else if (levelChange < 0 && previousLevel > userLevel) {
-    if (userLevel < 1.2) return { message: "Tu baisses dans son estime", type: "down" };
-    if (userLevel < 1.8) return { message: "Elle n'a pas aimé ta réponse", type: "down" };
+  if (levelChange > 0 && newLevel > previousLevel) {
+    if (newLevel >= 1.1 && previousLevel < 1.1) return { message: "Bravo, tu lui plais.", type: "up" };
+    if (newLevel >= 1.7 && previousLevel < 1.7) return { message: "Elle est folle de toi.", type: "up" };
+    if (newLevel >= 2.2 && previousLevel < 2.2) return { message: "Wow, tu es son crush parfait !", type: "up" };
+  } else if (levelChange < 0 && previousLevel > newLevel) {
+    if (newLevel < 1.2 && previousLevel >= 1.2) return { message: "Tu baisses dans son estime", type: "down" };
+    if (newLevel < 1.8 && previousLevel >= 1.8) return { message: "Elle n'a pas aimé ta réponse", type: "down" };
   }
 
   return null;
 }
+
 
 // Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {
@@ -749,6 +754,9 @@ app.post('/message', async (req, res) => {
     addMessageToHistory("user", message);
 
     // Préparer le prompt pour OpenAI
+    userLevel = userLevels.get(email) || 1.0;
+
+
     const userLevelDescription = userLevel >= 1.1 
       ? `The user is at the ${
           userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
@@ -811,25 +819,54 @@ if (!userCharacter) {
 
     // Extraire le niveau de confort et ajuster le niveau utilisateur
     const comfortLevel = extractComfortLevel(botReply);
-    const levelUpdate = adjustUserLevel(comfortLevel);
+    console.log("📊 Vérification de l'envoi d'image...");
+console.log("   🔹 Niveau actuel:", userLevel);
+console.log("   🔹 Statut Premium:", isPremium);
+console.log("   🔹 Statut photo utilisateur:", userPhotoStatus.get(email));
+console.log("   🔹 Contient le tag [PHOTO] ?", botReply.includes("[PHOTO]"));
+
+const levelUpdate = adjustUserLevel(email, comfortLevel);
+userLevel = userLevels.get(email) || 1.0;  // 🔥 On met à jour userLevel après ajustement
+
+
 
     // Nettoyer le message de la mention de confort
     botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
 
     // Déterminer si une photo doit être envoyée
+    let userPhotoData = userPhotoStatus.get(email) || {
+      photoSentAtLittleCrush: false,
+      photoSentAtBigCrush: false,
+      photoSentAtPerfectCrush: false
+    };
+    
     let sendPhoto = botReply.includes("[PHOTO]");
-    if (!sendPhoto) {
-      if (userLevel >= 1.1 && userLevel < 1.7 && !photoSentAtLittleCrush) {
-        sendPhoto = true;
-        photoSentAtLittleCrush = true;
-      } else if (userLevel >= 1.7 && userLevel < 2.2 && !photoSentAtBigCrush) {
-        sendPhoto = true;
-        photoSentAtBigCrush = true;
-      } else if (userLevel >= 2.2 && !photoSentAtPerfectCrush) {
-        sendPhoto = true;
-        photoSentAtPerfectCrush = true;
-      }
-    }
+    console.log("📷 Détection d'envoi de photo : sendPhoto =", sendPhoto);
+
+    
+   // 🔥 FORCE L'ENVOI D'UNE IMAGE À 1.1
+
+ // 🔥 FORCE L'ENVOI D'UNE IMAGE AUX NIVEAUX SUPÉRIEURS
+if (!sendPhoto) {
+  if (userLevel >= 1.1 && userLevel < 1.7 && !userPhotoData.photoSentAtLittleCrush) {
+      console.log("📸 CONDITION VALIDÉE : Envoi d'une image pour niveau Little Crush !");
+      sendPhoto = true;
+      userPhotoData.photoSentAtLittleCrush = true;
+  } else if (userLevel >= 1.7 && userLevel < 2.2 && !userPhotoData.photoSentAtBigCrush) {
+      console.log("📸 CONDITION VALIDÉE : Envoi d'une image pour niveau Big Crush !");
+      sendPhoto = true;
+      userPhotoData.photoSentAtBigCrush = true;
+  } else if (userLevel >= 2.2 && !userPhotoData.photoSentAtPerfectCrush) {
+      console.log("📸 CONDITION VALIDÉE : Envoi d'une image pour niveau Perfect Crush !");
+      sendPhoto = true;
+      userPhotoData.photoSentAtPerfectCrush = true;
+  }
+}
+
+  
+    
+    userPhotoStatus.set(email, userPhotoData);
+    
 
     // Nettoyer le tag PHOTO avant d'envoyer la réponse
     botReply = botReply.replace("[PHOTO]", "").trim();
@@ -844,13 +881,19 @@ if (!userCharacter) {
 
     // Ajouter une image sécurisée si une photo doit être envoyée
     if (sendPhoto) {
-      console.log("📸 Envoi d'une image...");
+      console.log("📸 Envoi d'une image confirmé. Appel de getRandomCharacterImage()...");
+
+     
   
       console.log("📧 Email transmis à getRandomCharacterImage :", email);
 console.log("🌟 Statut premium :", isPremium);
 
 const imageResult = await getRandomCharacterImage(email, isPremium, userLevel);
-
+if (imageResult && imageResult.token) {
+  console.log(`✅ Image générée avec succès ! Token: ${imageResult.token}, Floutée: ${imageResult.isBlurred}`);
+} else {
+  console.error("❌ Échec de la génération de l'image !");
+}
 
   
 if (imageResult && imageResult.token) {
@@ -880,13 +923,15 @@ else {
 // ENDPOINT pour réinitialiser le niveau UTILISATEUR BACK-BTN
 
 app.post('/resetUserLevel', (req, res) => {
-  userLevel = 1.0; // Réinitialiser le niveau utilisateur à 1.0
-  photoSentAtLittleCrush = false; // Réinitialise l'état des photos
-  photoSentAtBigCrush = false; // Réinitialise l'état des photos
-  photoSentAtBigCrush = false; // Réinitialise l'état des photos
-  photoSentAtPerfectCrush = false;
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, message: "Email requis." });
+
+  userLevels.set(email, 1.0); // ✅ Réinitialise le niveau utilisateur
+  userPhotoStatus.set(email, { photoSentAtLittleCrush: false, photoSentAtBigCrush: false, photoSentAtPerfectCrush: false });
+
   res.json({ success: true, message: 'Niveau utilisateur réinitialisé.' });
 });
+
 
 // Fonction pour ajouter a BREVO
 async function addUserToBrevo(email) {
