@@ -67,35 +67,34 @@
   <!-- Inclure les fichiers JavaScript -->
   <script type="module" src="./scripts/menu.js"></script>
 
-  <!-- Pixel Facebook
-<script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-
-  fbq('init', '955861022940111'); // ✅ Remplace avec ton vrai Pixel ID
-
-  // 🔥 Génération d'un eventID unique basé sur la date et stocké pour l'API
-  var purchaseEventID = 'purchase_' + Date.now();
-
-  // ✅ Envoi de l'événement "Purchase" avec eventID pour le dédoublonnage
-  fbq('track', 'Purchase', {
-    value: 10,
-    currency: 'EUR'
-  }, {
-    eventID: purchaseEventID // ✅ Assure le même eventID entre Pixel et API
-  });
-
-  // ✅ Optionnel : Stocker cet eventID dans une variable globale pour l'API
-  window.fbqPurchaseEventID = purchaseEventID;
-
-</script>
- -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+  
+    fbq('init', '955861022940111'); // ✅ Ton Pixel ID
+  
+    // 🔥 Génération d'un eventID unique pour le dédoublonnage avec l'API
+    var purchaseEventID = 'purchase_' + Date.now();
+  
+    // ✅ Envoi de l'événement "Purchase" avec fbp et eventID
+    fbq('track', 'Purchase', {
+      value: 10, // 🔥 Remplace par la valeur réelle du paiement
+      currency: 'EUR'
+    }, {
+      eventID: purchaseEventID // ✅ Clé pour éviter les doublons avec l'API
+    });
+  
+    // ✅ Stocke cet eventID pour l’API Conversion
+    localStorage.setItem('fbqPurchaseEventID', purchaseEventID);
+  </script>
+  
+ 
 <noscript>
   <img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Purchase&noscript=1"/>

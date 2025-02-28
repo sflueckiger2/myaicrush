@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="styles.css">
 
 <!-- Meta Pixel Facebook -->
+<!-- Meta Pixel Facebook -->
 <script>
   !function(f,b,e,v,n,t,s)
   {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -19,9 +20,21 @@
   t.src=v;s=b.getElementsByTagName(e)[0];
   s.parentNode.insertBefore(t,s)}(window,document,'script',
   'https://connect.facebook.net/en_US/fbevents.js');
+
   fbq('init', '955861022940111');
   fbq('track', 'Lead');
+
+  // Capture du FBP et stockage local
+  fbq(function() {
+    var fbp_cookie = document.cookie.split('; ').find(row => row.startsWith('_fbp='));
+    if (fbp_cookie) {
+      var fbp_value = fbp_cookie.split('=')[1];
+      console.log("FBP capturé :", fbp_value);
+      localStorage.setItem('fbp_value', fbp_value); // Sauvegarde dans localStorage
+    }
+  });
 </script>
+
 <noscript><img height="1" width="1" style="display:none"
   src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Lead&noscript=1"
 /></noscript>

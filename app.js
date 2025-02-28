@@ -36,16 +36,15 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
   let event;
   try {
-      // ✅ Stripe attend un Buffer ici (raw body), pas un objet JSON parsé
+      // ✅ Vérification de la signature Stripe (body doit être RAW)
       event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
       console.log("✅ Webhook Stripe validé :", JSON.stringify(event, null, 2));
-
   } catch (err) {
       console.error("❌ Erreur lors de la validation du webhook :", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // 💳 Vérifier que l'événement est bien un paiement réussi
+  // 📌 Vérifier que l'événement est bien un paiement réussi
   if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const email = session.customer_email;
@@ -57,21 +56,31 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       // 🔥 Hachage de l'email pour Facebook
       const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 
+      // ✅ Vérifier si `metadata` existe pour éviter les erreurs
+      const metadata = session.metadata || {};
+      const fbp = metadata.fbp || null; // ✅ Récupérer fbp si dispo
+      const purchaseEventID = metadata.fbqPurchaseEventID || `purchase_${Date.now()}`;
+
       // 🔥 Construction du payload Facebook
       const payload = {
-        data: [
-            {
-                event_name: "Purchase",
-                event_time: Math.floor(Date.now() / 1000),
-                event_id: req.body.metadata?.fbqPurchaseEventID || `purchase_${Date.now()}`, // ✅ Assure le même eventID
-                user_data: { em: hashedEmail },
-                custom_data: { value: amount, currency: currency },
-                action_source: "website" // ✅ Doit être "website" au lieu de "server"
-            }
-        ],
-        access_token: process.env.FACEBOOK_ACCESS_TOKEN
-    };
-    
+          data: [
+              {
+                  event_name: "Purchase",
+                  event_time: Math.floor(Date.now() / 1000),
+                  event_id: purchaseEventID, // ✅ Évite les doublons Pixel/API
+                  user_data: {
+                      em: hashedEmail,
+                      fbp: fbp // ✅ Ajout de fbp pour meilleure attribution
+                  },
+                  custom_data: {
+                      value: amount,
+                      currency: currency
+                  },
+                  action_source: "website"
+              }
+          ],
+          access_token: process.env.FACEBOOK_ACCESS_TOKEN
+      };
 
       console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
 
@@ -85,6 +94,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
   res.json({ received: true });
 });
+
 
 
 app.use(express.json());
@@ -294,13 +304,18 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
       // Création de la session Stripe
       const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          mode: 'subscription',
-          customer_email: email,
-          line_items: [{ price: priceId, quantity: 1 }],
-          success_url: `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html`,
-          cancel_url: `${process.env.BASE_URL || 'http://localhost:3000'}/premium.html`
-      });
+        payment_method_types: ['card'],
+        mode: 'subscription',
+        customer_email: email,
+        metadata: {
+            fbp: req.body.fbp || null, // ✅ Ajoute fbp depuis le navigateur
+            fbqPurchaseEventID: `purchase_${Date.now()}`
+        },
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${process.env.BASE_URL}/confirmation.html`,
+        cancel_url: `${process.env.BASE_URL}/premium.html`
+    });
+    
 
       console.log('✅ Session Checkout créée avec succès :', session.url);
       res.json({ url: session.url });
