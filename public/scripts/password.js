@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const confirmPassword = document.getElementById('confirm-password').value;
 
           if (newPassword !== confirmPassword) {
-              alert("New password and confirmation do not match!");
+              alert("Le nouveau mot de passe et la confirmation ne correspondent pas !");
               return;
           }
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
               // Vérifie si l'utilisateur est connecté
               const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
               if (!user || !user.email) {
-                  alert("User not logged in.");
+                  alert("Utilisateur non connecté.");
                   return;
               }
 
@@ -39,15 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
               });
 
               if (response.ok) {
-                  alert("Password successfully changed!");
+                  alert("Mot de passe changé avec succès !");
                   changePasswordForm.reset();
               } else {
                   const errorData = await response.json();
-                  alert(errorData.message || 'Failed to change password.');
+                  alert(errorData.message || 'Échec du changement de mot de passe.');
               }
           } catch (error) {
-              console.error('Error changing password:', error);
-              alert('An error occurred. Please try again.');
+              console.error('Erreur lors du changement de mot de passe :', error);
+              alert('Une erreur est survenue. Veuillez réessayer.');
           }
       });
   }

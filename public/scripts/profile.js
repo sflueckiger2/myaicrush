@@ -84,7 +84,7 @@ if (window.location.pathname.includes('profile.html')) {
         const confirmPassword = document.getElementById('confirm-password').value;
 
         if (newPassword !== confirmPassword) {
-          alert("New password and confirmation do not match!");
+          alert("Le nouveau mot de passe et la confirmation ne correspondent pas !");
           return;
         }
 
@@ -96,15 +96,15 @@ if (window.location.pathname.includes('profile.html')) {
           });
 
           if (response.ok) {
-            alert("Password successfully changed!");
+            alert("Mot de passe changé avec succès !");
             changePasswordForm.reset();
           } else {
             const errorData = await response.json();
-            alert(errorData.message || 'Failed to change password.');
+            alert(errorData.message || 'Le changement de mot de passe a échoué');
           }
         } catch (error) {
           console.error('Error changing password:', error);
-          alert('An error occurred. Please try again.');
+          alert('Erreur. Merci de réessayer.');
         }
       });
     }
@@ -166,11 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
           const errorData = await response.json();
-          alert(errorData.message || 'Signup failed');
+          alert(errorData.message || 'La connexion a échoué');
         }
       } catch (error) {
         console.error('Error during signup:', error);
-        alert('An error occurred. Please try again.');
+        alert('Erreur. Merci de réessayer.');
       }
     });
   }
@@ -197,11 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
           window.location.href = 'index.html'; // Rediriger vers la page principale
         } else {
           const errorData = await response.json();
-          alert(errorData.message || 'Login failed');
+          alert(errorData.message || 'La connexion a échoué');
         }
       } catch (error) {
         console.error('Error during login:', error);
-        alert('An error occurred. Please try again.');
+        alert('Erreur. Merci de réessayer.');
       }
     });
   }
