@@ -58,29 +58,30 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
       // ✅ Vérifier si `metadata` existe pour éviter les erreurs
       const metadata = session.metadata || {};
-      const fbp = metadata.fbp || null; // ✅ Récupérer fbp si dispo
-      const purchaseEventID = metadata.fbqPurchaseEventID || `purchase_${Date.now()}`;
+const fbp = metadata.fbp || null;
+const fbc = metadata.fbc || null; // ✅ Ajout de fbc
+const purchaseEventID = metadata.fbqPurchaseEventID || `purchase_${Date.now()}`;
 
-      // 🔥 Construction du payload Facebook
-      const payload = {
-          data: [
-              {
-                  event_name: "Purchase",
-                  event_time: Math.floor(Date.now() / 1000),
-                  event_id: purchaseEventID, // ✅ Évite les doublons Pixel/API
-                  user_data: {
-                      em: hashedEmail,
-                      fbp: fbp // ✅ Ajout de fbp pour meilleure attribution
-                  },
-                  custom_data: {
-                      value: amount,
-                      currency: currency
-                  },
-                  action_source: "website"
-              }
-          ],
-          access_token: process.env.FACEBOOK_ACCESS_TOKEN
-      };
+const payload = {
+    data: [
+        {
+            event_name: "Purchase",
+            event_time: Math.floor(Date.now() / 1000),
+            event_id: purchaseEventID,
+            user_data: {
+                em: hashedEmail,
+                fbp: fbp,
+                fbc: fbc // ✅ Ajout de fbc pour optimiser l’attribution
+            },
+            custom_data: {
+                value: amount,
+                currency: currency
+            },
+            action_source: "website"
+        }
+    ],
+    access_token: process.env.FACEBOOK_ACCESS_TOKEN
+};
 
       console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
 
@@ -308,9 +309,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
         mode: 'subscription',
         customer_email: email,
         metadata: {
-            fbp: req.body.fbp || null, // ✅ Ajoute fbp depuis le navigateur
-            fbqPurchaseEventID: `purchase_${Date.now()}`
-        },
+          fbp: req.body.fbp || null, // ✅ OK, récupère fbp du frontend
+          fbc: req.body.fbc || null, // ✅ Ajoute fbc mais SANS utiliser localStorage
+          fbqPurchaseEventID: `purchase_${Date.now()}`
+      },
+      
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${process.env.BASE_URL}/confirmation.html`,
         cancel_url: `${process.env.BASE_URL}/premium.html`

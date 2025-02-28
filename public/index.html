@@ -126,6 +126,26 @@
       }
     });
   </script>
+<script>
+  function getFacebookParams() {
+      var urlParams = new URLSearchParams(window.location.search);
+
+      // ✅ Récupérer `fbc` (Facebook Click ID) s'il est présent dans l'URL
+      var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
+
+      // ✅ Récupérer `fbp` généré automatiquement par le Pixel Facebook
+      var fbp = null;
+      if (window.fbq && fbq.getState) {
+          fbp = fbq.getState().lastExternalId;
+      }
+
+      // ✅ Stocker les valeurs dans localStorage pour les récupérer plus tard (Stripe Checkout)
+      if (fbp) localStorage.setItem('fbp', fbp);
+      if (fbc) localStorage.setItem('fbc', fbc);
+  }
+
+  getFacebookParams();
+</script>
 
 </body>
 </html>
