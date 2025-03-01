@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hanaé t'attend !</title>
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+  <link rel="stylesheet" href="styles.css">
+    <!-- Google Analytics (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-FJ5S0H9B1R');
+  </script>
+</head>
+<body>
+ 
+
+ <!-- Contenu principal -->
+ <div class="container policy-page">
+  
+  <h2>Ton <span style="font-family:'Times New Roman', Times, serif;">I.A</span> (Hanaé) t'attend ! Inscris-toi <u>gratuitement</u> pour lui parler</h2>
+  <img style="width:100%;"src="/images/market/hanae-lead-visu-1.webp" alt="Hanaé - IA virtuelle" class="hanae-image">
+  <p class="p-description">
+    
+  </p>
+  <h2>MyAiCrush, l'une des premières plateformes francophones de discussion avec des <span style="font-family:'Times New Roman', Times, serif;">I.A</span></h2><br>
+  <img style="width:100%;"src="/images/market/hanae-lead-visu-2.webp" alt="Hanaé - IA virtuelle" class="hanae-image">
+  <div  style="text-align: left;">
+  <p>
+    Discute dès maintenant avec Hanaé, mais aussi avec d'autres partenaires <span style="font-family:'Times New Roman', Times, serif;">I.A</span> (gratuitement). </p>
+    
+  </p>
+  <p>
+ Hanaé peut partager des images avec toi lors de vos conversations. Complimente-la pour en savoir plus !
+</p>
+<p>
+    Pour démarrer l'aventure, il suffit de continuer avec ton adresse Gmail, ou de créer un compte avec un autre email.
+  </p>
+</div>
+<!-- Formulaire d'inscription -->
+<div id="signup-container">
+    <h2>S'inscrire</h2><br>
+    <a href="/auth/google" class="google-login-btn">
+      <img src="images/google-logo.webp" 
+           alt="Google Logo" class="google-logo">
+      Continuer avec Google
+    </a><br>OU
+    <p>Continuer avec un email</p>
+    <form id="signup-form">
+      <label for="signup-email">Email:</label>
+      <input type="email" id="signup-email" name="email" placeholder="Saisis ton email" required /><br><br>
+      <label for="signup-password">Mot de passe:</label>
+      <input type="password" id="signup-password" name="password" placeholder="Saisis ton mot de passe" required />
+      <button type="submit" class="button">S'inscrire</button>
+    </form>
+    <p>
+     Déjà inscrit ?
+      <a href="#" id="show-signin">Connecte-toi ici</a>
+    </p>
+    <p id="signup-message"></p>
+  </div>
+  <!-- Formulaire de connexion -->
+<div id="signin-container" style="display: none;">
+  <h2>Se connecter</h2><br>
+  <form id="login-form">
+    <label for="login-email">Email:</label>
+    <input type="email" id="login-email" placeholder="Saisis ton email" required><br><br>
+
+    <label for="login-password">Mot de passe:</label>
+    <input type="password" id="login-password" placeholder="Saisis ton mot de passe" required><br><br>
+
+    <button class="button" type="submit">Se connecter</button>
+  </form>
+  <p>
+      Tu n'as pas de compte ? 
+      <a href="#" id="show-signup">Inscris-toi ici</a>
+  </p>
+</div>
+<a class="pink" href="privacy-policy.html">Politique de Confidentialité</a><br>
+ 
+</div>
+
+
+
+<script>
+  function getFacebookParams() {
+      var urlParams = new URLSearchParams(window.location.search);
+
+      // ✅ Récupérer `fbc` (Facebook Click ID) s'il est présent dans l'URL
+      var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
+
+      // ✅ Récupérer `fbp` généré automatiquement par le Pixel Facebook
+      var fbp = null;
+      if (window.fbq && fbq.getState) {
+          fbp = fbq.getState().lastExternalId;
+      }
+
+      // ✅ Stocker les valeurs dans localStorage pour les récupérer plus tard (Stripe Checkout)
+      if (fbp) localStorage.setItem('fbp', fbp);
+      if (fbc) localStorage.setItem('fbc', fbc);
+  }
+
+  getFacebookParams();
+</script>
+
+
+  <!-- Inclure les fichiers JavaScript -->
+  <script type="module" src="./scripts/menu.js"></script>
+  <script type="module" src="./scripts/profile.js"></script>
+  <script type="module" src="./scripts/stripe-frontend.js"></script>
+ 
+</body>
+</html>

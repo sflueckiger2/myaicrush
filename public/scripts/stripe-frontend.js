@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cancelSubscriptionButton) {
         cancelSubscriptionButton.addEventListener('click', () => {
-            const confirmCancel = confirm('Êtes-vous sûr de vouloir annuler votre abonnement ?');
+            const confirmCancel = confirm('Are you sure you want to cancel your subscription?');
             if (confirmCancel) {
                 cancelSubscription();
             }
@@ -102,7 +102,7 @@ async function startCheckout(priceId, email, planType) {
         }
     } catch (error) {
         console.error('❌ Erreur Stripe:', error.message);
-        alert(error.message || 'Une erreur est survenue lors de l'annulation de l'abonnement. Veuillez réessayer.');
+        alert(error.message || 'An error occurred while creating the Stripe session. Please try again.');
     }
 }
 
@@ -123,11 +123,11 @@ async function cancelSubscription() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Échec de l'annulation de l'abonnement.');
+            throw new Error(errorData.message || 'Failed to cancel subscription');
         }
 
         const data = await response.json();
-        alert('Ton abonnement est bien annulé');
+        alert('Your subscription has been cancelled.');
         localStorage.setItem('user', JSON.stringify({ ...user, isPremium: false }));
 
         const unsubscribeContainer = document.querySelector('#unsubscribe-container');
@@ -136,7 +136,7 @@ async function cancelSubscription() {
         }
     } catch (error) {
         console.error('❌ Erreur:', error);
-        alert('Une erreur est survenue lors de l'annulation de l'abonnement. Veuillez réessayer.');
+        alert('An error occurred while cancelling the subscription. Please try again.');
     }
 }
 
