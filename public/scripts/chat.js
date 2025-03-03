@@ -17,6 +17,16 @@ function isUserLoggedIn() {
     return user !== null && user.email; 
 }
 
+//Fonction Google analytics 
+
+function trackCharacterSelection(characterName) {
+    gtag('event', 'select_character', {
+        character_name: characterName
+    });
+    console.log(`📊 Suivi GA4 : ${characterName} sélectionné`);
+}
+
+
 
 export function addUserMessage(userMessage, messagesContainer, scrollToBottomCallback) {
     if (userMessage.trim() !== '') {
@@ -211,7 +221,7 @@ function adjustChatHeight() {
   window.addEventListener('resize', adjustChatHeight);
   
 
-export function startChat(characterName) {
+  export function startChat(characterName) {
     if (!isUserLoggedIn()) {
         window.location.href = 'profile.html';
         return;
@@ -220,6 +230,10 @@ export function startChat(characterName) {
     setCharacter(characterName)
     .then(() => {
         console.log(`Personnage chargé côté serveur : ${characterName}`);
+        
+        // ✅ Ajouter l'événement Google Analytics ici
+        trackCharacterSelection(characterName);
+        
         const messagesContainer = document.getElementById('messages');
         if (messagesContainer) messagesContainer.innerHTML = '';
 
@@ -242,6 +256,7 @@ export function startChat(characterName) {
         console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
 }
+
 
 
 
