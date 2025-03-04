@@ -27,7 +27,7 @@ const getAllFiles = (dir, files = []) => {
         const fullPath = path.join(dir, file);
         if (fs.statSync(fullPath).isDirectory()) {
             getAllFiles(fullPath, files);
-        } else if (/\.(jpg|jpeg|png)$/i.test(file)) { 
+        } else if (/\.(jpg|jpeg|png|gif)$/i.test(file)) {  // 🔥 Inclut les GIFs mais on les filtrera plus tard
             files.push(fullPath);
         }
     });
@@ -53,7 +53,14 @@ const moveToBackup = async (filePath) => {
 };
 
 const processImage = async (file) => {
-    const ext = path.extname(file);
+    const ext = path.extname(file).toLowerCase();
+
+    // 🚨 Ignorer les GIFs pour éviter qu'ils soient convertis en images statiques
+    if (ext === '.gif') {
+        console.log(`⏭ Ignoré : ${file} (GIF non converti)`);
+        return;
+    }
+
     const tempFile = file.replace(ext, `.temp${ext}`);
     const outputFile = file.replace(ext, '.webp');
 

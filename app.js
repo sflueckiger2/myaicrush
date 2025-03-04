@@ -616,7 +616,8 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
           return null;
       }
 
-      const images = fs.readdirSync(imageDir).filter(file => file.match(/\.(jpg|jpeg|png|webp)$/i));
+      const images = fs.readdirSync(imageDir).filter(file => file.match(/\.(jpg|jpeg|png|webp|gif)$/i));
+
 
       if (images.length === 0) {
           console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
