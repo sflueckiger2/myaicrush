@@ -237,6 +237,7 @@ function adjustChatHeight() {
   window.addEventListener('resize', adjustChatHeight);
   
 
+ 
   export function startChat(characterName) {
     if (!isUserLoggedIn()) {
         window.location.href = 'profile.html';
@@ -265,6 +266,14 @@ function adjustChatHeight() {
             document.querySelector('.chat-profile-pic').src = character.photo;
 
             document.querySelector('.menu').classList.add('hidden');
+
+            // ✅ FORCER LE MODE IMAGE PAR DÉFAUT À CHAQUE CHANGEMENT DE PERSONNAGE
+            const toggleMode = document.getElementById("toggleMode");
+            if (toggleMode) {
+                localStorage.setItem("chatMode", "image"); // Réinitialiser à "image"
+                toggleMode.checked = false; // Désactiver le toggle (donc mode image)
+                console.log("🔄 Mode forcé sur IMAGE par défaut");
+            }
         }
         
     })
