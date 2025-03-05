@@ -269,10 +269,20 @@ function adjustChatHeight() {
 
             // ✅ FORCER LE MODE IMAGE PAR DÉFAUT À CHAQUE CHANGEMENT DE PERSONNAGE
             const toggleMode = document.getElementById("toggleMode");
-            if (toggleMode) {
+            const modeToggleContainer = document.getElementById("mode-toggle-container"); // Utilisation du bon ID
+
+            if (toggleMode && modeToggleContainer) {
                 localStorage.setItem("chatMode", "image"); // Réinitialiser à "image"
                 toggleMode.checked = false; // Désactiver le toggle (donc mode image)
-                console.log("🔄 Mode forcé sur IMAGE par défaut");
+
+                // ✅ AFFICHER OU CACHER LE BOUTON SELON `hasVideos`
+                if (character.hasVideos) {
+                    modeToggleContainer.style.display = "block"; // Afficher le toggle
+                    console.log("🎬 Le personnage a des vidéos, affichage du toggle.");
+                } else {
+                    modeToggleContainer.style.display = "none"; // Cacher le toggle
+                    console.log("📸 Aucun GIF disponible, on cache le toggle.");
+                }
             }
         }
         
@@ -281,6 +291,8 @@ function adjustChatHeight() {
         console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
 }
+
+
 
 
 
