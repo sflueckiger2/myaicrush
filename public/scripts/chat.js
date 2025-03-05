@@ -9,6 +9,20 @@ const DAILY_MESSAGE_LIMIT = 8;
 // Définir dynamiquement l'URL de base
 const BASE_URL = window.location.origin;
 
+const toggleMode = document.getElementById("toggleMode");
+
+// ✅ Charger le mode actuel depuis le stockage local
+const currentMode = localStorage.getItem("chatMode") || "image";
+toggleMode.checked = currentMode === "gif";
+
+// ✅ Écouter les changements et mettre à jour le mode
+toggleMode.addEventListener("change", () => {
+    const newMode = toggleMode.checked ? "gif" : "image";
+    localStorage.setItem("chatMode", newMode);
+    console.log(`🎬 Mode changé : ${newMode}`);
+});
+
+
 // Vérifie si l'utilisateur est connecté
 function isUserLoggedIn() {
     const user = JSON.parse(localStorage.getItem('user')); 
@@ -78,8 +92,10 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     message: userMessage, 
-                    email: user?.email // 🔥 Ajoute l'email ici !
+                    email: user?.email, 
+                    mode: localStorage.getItem("chatMode") || "image" // ✅ Ajout du mode
                 }),
+                
             })
             .then(response => response.json())
             .then(data => {

@@ -585,7 +585,8 @@ async function addOrFindUser(email) {
 
 
 
-async function getRandomCharacterImage(email, isPremium, userLevel) {
+async function getRandomCharacterMedia(email, isPremium, userLevel, isGifMode) {
+
   const userCharacter = userCharacters.get(email); // 🔥 Récupère le personnage spécifique de cet utilisateur
   if (!userCharacter) {
       console.error(`❌ Erreur : Aucun personnage défini pour ${email}`);
@@ -595,7 +596,6 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
   const sanitizedCharacterName = removeAccents(userCharacter.name.toLowerCase());
   
   userLevel = userLevels.get(email) || 1.0;
-
 
   let levelFolder;
 
@@ -608,7 +608,7 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
   }
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
-  console.log(`📂 Chemin du dossier image pour ${email} : ${imageDir}`);
+  console.log(`📂 Chemin du dossier média pour ${email} : ${imageDir}`);
 
   try {
       if (!fs.existsSync(imageDir)) {
@@ -616,24 +616,26 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
           return null;
       }
 
-      const images = fs.readdirSync(imageDir).filter(file => file.match(/\.(jpg|jpeg|png|webp|gif)$/i));
+      // 🔥 Sélection des fichiers en fonction du mode
+      const mediaFiles = fs.readdirSync(imageDir).filter(file => 
+          isGifMode ? file.endsWith('.gif') : !file.endsWith('.gif')
+      );
 
-
-      if (images.length === 0) {
-          console.error(`⚠️ Aucune image trouvée dans ${imageDir}`);
+      if (mediaFiles.length === 0) {
+          console.error(`⚠️ Aucun fichier trouvé dans ${imageDir}`);
           return null;
       }
 
-      const randomImage = images[Math.floor(Math.random() * images.length)];
-      const imagePath = path.join(imageDir, randomImage);
-      console.log(`📸 Image sélectionnée pour ${email} : ${imagePath}`);
+      const randomMedia = mediaFiles[Math.floor(Math.random() * mediaFiles.length)];
+      const mediaPath = path.join(imageDir, randomMedia);
+      console.log(`📸 Média sélectionné pour ${email} : ${mediaPath}`);
 
-      if (!fs.existsSync(imagePath)) {
-          console.error(`❌ L'image sélectionnée ${imagePath} n'existe pas.`);
+      if (!fs.existsSync(mediaPath)) {
+          console.error(`❌ Le fichier sélectionné ${mediaPath} n'existe pas.`);
           return null;
       }
 
-      // ✅ Par défaut, les abonnés premium voient les images nettes
+      // ✅ Par défaut, les abonnés premium voient les médias nets
       let isBlurred = false; 
 
       if (!isPremium) { // 🔥 Appliquer les règles de floutage SEULEMENT pour les non-premium
@@ -645,7 +647,7 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
               console.log(`🎁 Première image claire offerte à ${email}`);
               firstFreeImageSent.set(email, true);
           } else {
-              console.log(`🔒 Image floutée car ${email} a déjà reçu une image gratuite`);
+              console.log(`🔒 Média flouté car ${email} a déjà reçu une image gratuite`);
               isBlurred = true;
           }
 
@@ -657,18 +659,19 @@ async function getRandomCharacterImage(email, isPremium, userLevel) {
       }
 
       console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
-      console.log(`📸 Image ${isBlurred ? "floutée" : "non floutée"} envoyée pour ${email}`);
+      console.log(`📸 Média ${isBlurred ? "flouté" : "non flouté"} envoyé pour ${email}`);
 
       return { 
-          token: generateImageToken(imagePath, isBlurred), 
+          token: generateImageToken(mediaPath, isBlurred), 
           isBlurred: isBlurred // ✅ On ajoute bien isBlurred dans l'objet retourné
       };
 
   } catch (err) {
-      console.error(`❌ Erreur lors de la récupération de l'image pour ${email} :`, err);
+      console.error(`❌ Erreur lors de la récupération du média pour ${email} :`, err);
       return null;
   }
 }
+
 
 
 
@@ -688,19 +691,42 @@ app.get('/get-image/:token', async (req, res) => {
     const { imagePath, isBlurred } = imageData;
     console.log(`📸 Chargement de l'image : ${imagePath} (Floutée : ${isBlurred})`);
 
-    let image = sharp(imagePath).resize({ width: 800 }).jpeg({ quality: 70 }); // Optimisation
-
-    if (isBlurred) {
-      console.log("💨 Application du flou...");
-      image = image.blur(50);
+    if (!fs.existsSync(imagePath)) {
+      console.error(`❌ Fichier introuvable : ${imagePath}`);
+      return res.status(404).send('Image non trouvée');
     }
 
-    const imageBuffer = await image.toBuffer();
+    let contentType = imagePath.endsWith('.gif') ? 'image/gif' : 'image/jpeg';
+
+    let imageBuffer;
+    
+    if (isBlurred) {
+      console.log("💨 Application du flou...");
+
+      if (imagePath.endsWith('.gif')) {
+        // 🔥 Flouter un GIF tout en conservant l’animation
+        const gifBuffer = fs.readFileSync(imagePath);
+        imageBuffer = await sharp(gifBuffer, { animated: true })
+          .blur(50) // Appliquer le flou sur toutes les frames
+          .toBuffer();
+      } else {
+        // 🔥 Flouter une image classique (JPG/PNG/WEBP)
+        imageBuffer = await sharp(imagePath)
+          .resize({ width: 800 }) // Optimisation
+          .blur(50)
+          .jpeg({ quality: 70 }) // Compression légère pour performance
+          .toBuffer();
+      }
+    } else {
+      // 🔥 Envoyer l’image/GIF normal sans modification
+      imageBuffer = fs.readFileSync(imagePath);
+    }
+
     res.writeHead(200, {
-      'Content-Type': 'image/jpeg',
+      'Content-Type': contentType,
       'Cache-Control': 'public, max-age=604800, immutable', // Cache efficace
     });
-    res.end(imageBuffer, 'binary'); // Une seule réponse ici
+    res.end(imageBuffer, 'binary'); // ✅ Une seule réponse
   } catch (error) {
     console.error("❌ Erreur lors du chargement de l'image :", error);
     if (!res.headersSent) {
@@ -708,6 +734,7 @@ app.get('/get-image/:token', async (req, res) => {
     }
   }
 });
+
 
 
 
@@ -759,7 +786,8 @@ app.post('/message', async (req, res) => {
 
 
   try {
-    const { message, email } = req.body;
+    const { message, email, mode } = req.body;
+
 
     if (!message || !email) {
       console.error("❌ Erreur : message ou email manquant !");
@@ -920,7 +948,9 @@ if (!sendPhoto) {
       console.log("📧 Email transmis à getRandomCharacterImage :", email);
 console.log("🌟 Statut premium :", isPremium);
 
-const imageResult = await getRandomCharacterImage(email, isPremium, userLevel);
+const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif");
+
+
 if (imageResult && imageResult.token) {
   console.log(`✅ Image générée avec succès ! Token: ${imageResult.token}, Floutée: ${imageResult.isBlurred}`);
 } else {
