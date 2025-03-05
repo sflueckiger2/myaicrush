@@ -943,6 +943,7 @@ if (!sendPhoto) {
 
     // Nettoyer le tag PHOTO avant d'envoyer la réponse
     botReply = botReply.replace("[PHOTO]", "").trim();
+    botReply = botReply.replace("[VIDEO]", "").trim();
 
     // Préparer la réponse JSON
     let responseData = { reply: botReply };
