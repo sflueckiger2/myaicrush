@@ -700,27 +700,40 @@ app.get('/get-image/:token', async (req, res) => {
 
     let imageBuffer;
     
-    if (isBlurred) {
-      console.log("💨 Application du flou...");
+    
 
+    if (isBlurred) {
+      console.log("💨 Application du flou renforcé...");
+  
       if (imagePath.endsWith('.gif')) {
-        // 🔥 Flouter un GIF tout en conservant l’animation
-        const gifBuffer = fs.readFileSync(imagePath);
-        imageBuffer = await sharp(gifBuffer, { animated: true })
-          .blur(50) // Appliquer le flou sur toutes les frames
-          .toBuffer();
+          console.log("🎥 Floutage GIF renforcé en cours...");
+  
+          const gifBuffer = fs.readFileSync(imagePath);
+  
+          // ✅ EXTRAIT UNIQUEMENT LA PREMIÈRE FRAME et la transforme en image fixe floutée avec un flou plus fort
+          imageBuffer = await sharp(gifBuffer, { animated: false }) // 🔥 Transforme le GIF en image statique
+              .resize({ width: 500 }) // ✅ Taille optimisée
+              .blur(35) // 🔥 Flou renforcé (10 → 15)
+              .jpeg({ quality: 70 }) // ✅ Compression JPEG pour ultra-rapidité
+              .toBuffer();
+  
+          console.log("✅ GIF transformé en image fixe et flouté plus fortement !");
       } else {
-        // 🔥 Flouter une image classique (JPG/PNG/WEBP)
-        imageBuffer = await sharp(imagePath)
-          .resize({ width: 800 }) // Optimisation
-          .blur(50)
-          .jpeg({ quality: 70 }) // Compression légère pour performance
-          .toBuffer();
+          console.log("🖼️ Floutage d'une image standard...");
+          imageBuffer = await sharp(imagePath)
+              .resize({ width: 700 }) // ✅ Taille optimisée
+              .blur(35) // 🔥 Flou renforcé (15 → 25)
+              .jpeg({ quality: 65 }) // ✅ Compression plus forte (70 → 65)
+              .toBuffer();
       }
-    } else {
-      // 🔥 Envoyer l’image/GIF normal sans modification
+  } else {
+      // 🔥 Envoi direct de l’image/GIF sans modification
+      console.log("📤 Envoi d'une image/GIF sans flou.");
       imageBuffer = fs.readFileSync(imagePath);
-    }
+  }
+  
+
+
 
     res.writeHead(200, {
       'Content-Type': contentType,
