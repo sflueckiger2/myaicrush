@@ -1163,47 +1163,7 @@ img.chat-image {
 }
 
 
-/* Badge rouge */
-.new-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: #ff4757;
-  color: white;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: bold;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
 
-/* Bordure rouge brillante autour des nouvelles IA */
-.chat-card.new {
-  border: 3px solid #ff4757; /* Bordure rouge */
-  box-shadow: 0px 0px 15px rgba(255, 71, 87, 0.8); /* Effet lumineux */
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-/* Effet hover pour renforcer l'effet lumineux */
-.chat-card.new:hover {
-  transform: scale(1.05);
-  box-shadow: 0px 0px 25px rgba(255, 71, 87, 1);
-}
-
-/* ✅ Ajustement pour les grands écrans (réduit la taille du badge) */
-@media screen and (min-width: 768px) {
-  .new-badge {
-      padding: 4px 8px;
-      font-size: 10px;
-  }
-}
-
-@media screen and (min-width: 1024px) {
-  .new-badge {
-      padding: 3px 7px;
-      font-size: 9px;
-  }
-}
 
 #mode-toggle-container {
   
@@ -1256,4 +1216,74 @@ input:checked + .slider {
 
 input:checked + .slider:before {
   transform: translateX(14px);
+}
+
+/* 🔴 Badge rouge pour "Nouvelle sur MyAiCrush" */
+.new-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #ff4757; /* Rouge */
+  color: white;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 🟢 Badge vert pour "🎥 Vidéos disponibles" */
+.video-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #28a745; /* Vert */
+  color: white;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 🔴 Bordure lumineuse rouge pour "Nouvelle sur MyAiCrush" */
+.chat-card.new {
+  border: 3px solid #ff4757;
+  box-shadow: 0px 0px 15px rgba(255, 71, 87, 0.8);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* 🟢 Bordure lumineuse verte pour "🎥 Vidéos disponibles" */
+.chat-card.hasVideos {
+  border: 3px solid #28a745;
+  box-shadow: 0px 0px 15px rgba(40, 167, 69, 0.8);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* ✅ Effet lumineux renforcé au survol */
+.chat-card.new:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 0px 25px rgba(255, 71, 87, 1);
+}
+
+.chat-card.hasVideos:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 0px 25px rgba(40, 167, 69, 1);
+}
+
+/* ✅ Ajustement pour les grands écrans */
+@media screen and (min-width: 768px) {
+  .new-badge,
+  .video-badge {
+      padding: 4px 8px;
+      font-size: 10px;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .new-badge,
+  .video-badge {
+      padding: 3px 7px;
+      font-size: 9px;
+  }
 }

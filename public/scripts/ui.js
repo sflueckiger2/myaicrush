@@ -26,7 +26,9 @@ export function initializeUIEvents(sendBtn, userInput, addUserMessageHandler) {
     });
 }
 
-// ✅ Générer dynamiquement les options de chat avec le badge "Nouvelle sur MyAiCrush"
+
+// ✅ Générer dynamiquement les options de chat avec les badges "Nouvelle" et "Vidéos disponibles"
+
 export function generateChatOptions(characters) {
     const chatOptions = document.querySelector('.chat-options');
     chatOptions.innerHTML = ''; // Nettoyer le conteneur avant d'ajouter les options
@@ -34,21 +36,35 @@ export function generateChatOptions(characters) {
     characters.forEach(character => {
         const card = document.createElement('div');
         card.className = 'chat-card';
+
+        if (character.new) {
+            card.classList.add('new'); // ✅ Appliquer la classe "new" pour le contour rouge
+        } else if (character.hasVideos) {
+            card.classList.add('hasVideos'); // ✅ Appliquer la classe "hasVideos" pour le contour vert
+        }
+
         card.addEventListener('click', () => startChat(character.name));
 
-        // ✅ Ajout de la classe "new" si le personnage est marqué comme nouveau
-        if (character.new) {
-            card.classList.add('new');
+        let badgeText = "";
+        let badgeClass = ""; 
 
-            // ✅ Ajout du badge
-            const newBadge = document.createElement('div');
-            newBadge.classList.add('new-badge');
-            newBadge.textContent = 'Nouvelle sur MyAiCrush';
-            card.appendChild(newBadge);
+        if (character.new) {
+            badgeText = "Nouvelle sur MyAiCrush";
+            badgeClass = "new-badge"; 
+        } else if (character.hasVideos) {
+            badgeText = "🎥 Vidéos disponibles";
+            badgeClass = "video-badge"; 
+        }
+
+        if (badgeText) {
+            const badge = document.createElement('div');
+            badge.classList.add('character-badge', badgeClass);
+            badge.textContent = badgeText;
+            card.appendChild(badge);
         }
 
         const img = document.createElement('img');
-        img.src = character.photo; // Photo du personnage depuis le JSON
+        img.src = character.photo;
         img.alt = character.name;
 
         const content = document.createElement('div');
@@ -58,7 +74,7 @@ export function generateChatOptions(characters) {
         title.textContent = character.name;
 
         const description = document.createElement('p');
-        description.textContent = character.description; // Utiliser le champ "description"
+        description.textContent = character.description;
 
         content.appendChild(title);
         content.appendChild(description);
@@ -67,6 +83,8 @@ export function generateChatOptions(characters) {
         chatOptions.appendChild(card);
     });
 }
+
+
 
 export function setupBackButton() {
     document.getElementById('back-btn').addEventListener('click', function () {

@@ -269,19 +269,31 @@ function adjustChatHeight() {
 
             // ✅ FORCER LE MODE IMAGE PAR DÉFAUT À CHAQUE CHANGEMENT DE PERSONNAGE
             const toggleMode = document.getElementById("toggleMode");
-            const modeToggleContainer = document.getElementById("mode-toggle-container"); // Utilisation du bon ID
+            const modeToggleContainer = document.getElementById("mode-toggle-container");
+            const videoTag = document.getElementById("video-available"); // Sélecteur pour l'encart vidéo
 
             if (toggleMode && modeToggleContainer) {
                 localStorage.setItem("chatMode", "image"); // Réinitialiser à "image"
                 toggleMode.checked = false; // Désactiver le toggle (donc mode image)
 
-                // ✅ AFFICHER OU CACHER LE BOUTON SELON `hasVideos`
+                // ✅ AFFICHER OU CACHER LE BOUTON TOGGLE
                 if (character.hasVideos) {
-                    modeToggleContainer.style.display = "block"; // Afficher le toggle
+                    modeToggleContainer.style.display = "flex"; // Afficher le toggle
                     console.log("🎬 Le personnage a des vidéos, affichage du toggle.");
                 } else {
                     modeToggleContainer.style.display = "none"; // Cacher le toggle
                     console.log("📸 Aucun GIF disponible, on cache le toggle.");
+                }
+            }
+
+            // ✅ AFFICHER OU CACHER L'ENCART VIDÉO
+            if (videoTag) {
+                if (character.hasVideos) {
+                    videoTag.style.display = "block"; // Afficher l'encart
+                    console.log("📢 Vidéos disponibles, affichage de l'encart.");
+                } else {
+                    videoTag.style.display = "none"; // Cacher l'encart
+                    console.log("🚫 Aucune vidéo disponible, encart caché.");
                 }
             }
         }
@@ -291,6 +303,7 @@ function adjustChatHeight() {
         console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
 }
+
 
 
 
