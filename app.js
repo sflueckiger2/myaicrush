@@ -913,7 +913,7 @@ userLevel = userLevels.get(email) || 1.0;  // 🔥 On met à jour userLevel apr�
       photoSentAtPerfectCrush: false
     };
     
-    let sendPhoto = botReply.includes("[PHOTO]");
+    let sendPhoto = botReply.includes("[PHOTO]") || botReply.includes("[VIDEO]")
     console.log("📷 Détection d'envoi de photo : sendPhoto =", sendPhoto);
 
     
