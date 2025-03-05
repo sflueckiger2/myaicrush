@@ -11,16 +11,20 @@ const BASE_URL = window.location.origin;
 
 const toggleMode = document.getElementById("toggleMode");
 
-// ✅ Charger le mode actuel depuis le stockage local
-const currentMode = localStorage.getItem("chatMode") || "image";
-toggleMode.checked = currentMode === "gif";
+if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses propriétés
+    const currentMode = localStorage.getItem("chatMode") || "image";
+    toggleMode.checked = currentMode === "gif";
 
-// ✅ Écouter les changements et mettre à jour le mode
-toggleMode.addEventListener("change", () => {
-    const newMode = toggleMode.checked ? "gif" : "image";
-    localStorage.setItem("chatMode", newMode);
-    console.log(`🎬 Mode changé : ${newMode}`);
-});
+    toggleMode.addEventListener("change", () => {
+        const newMode = toggleMode.checked ? "gif" : "image";
+        localStorage.setItem("chatMode", newMode);
+        console.log(`🎬 Mode changé : ${newMode}`);
+    });
+} else {
+    console.warn("⚠️ 'toggleMode' non trouvé sur cette page.");
+}
+
+
 
 
 // Vérifie si l'utilisateur est connecté
@@ -175,7 +179,7 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
         // ✅ Ajouter le bouton Unlock
         const unlockButton = document.createElement('button');
-        unlockButton.textContent = 'Voir la photo';
+        unlockButton.textContent = 'Retirer le flou';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
             window.location.href = '/premium.html';
@@ -278,7 +282,7 @@ function adjustChatHeight() {
 
                 // ✅ AFFICHER OU CACHER LE BOUTON TOGGLE
                 if (character.hasVideos) {
-                    modeToggleContainer.style.display = "flex"; // Afficher le toggle
+                    modeToggleContainer.style.display = "block"; // Afficher le toggle
                     console.log("🎬 Le personnage a des vidéos, affichage du toggle.");
                 } else {
                     modeToggleContainer.style.display = "none"; // Cacher le toggle
