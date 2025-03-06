@@ -58,30 +58,32 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
       // ✅ Vérifier si `metadata` existe pour éviter les erreurs
       const metadata = session.metadata || {};
-const fbp = metadata.fbp || null;
-const fbc = metadata.fbc || null; // ✅ Ajout de fbc
-const purchaseEventID = metadata.fbqPurchaseEventID || `purchase_${Date.now()}`;
+      const fbp = metadata.fbp || null;
+      const fbc = metadata.fbc || null; // ✅ Ajout de fbc
+      const purchaseEventID = metadata.fbqPurchaseEventID || `purchase_${Date.now()}`;
 
-const payload = {
-    data: [
-        {
-            event_name: "Purchase",
-            event_time: Math.floor(Date.now() / 1000),
-            event_id: purchaseEventID,
-            user_data: {
-                em: hashedEmail,
-                fbp: fbp,
-                fbc: fbc // ✅ Ajout de fbc pour optimiser l’attribution
-            },
-            custom_data: {
-                value: amount,
-                currency: currency
-            },
-            action_source: "website"
-        }
-    ],
-    access_token: process.env.FACEBOOK_ACCESS_TOKEN
-};
+      // Désactivation temporaire de l'API de conversion pour "Purchase"
+      /*
+      const payload = {
+          data: [
+              {
+                  event_name: "Purchase",
+                  event_time: Math.floor(Date.now() / 1000),
+                  event_id: purchaseEventID,
+                  user_data: {
+                      em: hashedEmail,
+                      fbp: fbp,
+                      fbc: fbc // ✅ Ajout de fbc pour optimiser l’attribution
+                  },
+                  custom_data: {
+                      value: amount,
+                      currency: currency
+                  },
+                  action_source: "website"
+              }
+          ],
+          access_token: process.env.FACEBOOK_ACCESS_TOKEN
+      };
 
       console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
 
@@ -91,6 +93,7 @@ const payload = {
       } catch (error) {
           console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
       }
+      */
   }
 
   res.json({ received: true });
