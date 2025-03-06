@@ -79,42 +79,47 @@
   
     fbq('init', '955861022940111'); // ✅ Ton Pixel ID
   
-    // 🔥 Génération d'un eventID unique pour le dédoublonnage avec l'API
+    // 🔥 Génération d'un eventID unique pour éviter les doublons
     var purchaseEventID = 'purchase_' + Date.now();
   
-    // ✅ Envoi de l'événement "Purchase" avec fbp et eventID
+    // ✅ Récupération dynamique du montant depuis l'URL (par défaut : 10€)
+    var urlParams = new URLSearchParams(window.location.search);
+    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 10;
+  
+    // ✅ Envoi de l'événement "Purchase" avec la vraie valeur
     fbq('track', 'Purchase', {
-      value: 10, // 🔥 Remplace par la valeur réelle du paiement
+      value: amount, // 🔥 Montant dynamique
       currency: 'EUR'
     }, {
-      eventID: purchaseEventID // ✅ Clé pour éviter les doublons avec l'API
+      eventID: purchaseEventID // ✅ Clé pour éviter les doublons
     });
   
-    // ✅ Stocke cet eventID pour l’API Conversion
-    localStorage.setItem('fbqPurchaseEventID', purchaseEventID);
+    // ✅ Suppression du stockage inutile pour l’API CAPI (car désactivée)
   </script>
-
-<script>
-  function getFacebookParams() {
-      var urlParams = new URLSearchParams(window.location.search);
-
-      // ✅ Récupérer `fbc` (Facebook Click ID) s'il est présent dans l'URL
-      var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
-
-      // ✅ Récupérer `fbp` généré automatiquement par le Pixel Facebook
-      var fbp = null;
-      if (window.fbq && fbq.getState) {
-          fbp = fbq.getState().lastExternalId;
-      }
-
-      // ✅ Stocker les valeurs dans localStorage pour les récupérer plus tard (Stripe Checkout)
-      if (fbp) localStorage.setItem('fbp', fbp);
-      if (fbc) localStorage.setItem('fbc', fbc);
-  }
-
-  getFacebookParams();
-</script>
-
+  
+  <script>
+    function getFacebookParams() {
+        var urlParams = new URLSearchParams(window.location.search);
+  
+        // ✅ Récupération du paramètre `fbclid` pour fbc
+        var fbc = urlParams.get('fbclid') 
+            ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') 
+            : null;
+  
+        // ✅ Récupération du `fbp` généré par le Pixel Facebook
+        var fbp = null;
+        if (window.fbq && typeof fbq.getState === "function") {
+            fbp = fbq.getState().lastExternalId || null;
+        }
+  
+        // ✅ Stocker fbp et fbc si présents
+        if (fbp) localStorage.setItem('fbp', fbp);
+        if (fbc) localStorage.setItem('fbc', fbc);
+    }
+  
+    getFacebookParams();
+  </script>
+  
   
  
 <noscript>

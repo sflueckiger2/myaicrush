@@ -318,7 +318,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       },
       
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${process.env.BASE_URL}/confirmation.html`,
+        success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType === 'monthly' ? 9.90 : 59}`,
         cancel_url: `${process.env.BASE_URL}/premium.html`
     });
     
