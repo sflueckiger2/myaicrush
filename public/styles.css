@@ -1287,3 +1287,37 @@ input:checked + .slider:before {
       font-size: 9px;
   }
 }
+
+
+#upload-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #fff;
+  padding: 8px;
+  transition: transform 0.2s ease-in-out;
+}
+
+#upload-btn:hover {
+  transform: scale(1.1);
+}
+
+#upload-btn i {
+  color: #ff4d80;
+}
+
+.image-message {
+  background-color: #ff4d80; /* Rose comme les messages utilisateur */
+  padding: 10px;
+  border-radius: 15px;
+  max-width: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-message img {
+  max-width: 100%;
+  border-radius: 10px;
+}

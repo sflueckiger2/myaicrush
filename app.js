@@ -157,6 +157,49 @@ async function isDisposableOrInvalidEmail(email) {
 }
 
 
+const multer = require('multer');
+
+
+// Stockage temporaire en RAM
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+
+
+// Route pour gérer l'upload d'images
+app.post('/upload-image', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "Aucune image envoyée" });
+    }
+
+    // Générer un identifiant unique pour l'image temporaire
+    const token = crypto.randomBytes(20).toString('hex');
+
+    // Stocker temporairement l'image en mémoire
+    imageTokens.set(token, { buffer: req.file.buffer, mimetype: req.file.mimetype });
+
+    // Supprimer l'image après 10 minutes
+    setTimeout(() => imageTokens.delete(token), 10 * 60 * 1000);
+
+    res.json({ imageUrl: `/get-uploaded-image/${token}` });
+});
+
+// Route pour récupérer une image temporaire
+app.get('/get-uploaded-image/:token', (req, res) => {
+    const { token } = req.params;
+    const imageData = imageTokens.get(token);
+
+    if (!imageData) {
+        return res.status(404).send("Image introuvable ou expirée.");
+    }
+
+    res.writeHead(200, { 'Content-Type': imageData.mimetype });
+    res.end(imageData.buffer);
+});
+
+
+
+
 let firstFreeImageSent = new Map(); // Stocke les utilisateurs qui ont déjà reçu une image non floutée
 
 
@@ -802,7 +845,13 @@ app.post('/message', async (req, res) => {
 
 
   try {
-    const { message, email, mode } = req.body;
+    let { message, email, mode } = req.body;
+
+    // Si c'est une image envoyée, on modifie le message pour que l'IA le comprenne mieux
+    if (message === "[PHOTO ENVOYÉE]") {
+        message = "L'utilisateur vient d'envoyer une photo. Réagis de manière appropriée.";
+    }
+    
 
 
     if (!message || !email) {
