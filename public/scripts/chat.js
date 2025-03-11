@@ -422,7 +422,7 @@ if (uploadBtn) {
 
             const { isPremium } = await response.json();
             if (!isPremium) {
-                window.location.href = "premium.html";
+                window.location.href = "image-upload.html";
                 return;
             }
 

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation d'achat</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Google Analytics (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-FJ5S0H9B1R');
+  </script>
+</head>
+<body>
+  <!-- Menu Hamburger -->
+  <nav class="menu">
+    <button id="menu-toggle" class="menu-toggle">
+      <span class="hamburger"></span>
+    </button>
+    <ul id="menu-items" class="menu-items hidden">
+      <li><a href="index.html">Choisis ta partenaire</a></li>
+      <li><a href="profile.html">Ton profil</a></li>
+      <li><a href="premium.html">Premium</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="container confirmation-page">
+    
+    <p class="p-description">
+      Désolé, l'envoi d'images est réservé pour nos membres premium.
+    </p>
+    <p class="p-description">
+En devenant premium, tu peux partager tes photos avec nos I.A, les laisser découvrir ce que tu veux leur montrer… et savourer leurs réactions, en temps réel.  </p>
+
+<p class="p-description">Afin de respecter l'intimité de vos discussions, tes images disparaissent à la fin de la conversation.</p> 
+
+<p class="p-description">Elles ne sont stockées nulle part. Juste un instant volé… entre toi et elle.</p>
+
+    <!-- Bouton pour retourner à la page premium-->
+    <div class="action-section">
+      <button id="startChatButton" class="checkout-button" onclick="window.location.href='premium.html'">
+        Devenir Premium
+      </button>
+    </div>
+  </div>
+
+  <!-- Icônes de sécurité -->
+  <div class="security-section">
+    <div class="security-item">
+      <i class="fas fa-lock"></i>
+      <p>100% Sécurisé</p>
+    </div>
+    <div class="security-item">
+      <i class="fas fa-mask"></i>
+      <p>Confidentialité totale</p>
+    </div>
+  </div>
+
+
+  <!-- Inclure les fichiers JavaScript -->
+  <script type="module" src="./scripts/menu.js"></script>
+
+  
+  
+  
+ 
+<noscript>
+  <img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Purchase&noscript=1"/>
+</noscript>
+
+</body>
+</html>
