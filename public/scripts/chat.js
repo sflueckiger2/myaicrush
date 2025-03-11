@@ -401,8 +401,7 @@ function recreateTypingIndicator() {
 }
 
 
-// Fonction pour envoi IMAGE par utilisateur
-
+// FONCTION ENVOIE IMAGE USER 
 
 // ✅ Vérifier que le bouton existe avant d'ajouter l'event listener
 const uploadBtn = document.getElementById("upload-btn");
@@ -443,9 +442,6 @@ if (imageInput) {
         const file = this.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append("image", file);
-
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user || !user.email) {
             alert("Vous devez être connecté pour envoyer une image.");
@@ -461,6 +457,14 @@ if (imageInput) {
         scrollToBottom(messagesContainer);
 
         try {
+            // 🔥 Optimiser l’image avant envoi (compression et redimensionnement)
+            const optimizedImage = await optimizeImage(file);
+
+            // Création du FormData pour l’envoi
+            const formData = new FormData();
+            formData.append("image", optimizedImage, "optimized-image.webp");
+
+            // 🔥 Envoi de l’image optimisée au serveur
             const response = await fetch(`${BASE_URL}/upload-image`, {
                 method: "POST",
                 body: formData
@@ -468,7 +472,7 @@ if (imageInput) {
 
             const data = await response.json();
             if (data.imageUrl) {
-                tempImageElement.innerHTML = ""; 
+                tempImageElement.innerHTML = "";
                 const imageMessageElement = document.createElement("div");
                 imageMessageElement.classList.add("user-message", "image-message");
 
@@ -484,6 +488,7 @@ if (imageInput) {
 
                 imageInput.value = "";
 
+                // 🔥 🔥 Envoyer un message spécial au serveur pour informer l’IA
                 const iaResponse = await fetch(`${BASE_URL}/message`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -495,9 +500,16 @@ if (imageInput) {
 
                 const iaData = await iaResponse.json();
                 console.log("🔍 Réponse IA après envoi d’image :", iaData);
-
+                
+                // ✅ AFFICHER D'ABORD LA POP-UP DE PASSAGE DE NIVEAU AVANT LA RÉPONSE IA
+                if (iaData.levelUpdateMessage && iaData.levelUpdateType) {
+                    showLevelUpdatePopup(iaData.levelUpdateMessage, iaData.levelUpdateType);
+                }
+                
+                // ✅ Toujours afficher le message de l'IA (texte et/ou image)
                 if (iaData.reply) addBotMessage(iaData.reply, messagesContainer);
                 if (iaData.imageUrl) addBotImageMessage(iaData.reply, iaData.imageUrl, isPremium, messagesContainer, iaData.isBlurred);
+                
 
                 scrollToBottom(messagesContainer);
             } else {
@@ -505,8 +517,44 @@ if (imageInput) {
             }
         } catch (error) {
             console.error("❌ Erreur lors de l'envoi de l'image :", error);
-            tempImageElement.innerHTML = `<p>❌ Erreur</p>`;
+        
+            // ✅ Vérifier si la réponse contient réellement une erreur
+            if (!data || !data.imageUrl) {
+                tempImageElement.innerHTML = `<p>❌ Erreur lors de l'envoi</p>`;
+            } else {
+                tempImageElement.innerHTML = ""; // ✅ Ne rien afficher si tout est OK
+            }
         }
+        
     });
 }
 
+// 🔥 Fonction pour optimiser une image avant envoi (compression + redimensionnement)
+function optimizeImage(file, maxWidth = 320, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function () {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                // Calcul du ratio pour garder les proportions
+                const scaleFactor = maxWidth / img.width;
+                canvas.width = maxWidth;
+                canvas.height = img.height * scaleFactor;
+
+                // Dessiner l'image compressée
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(
+                    (blob) => resolve(blob),
+                    "image/webp", // 🔥 Format WebP pour compression maximale
+                    quality
+                );
+            };
+        };
+        reader.onerror = reject;
+    });
+}
