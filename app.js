@@ -207,7 +207,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             {
                 model: "gpt-4-turbo",
                 messages: [
-                    { role: "system", content: "Décris cette image de manière réaliste et naturelle en moins de 100 tokens." },
+                    { role: "system", content: "Décris cette image de manière objective, sans euphémisme et avec précision. N'altère pas les éléments visibles. Si l'image contient un corps humain ou un élément intime, précise-le clairement. Le tout en moins de 100 tokens." },
                     {
                         role: "user",
                         content: [
@@ -239,6 +239,9 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             userLastImageDescriptions.set(userEmail, imageDescription);
             console.log(`📝 Description associée à ${userEmail}`);
         }
+
+        
+
 
         // Répondre avec l'URL de l'image et sa description
         res.json({
@@ -1251,6 +1254,32 @@ app.post('/api/signup', async (req, res) => {
 });
 
 
+const schedule = require('node-schedule');
+
+// 🔥 Planifie la suppression à 23h05
+schedule.scheduleJob('5 23 * * *', () => {
+    console.log("🗑️ Nettoyage du dossier /uploads/ à 23h05...");
+
+    fs.readdir(uploadDir, (err, files) => {
+        if (err) {
+            console.error(`❌ Erreur lors de la lecture du dossier /uploads/ :`, err);
+            return;
+        }
+
+        files.forEach(file => {
+            const filePath = path.join(uploadDir, file);
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error(`❌ Erreur lors de la suppression de ${filePath} :`, err);
+                } else {
+                    console.log(`🗑️ Fichier supprimé : ${filePath}`);
+                }
+            });
+        });
+
+        console.log("✅ Nettoyage du dossier /uploads/ terminé.");
+    });
+});
 
 
 
