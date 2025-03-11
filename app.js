@@ -991,8 +991,16 @@ app.post('/message', async (req, res) => {
                 content: `L'utilisateur a récemment envoyé une image. Voici la description : "${lastImageDescription}". Réagis en tenant compte de cette image.`
             });
 
-            // 🔥 Supprime la description après usage pour éviter qu'elle soit prise en compte plusieurs fois
-            userLastImageDescriptions.delete(email);
+          // Garder la description en mémoire tant que l'utilisateur ne change pas de sujet
+const conversationHistory = userConversationHistory.get(email) || [];
+
+if (conversationHistory.length >= 5) { // Supprime après 5 échanges
+    userLastImageDescriptions.delete(email);
+    console.log("🛑 Suppression de la description d'image après plusieurs messages.");
+} else {
+    console.log("🖼️ La description de l'image est toujours en mémoire.");
+}
+
         }
 
         // Ajoute le message de l'utilisateur
