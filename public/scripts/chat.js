@@ -400,121 +400,113 @@ function recreateTypingIndicator() {
     }
 }
 
-document.getElementById("upload-btn").addEventListener("click", async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.email) {
-        alert("Vous devez être connecté pour envoyer une image.");
-        return;
-    }
-
-    // 🔥 Vérifier si l'utilisateur est premium AVANT d'afficher l'input file
-    try {
-        const response = await fetch(`${BASE_URL}/api/is-premium`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: user.email }),
-        });
-
-        const { isPremium } = await response.json();
-        if (!isPremium) {
-            // 🔥 Rediriger vers la page premium si l'utilisateur n'est pas premium
-            window.location.href = "premium.html";
-            return;
-        }
-
-        // ✅ Si l'utilisateur est premium, ouvrir le file input
-        document.getElementById("image-input").click();
-    } catch (error) {
-        console.error("❌ Erreur lors de la vérification du statut premium :", error);
-        alert("Erreur lors de la vérification de votre compte. Veuillez réessayer.");
-    }
-});
-
 
 // Fonction pour envoi IMAGE par utilisateur
 
-document.getElementById("image-input").addEventListener("change", async function () {
-    const file = this.files[0];
-    if (!file) return;
 
-    const formData = new FormData();
-    formData.append("image", file);
+// ✅ Vérifier que le bouton existe avant d'ajouter l'event listener
+const uploadBtn = document.getElementById("upload-btn");
+if (uploadBtn) {
+    uploadBtn.addEventListener("click", async () => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !user.email) {
+            alert("Vous devez être connecté pour envoyer une image.");
+            return;
+        }
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.email) {
-        alert("Vous devez être connecté pour envoyer une image.");
-        return;
-    }
-
-    // 🔥 Afficher l’image en cours d’envoi dans le chat
-    const messagesContainer = document.getElementById("messages");
-    const tempImageElement = document.createElement("div");
-    tempImageElement.innerHTML = `<p>📤 Envoi en cours...</p>`;
-    messagesContainer.appendChild(tempImageElement);
-    scrollToBottom(messagesContainer);
-
-    try {
-        const response = await fetch(`${BASE_URL}/upload-image`, {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.imageUrl) {
-            // 🔥 Afficher l'image dans une bulle utilisateur (message rose)
-            tempImageElement.innerHTML = ""; // On vide l'ancien contenu
-            const imageMessageElement = document.createElement("div");
-            imageMessageElement.classList.add("user-message", "image-message");
-
-            const imageElement = document.createElement("img");
-            imageElement.src = data.imageUrl;
-            imageElement.alt = "Image envoyée";
-            imageElement.style.maxWidth = "200px";
-            imageElement.style.borderRadius = "10px";
-
-            imageMessageElement.appendChild(imageElement);
-            messagesContainer.appendChild(imageMessageElement);
-            scrollToBottom(messagesContainer);
-
-            // ✅ Reset de l'input pour permettre le même fichier à la suite
-            document.getElementById("image-input").value = "";
-
-            // 🔥 🔥 Envoyer un message spécial au serveur pour informer l’IA
-            const iaResponse = await fetch(`${BASE_URL}/message`, {
+        try {
+            const response = await fetch(`${BASE_URL}/api/is-premium`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    message: "[PHOTO ENVOYÉE]", 
-                    email: user.email 
-                }),
+                body: JSON.stringify({ email: user.email }),
             });
 
-            const iaData = await iaResponse.json();
-            console.log("🔍 Réponse IA après envoi d’image :", iaData);
-
-            // ✅ Toujours afficher le message de l'IA (texte et/ou image)
-            if (iaData.reply) {
-                addBotMessage(iaData.reply, messagesContainer);
-            }
-            
-            if (iaData.imageUrl) {
-                addBotImageMessage(iaData.reply, iaData.imageUrl, isPremium, messagesContainer, iaData.isBlurred);
+            const { isPremium } = await response.json();
+            if (!isPremium) {
+                window.location.href = "premium.html";
+                return;
             }
 
-            scrollToBottom(messagesContainer);
+            const imageInput = document.getElementById("image-input");
+            if (imageInput) imageInput.click();
+        } catch (error) {
+            console.error("❌ Erreur lors de la vérification du statut premium :", error);
+            alert("Erreur lors de la vérification de votre compte. Veuillez réessayer.");
+        }
+    });
+}
 
-        } else {
-            tempImageElement.innerHTML = `<p>❌ Échec de l’envoi</p>`;
+// ✅ Vérifier que l'input image existe avant d'ajouter l'event listener
+const imageInput = document.getElementById("image-input");
+if (imageInput) {
+    imageInput.addEventListener("change", async function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !user.email) {
+            alert("Vous devez être connecté pour envoyer une image.");
+            return;
         }
 
-    } catch (error) {
-        console.error("❌ Erreur lors de l'envoi de l'image :", error);
+        const messagesContainer = document.getElementById("messages");
+        if (!messagesContainer) return;
 
-        // ✅ Afficher l'erreur seulement si la réponse du serveur est vide ou invalide
-        if (!data || !data.imageUrl) {
+        const tempImageElement = document.createElement("div");
+        tempImageElement.innerHTML = `<p>📤 Envoi en cours...</p>`;
+        messagesContainer.appendChild(tempImageElement);
+        scrollToBottom(messagesContainer);
+
+        try {
+            const response = await fetch(`${BASE_URL}/upload-image`, {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.imageUrl) {
+                tempImageElement.innerHTML = ""; 
+                const imageMessageElement = document.createElement("div");
+                imageMessageElement.classList.add("user-message", "image-message");
+
+                const imageElement = document.createElement("img");
+                imageElement.src = data.imageUrl;
+                imageElement.alt = "Image envoyée";
+                imageElement.style.maxWidth = "200px";
+                imageElement.style.borderRadius = "10px";
+
+                imageMessageElement.appendChild(imageElement);
+                messagesContainer.appendChild(imageMessageElement);
+                scrollToBottom(messagesContainer);
+
+                imageInput.value = "";
+
+                const iaResponse = await fetch(`${BASE_URL}/message`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        message: "[PHOTO ENVOYÉE]", 
+                        email: user.email 
+                    }),
+                });
+
+                const iaData = await iaResponse.json();
+                console.log("🔍 Réponse IA après envoi d’image :", iaData);
+
+                if (iaData.reply) addBotMessage(iaData.reply, messagesContainer);
+                if (iaData.imageUrl) addBotImageMessage(iaData.reply, iaData.imageUrl, isPremium, messagesContainer, iaData.isBlurred);
+
+                scrollToBottom(messagesContainer);
+            } else {
+                tempImageElement.innerHTML = `<p>❌ Échec de l’envoi</p>`;
+            }
+        } catch (error) {
+            console.error("❌ Erreur lors de l'envoi de l'image :", error);
             tempImageElement.innerHTML = `<p>❌ Erreur</p>`;
         }
-    }
+    });
+}
 
-});
