@@ -167,22 +167,84 @@ const upload = multer({ storage: storage });
 
 
 // Route pour gérer l'upload d'images
-app.post('/upload-image', upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: "Aucune image envoyée" });
-    }
 
-    // Générer un identifiant unique pour l'image temporaire
-    const token = crypto.randomBytes(20).toString('hex');
+const uploadDir = path.join(__dirname, 'public', 'uploads');
 
-    // Stocker temporairement l'image en mémoire
-    imageTokens.set(token, { buffer: req.file.buffer, mimetype: req.file.mimetype });
+// Vérifier si le dossier uploads existe, sinon le créer
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true }); // ✅ Création récursive si besoin
+}
 
-    // Supprimer l'image après 10 minutes
-    setTimeout(() => imageTokens.delete(token), 10 * 60 * 1000);
+app.post('/upload-image', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "Aucune image envoyée" });
+  }
 
-    res.json({ imageUrl: `/get-uploaded-image/${token}` });
+  try {
+    // 🔥 Compression de l'image
+    const compressedImageBuffer = await sharp(req.file.buffer)
+      .resize({ width: 320 })
+      .jpeg({ quality: 60 })
+      .toBuffer();
+
+    // 🔥 Sauvegarde temporaire de l’image
+    const imageName = `${Date.now()}.jpg`;
+    const imagePath = path.join(uploadDir, imageName);
+    
+    console.log(`📂 Chemin de sauvegarde de l'image : ${imagePath}`);
+
+    fs.writeFileSync(imagePath, compressedImageBuffer);
+
+    // 📡 Envoi de l'image à OpenAI via une URL accessible
+    console.log("📡 Envoi de l'image à OpenAI pour analyse...");
+
+    const openaiResponse = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+          model: "gpt-4-turbo",
+          messages: [
+              { role: "system", content: "Décris cette image de manière réaliste et naturelle en moins de 100 tokens." },
+              {
+                  role: "user",
+                  content: [
+                      { type: "text", text: "Décris cette image brièvement." },
+                      { 
+                          type: "image_url", 
+                          image_url: { url: "data:image/jpeg;base64," + compressedImageBuffer.toString("base64") } // ✅ Format correct
+                      }
+                  ]
+              }
+          ],
+          max_tokens: 100, 
+      },
+      {
+          headers: {
+              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+              "Content-Type": "application/json"
+          }
+      }
+  );
+  
+  
+
+    // 🔥 Récupération de la description de l’image
+    let imageDescription = openaiResponse.data.choices[0]?.message?.content?.trim() || "Une photo intéressante.";
+    console.log("📝 Description de l'image par OpenAI :", imageDescription);
+
+    // Répondre avec l'URL de l'image et sa description
+    res.json({
+      imageUrl: `/uploads/${imageName}`,
+      description: imageDescription
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur lors du traitement de l'image :", error.response?.data || error.message);
+    res.status(500).json({ message: "Erreur lors de l'analyse de l'image." });
+  }
 });
+
+
+
 
 // Route pour récupérer une image temporaire
 app.get('/get-uploaded-image/:token', (req, res) => {
@@ -859,6 +921,11 @@ app.post('/message', async (req, res) => {
       return res.status(400).json({ reply: "Votre message ou votre email est manquant." });
     }
 
+    let imageDescription = null; // ✅ Initialisation pour éviter l'erreur ReferenceError
+
+    const userLastImageDescription = userConversationHistory.get(email)?.find(msg => msg.role === "image_description")?.content || null;
+
+
     console.log("💬 Message utilisateur :", message);
     console.log("📧 Email utilisateur :", email);
 
@@ -906,10 +973,29 @@ if (!userCharacter) {
 
     // Construire le contexte du chat pour OpenAI
     const conversationHistory = userConversationHistory.get(email) || [];
-const messages = [
-  { role: "system", content: systemPrompt },
-  ...conversationHistory, // ✅ Utilisation de l'historique propre à l'utilisateur
-];
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...conversationHistory
+  ];
+  
+  // Si une image a été envoyée récemment, ajoute sa description
+  if (userLastImageDescription) {
+      messages.push({
+          role: "user",
+          content: `Voici la description de l'image envoyée : "${userLastImageDescription}". Réagis en tenant compte de cette image dans ta réponse.`
+      });
+  }
+  
+// Si l'utilisateur a envoyé une image, on lui ajoute la description dans le prompt
+if (imageDescription) {
+    messages.push({
+        role: "user",
+        content: `Voici la description de l'image envoyée : "${imageDescription}". Réagis en tenant compte de cette image dans ta réponse.`  
+    });
+}
+
+console.log("📡 Prompt final envoyé à OpenAI :", messages);
+
 
 
     console.log("📡 Envoi du prompt à OpenAI...");
