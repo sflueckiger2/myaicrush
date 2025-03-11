@@ -463,6 +463,8 @@ if (imageInput) {
             // Création du FormData pour l’envoi
             const formData = new FormData();
             formData.append("image", optimizedImage, "optimized-image.webp");
+            formData.append("email", user.email); // 🔥 Ajout de l'email
+
 
             // 🔥 Envoi de l’image optimisée au serveur
             const response = await fetch(`${BASE_URL}/upload-image`, {

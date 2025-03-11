@@ -23,6 +23,9 @@ const stripe = require('stripe')(stripeSecretKey); // ✅ Initialisation correct
 console.log(`🚀 Stripe en mode : ${stripeMode.toUpperCase()}`);
 console.log(`🔑 Clé Stripe utilisée : ${stripeSecretKey.startsWith("sk_live") ? "LIVE" : "TEST"}`);
 
+const userLastImageDescriptions = new Map(); // Stocke la dernière description d’image pour chaque email
+
+
 // ROUTE Webhook Stripe pour envoyer les données "Purchase" à Facebook
 
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -175,72 +178,78 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true }); // ✅ Création récursive si besoin
 }
 
+
 app.post('/upload-image', upload.single('image'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "Aucune image envoyée" });
-  }
+    if (!req.file) {
+        return res.status(400).json({ message: "Aucune image envoyée" });
+    }
 
-  try {
-    // 🔥 Compression de l'image
-    const compressedImageBuffer = await sharp(req.file.buffer)
-      .resize({ width: 320 })
-      .jpeg({ quality: 60 })
-      .toBuffer();
+    try {
+        // 🔥 Compression de l'image
+        const compressedImageBuffer = await sharp(req.file.buffer)
+            .resize({ width: 320 })
+            .jpeg({ quality: 60 })
+            .toBuffer();
 
-    // 🔥 Sauvegarde temporaire de l’image
-    const imageName = `${Date.now()}.jpg`;
-    const imagePath = path.join(uploadDir, imageName);
-    
-    console.log(`📂 Chemin de sauvegarde de l'image : ${imagePath}`);
+        // 🔥 Sauvegarde temporaire de l’image
+        const imageName = `${Date.now()}.jpg`;
+        const imagePath = path.join(uploadDir, imageName);
 
-    fs.writeFileSync(imagePath, compressedImageBuffer);
+        console.log(`📂 Chemin de sauvegarde de l'image : ${imagePath}`);
 
-    // 📡 Envoi de l'image à OpenAI via une URL accessible
-    console.log("📡 Envoi de l'image à OpenAI pour analyse...");
+        fs.writeFileSync(imagePath, compressedImageBuffer);
 
-    const openaiResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-          model: "gpt-4-turbo",
-          messages: [
-              { role: "system", content: "Décris cette image de manière réaliste et naturelle en moins de 100 tokens." },
-              {
-                  role: "user",
-                  content: [
-                      { type: "text", text: "Décris cette image brièvement." },
-                      { 
-                          type: "image_url", 
-                          image_url: { url: "data:image/jpeg;base64," + compressedImageBuffer.toString("base64") } // ✅ Format correct
-                      }
-                  ]
-              }
-          ],
-          max_tokens: 100, 
-      },
-      {
-          headers: {
-              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-              "Content-Type": "application/json"
-          }
-      }
-  );
-  
-  
+        // 📡 Envoi de l'image à OpenAI via une URL accessible
+        console.log("📡 Envoi de l'image à OpenAI pour analyse...");
 
-    // 🔥 Récupération de la description de l’image
-    let imageDescription = openaiResponse.data.choices[0]?.message?.content?.trim() || "Une photo intéressante.";
-    console.log("📝 Description de l'image par OpenAI :", imageDescription);
+        const openaiResponse = await axios.post(
+            "https://api.openai.com/v1/chat/completions",
+            {
+                model: "gpt-4-turbo",
+                messages: [
+                    { role: "system", content: "Décris cette image de manière réaliste et naturelle en moins de 100 tokens." },
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Décris cette image brièvement." },
+                            { 
+                                type: "image_url", 
+                                image_url: { url: "data:image/jpeg;base64," + compressedImageBuffer.toString("base64") } // ✅ Format correct
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 100, 
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
 
-    // Répondre avec l'URL de l'image et sa description
-    res.json({
-      imageUrl: `/uploads/${imageName}`,
-      description: imageDescription
-    });
+        // 🔥 Récupération de la description de l’image
+        let imageDescription = openaiResponse.data.choices[0]?.message?.content?.trim() || "Une photo intéressante.";
+        console.log("📝 Description de l'image par OpenAI :", imageDescription);
 
-  } catch (error) {
-    console.error("❌ Erreur lors du traitement de l'image :", error.response?.data || error.message);
-    res.status(500).json({ message: "Erreur lors de l'analyse de l'image." });
-  }
+        // 📌 Stocker la description temporairement pour cet utilisateur
+        const userEmail = req.body.email;
+        if (userEmail) {
+            userLastImageDescriptions.set(userEmail, imageDescription);
+            console.log(`📝 Description associée à ${userEmail}`);
+        }
+
+        // Répondre avec l'URL de l'image et sa description
+        res.json({
+            imageUrl: `/uploads/${imageName}`,
+            description: imageDescription
+        });
+
+    } catch (error) {
+        console.error("❌ Erreur lors du traitement de l'image :", error.response?.data || error.message);
+        res.status(500).json({ message: "Erreur lors de l'analyse de l'image." });
+    }
 });
 
 
@@ -901,236 +910,193 @@ function adjustUserLevel(email, comfortLevel) {
 }
 
 
+
 // Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {
-  console.log("📥 Requête reçue - Body :", req.body);
+    console.log("📥 Requête reçue - Body :", req.body);
 
+    try {
+        let { message, email, mode } = req.body;
 
-  try {
-    let { message, email, mode } = req.body;
+        // Si c'est une image envoyée, on modifie le message pour que l'IA le comprenne mieux
+        if (message === "[PHOTO ENVOYÉE]") {
+            message = "L'utilisateur vient d'envoyer une photo. Réagis de manière appropriée.";
+        }
 
-    // Si c'est une image envoyée, on modifie le message pour que l'IA le comprenne mieux
-    if (message === "[PHOTO ENVOYÉE]") {
-        message = "L'utilisateur vient d'envoyer une photo. Réagis de manière appropriée.";
+        if (!message || !email) {
+            console.error("❌ Erreur : message ou email manquant !");
+            return res.status(400).json({ reply: "Votre message ou votre email est manquant." });
+        }
+
+        console.log("💬 Message utilisateur :", message);
+        console.log("📧 Email utilisateur :", email);
+
+        // 🔥 Récupérer la description de l’image envoyée récemment
+        const lastImageDescription = userLastImageDescriptions.get(email);
+        if (lastImageDescription) {
+            console.log("🖼️ Dernière image envoyée - Description :", lastImageDescription);
+        }
+
+        // Vérification du statut premium via `/api/is-premium`
+        const premiumResponse = await fetch(`${BASE_URL}/api/is-premium`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+
+        const { isPremium } = await premiumResponse.json();
+        console.log("🌟 Statut premium OK :", isPremium);
+
+        addMessageToHistory(email, "user", message);
+
+        userLevel = userLevels.get(email) || 1.0;
+
+        const userCharacter = userCharacters.get(email);
+        if (!userCharacter) {
+            console.error(`❌ Aucun personnage actif trouvé pour ${email}`);
+            return res.status(400).json({ reply: "Aucun personnage sélectionné." });
+        }
+
+        const userLevelDescription = userLevel >= 1.1
+            ? `The user is at the ${
+                userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
+            } level.` 
+            : "";
+
+        const systemPrompt = `
+            Profil : ${userCharacter.prompt.profile}
+            Temperament : ${userCharacter.prompt.temperament}
+            Objective : ${userCharacter.prompt.objective}
+
+            Level System:
+            - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
+            - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
+
+            ${userLevelDescription}
+
+            After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
+        `;
+
+        // Construire le contexte du chat pour OpenAI
+        const conversationHistory = userConversationHistory.get(email) || [];
+        const messages = [
+            { role: "system", content: systemPrompt },
+            ...conversationHistory
+        ];
+
+        // ✅ Ajoute la description de la dernière image envoyée si elle existe
+        if (lastImageDescription) {
+            messages.push({
+                role: "user",
+                content: `L'utilisateur a récemment envoyé une image. Voici la description : "${lastImageDescription}". Réagis en tenant compte de cette image.`
+            });
+
+            // 🔥 Supprime la description après usage pour éviter qu'elle soit prise en compte plusieurs fois
+            userLastImageDescriptions.delete(email);
+        }
+
+        // Ajoute le message de l'utilisateur
+        messages.push({ role: "user", content: message });
+
+        console.log("📡 Prompt final envoyé à OpenAI :", messages);
+
+        console.log("📡 Envoi du prompt à OpenAI...");
+
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: "gpt-3.5-turbo",
+                messages: messages,
+                max_tokens: 300,
+                temperature: 0.7,
+                top_p: 0.9,
+                frequency_penalty: 0.7,
+                presence_penalty: 0.5,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                },
+            }
+        );
+
+        let botReply = response.data.choices[0].message.content;
+        if (!botReply) {
+            return res.status(500).json({ reply: "Désolé, la réponse n'a pas pu être obtenue." });
+        }
+
+        console.log("🤖 Réponse reçue d'OpenAI :", botReply);
+
+        addMessageToHistory(email, "assistant", botReply);
+
+        // Extraire le niveau de confort et ajuster le niveau utilisateur
+        const comfortLevel = extractComfortLevel(botReply);
+        const levelUpdate = adjustUserLevel(email, comfortLevel);
+        userLevel = userLevels.get(email) || 1.0;  // 🔥 On met à jour userLevel après ajustement
+
+        // Nettoyer le message de la mention de confort
+        botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
+
+        // Déterminer si une photo doit être envoyée
+        let sendPhoto = botReply.includes("[PHOTO]") || botReply.includes("[VIDEO]");
+        let userPhotoData = userPhotoStatus.get(email) || {
+            photoSentAtLittleCrush: false,
+            photoSentAtBigCrush: false,
+            photoSentAtPerfectCrush: false
+        };
+
+        // 🔥 Force l'envoi d'une image aux niveaux supérieurs
+        if (!sendPhoto) {
+            if (userLevel >= 1.1 && userLevel < 1.7 && !userPhotoData.photoSentAtLittleCrush) {
+                sendPhoto = true;
+                userPhotoData.photoSentAtLittleCrush = true;
+            } else if (userLevel >= 1.7 && userLevel < 2.2 && !userPhotoData.photoSentAtBigCrush) {
+                sendPhoto = true;
+                userPhotoData.photoSentAtBigCrush = true;
+            } else if (userLevel >= 2.2 && !userPhotoData.photoSentAtPerfectCrush) {
+                sendPhoto = true;
+                userPhotoData.photoSentAtPerfectCrush = true;
+            }
+        }
+
+        userPhotoStatus.set(email, userPhotoData);
+
+        // Nettoyer le tag PHOTO avant d'envoyer la réponse
+        botReply = botReply.replace("[PHOTO]", "").trim();
+        botReply = botReply.replace("[VIDEO]", "").trim();
+
+        // Préparer la réponse JSON
+        let responseData = { reply: botReply };
+
+        if (levelUpdate) {
+            responseData.levelUpdateMessage = levelUpdate.message;
+            responseData.levelUpdateType = levelUpdate.type;
+        }
+
+        // Ajouter une image sécurisée si une photo doit être envoyée
+        if (sendPhoto) {
+            console.log("📸 Envoi d'une image confirmé. Appel de getRandomCharacterMedia()...");
+
+            const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif");
+
+            if (imageResult && imageResult.token) {
+                responseData.imageUrl = `/get-image/${imageResult.token}`;
+                responseData.isBlurred = imageResult.isBlurred;
+                console.log(`✅ Image envoyée avec succès. Floutée: ${imageResult.isBlurred}`);
+            } else {
+                console.error("⚠️ Aucune image trouvée !");
+                responseData.reply += " (Désolé, aucune image disponible)";
+            }
+        }
+
+        console.log("🚀 Réponse envoyée :", responseData);
+        res.json(responseData);
+
+    } catch (error) {
+        console.error("❌ ERREUR dans l'endpoint /message :", error);
+        res.status(500).json({ reply: "Erreur interne du serveur." });
     }
-    
-
-
-    if (!message || !email) {
-      console.error("❌ Erreur : message ou email manquant !");
-      return res.status(400).json({ reply: "Votre message ou votre email est manquant." });
-    }
-
-    let imageDescription = null; // ✅ Initialisation pour éviter l'erreur ReferenceError
-
-    const userLastImageDescription = userConversationHistory.get(email)?.find(msg => msg.role === "image_description")?.content || null;
-
-
-    console.log("💬 Message utilisateur :", message);
-    console.log("📧 Email utilisateur :", email);
-
-    // Vérification du statut premium via `/api/is-premium`
-    const premiumResponse = await fetch(`${BASE_URL}/api/is-premium`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-
-    const { isPremium } = await premiumResponse.json();
-    console.log("🌟 Statut premium OK :", isPremium);
-
-    addMessageToHistory(email, "user", message);
-
-
-    // Préparer le prompt pour OpenAI
-    userLevel = userLevels.get(email) || 1.0;
-
-
-    const userLevelDescription = userLevel >= 1.1 
-      ? `The user is at the ${
-          userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
-        } level.`
-      : "";
-
-      const userCharacter = userCharacters.get(email);
-if (!userCharacter) {
-    console.error(`❌ Aucun personnage actif trouvé pour ${email}`);
-    return res.status(400).json({ reply: "Aucun personnage sélectionné." });
-}
-    const systemPrompt = `
-      Profil : ${userCharacter.prompt.profile}
-      Temperament : ${userCharacter.prompt.temperament}
-      Objective : ${userCharacter.prompt.objective}
-
-      Level System:
-      - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
-      - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
-
-      ${userLevelDescription}
-
-      After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
-    `;
-
-    // Construire le contexte du chat pour OpenAI
-    const conversationHistory = userConversationHistory.get(email) || [];
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...conversationHistory
-  ];
-  
-  // Si une image a été envoyée récemment, ajoute sa description
-  if (userLastImageDescription) {
-      messages.push({
-          role: "user",
-          content: `Voici la description de l'image envoyée : "${userLastImageDescription}". Réagis en tenant compte de cette image dans ta réponse.`
-      });
-  }
-  
-// Si l'utilisateur a envoyé une image, on lui ajoute la description dans le prompt
-if (imageDescription) {
-    messages.push({
-        role: "user",
-        content: `Voici la description de l'image envoyée : "${imageDescription}". Réagis en tenant compte de cette image dans ta réponse.`  
-    });
-}
-
-console.log("📡 Prompt final envoyé à OpenAI :", messages);
-
-
-
-    console.log("📡 Envoi du prompt à OpenAI...");
-
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: "gpt-3.5-turbo",
-        messages: messages,
-        max_tokens: 300,
-        temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0.7,
-        presence_penalty: 0.5,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-      }
-    );
-
-    let botReply = response.data.choices[0].message.content;
-    if (!botReply) {
-      return res.status(500).json({ reply: "Désolé, la réponse n'a pas pu être obtenue." });
-    }
-
-    console.log("🤖 Réponse reçue d'OpenAI :", botReply);
-
-    addMessageToHistory(email, "assistant", botReply);
-
-
-    // Extraire le niveau de confort et ajuster le niveau utilisateur
-    const comfortLevel = extractComfortLevel(botReply);
-    console.log("📊 Vérification de l'envoi d'image...");
-console.log("   🔹 Niveau actuel:", userLevel);
-console.log("   🔹 Statut Premium:", isPremium);
-console.log("   🔹 Statut photo utilisateur:", userPhotoStatus.get(email));
-console.log("   🔹 Contient le tag [PHOTO] ?", botReply.includes("[PHOTO]"));
-
-const levelUpdate = adjustUserLevel(email, comfortLevel);
-userLevel = userLevels.get(email) || 1.0;  // 🔥 On met à jour userLevel après ajustement
-
-
-
-    // Nettoyer le message de la mention de confort
-    botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
-
-    // Déterminer si une photo doit être envoyée
-    let userPhotoData = userPhotoStatus.get(email) || {
-      photoSentAtLittleCrush: false,
-      photoSentAtBigCrush: false,
-      photoSentAtPerfectCrush: false
-    };
-    
-    let sendPhoto = botReply.includes("[PHOTO]") || botReply.includes("[VIDEO]")
-    console.log("📷 Détection d'envoi de photo : sendPhoto =", sendPhoto);
-
-    
-   // 🔥 FORCE L'ENVOI D'UNE IMAGE À 1.1
-
- // 🔥 FORCE L'ENVOI D'UNE IMAGE AUX NIVEAUX SUPÉRIEURS
-if (!sendPhoto) {
-  if (userLevel >= 1.1 && userLevel < 1.7 && !userPhotoData.photoSentAtLittleCrush) {
-      console.log("📸 CONDITION VALIDÉE : Envoi d'une image pour niveau Little Crush !");
-      sendPhoto = true;
-      userPhotoData.photoSentAtLittleCrush = true;
-  } else if (userLevel >= 1.7 && userLevel < 2.2 && !userPhotoData.photoSentAtBigCrush) {
-      console.log("📸 CONDITION VALIDÉE : Envoi d'une image pour niveau Big Crush !");
-      sendPhoto = true;
-      userPhotoData.photoSentAtBigCrush = true;
-  } else if (userLevel >= 2.2 && !userPhotoData.photoSentAtPerfectCrush) {
-      console.log("📸 CONDITION VALIDÉE : Envoi d'une image pour niveau Perfect Crush !");
-      sendPhoto = true;
-      userPhotoData.photoSentAtPerfectCrush = true;
-  }
-}
-
-  
-    
-    userPhotoStatus.set(email, userPhotoData);
-    
-
-    // Nettoyer le tag PHOTO avant d'envoyer la réponse
-    botReply = botReply.replace("[PHOTO]", "").trim();
-    botReply = botReply.replace("[VIDEO]", "").trim();
-
-    // Préparer la réponse JSON
-    let responseData = { reply: botReply };
-
-    if (levelUpdate) {
-      responseData.levelUpdateMessage = levelUpdate.message;
-      responseData.levelUpdateType = levelUpdate.type;
-    }
-
-    // Ajouter une image sécurisée si une photo doit être envoyée
-    if (sendPhoto) {
-      console.log("📸 Envoi d'une image confirmé. Appel de getRandomCharacterImage()...");
-
-     
-  
-      console.log("📧 Email transmis à getRandomCharacterImage :", email);
-console.log("🌟 Statut premium :", isPremium);
-
-const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif");
-
-
-if (imageResult && imageResult.token) {
-  console.log(`✅ Image générée avec succès ! Token: ${imageResult.token}, Floutée: ${imageResult.isBlurred}`);
-} else {
-  console.error("❌ Échec de la génération de l'image !");
-}
-
-  
-if (imageResult && imageResult.token) {
-  responseData.imageUrl = `/get-image/${imageResult.token}`; // Lien sécurisé
-  responseData.isBlurred = imageResult.isBlurred; // ✅ Ajout de l'information isBlurred dans la réponse
-  console.log(`✅ Image envoyée avec succès. Floutée: ${imageResult.isBlurred}`);
-}
-else {
-  console.error("⚠️ Aucune image trouvée !");
-  responseData.reply += " (Désolé, aucune image disponible)";
-}
-
-    }
-  
-    console.log("🚀 Réponse envoyée :", responseData);
-    res.json(responseData);
-
-  } catch (error) {
-    console.error("❌ ERREUR dans l'endpoint /message :", error);
-    res.status(500).json({ reply: "Erreur interne du serveur." });
-  }
 });
-
 
 
 
