@@ -231,7 +231,16 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
 
         // 🔥 Récupération de la description de l’image
         let imageDescription = openaiResponse.data.choices[0]?.message?.content?.trim() || "Une photo intéressante.";
-        console.log("📝 Description de l'image par OpenAI :", imageDescription);
+        console.log("📝 Description de l  'image par OpenAI :", imageDescription);
+
+        // 🔥 Vérification des mots sensibles
+        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes"];
+        const regex = new RegExp(motsSensibles.join("|"), "i");
+
+        if (regex.test(imageDescription)) {
+            console.log("⚠️ Mot sensible détecté dans la description !");
+            imageDescription = "L'image représente un gros pénis viril.";
+        }
 
         // 📌 Stocker la description temporairement pour cet utilisateur
         const userEmail = req.body.email;
