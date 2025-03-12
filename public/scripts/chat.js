@@ -63,12 +63,12 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             return;
         }
 
-        // Afficher l'indicateur de saisie
-        simulateTypingIndicator(messagesContainer);
+        // ✅ Afficher l'indicateur de saisie immédiatement
+        showTypingIndicator(messagesContainer);
 
         console.log("📨 Envoi du message avec :", { 
             message: userMessage, 
-            email: user?.email // Vérifie si email est défini
+            email: user?.email 
         });
         
         // Vérifier si l'utilisateur est premium
@@ -87,6 +87,7 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                     `Tu as dépassé ta limite de messages gratuits. <a href="premium.html" style="color: blue; text-decoration: underline;">Deviens un membre Premium</a> pour débloquer les messages illimités.`,
                     messagesContainer
                 );
+                hideTypingIndicator(); // ✅ Masquer immédiatement si on ne peut pas envoyer
                 return;
             }
 
@@ -97,14 +98,15 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 body: JSON.stringify({ 
                     message: userMessage, 
                     email: user?.email, 
-                    mode: localStorage.getItem("chatMode") || "image" // ✅ Ajout du mode
+                    mode: localStorage.getItem("chatMode") || "image" 
                 }),
-                
             })
             .then(response => response.json())
             .then(data => {
-                console.log("🔍 Réponse reçue du serveur :", data); // ✅ Vérification de isBlurred
-                hideTypingIndicator(); // Masque l'indicateur après réception de la réponse
+                console.log("🔍 Réponse reçue du serveur :", data);
+
+                // ✅ Masquer l'indicateur SEULEMENT maintenant
+                hideTypingIndicator();
 
                 if (data.levelUpdateMessage && data.levelUpdateType) {
                     showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
@@ -112,8 +114,6 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 
                 if (data.imageUrl) {
                     console.log(`📌 Image reçue : ${data.imageUrl} - Floutée : ${data.isBlurred}`);
-
-                    // ✅ Passe l'info "isBlurred" si elle est envoyée par le backend
                     addBotImageMessage(data.reply, data.imageUrl, isPremium, messagesContainer, data.isBlurred);
                 } else {
                     addBotMessage(data.reply, messagesContainer);
@@ -127,17 +127,18 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             })
             .catch(error => {
                 console.error('Erreur lors de l\'envoi du message:', error);
-                hideTypingIndicator(); // Masque en cas d'erreur
+                hideTypingIndicator(); // ✅ Masquer en cas d'erreur
                 addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
             });
         })
         .catch(error => {
             console.error('Erreur lors de la vérification du statut premium:', error);
-            hideTypingIndicator(); // Masque en cas d'erreur
+            hideTypingIndicator(); // ✅ Masquer en cas d'erreur
             addBotMessage('Erreur lors de la vérification du statut premium. Merci de réessayer.', messagesContainer);
         });
     }
 }
+
 
 
 
@@ -344,10 +345,7 @@ function simulateTypingIndicator(messagesContainer) {
 
     showTypingIndicator(messagesContainer); // Affiche l'indicateur
 
-    // Masque l'indicateur après le délai
-    setTimeout(() => {
-        hideTypingIndicator();
-    }, delay);
+    
 }
 
 
