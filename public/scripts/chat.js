@@ -291,13 +291,36 @@ function adjustChatHeight() {
         return;
     }
 
+    console.log(`🎭 Changement de personnage en cours : ${characterName}`);
+
+    // ✅ Stocker le personnage côté serveur pour l'utiliser dans le TTS
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.email) {
+        fetch("/setCharacter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email, name: characterName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(`✅ Personnage actif mis à jour côté serveur : ${data.message}`);
+        })
+        .catch(error => console.error("❌ Erreur lors de la mise à jour du personnage :", error));
+    } else {
+        console.warn("⚠️ Utilisateur non connecté, impossible d'envoyer le personnage.");
+    }
+
     setCharacter(characterName)
+    
+
     .then(() => {
-        console.log(`Personnage chargé côté serveur : ${characterName}`);
-        
-        // ✅ Ajouter l'événement Google Analytics ici
+        localStorage.setItem("activeCharacter", characterName);
+console.log(`📌 Personnage actif sauvegardé : ${characterName}`);
+        console.log(`🎭 Personnage chargé côté serveur : ${characterName}`);
+
+        // ✅ Ajouter l'événement Google Analytics
         trackCharacterSelection(characterName);
-        
+
         const messagesContainer = document.getElementById('messages');
         if (messagesContainer) messagesContainer.innerHTML = '';
 
@@ -344,10 +367,9 @@ function adjustChatHeight() {
                 }
             }
         }
-        
     })
     .catch((error) => {
-        console.error(`Erreur lors de la mise à jour du personnage côté serveur :`, error);
+        console.error(`❌ Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
 }
 
@@ -605,11 +627,34 @@ function optimizeImage(file, maxWidth = 320, quality = 0.7) {
 
 // Fonction pour lire un message avec une voix française sexy
 async function speakMessage(text) {
+    const activeCharacterName = localStorage.getItem("activeCharacter");
+
+    if (!activeCharacterName) {
+        console.error("❌ Aucun personnage actif trouvé.");
+        return;
+    }
+
+    const character = characters.find(c => c.name === activeCharacterName);
+
+    if (!character || !character.voice) {
+        console.error("❌ Aucune voix définie pour ce personnage.");
+        return;
+    }
+
+    console.log("📢 Envoi du texte à lire :", text);
+    console.log("🗣️ Paramètres de voix :", character.voice);
+
     try {
-        const response = await fetch("/api/tts", { // 🔥 Appelle l'API de ton backend
+        const response = await fetch("/api/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: text })
+            body: JSON.stringify({
+                text: text,
+                voice_id: character.voice.id,
+                stability: character.voice.stability,
+                similarity_boost: character.voice.similarity_boost,
+                speed: character.voice.speed
+            })
         });
 
         if (!response.ok) throw new Error("Erreur API TTS Backend");
@@ -621,6 +666,7 @@ async function speakMessage(text) {
 
         console.log("🔊 Lecture EvenLabs en cours...");
     } catch (error) {
-        console.error("❌ Erreur avec l'API TTS Backend :", error);
+        console.error("❌ Erreur avec l'API TTS :", error);
     }
 }
+

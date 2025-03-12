@@ -1,4 +1,6 @@
 require('dotenv').config(); // Charger les variables d'environnement
+console.log("🔑 Clé API EvenLabs chargée :", process.env.EVENLABS_API_KEY ? "OK" : "❌ Manquante !");
+
 const express = require('express');
 
 const axios = require('axios');
@@ -1296,27 +1298,29 @@ schedule.scheduleJob('5 23 * * *', () => {
 
 //ROUTE POUR LES MESSAGES VOCAUX
 app.post('/api/tts', async (req, res) => {
-    const { text } = req.body;
+    const { text, voice_id, voice_settings } = req.body;
 
-    if (!text) return res.status(400).json({ error: "Texte requis" });
+    if (!text || !voice_id) return res.status(400).json({ error: "Texte et ID de voix requis" });
 
     try {
-        const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM", { // 🔥 Ajoute l'ID de voix dans l'URL
+        console.log("📡 Envoi de la requête TTS à ElevenLabs :", { text, voice_id, voice_settings });
+
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/stream`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "xi-api-key": EVENLABS_API_KEY
             },
             body: JSON.stringify({
-                text: text,
-                model_id: "eleven_multilingual_v2", // 🔥 Modèle de voix recommandé
-                voice_settings: { stability: 0.5, similarity_boost: 0.8 }
+                text,
+                voice_settings
             })
         });
 
         if (!response.ok) {
-            const errorMsg = await response.text();
-            throw new Error(`Erreur API EvenLabs: ${errorMsg}`);
+            const errorData = await response.json();
+            console.error("❌ Réponse erreur API ElevenLabs :", errorData);
+            throw new Error(`Erreur API ElevenLabs : ${JSON.stringify(errorData)}`);
         }
 
         const audioBuffer = await response.arrayBuffer();
@@ -1324,10 +1328,11 @@ app.post('/api/tts', async (req, res) => {
         res.send(Buffer.from(audioBuffer));
 
     } catch (error) {
-        console.error("❌ Erreur avec EvenLabs :", error.message);
-        res.status(500).json({ error: "Erreur avec EvenLabs" });
+        console.error("❌ Erreur avec ElevenLabs :", error);
+        res.status(500).json({ error: "Erreur avec ElevenLabs" });
     }
 });
+
 
 
 
