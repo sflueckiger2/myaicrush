@@ -234,7 +234,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         console.log("📝 Description de l  'image par OpenAI :", imageDescription);
 
         // 🔥 Vérification des mots sensibles
-        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes"];
+        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes","inappropriée","explicites","intimes"];
         const regex = new RegExp(motsSensibles.join("|"), "i");
 
         if (regex.test(imageDescription)) {
