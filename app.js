@@ -7,6 +7,9 @@ const path = require('path');
 const fs = require('fs');
 const app = express(); // Initialiser l'instance d'Express
 
+const EVENLABS_API_KEY = process.env.EVENLABS_API_KEY;
+const fetch = require('node-fetch'); // ✅ Assure-toi que c'est installé
+
 
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -1291,6 +1294,40 @@ schedule.scheduleJob('5 23 * * *', () => {
 });
 
 
+//ROUTE POUR LES MESSAGES VOCAUX
+app.post('/api/tts', async (req, res) => {
+    const { text } = req.body;
+
+    if (!text) return res.status(400).json({ error: "Texte requis" });
+
+    try {
+        const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM", { // 🔥 Ajoute l'ID de voix dans l'URL
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "xi-api-key": EVENLABS_API_KEY
+            },
+            body: JSON.stringify({
+                text: text,
+                model_id: "eleven_multilingual_v2", // 🔥 Modèle de voix recommandé
+                voice_settings: { stability: 0.5, similarity_boost: 0.8 }
+            })
+        });
+
+        if (!response.ok) {
+            const errorMsg = await response.text();
+            throw new Error(`Erreur API EvenLabs: ${errorMsg}`);
+        }
+
+        const audioBuffer = await response.arrayBuffer();
+        res.setHeader("Content-Type", "audio/mpeg");
+        res.send(Buffer.from(audioBuffer));
+
+    } catch (error) {
+        console.error("❌ Erreur avec EvenLabs :", error.message);
+        res.status(500).json({ error: "Erreur avec EvenLabs" });
+    }
+});
 
 
 

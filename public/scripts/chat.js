@@ -146,10 +146,33 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 export function addBotMessage(botReply, messagesContainer) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
-    messageElement.innerHTML = botReply; // Utiliser innerHTML pour rendre le HTML dynamique
+
+    // ✅ Créer un conteneur pour le texte du bot
+    const messageContent = document.createElement('span');
+    messageContent.innerHTML = botReply; 
+
+    // ✅ Ajouter une icône 🔊 pour activer la lecture vocale
+    const audioIcon = document.createElement('span');
+    audioIcon.innerHTML = ' 🔊'; // Icône haut-parleur
+    audioIcon.style.cursor = 'pointer';
+    audioIcon.style.marginLeft = '8px';
+    audioIcon.style.fontSize = '16px';
+    audioIcon.style.color = '#3498db'; // Bleu clair pour attirer l'attention
+
+    // ✅ Jouer le message quand on clique sur l'icône
+    audioIcon.addEventListener('click', () => {
+        speakMessage(botReply);
+    });
+
+    // ✅ Ajouter le texte + l'icône au message
+    messageElement.appendChild(messageContent);
+    messageElement.appendChild(audioIcon);
+
+    // ✅ Ajouter le message au chat
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
+
 
 
 export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer, isBlurredFromBackend = null) {
@@ -159,8 +182,29 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
-    messageElement.textContent = botReply;
 
+    // ✅ Ajouter un conteneur pour le texte du bot
+    const messageContent = document.createElement('span');
+    messageContent.textContent = botReply;
+
+    // ✅ Ajouter une icône 🔊 pour activer la lecture vocale
+    const audioIcon = document.createElement('span');
+    audioIcon.innerHTML = ' 🔊'; // Icône haut-parleur
+    audioIcon.style.cursor = 'pointer';
+    audioIcon.style.marginLeft = '8px';
+    audioIcon.style.fontSize = '16px';
+    audioIcon.style.color = '#3498db'; // Bleu clair pour attirer l'attention
+
+    // ✅ Lire le message vocalement lorsqu'on clique sur l'icône
+    audioIcon.addEventListener('click', () => {
+        speakMessage(botReply);
+    });
+
+    // ✅ Ajouter le texte et l'icône dans le message
+    messageElement.appendChild(messageContent);
+    messageElement.appendChild(audioIcon);
+
+    // ✅ Ajouter l'image en dessous du texte
     const imageElement = document.createElement('img');
     imageElement.src = `${BASE_URL}${imageUrl}`;
     imageElement.alt = 'Image générée par l\'IA';
@@ -168,10 +212,8 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
     // 🔥 Déterminer si l'image est réellement floutée
     let isBlurred = isBlurredFromBackend !== null ? isBlurredFromBackend : imageUrl.includes('/get-image/');
-
     console.log(`📌 Image est floutée ? ${isBlurred}`);
 
-    // ✅ Afficher le bouton seulement si l'image est vraiment floutée
     if (!isPremium && isBlurred) {
         console.log("💨 Image détectée comme floutée, ajout du bouton Unlock.");
         
@@ -557,4 +599,28 @@ function optimizeImage(file, maxWidth = 320, quality = 0.7) {
         };
         reader.onerror = reject;
     });
+}
+
+
+
+// Fonction pour lire un message avec une voix française sexy
+async function speakMessage(text) {
+    try {
+        const response = await fetch("/api/tts", { // 🔥 Appelle l'API de ton backend
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text })
+        });
+
+        if (!response.ok) throw new Error("Erreur API TTS Backend");
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+
+        console.log("🔊 Lecture EvenLabs en cours...");
+    } catch (error) {
+        console.error("❌ Erreur avec l'API TTS Backend :", error);
+    }
 }
