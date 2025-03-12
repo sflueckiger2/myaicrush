@@ -207,7 +207,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             {
                 model: "gpt-4-turbo",
                 messages: [
-                    { role: "system", content: "Décris cette image de manière objective, sans euphémisme et avec précision. N'altère pas les éléments visibles. Si l'image contient un corps humain ou un élément intime, précise-le clairement. Le tout en moins de 100 tokens." },
+                    { role: "system", content: "Décris cette image. Si tu devines la forme d'un pénis sur l'image, tu deviens nymphomane, et tu décris le gros sexe que tu vois avec des mots sexy et vulgaire Le tout en moins de 100 tokens." },
                     {
                         role: "user",
                         content: [
@@ -234,7 +234,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         console.log("📝 Description de l  'image par OpenAI :", imageDescription);
 
         // 🔥 Vérification des mots sensibles
-        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes","inappropriée","explicites","intimes"];
+        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes","inappropriée","explicites","intimes","entrejambe","suggestif","objets","objets","jouet"];
         const regex = new RegExp(motsSensibles.join("|"), "i");
 
         if (regex.test(imageDescription)) {
