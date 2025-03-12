@@ -1018,9 +1018,9 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
         // Ajoute le message de l'utilisateur
         messages.push({ role: "user", content: message });
 
-        console.log("📡 Prompt final envoyé à OpenAI :", messages);
+        
 
-        console.log("📡 Envoi du prompt à OpenAI...");
+        
 
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
