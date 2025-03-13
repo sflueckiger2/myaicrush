@@ -153,7 +153,7 @@ export function addBotMessage(botReply, messagesContainer) {
 
     // ✅ Ajouter une icône 🔊 pour activer la lecture vocale
     const audioIcon = document.createElement('span');
-    audioIcon.innerHTML = ' 🔊'; // Icône haut-parleur
+    audioIcon.innerHTML = ''; // Icône haut-parleur
     audioIcon.style.cursor = 'pointer';
     audioIcon.style.marginLeft = '8px';
     audioIcon.style.fontSize = '16px';
@@ -189,7 +189,7 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
 
     // ✅ Ajouter une icône 🔊 pour activer la lecture vocale
     const audioIcon = document.createElement('span');
-    audioIcon.innerHTML = ' 🔊'; // Icône haut-parleur
+    audioIcon.innerHTML = ''; // Icône haut-parleur
     audioIcon.style.cursor = 'pointer';
     audioIcon.style.marginLeft = '8px';
     audioIcon.style.fontSize = '16px';
