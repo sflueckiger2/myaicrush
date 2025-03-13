@@ -100,7 +100,8 @@
       "3": "images/juliette/juliette"
     },
     "voice": {
-      "id": "EXAVITQu4vr4xnSDxMaL",
+      "id": "5OnMHwgTFgvPVwE8jP6B",
+      "model_id": "eleven_multilingual_v2",
       "stability": 0.4,
       "similarity_boost": 0.8,
       "speed": 1.05

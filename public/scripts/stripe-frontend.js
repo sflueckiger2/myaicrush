@@ -6,11 +6,11 @@ const STRIPE_MODE = window.STRIPE_MODE || "live"; // Mode "live" par défaut
 
 // Récupération des IDs de prix en fonction du mode Stripe
 const STRIPE_PRICE_ID_MONTHLY = STRIPE_MODE === "live"
-    ? "price_1QP4NsAOSHX0SgbTbXleafxi" // Live Monthly
+    ? "price_1R288qAOSHX0SgbTCgRDHuka" // Live Monthly
     : "price_1QP4dCAOSHX0SgbTY5N4QrsW"; // Test Monthly
 
 const STRIPE_PRICE_ID_ANNUAL = STRIPE_MODE === "live"
-    ? "price_1QvL1KAOSHX0SgbTExLhbLgG" // Live Annual
+    ? "price_1R28ADAOSHX0SgbTfwDtAQRQ" // Live Annual
     : "price_1QPRXpAOSHX0SgbT8GfUUtvL"; // Test Annual
 
 console.log(`🚀 Mode Stripe actif : ${STRIPE_MODE.toUpperCase()}`);

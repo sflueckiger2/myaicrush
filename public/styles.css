@@ -1321,3 +1321,24 @@ input:checked + .slider:before {
   max-width: 100%;
   border-radius: 10px;
 }
+
+.voice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #ff4d80;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 77, 128, 0.2);
+  width: fit-content;
+  margin-top: 5px;
+  transition: background 0.3s ease-in-out;
+}
+
+.voice-button:hover {
+  background: rgba(255, 77, 128, 0.4);
+}

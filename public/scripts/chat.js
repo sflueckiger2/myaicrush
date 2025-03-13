@@ -651,9 +651,12 @@ async function speakMessage(text) {
             body: JSON.stringify({
                 text: text,
                 voice_id: character.voice.id,
-                stability: character.voice.stability,
-                similarity_boost: character.voice.similarity_boost,
-                speed: character.voice.speed
+                model_id: "eleven_multilingual_v2", // ✅ Ajout du modèle multilingue
+                voice_settings: {
+                    stability: character.voice.stability,
+                    similarity_boost: character.voice.similarity_boost,
+                    speed: character.voice.speed
+                }
             })
         });
 
@@ -669,4 +672,3 @@ async function speakMessage(text) {
         console.error("❌ Erreur avec l'API TTS :", error);
     }
 }
-

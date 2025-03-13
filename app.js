@@ -1313,6 +1313,7 @@ app.post('/api/tts', async (req, res) => {
             },
             body: JSON.stringify({
                 text,
+                model_id: "eleven_multilingual_v2",  // ✅ Ajout du modèle multilingue
                 voice_settings
             })
         });
@@ -1332,6 +1333,7 @@ app.post('/api/tts', async (req, res) => {
         res.status(500).json({ error: "Erreur avec ElevenLabs" });
     }
 });
+
 
 
 
