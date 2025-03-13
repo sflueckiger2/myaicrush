@@ -149,29 +149,72 @@ export function addBotMessage(botReply, messagesContainer) {
 
     // ✅ Créer un conteneur pour le texte du bot
     const messageContent = document.createElement('span');
-    messageContent.innerHTML = botReply; 
+    messageContent.innerHTML = botReply;
 
-    // ✅ Ajouter une icône 🔊 pour activer la lecture vocale
-    const audioIcon = document.createElement('span');
-    audioIcon.innerHTML = ''; // Icône haut-parleur
-    audioIcon.style.cursor = 'pointer';
-    audioIcon.style.marginLeft = '8px';
-    audioIcon.style.fontSize = '16px';
-    audioIcon.style.color = '#3498db'; // Bleu clair pour attirer l'attention
+   // ✅ Ajouter un bouton "Écouter le message vocal"
+const voiceButton = document.createElement('button');
+voiceButton.classList.add('voice-button');
+voiceButton.innerHTML = ''; // Vide le bouton
+const icon = document.createElement('i');
+const lockIcon = document.createElement('i');
+lockIcon.classList.add('fas', 'fa-volume-up'); // Icône audio au lieu du cadenas
 
-    // ✅ Jouer le message quand on clique sur l'icône
-    audioIcon.addEventListener('click', () => {
-        speakMessage(botReply);
-    });
 
-    // ✅ Ajouter le texte + l'icône au message
+icon.classList.add('fas', 'fa-volume-up'); // Ajoute l'icône FA
+voiceButton.appendChild(icon);
+voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
+
+voiceButton.onclick = () => {
+    speakMessage(botReply);
+};
+
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user && user.email) {
+        fetch("/api/is-premium", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email }),
+        })
+        .then(response => response.json())
+        .then(({ isPremium }) => {
+            if (isPremium) {
+                voiceButton.innerHTML = ''; // Vide le bouton
+                voiceButton.appendChild(icon); // Réinsère l'icône du son
+                voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
+                voiceButton.onclick = () => speakMessage(botReply);
+            } else {
+                voiceButton.innerHTML = ''; // Vide le bouton
+                voiceButton.innerHTML = ''; // Vide le bouton
+voiceButton.appendChild(icon); // Utilise l'icône audio au lieu du cadenas
+voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
+
+            }
+            
+            
+        })
+        .catch(error => console.error("❌ Erreur vérification premium :", error));
+    } else {
+        voiceButton.innerHTML = ' Écouter le message vocal';
+        voiceButton.onclick = () => window.location.href = "premium.html";
+    }
+
+    // ✅ Ajouter le texte + le bouton au message
     messageElement.appendChild(messageContent);
-    messageElement.appendChild(audioIcon);
+
+const buttonContainer = document.createElement('div');
+buttonContainer.classList.add('voice-button-container'); // On ajoute une classe pour mieux le styler
+buttonContainer.appendChild(voiceButton);
+
+messagesContainer.appendChild(messageElement);
+messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en dessous
+
 
     // ✅ Ajouter le message au chat
     messagesContainer.appendChild(messageElement);
     scrollToBottom(messagesContainer);
 }
+
 
 
 
@@ -187,22 +230,43 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     const messageContent = document.createElement('span');
     messageContent.textContent = botReply;
 
-    // ✅ Ajouter une icône 🔊 pour activer la lecture vocale
-    const audioIcon = document.createElement('span');
-    audioIcon.innerHTML = ''; // Icône haut-parleur
-    audioIcon.style.cursor = 'pointer';
-    audioIcon.style.marginLeft = '8px';
-    audioIcon.style.fontSize = '16px';
-    audioIcon.style.color = '#3498db'; // Bleu clair pour attirer l'attention
+    // ✅ Ajouter un bouton "Écouter le message vocal"
+    const voiceButton = document.createElement('button');
+    voiceButton.classList.add('voice-button');
 
-    // ✅ Lire le message vocalement lorsqu'on clique sur l'icône
-    audioIcon.addEventListener('click', () => {
-        speakMessage(botReply);
-    });
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user && user.email) {
+        fetch("/api/is-premium", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email }),
+        })
+        .then(response => response.json())
+        .then(({ isPremium }) => {
+            if (isPremium) {
+                voiceButton.innerHTML = ' Écouter le message vocal';
+                voiceButton.onclick = () => speakMessage(botReply);
+            } else {
+                voiceButton.innerHTML = ' Écouter le message vocal';
+                voiceButton.onclick = () => window.location.href = "premium.html";
+            }
+        })
+        .catch(error => console.error("❌ Erreur vérification premium :", error));
+    } else {
+        voiceButton.innerHTML = ' Écouter le message vocal';
+        voiceButton.onclick = () => window.location.href = "premium.html";
+    }
 
-    // ✅ Ajouter le texte et l'icône dans le message
+    // ✅ Ajouter le texte + le bouton dans le message
     messageElement.appendChild(messageContent);
-    messageElement.appendChild(audioIcon);
+
+const buttonContainer = document.createElement('div');
+buttonContainer.classList.add('voice-button-container'); // On ajoute une classe pour mieux le styler
+buttonContainer.appendChild(voiceButton);
+
+messagesContainer.appendChild(messageElement);
+messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en dessous
+
 
     // ✅ Ajouter l'image en dessous du texte
     const imageElement = document.createElement('img');
@@ -210,7 +274,7 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     imageElement.alt = 'Image générée par l\'IA';
     imageElement.classList.add('chat-image');
 
-    // 🔥 Déterminer si l'image est réellement floutée
+    // 🔥 Gestion du flou pour les non-premiums
     let isBlurred = isBlurredFromBackend !== null ? isBlurredFromBackend : imageUrl.includes('/get-image/');
     console.log(`📌 Image est floutée ? ${isBlurred}`);
 
@@ -641,17 +705,39 @@ async function speakMessage(text) {
         return;
     }
 
-    console.log("📢 Envoi du texte à lire :", text);
-    console.log("🗣️ Paramètres de voix :", character.voice);
+    console.log("📢 Vérification du statut premium...");
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || !user.email) {
+        console.error("❌ Utilisateur non connecté !");
+        window.location.href = "profile.html";
+        return;
+    }
 
     try {
-        const response = await fetch("/api/tts", {
+        const response = await fetch("/api/is-premium", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email }),
+        });
+
+        const { isPremium } = await response.json();
+        
+        if (!isPremium) {
+            console.warn("🚫 Accès refusé : l'utilisateur n'est pas premium.");
+            window.location.href = "premium.html";
+            return;
+        }
+
+        console.log("✅ L'utilisateur est premium, lecture du message...");
+
+        const ttsResponse = await fetch("/api/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 text: text,
                 voice_id: character.voice.id,
-                model_id: "eleven_multilingual_v2", // ✅ Ajout du modèle multilingue
+                model_id: "eleven_multilingual_v2",
                 voice_settings: {
                     stability: character.voice.stability,
                     similarity_boost: character.voice.similarity_boost,
@@ -660,9 +746,9 @@ async function speakMessage(text) {
             })
         });
 
-        if (!response.ok) throw new Error("Erreur API TTS Backend");
+        if (!ttsResponse.ok) throw new Error("Erreur API TTS Backend");
 
-        const audioBlob = await response.blob();
+        const audioBlob = await ttsResponse.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.play();
@@ -672,3 +758,4 @@ async function speakMessage(text) {
         console.error("❌ Erreur avec l'API TTS :", error);
     }
 }
+

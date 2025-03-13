@@ -1326,19 +1326,38 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  color: #ff4d80;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 8px;
-  background: rgba(255, 77, 128, 0.2);
-  width: fit-content;
   margin-top: 5px;
-  transition: background 0.3s ease-in-out;
+  padding: 4px 10px;
+  font-size: 12px;  /* 🔹 Taille réduite */
+  font-weight: bold;
+  color: #ff4d80;  /* 🌸 Texte en rose */
+  background-color: transparent;
+  border: 1px solid #ff4d80;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  width: fit-content;
 }
 
 .voice-button:hover {
-  background: rgba(255, 77, 128, 0.4);
+  background-color: #ff4d80;
+  color: white;
 }
+
+.voice-button:active {
+  transform: scale(0.95);
+}
+
+/* 🔊 Icône FontAwesome */
+.voice-button i {
+  color: #ff4d80;  /* 🌸 Icône en rose */
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.small-icon {
+  font-size: 12px; /* Ajuste la taille selon tes besoins */
+  margin-right: 5px; /* Ajoute un petit espace entre l'icône et le texte */
+}
+
