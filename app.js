@@ -1338,6 +1338,10 @@ app.post('/api/tts', async (req, res) => {
 
 
 
+
+
+
+
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {
   app.listen(PORT, () => {
