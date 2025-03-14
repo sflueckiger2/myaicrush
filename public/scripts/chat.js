@@ -151,7 +151,7 @@ export function addBotMessage(botReply, messagesContainer) {
     const messageContent = document.createElement('span');
     messageContent.innerHTML = botReply;
 
-   // ✅ Ajouter un bouton "Écouter le message vocal"
+   // ✅ Ajouter un bouton " Écouter le message vocal"
 const voiceButton = document.createElement('button');
 voiceButton.classList.add('voice-button');
 voiceButton.innerHTML = ''; // Vide le bouton
@@ -230,7 +230,7 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     const messageContent = document.createElement('span');
     messageContent.textContent = botReply;
 
-    // ✅ Ajouter un bouton "Écouter le message vocal"
+    // ✅ Ajouter un bouton " Écouter le message vocal"
     const voiceButton = document.createElement('button');
     voiceButton.classList.add('voice-button');
 
@@ -769,4 +769,3 @@ async function speakMessage(text) {
         console.error("❌ Erreur avec l'API TTS :", error);
     }
 }
-

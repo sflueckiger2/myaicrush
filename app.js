@@ -1321,7 +1321,7 @@ app.post('/api/tts', async (req, res) => {
             return res.status(403).json({ error: "Utilisateur introuvable." });
         }
 
-        const max_free_minutes = 0.25; // ⏳ 1 minute gratuite par mois
+        const max_free_minutes = 2; // ⏳ 2 minute gratuite par mois
         const words_per_second = 2.5; // 🔥 Approximation : 2.5 mots/seconde
         const estimated_seconds = text.split(" ").length / words_per_second;
         const estimated_minutes = estimated_seconds / 60;
