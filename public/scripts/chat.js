@@ -742,11 +742,22 @@ async function speakMessage(text) {
                     stability: character.voice.stability,
                     similarity_boost: character.voice.similarity_boost,
                     speed: character.voice.speed
-                }
+                },
+                email: user.email // 🔥 Ajout de l'email pour éviter l'erreur 400
             })
         });
+        
 
-        if (!ttsResponse.ok) throw new Error("Erreur API TTS Backend");
+        if (!ttsResponse.ok) {
+            const errorData = await ttsResponse.json();
+            if (errorData.redirect) {
+                console.warn("🚨 Limite atteinte, redirection vers", errorData.redirect);
+                window.location.href = errorData.redirect; // 🚀 Redirige automatiquement vers audio.html
+                return;
+            }
+            throw new Error("Erreur API TTS Backend");
+        }
+        
 
         const audioBlob = await ttsResponse.blob();
         const audioUrl = URL.createObjectURL(audioBlob);

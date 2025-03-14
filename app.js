@@ -1227,7 +1227,13 @@ app.post('/api/signup', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // Ajouter l'utilisateur avec le mot de passe haché
-        await users.insertOne({ email, password: hashedPassword });
+        await users.insertOne({ 
+            email, 
+            password: hashedPassword, 
+            audioMinutesUsed: 0, // 🔥 On initialise le compteur d'audio à 0
+            createdAt: new Date() 
+        });
+        
 
         console.log("✅ Inscription réussie pour :", email);
 
@@ -1296,13 +1302,41 @@ schedule.scheduleJob('5 23 * * *', () => {
 });
 
 
-//ROUTE POUR LES MESSAGES VOCAUX
+//ROUTE POUR LES MESSAGES VOCAUX AVEC LIMITATION
 app.post('/api/tts', async (req, res) => {
-    const { text, voice_id, voice_settings } = req.body;
+    const { text, voice_id, voice_settings, email } = req.body;
 
-    if (!text || !voice_id) return res.status(400).json({ error: "Texte et ID de voix requis" });
+    if (!text || !voice_id || !email) {
+        return res.status(400).json({ error: "Texte, ID de voix et email requis" });
+    }
 
     try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+
+        // 🔥 Récupérer l'utilisateur depuis MongoDB
+        const user = await users.findOne({ email });
+
+        if (!user) {
+            return res.status(403).json({ error: "Utilisateur introuvable." });
+        }
+
+        const max_free_minutes = 0.25; // ⏳ 1 minute gratuite par mois
+        const words_per_second = 2.5; // 🔥 Approximation : 2.5 mots/seconde
+        const estimated_seconds = text.split(" ").length / words_per_second;
+        const estimated_minutes = estimated_seconds / 60;
+
+        // 🔥 Vérifier si l'utilisateur a encore du crédit
+        if ((user.audioMinutesUsed || 0) + estimated_minutes > max_free_minutes) {
+            return res.status(403).json({ redirect: "/audio.html" });
+        }
+        
+
+        // 🔥 Mise à jour du temps consommé en base de données
+        await users.updateOne({ email }, { $inc: { audioMinutesUsed: estimated_minutes } });
+
+        console.log(`🔊 ${email} a consommé ${user.audioMinutesUsed + estimated_minutes} min.`);
+
         console.log("📡 Envoi de la requête TTS à ElevenLabs :", { text, voice_id, voice_settings });
 
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/stream`, {
@@ -1313,7 +1347,7 @@ app.post('/api/tts', async (req, res) => {
             },
             body: JSON.stringify({
                 text,
-                model_id: "eleven_multilingual_v2",  // ✅ Ajout du modèle multilingue
+                model_id: "eleven_multilingual_v2",
                 voice_settings
             })
         });
@@ -1335,7 +1369,14 @@ app.post('/api/tts', async (req, res) => {
 });
 
 
+// 🔄 Réinitialisation automatique des minutes audio chaque 1er du mois à minuit
+schedule.scheduleJob('0 0 1 * *', async () => {
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
 
+    const result = await users.updateMany({}, { $set: { audioMinutesUsed: 0 } });
+    console.log(`🔄 Réinitialisation des minutes audio pour ${result.modifiedCount} utilisateurs !`);
+});
 
 
 
