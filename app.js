@@ -584,12 +584,19 @@ app.get('/auth/google/callback', async (req, res) => {
       const isNewUser = !existingUser;
 
       if (!existingUser) {
-          await usersCollection.insertOne({ email: userEmail, createdAt: new Date() });
-          console.log(`✅ Nouvel utilisateur Google ajouté : ${userEmail}`);
-
-          // ✅ Ajout à Brevo pour les nouveaux utilisateurs
-          await addUserToBrevo(userEmail);
-      }
+        await usersCollection.insertOne({ 
+            email: userEmail, 
+            createdAt: new Date(), 
+            audioMinutesUsed: 0, 
+            creditsPurchased: 0  // ✅ Ajout du compteur de crédits
+        });
+    
+        console.log(`✅ Nouvel utilisateur Google ajouté avec crédits : ${userEmail}`);
+    
+        // ✅ Ajout à Brevo pour les nouveaux utilisateurs
+        await addUserToBrevo(userEmail);
+    }
+    
 
       console.log('Utilisateur Google authentifié :', userEmail);
 
@@ -1230,9 +1237,11 @@ app.post('/api/signup', async (req, res) => {
         await users.insertOne({ 
             email, 
             password: hashedPassword, 
-            audioMinutesUsed: 0, // 🔥 On initialise le compteur d'audio à 0
+            audioMinutesUsed: 0, 
+            creditsPurchased: 0,  // ✅ Ajout du compteur de crédits
             createdAt: new Date() 
         });
+        
         
 
         console.log("✅ Inscription réussie pour :", email);
@@ -1302,7 +1311,7 @@ schedule.scheduleJob('5 23 * * *', () => {
 });
 
 
-//ROUTE POUR LES MESSAGES VOCAUX AVEC LIMITATION
+// ROUTE POUR LES MESSAGES VOCAUX AVEC LIMITATION & CRÉDITS
 app.post('/api/tts', async (req, res) => {
     const { text, voice_id, voice_settings, email } = req.body;
 
@@ -1321,21 +1330,47 @@ app.post('/api/tts', async (req, res) => {
             return res.status(403).json({ error: "Utilisateur introuvable." });
         }
 
-        const max_free_minutes = 2; // ⏳ 2 minute gratuite par mois
-        const words_per_second = 2.5; // 🔥 Approximation : 2.5 mots/seconde
+        const max_free_minutes = 0.5; // ⏳ 2 minutes gratuites par mois
+        const words_per_second = 4.5; // 🔥 Approximation : 2.5 mots/seconde
         const estimated_seconds = text.split(" ").length / words_per_second;
         const estimated_minutes = estimated_seconds / 60;
 
-        // 🔥 Vérifier si l'utilisateur a encore du crédit
-        if ((user.audioMinutesUsed || 0) + estimated_minutes > max_free_minutes) {
-            return res.status(403).json({ redirect: "/audio.html" });
-        }
+        console.log(`📊 Durée estimée : ${estimated_seconds.toFixed(2)} sec (${estimated_minutes.toFixed(2)} min)`);
         
+        let newAudioMinutesUsed = (user.audioMinutesUsed || 0) + estimated_minutes;
 
-        // 🔥 Mise à jour du temps consommé en base de données
-        await users.updateOne({ email }, { $inc: { audioMinutesUsed: estimated_minutes } });
+        // 🔥 Vérifier si l'utilisateur a encore du crédit gratuit
+        if (newAudioMinutesUsed <= max_free_minutes) {
+            // ✅ Il reste des minutes gratuites, on les utilise
+            await users.updateOne({ email }, { $set: { audioMinutesUsed: newAudioMinutesUsed } });
+            console.log(`🔊 ${email} a utilisé ${estimated_minutes.toFixed(2)} min gratuites.`);
+        } else {
+            // ✅ L'utilisateur a dépassé ses minutes gratuites → Utilisation des crédits
+            const paidMinutes = newAudioMinutesUsed - max_free_minutes;
+            const creditsNeeded = Math.floor(paidMinutes); // ❗ Déduction **seulement** quand 1 min complète est atteinte
+            
+            console.log(`💳 Minutes payantes accumulées : ${paidMinutes.toFixed(2)} min (${creditsNeeded} crédits nécessaires)`);
 
-        console.log(`🔊 ${email} a consommé ${user.audioMinutesUsed + estimated_minutes} min.`);
+            if (creditsNeeded > 0) {
+                if (user.creditsPurchased < creditsNeeded) {
+                    return res.status(403).json({ redirect: "/audio.html" }); // Pas assez de crédits
+                }
+
+                // ✅ Déduire uniquement les crédits nécessaires et remettre le surplus à `audioMinutesUsed`
+                newAudioMinutesUsed = max_free_minutes + (paidMinutes - creditsNeeded); 
+
+                await users.updateOne({ email }, {
+                    $set: { audioMinutesUsed: newAudioMinutesUsed },
+                    $inc: { creditsPurchased: -creditsNeeded }
+                });
+
+                console.log(`🔴 ${email} a payé ${creditsNeeded} crédits et reste avec ${newAudioMinutesUsed.toFixed(2)} min en attente.`);
+            } else {
+                // Pas encore 1 min complète payante → Juste ajouter au compteur
+                await users.updateOne({ email }, { $set: { audioMinutesUsed: newAudioMinutesUsed } });
+                console.log(`⏳ ${email} a accumulé ${newAudioMinutesUsed.toFixed(2)} min mais n'a pas encore atteint 1 crédit.`);
+            }
+        }
 
         console.log("📡 Envoi de la requête TTS à ElevenLabs :", { text, voice_id, voice_settings });
 
