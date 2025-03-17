@@ -1355,7 +1355,7 @@ app.post('/api/tts', async (req, res) => {
 
             if (creditsNeeded > 0) {
                 if (user.creditsPurchased < creditsNeeded) {
-                    return res.status(403).json({ redirect: "/audio.html" }); // Pas assez de crédits
+                    return res.status(403).json({ redirect: "/jetons.html" }); // Pas assez de crédits
                 }
 
                 // ✅ Déduire uniquement les crédits nécessaires et remettre le surplus à `audioMinutesUsed`
