@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation d'achat de jetons</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Google Analytics (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-FJ5S0H9B1R');
+  </script>
+</head>
+<body>
+  <!-- Menu Hamburger -->
+  <nav class="menu">
+    <button id="menu-toggle" class="menu-toggle">
+      <span class="hamburger"></span>
+    </button>
+    <ul id="menu-items" class="menu-items hidden">
+      <li><a href="index.html">Choisis ta partenaire</a></li>
+      <li><a href="profile.html">Ton profil</a></li>
+      <li><a href="premium.html">Premium</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="container confirmation-page">
+    <h1 class="p-title">Merci pour ton achat</h1>
+    <p class="p-description">
+      Tes jetons ont été ajouté à ton profil. 
+    </p>
+    <p class="p-description">
+      Tu peux maintenant les utiliser avec tes IA préférés.
+    </p>
+    <p class="p-description">
+      Pour savoir combien de jetons il te reste, rends-toi dans la section "profil".
+    </p>
+    <p class="p-description">
+      Merci de ta confiance,
+      <br>
+      L'équipe MyAiCrush
+    </p>
+
+    <!-- Bouton pour retourner à la page d'accueil -->
+    <div class="action-section">
+      <button id="startChatButton" class="checkout-button" onclick="window.location.href='index.html'">
+        Commencer à discuter
+      </button>
+    </div>
+  </div>
+
+  <!-- Icônes de sécurité -->
+  <div class="security-section">
+    <div class="security-item">
+      <i class="fas fa-lock"></i>
+      <p>100% Sécurisé</p>
+    </div>
+    <div class="security-item">
+      <i class="fas fa-mask"></i>
+      <p>Confidentialité totale</p>
+    </div>
+  </div>
+
+
+  <!-- Inclure les fichiers JavaScript -->
+  <script type="module" src="./scripts/menu.js"></script>
+
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+  
+    fbq('init', '955861022940111'); // ✅ Ton Pixel ID
+  
+    // 🔥 Génération d'un eventID unique pour éviter les doublons
+    var purchaseEventID = 'purchase_' + Date.now();
+  
+    // ✅ Récupération dynamique du montant depuis l'URL (par défaut : 10€)
+    var urlParams = new URLSearchParams(window.location.search);
+    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 10;
+  
+    // ✅ Envoi de l'événement "Purchase" avec la vraie valeur
+    fbq('track', 'Purchase', {
+      value: amount, // 🔥 Montant dynamique
+      currency: 'EUR'
+    }, {
+      eventID: purchaseEventID // ✅ Clé pour éviter les doublons
+    });
+  
+    // ✅ Suppression du stockage inutile pour l’API CAPI (car désactivée)
+  </script>
+  
+  <script>
+    function getFacebookParams() {
+        var urlParams = new URLSearchParams(window.location.search);
+  
+        // ✅ Récupération du paramètre `fbclid` pour fbc
+        var fbc = urlParams.get('fbclid') 
+            ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') 
+            : null;
+  
+        // ✅ Récupération du `fbp` généré par le Pixel Facebook
+        var fbp = null;
+        if (window.fbq && typeof fbq.getState === "function") {
+            fbp = fbq.getState().lastExternalId || null;
+        }
+  
+        // ✅ Stocker fbp et fbc si présents
+        if (fbp) localStorage.setItem('fbp', fbp);
+        if (fbc) localStorage.setItem('fbc', fbc);
+    }
+  
+    getFacebookParams();
+  </script>
+  
+  
+ 
+<noscript>
+  <img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Purchase&noscript=1"/>
+</noscript>
+
+</body>
+</html>

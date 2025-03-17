@@ -27,6 +27,8 @@ const stripeSecretKey = stripeMode === "live"
 const stripe = require('stripe')(stripeSecretKey); // ✅ Initialisation correcte de Stripe
 console.log(`🚀 Stripe en mode : ${stripeMode.toUpperCase()}`);
 console.log(`🔑 Clé Stripe utilisée : ${stripeSecretKey.startsWith("sk_live") ? "LIVE" : "TEST"}`);
+const { createTokenCheckoutSession, handleStripeWebhook } = require('./public/scripts/stripe.js');
+
 
 const userLastImageDescriptions = new Map(); // Stocke la dernière description d’image pour chaque email
 
@@ -1414,7 +1416,35 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 });
 
 
+// ROUTE PAIEMENT JETONS MYAICRUSH
 
+// Route API pour acheter des jetons
+app.post('/api/buy-tokens', async (req, res) => {
+    console.log('📡 Requête reçue pour l\'achat de jetons:', req.body);
+
+    try {
+        const { tokensAmount, email } = req.body;
+        if (!tokensAmount || !email) {
+            return res.status(400).json({ message: "Email et quantité de jetons requis." });
+        }
+
+        const session = await createTokenCheckoutSession(tokensAmount, email);
+
+        if (session.error) {
+            return res.status(400).json({ message: session.error });
+        }
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+
+// Webhook Stripe pour gérer les paiements de jetons
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    await handleStripeWebhook(req, res);
+});
 
 
 

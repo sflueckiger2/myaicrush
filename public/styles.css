@@ -56,7 +56,7 @@ body {
 
 /* Style du titre */
 h1 {
-  color: #d81b60;
+  color: #dd4d9d;
   font-size: 24px;
   margin-bottom: 10px;
 }
@@ -109,7 +109,7 @@ p {
 
 .card-content h3 {
   font-size: 1.2em;
-  color: #d81b60;
+  color: #dd4d9d;
   margin-bottom: 5px;
 }
 
@@ -161,13 +161,13 @@ p {
   height: 50px;
   border-radius: 50%;
   margin-right: 10px;
-  border: 2px solid #d81b60;
+  border: 2px solid #dd4d9d;
   object-fit: cover; /* Maintient le ratio de l'image */
 }
 
 #chat-name {
   font-size: 1.2em;
-  color: #d81b60;
+  color: #dd4d9d;
 }
 
 /* Style des messages */
@@ -194,7 +194,7 @@ p {
 }
 
 .user-message {
-  background-color: #d81b60!important;
+  background-color: #dd4d9d!important;
   color: #ffffff;
   align-self: flex-end;
   text-align: right;
@@ -231,7 +231,7 @@ p {
 }
 
 #send-btn {
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   border: none;
   padding: 10px;
   border-radius: 50%;
@@ -246,7 +246,7 @@ p {
 }
 
 #send-btn:hover {
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   transform: scale(1.1);
 }
 
@@ -276,7 +276,7 @@ p {
 #typing-indicator .dot {
   width: 8px;
   height: 8px;
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   border-radius: 50%;
   animation: typingAnimation 1.5s infinite;
 }
@@ -326,7 +326,7 @@ p {
 .audio-button {
   background: none;
   border: none;
-  color: #d81b60;
+  color: #dd4d9d;
   font-size: 1.2em;
   cursor: pointer;
   margin-left: 10px;
@@ -458,7 +458,7 @@ p {
 }
 
 .menu-items li a:hover {
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   color: #ffffff;
   border-radius: 5px;
 }
@@ -574,7 +574,7 @@ p {
 }
 
 .close-modal-btn:hover {
-  background-color: #d81b60; /* Fond rose au survol */
+  background-color: #dd4d9d; /* Fond rose au survol */
   color: #ffffff; /* Couleur blanche pour la croix au survol */
 }
 #signup-modal {
@@ -615,7 +615,7 @@ p {
   top: 50%; 
   left: 50%;
   transform: translate(-50%, -50%); /* ✅ Centre parfaitement le bouton */
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -649,7 +649,7 @@ p {
 
 .p-title {
   font-size: 1.5em;
-  color: #d81b60;
+  color: #dd4d9d;
   margin-bottom: 10px;
   
 }
@@ -687,7 +687,7 @@ text-align: left;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   display: inline-block;
   margin-right: 10px;
   position: relative;
@@ -724,7 +724,7 @@ text-align: left;
 
 .pricing-card h2 {
   font-size: 1.5em;
-  color: #d81b60;
+  color: #dd4d9d;
 }
 
 .pricing-card .price {
@@ -739,7 +739,7 @@ text-align: left;
 }
 
 .pricing-card.popular {
-  border: 2px solid #d81b60;
+  border: 2px solid #dd4d9d;
   position: relative;
 
 }
@@ -769,7 +769,7 @@ text-align: left;
 
 /* Boutons stylisés */
 .button {
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -785,7 +785,7 @@ text-align: left;
 
 /* Boutons de checkout */
 .checkout-button {
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   color: #ffffff;
   padding: 10px 20px;
   font-size: 1em;
@@ -899,7 +899,7 @@ text-align: left;
 }
 .forgot-password-link {
   font-size: 0.9em;
-  color: #d81b60;
+  color: #dd4d9d;
   text-decoration: none;
   cursor: pointer;
 }
@@ -919,7 +919,7 @@ text-align: left;
 
 #unsubscribe-container .button {
   margin-top: 10px;
-  background-color: #d81b60;
+  background-color: #dd4d9d;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -952,7 +952,7 @@ text-align: left;
 /* Titre des sections */
 .profile-section h2 {
   font-size: 1.5rem;
-  color: #d81b60; /* Votre couleur principale */
+  color: #dd4d9d; /* Votre couleur principale */
   margin-bottom: 10px;
 }
 
@@ -969,7 +969,7 @@ text-align: left;
   align-items: center;
   justify-content: flex-start;
   padding: 10px 15px;
-  background-color: #d81b60; /* Votre couleur principale */
+  background-color: #dd4d9d; /* Votre couleur principale */
   color: #ffffff;
   border: none;
   border-radius: 5px;
@@ -990,7 +990,7 @@ text-align: left;
 
 /* Boutons spécifiques */
 .profile-button.danger {
-  background-color: #d81b60; /* Variation pour les actions sensibles */
+  background-color: #dd4d9d; /* Variation pour les actions sensibles */
 }
 
 .profile-button.danger:hover {
@@ -1078,12 +1078,12 @@ form input::placeholder {
   width: 20px;
 }
 #show-signin{
-  color : #d81b60!important;
+  color : #dd4d9d!important;
   text-decoration: underline!important;
 
 }
 #show-signup{
-  color : #d81b60!important;
+  color : #dd4d9d!important;
   text-decoration: underline!important;
   
 }
@@ -1115,7 +1115,7 @@ form input::placeholder {
 }
 
 .footer-link {
-  color: #d81b60; /* Utilisation de la couleur principale */
+  color: #dd4d9d; /* Utilisation de la couleur principale */
   text-decoration: none;
   margin: 0 5px;
   transition: color 0.3s ease;
@@ -1141,7 +1141,7 @@ form input::placeholder {
 
 
 .pink{
-  color : #d81b60!important;
+  color : #dd4d9d!important;
   text-decoration: underline!important;
 margin:auto;
 }
@@ -1304,11 +1304,11 @@ input:checked + .slider:before {
 }
 
 #upload-btn i {
-  color: #ff4d80;
+  color: #dd4d9d;
 }
 
 .image-message {
-  background-color: #ff4d80; /* Rose comme les messages utilisateur */
+  background-color: #dd4d9d; /* Rose comme les messages utilisateur */
   padding: 10px;
   border-radius: 15px;
   max-width: 250px;
@@ -1330,9 +1330,9 @@ input:checked + .slider:before {
   padding: 4px 10px;
   font-size: 12px;  /* 🔹 Taille réduite */
   font-weight: bold;
-  color: #ff4d80;  /* 🌸 Texte en rose */
+  color: #dd4d9d;  /* 🌸 Texte en rose */
   background-color: transparent;
-  border: 1px solid #ff4d80;
+  border: 1px solid #dd4d9d;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
@@ -1341,7 +1341,7 @@ input:checked + .slider:before {
 }
 
 .voice-button:hover {
-  background-color: #ff4d80;
+  background-color: #dd4d9d;
   color: white;
 }
 
@@ -1351,7 +1351,7 @@ input:checked + .slider:before {
 
 /* 🔊 Icône FontAwesome */
 .voice-button i {
-  color: #ff4d80;  /* 🌸 Icône en rose */
+  color: #dd4d9d;  /* 🌸 Icône en rose */
   font-size: 12px;
   margin-right: 6px;
 }
@@ -1359,5 +1359,29 @@ input:checked + .slider:before {
 .small-icon {
   font-size: 12px; /* Ajuste la taille selon tes besoins */
   margin-right: 5px; /* Ajoute un petit espace entre l'icône et le texte */
+}
+
+.token-image {
+  width: 150px;  /* Taille de l'image */
+  height: 150px; /* Carré */
+  object-fit: cover; /* S'assure que l'image reste bien proportionnée */
+  margin: 10px auto; /* Centre l'image */
+  display: block; /* Évite les marges blanches */
+  border-radius: 10px; /* Coins légèrement arrondis */
+  
+}
+
+.token-benefits {
+  list-style-type: disc; /* Points classiques */
+  margin: 10px 0 20px 20px; /* Ajustement des marges */
+  padding-left: 15px;
+  color: #ffffff; /* Couleur du texte */
+  text-align: left;
+}
+
+.token-benefits li {
+  margin-bottom: 5px; /* Espacement entre les éléments */
+  font-size: 1.1em;
+  text-align: left;
 }
 
