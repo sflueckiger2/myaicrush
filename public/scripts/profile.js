@@ -60,11 +60,52 @@ if (window.location.pathname.includes('profile.html')) {
       if (signupContainer) signupContainer.classList.add('hidden');
       if (profileInfo) profileInfo.classList.remove('hidden');
       if (userEmailSpan) userEmailSpan.textContent = user.email;
+
+      // Fonction pour récupérer et afficher les jetons
+async function displayUserTokens() {
+  try {
+      const user = JSON.parse(localStorage.getItem('user'));
+
+      if (!user || !user.email) {
+          console.log("Utilisateur non connecté.");
+          return;
+      }
+
+      const response = await fetch('/api/get-user-tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email }),
+      });
+
+      if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Impossible de récupérer les jetons.");
+      }
+
+      const data = await response.json();
+      const tokenElement = document.getElementById('user-tokens');
+      if (tokenElement) {
+          tokenElement.textContent = `${data.tokens} Jetons disponibles`;
+      }
+  } catch (error) {
+      console.error("❌ Erreur lors de la récupération des jetons :", error);
+      const tokenElement = document.getElementById('user-tokens');
+      if (tokenElement) {
+          tokenElement.textContent = "Erreur lors du chargement des jetons.";
+      }
+  }
+}
+
+// Appelle la fonction après chargement du profil
+displayUserTokens();
+
     } else {
       if (profileInfo) profileInfo.classList.add('hidden');
       if (loginForm) loginForm.classList.remove('hidden');
       if (signupContainer) signupContainer.classList.remove('hidden');
     }
+
+
 
     // Gérer la déconnexion
     if (logoutButton) {

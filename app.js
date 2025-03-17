@@ -1447,6 +1447,34 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 });
 
 
+// Route API pour récupérer le nombre de jetons de l'utilisateur
+app.post('/api/get-user-tokens', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email requis." });
+        }
+
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+
+        // Récupérer le nombre de jetons de l'utilisateur
+        const user = await users.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé." });
+        }
+
+        res.json({ tokens: user.creditsPurchased || 0 }); // 0 si aucun jeton trouvé
+    } catch (error) {
+        console.error("❌ Erreur lors de la récupération des jetons :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
+
+
 
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {
