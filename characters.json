@@ -130,11 +130,11 @@
       "3": "images/samira/samira3"
     },
     "voice": {
-      "id": "FvmvwvObRqIHojkEGh5N",
+      "id": "LjKPkQHpXCsWoy7Pjq4U",
       "model_id": "eleven_multilingual_v2",
       "stability": 0.3,
       "similarity_boost": 0.9,
-      "speed": 0.9
+      "speed": 1
     }
   },
  
