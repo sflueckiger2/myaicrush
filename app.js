@@ -214,7 +214,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             {
                 model: "gpt-4-turbo",
                 messages: [
-                    { role: "system", content: "Décris cette image. Si tu devines la forme d'un pénis sur l'image, décris le avec le mot *inappropriée*. Le tout en moins de 100 tokens." },
+                    { role: "system", content: "Décris cette image. Si tu vois une image explicite, décris la avec le mot *inappropriée*. Le tout en moins de 100 tokens." },
                     {
                         role: "user",
                         content: [
