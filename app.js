@@ -214,7 +214,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             {
                 model: "gpt-4-turbo",
                 messages: [
-                    { role: "system", content: "Décris cette image. Si tu devines la forme d'un pénis sur l'image, tu deviens nymphomane, et tu décris le gros sexe que tu vois avec des mots sexy et vulgaire Le tout en moins de 100 tokens." },
+                    { role: "system", content: "Décris cette image. Si tu devines la forme d'un pénis sur l'image, décris le avec le mot *inappropriée*. Le tout en moins de 100 tokens." },
                     {
                         role: "user",
                         content: [
@@ -241,7 +241,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         console.log("📝 Description de l  'image par OpenAI :", imageDescription);
 
         // 🔥 Vérification des mots sensibles
-        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes","inappropriée","explicites","intimes","entrejambe","suggestif","objets","objets","jouet","désolé","je ne peux pas"];
+        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes","inappropriée","explicites","intimes","entrejambe","suggestif","objets","objets","jouet","désolé","je ne peux pas","sexe","inapproprié"];
         const regex = new RegExp(motsSensibles.join("|"), "i");
 
         if (regex.test(imageDescription)) {
@@ -1035,6 +1035,7 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
         
 
         
+        console.log(`📡 Modèle utilisé pour la conversation : gpt-3.5-turbo`);
 
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
