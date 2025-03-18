@@ -1433,24 +1433,41 @@ app.post('/api/buy-tokens', async (req, res) => {
             return res.status(400).json({ message: "Email et quantité de jetons requis." });
         }
 
-        // ✅ Vérifie si la fonction `createTokenCheckoutSession` est bien définie
-        if (typeof createTokenCheckoutSession !== "function") {
-            console.error("❌ Erreur : `createTokenCheckoutSession` n'est pas défini !");
-            return res.status(500).json({ message: "Erreur interne du serveur : Fonction Stripe manquante." });
+        // Sélectionne l'ID de prix en fonction du mode Stripe et du montant
+        const priceId = process.env.STRIPE_MODE === "live"
+            ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
+               tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
+               process.env.PRICE_ID_LIVE_100_TOKENS)
+            : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
+               tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
+               process.env.PRICE_ID_TEST_100_TOKENS);
+
+        if (!priceId) {
+            console.error("❌ Erreur : Aucun prix trouvé pour ce montant de jetons.");
+            return res.status(400).json({ message: "Erreur de prix." });
         }
 
-        const session = await createTokenCheckoutSession(tokensAmount, email);
+        console.log(`💰 Création d'une session Stripe pour ${tokensAmount} jetons (${email})`);
 
-        if (session.error) {
-            return res.status(400).json({ message: session.error });
-        }
+        // ✅ Création de la session Stripe avec le session_id dans `success_url`
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'payment',
+            customer_email: email,
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL}/jetons.html`
+        });
 
+        console.log("✅ Session Stripe créée :", session.id);
         res.json({ url: session.url });
+
     } catch (error) {
         console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+
 
 // ✅ Route API pour récupérer le nombre de jetons de l'utilisateur
 app.post('/api/get-user-tokens', async (req, res) => {

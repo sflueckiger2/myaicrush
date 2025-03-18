@@ -128,6 +128,41 @@
     getFacebookParams();
   </script>
   
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get("session_id");
+    
+        if (!sessionId) {
+            console.error("❌ Aucune session_id trouvée dans l'URL !");
+            return;
+        }
+    
+        console.log(`📡 Vérification du paiement avec session_id: ${sessionId}`);
+    
+        try {
+            const response = await fetch("/api/confirm-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sessionId })
+            });
+    
+            const result = await response.json();
+            console.log("✅ Réponse de /api/confirm-payment :", result);
+    
+            if (result.success) {
+                
+                // Redirige vers le profil ou met à jour l'affichage
+            } else {
+                alert("❌ Erreur lors de la confirmation du paiement.");
+            }
+    
+        } catch (error) {
+            console.error("❌ Erreur lors de la validation du paiement :", error);
+        }
+    });
+    </script>
+    
   
  
 <noscript>
