@@ -6,9 +6,9 @@ const STRIPE_MODE = window.STRIPE_MODE || "live"; // Mode "live" par défaut
 
 // Prix des jetons selon l'environnement (test ou live)
 const STRIPE_PRICE_IDS = {
-    "10": window.STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTbme4bKp1" : "price_1R3epsAOSHX0SgbTsDSpNp1n",
-    "50": window.STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTtyLJcLqm" : "price_1R3eqfAOSHX0SgbTkfKuzSK6",
-    "100": window.STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTKRTHbCOe" : "price_1R3erLAOSHX0SgbT9WkZvQt6"
+    "10": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTbme4bKp1" : "price_1R3epsAOSHX0SgbTsDSpNp1n",
+    "50": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTtyLJcLqm" : "price_1R3eqfAOSHX0SgbTkfKuzSK6",
+    "100": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTKRTHbCOe" : "price_1R3erLAOSHX0SgbT9WkZvQt6"
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
             handleTokenCheckout(tokensAmount);
         });
     });
+
+    // ✅ Vérifier si un paiement a été effectué après redirection
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+
+    if (sessionId) {
+        checkPaymentAndUpdateTokens(sessionId);
+    }
 });
 
 // Fonction pour gérer l'achat de jetons via Stripe
@@ -48,7 +56,7 @@ async function startTokenCheckout(tokensAmount, email) {
         const response = await fetch(`${BASE_URL}/api/buy-tokens`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tokensAmount, email }) // ✅ On envoie bien `tokensAmount` et `email`
+            body: JSON.stringify({ tokensAmount, email })
         });
 
         if (!response.ok) {
@@ -60,10 +68,37 @@ async function startTokenCheckout(tokensAmount, email) {
         console.log("📩 Réponse Stripe :", data);
 
         if (data.url) {
-            window.location.href = data.url;
+            window.location.href = data.url; // ✅ Redirige vers Stripe
         }
     } catch (error) {
         console.error('❌ Erreur Stripe:', error.message);
         alert(error.message || 'Une erreur est survenue, veuillez réessayer.');
+    }
+}
+
+// ✅ Fonction pour vérifier le paiement et mettre à jour les jetons
+async function checkPaymentAndUpdateTokens(sessionId) {
+    console.log("📡 Vérification du paiement via Stripe...");
+    try {
+        const response = await fetch(`${BASE_URL}/api/confirm-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            console.log(`✅ Paiement validé, ${data.tokens} jetons ajoutés.`);
+            alert(`Achat réussi ! Vous avez reçu ${data.tokens} jetons.`);
+
+            // ✅ Supprimer session_id de l'URL pour éviter les doublons
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+            console.error("❌ Erreur de paiement :", data.message);
+            alert("Erreur lors de la validation du paiement.");
+        }
+    } catch (error) {
+        console.error("❌ Erreur réseau :", error);
+        alert("Impossible de vérifier le paiement.");
     }
 }
