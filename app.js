@@ -1416,9 +1416,125 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 });
 
 
-// ROUTE PAIEMENT JETONS MYAICRUSH
 
-// Route API pour acheter des jetons
+// GESTION DES JETONS
+// ✅ Webhook Stripe - Doit être défini en premier !
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    console.log("📡 Webhook Stripe reçu !");
+    const sig = req.headers['stripe-signature'];
+
+    if (!sig) {
+        console.error("❌ Signature Stripe manquante !");
+        return res.status(400).send("Webhook Error: Signature missing");
+    }
+
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        console.log("✅ Webhook Stripe validé !");
+    } catch (err) {
+        console.error("❌ Erreur lors de la validation du webhook :", err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const email = session.customer_email;
+
+        if (!email) {
+            console.error("❌ Aucune adresse email trouvée dans la session !");
+            return res.status(400).send("Aucun email détecté");
+        }
+
+        console.log(`💰 Paiement confirmé pour ${email}`);
+
+        try {
+            // 🔄 Récupération des détails de la session Stripe
+            console.log("🔄 Tentative de récupération de la session complète Stripe...");
+            const sessionWithLineItems = await stripe.checkout.sessions.retrieve(session.id, { expand: ["line_items", "payment_intent"] });
+            console.log("✅ Session Stripe récupérée avec succès !");
+            
+            console.log("🔍 Contenu brut de la session Stripe:", JSON.stringify(sessionWithLineItems, null, 2));
+
+            if (!sessionWithLineItems.line_items || sessionWithLineItems.line_items.data.length === 0) {
+                console.error("❌ `line_items` est vide !");
+                return res.status(400).send("Données `line_items` manquantes");
+            }
+
+            console.log("🛒 Contenu des `line_items` :", JSON.stringify(sessionWithLineItems.line_items, null, 2));
+
+            // 🔥 Mapping des IDs de prix -> jetons
+            const priceIdMapping = {
+                [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
+                [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
+                [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
+                [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
+                [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
+                [process.env.PRICE_ID_TEST_100_TOKENS]: 100
+            };
+
+            console.log("🎯 Mapping des priceId -> jetons :", priceIdMapping);
+
+            // 🔥 Récupérer l'ID du prix depuis `line_items`
+            const priceId = sessionWithLineItems.line_items.data[0]?.price?.id;
+            if (!priceId) {
+                console.error("❌ Aucun Price ID trouvé dans `line_items` !");
+                return res.status(400).send("Price ID introuvable");
+            }
+
+            console.log("💰 Price ID extrait :", priceId);
+
+            // 🔥 Vérification du nombre de jetons correspondants
+            const tokensPurchased = priceIdMapping[priceId];
+            console.log("🎟 Jetons détectés :", tokensPurchased);
+
+            if (!tokensPurchased) {
+                console.error("❌ Impossible de déterminer le nombre de jetons achetés !");
+                return res.status(400).send("Jetons non détectés");
+            }
+
+            console.log(`🎟 Créditer ${tokensPurchased} jetons à ${email}`);
+
+            // 🔥 Mise à jour de l'utilisateur en BDD
+            console.log("🔄 Tentative de connexion à MongoDB...");
+            const database = client.db('MyAICrush');
+            const users = database.collection('users');
+            console.log("✅ Connexion à MongoDB réussie.");
+
+            console.log(`🔎 Vérification de l'utilisateur ${email} dans la base de données...`);
+            const user = await users.findOne({ email });
+            if (!user) {
+                console.error("❌ Utilisateur non trouvé en base de données !");
+                return res.status(404).send("Utilisateur introuvable en base de données");
+            }
+
+            console.log("👤 Utilisateur trouvé en BDD :", user);
+
+            console.log(`🔄 Ajout de ${tokensPurchased} jetons à ${email} dans la base de données...`);
+            const updateResult = await users.updateOne(
+                { email },
+                { $inc: { creditsPurchased: parseInt(tokensPurchased, 10) } }
+            );
+
+            console.log("🛠 Résultat de la mise à jour MongoDB :", updateResult);
+
+            if (updateResult.modifiedCount > 0) {
+                console.log(`✅ ${tokensPurchased} jetons ajoutés avec succès pour ${email}`);
+            } else {
+                console.error("❌ Aucun utilisateur mis à jour. Vérifie si l'email est bien enregistré dans la DB.");
+            }
+
+        } catch (error) {
+            console.error("❌ Erreur lors du traitement de la transaction :", error);
+            return res.status(500).send("Erreur interne lors de l'ajout des crédits");
+        }
+    }
+
+    res.json({ received: true });
+});
+
+
+// ✅ Route API pour acheter des jetons
 app.post('/api/buy-tokens', async (req, res) => {
     console.log('📡 Requête reçue pour l\'achat de jetons:', req.body);
 
@@ -1426,6 +1542,12 @@ app.post('/api/buy-tokens', async (req, res) => {
         const { tokensAmount, email } = req.body;
         if (!tokensAmount || !email) {
             return res.status(400).json({ message: "Email et quantité de jetons requis." });
+        }
+
+        // Vérifie si la fonction `createTokenCheckoutSession` est bien définie
+        if (typeof createTokenCheckoutSession !== "function") {
+            console.error("❌ Erreur : `createTokenCheckoutSession` n'est pas défini !");
+            return res.status(500).json({ message: "Erreur interne du serveur : Fonction Stripe manquante." });
         }
 
         const session = await createTokenCheckoutSession(tokensAmount, email);
@@ -1441,13 +1563,7 @@ app.post('/api/buy-tokens', async (req, res) => {
     }
 });
 
-// Webhook Stripe pour gérer les paiements de jetons
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    await handleStripeWebhook(req, res);
-});
-
-
-// Route API pour récupérer le nombre de jetons de l'utilisateur
+// ✅ Route API pour récupérer le nombre de jetons de l'utilisateur
 app.post('/api/get-user-tokens', async (req, res) => {
     try {
         const { email } = req.body;
@@ -1459,12 +1575,15 @@ app.post('/api/get-user-tokens', async (req, res) => {
         const database = client.db('MyAICrush');
         const users = database.collection('users');
 
-        // Récupérer le nombre de jetons de l'utilisateur
+        // Récupérer l'utilisateur
         const user = await users.findOne({ email });
 
         if (!user) {
+            console.error("❌ Utilisateur non trouvé en base de données !");
             return res.status(404).json({ message: "Utilisateur non trouvé." });
         }
+
+        console.log("👤 Utilisateur trouvé, jetons :", user.creditsPurchased || 0);
 
         res.json({ tokens: user.creditsPurchased || 0 }); // 0 si aucun jeton trouvé
     } catch (error) {
@@ -1472,6 +1591,7 @@ app.post('/api/get-user-tokens', async (req, res) => {
         res.status(500).json({ message: "Erreur interne du serveur." });
     }
 });
+
 
 
 
