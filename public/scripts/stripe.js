@@ -167,7 +167,7 @@ async function handleStripeWebhook(req, res) {
     console.log("📡 Webhook Stripe reçu !");
     const sig = req.headers['stripe-signature'];
 
-    if (!sig) {
+    if (!sig) { 
         console.error("❌ Signature Stripe manquante !");
         return res.status(400).send("Webhook Error: Signature missing");
     }
@@ -201,9 +201,20 @@ async function handleStripeWebhook(req, res) {
                 return res.status(400).send("Données line_items manquantes");
             }
 
+            // 🔥 Mapping des IDs de prix -> jetons
+            const priceIdMapping = {
+                [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
+                [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
+                [process.env.PRICE_ID_LIVE_100_TOKENS]: 100
+            };
+
             // 🔥 Récupérer l'ID du prix depuis les `line_items`
             const priceId = sessionWithLineItems.line_items.data[0].price.id;
-            const tokensPurchased = Object.entries(priceIdMapping).find(([key, value]) => value === priceId)?.[0];
+            const tokensPurchased = priceIdMapping[priceId];
+
+            console.log("💰 Prix ID récupéré :", priceId);
+            console.log("🎟 Jetons détectés :", tokensPurchased);
+            console.log("📧 Email détecté :", email);
 
             if (!tokensPurchased) {
                 console.error("❌ Impossible de déterminer le nombre de jetons achetés !");
@@ -220,6 +231,8 @@ async function handleStripeWebhook(req, res) {
                 { email },
                 { $inc: { creditsPurchased: parseInt(tokensPurchased, 10) } }
             );
+
+            console.log("🛠 Résultat de la mise à jour MongoDB :", updateResult);
 
             if (updateResult.modifiedCount > 0) {
                 console.log(`✅ ${tokensPurchased} jetons ajoutés pour ${email}`);
