@@ -1421,8 +1421,8 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 // ✅ Webhook Stripe - Doit être défini en premier !
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     console.log("📡 Webhook Stripe reçu !");
+    
     const sig = req.headers['stripe-signature'];
-
     if (!sig) {
         console.error("❌ Signature Stripe manquante !");
         return res.status(400).send("Webhook Error: Signature missing");
@@ -1437,96 +1437,86 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log("🔄 Début du traitement du webhook Stripe - Type d'événement:", event.type);
-
-    try {
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            const email = session.customer_email;
-
-            if (!email) {
-                console.error("❌ Aucune adresse email trouvée dans la session !");
-                return res.status(400).send("Aucun email détecté");
-            }
-
-            console.log(`💰 Paiement confirmé pour ${email}`);
-
-            // 🔄 Ajout d'un try/catch autour de sessionWithLineItems
-            try {
-                console.log("🔄 Tentative de récupération de la session complète Stripe...");
-                const sessionWithLineItems = await stripe.checkout.sessions.retrieve(session.id, { expand: ["line_items", "payment_intent"] });
-                console.log("✅ Session Stripe récupérée avec succès !");
-                console.log("🔍 Contenu brut de la session Stripe:", JSON.stringify(sessionWithLineItems, null, 2));
-
-                if (!sessionWithLineItems.line_items || sessionWithLineItems.line_items.data.length === 0) {
-                    console.error("❌ `line_items` est vide !");
-                    return res.status(400).send("Données `line_items` manquantes");
-                }
-
-                console.log("🛒 Contenu des `line_items` :", JSON.stringify(sessionWithLineItems.line_items, null, 2));
-
-                // 🔥 Mapping des IDs de prix -> jetons
-                const priceIdMapping = {
-                    [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
-                    [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
-                    [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
-                    [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
-                    [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
-                    [process.env.PRICE_ID_TEST_100_TOKENS]: 100
-                };
-
-                console.log("🎯 Mapping des priceId -> jetons :", priceIdMapping);
-
-                const priceId = sessionWithLineItems.line_items.data[0].price.id;
-                console.log("💰 Price ID extrait :", priceId);
-
-                const tokensPurchased = priceIdMapping[priceId];
-                console.log("🎟 Jetons détectés :", tokensPurchased);
-
-                if (!tokensPurchased) {
-                    console.error("❌ Impossible de déterminer le nombre de jetons achetés !");
-                    return res.status(400).send("Jetons non détectés");
-                }
-
-                console.log(`🎟 Créditer ${tokensPurchased} jetons à ${email}`);
-
-                const database = client.db('MyAICrush');
-                const users = database.collection('users');
-
-                const user = await users.findOne({ email });
-                if (!user) {
-                    console.error("❌ Utilisateur non trouvé en base de données !");
-                    return res.status(404).send("Utilisateur introuvable en base de données");
-                }
-
-                console.log("👤 Utilisateur trouvé en BDD :", user);
-
-                const updateResult = await users.updateOne(
-                    { email },
-                    { $inc: { creditsPurchased: parseInt(tokensPurchased, 10) } }
-                );
-
-                console.log("🛠 Résultat de la mise à jour MongoDB :", updateResult);
-
-                if (updateResult.modifiedCount > 0) {
-                    console.log(`✅ ${tokensPurchased} jetons ajoutés pour ${email}`);
-                } else {
-                    console.error("❌ Aucun utilisateur mis à jour. Vérifie si l'email est bien enregistré dans la DB.");
-                }
-
-            } catch (error) {
-                console.error("❌ ERREUR critique dans la récupération de sessionWithLineItems :", error);
-                return res.status(500).send("Erreur interne Stripe - récupération session");
-            }
+    if (event.type === 'checkout.session.completed') {
+        console.log("🔄 Traitement d'un paiement réussi...");
+        const session = event.data.object;
+        const email = session.customer_email;
+        if (!email) {
+            console.error("❌ Aucune adresse email trouvée dans la session !");
+            return res.status(400).send("Aucun email détecté");
         }
 
-        res.json({ received: true });
+        console.log(`💰 Paiement confirmé pour ${email}`);
 
-    } catch (globalError) {
-        console.error("❌ ERREUR critique DANS TOUT LE WEBHOOK :", globalError);
-        return res.status(500).send("Erreur interne webhook Stripe");
+        try {
+            // ✅ Nouvelle méthode pour récupérer la session complète Stripe
+            console.log("🔄 Tentative de récupération des détails de la session...");
+            const sessionDetails = await stripe.checkout.sessions.retrieve(session.id, { expand: ["line_items"] });
+
+            if (!sessionDetails || !sessionDetails.line_items || sessionDetails.line_items.data.length === 0) {
+                console.error("❌ Erreur: `line_items` est vide !");
+                return res.status(400).send("Données `line_items` manquantes");
+            }
+
+            console.log("✅ Session Stripe récupérée :", JSON.stringify(sessionDetails, null, 2));
+
+            // 🔥 Nouvelle manière de récupérer l'ID du prix
+            const priceId = sessionDetails.line_items.data[0]?.price?.id;
+            console.log("💰 Price ID extrait :", priceId);
+
+            // 🔥 Mapping des IDs de prix -> jetons
+            const priceIdMapping = {
+                [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
+                [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
+                [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
+                [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
+                [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
+                [process.env.PRICE_ID_TEST_100_TOKENS]: 100
+            };
+
+            const tokensPurchased = priceIdMapping[priceId];
+            if (!tokensPurchased) {
+                console.error("❌ Impossible de déterminer le nombre de jetons achetés !");
+                return res.status(400).send("Jetons non détectés");
+            }
+
+            console.log(`🎟 Créditer ${tokensPurchased} jetons à ${email}`);
+
+            // ✅ Nouvelle méthode : Vérifier si l'utilisateur existe AVANT d'ajouter les jetons
+            const database = client.db('MyAICrush');
+            const users = database.collection('users');
+
+            const user = await users.findOne({ email });
+            if (!user) {
+                console.error("❌ Utilisateur non trouvé en base de données !");
+                return res.status(404).send("Utilisateur introuvable en base de données");
+            }
+
+            console.log("👤 Utilisateur trouvé en BDD :", user);
+
+            // ✅ Sécuriser l'ajout des crédits
+            const updateResult = await users.updateOne(
+                { email },
+                { $inc: { creditsPurchased: tokensPurchased } }
+            );
+
+            console.log("🛠 Résultat de la mise à jour MongoDB :", updateResult);
+
+            if (updateResult.modifiedCount > 0) {
+                console.log(`✅ ${tokensPurchased} jetons ajoutés pour ${email}`);
+            } else {
+                console.error("❌ Aucun utilisateur mis à jour. Vérifie si l'email est bien enregistré dans la DB.");
+            }
+
+        } catch (error) {
+            console.error("❌ Erreur lors du traitement du paiement :", error);
+            return res.status(500).send("Erreur interne lors de l'ajout des crédits");
+        }
     }
+
+    res.json({ received: true });
 });
+
 
 
 
