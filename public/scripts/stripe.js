@@ -167,7 +167,7 @@ async function handleStripeWebhook(req, res) {
     console.log("📡 Webhook Stripe reçu !");
     const sig = req.headers['stripe-signature'];
 
-    if (!sig) { 
+    if (!sig) {
         console.error("❌ Signature Stripe manquante !");
         return res.status(400).send("Webhook Error: Signature missing");
     }
