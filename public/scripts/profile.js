@@ -1,5 +1,45 @@
 import { characters } from './data.js';
 
+
+// Vérification du statut premium et affichage de la section "Jetons"
+async function checkPremiumStatus() {
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  if (!user || !user.email) {
+      console.log("Utilisateur non connecté.");
+      return;
+  }
+
+  console.log("📩 Vérification du statut premium pour :", user.email);
+
+  try {
+      const response = await fetch("/api/is-premium", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+      });
+
+      const data = await response.json();
+      console.log("🌟 Statut premium :", data.isPremium);
+
+      const tokenSection = document.getElementById("tokens-section");
+
+      if (tokenSection) {
+          if (!data.isPremium) {
+              console.log("⛔ Utilisateur NON premium, masquage de la section jetons.");
+              tokenSection.style.display = "none";
+          } else {
+              console.log("✅ Utilisateur premium, affichage de la section jetons.");
+          }
+      }
+  } catch (error) {
+      console.error("❌ Erreur lors de la vérification du statut premium :", error);
+  }
+}
+
+
+
+
 // Fonction pour ouvrir la modal de profil du personnage
 export function openProfileModal(characterName) {
   const character = characters.find(char => char.name === characterName);
@@ -98,6 +138,8 @@ async function displayUserTokens() {
 
 // Appelle la fonction après chargement du profil
 displayUserTokens();
+// Appelle la fonction après chargement du profil
+checkPremiumStatus();
 
     } else {
       if (profileInfo) profileInfo.classList.add('hidden');
