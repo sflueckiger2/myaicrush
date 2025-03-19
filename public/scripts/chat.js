@@ -454,12 +454,6 @@ function adjustChatHeight() {
 
 
 
-
-
-
-
-
-
 //fonctions is typing
 
 function showTypingIndicator(messagesContainer) {
@@ -557,26 +551,44 @@ if (uploadBtn) {
         }
 
         try {
-            const response = await fetch(`${BASE_URL}/api/is-premium`, {
+            // 🔥 Vérifier si l'utilisateur est Premium
+            const premiumResponse = await fetch(`${BASE_URL}/api/is-premium`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: user.email }),
             });
 
-            const { isPremium } = await response.json();
+            const { isPremium } = await premiumResponse.json();
             if (!isPremium) {
-                window.location.href = "image-upload.html";
+                window.location.href = "image-upload.html"; // 🔥 Redirection vers une autre page si non-premium
                 return;
             }
 
+            // ✅ L'utilisateur est Premium, on vérifie maintenant son quota d'images
+            const quotaResponse = await fetch(`${BASE_URL}/api/check-upload-limit`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: user.email }),
+            });
+
+            const { canUpload, redirect } = await quotaResponse.json();
+
+            if (!canUpload) {
+                console.warn(`🚨 Limite d'upload atteinte ! Redirection vers ${redirect}`);
+                window.location.href = redirect; // 🔥 Redirection immédiate vers achat de jetons
+                return;
+            }
+
+            // ✅ Si tout est OK, ouvrir l'explorateur de fichiers pour sélectionner une image
             const imageInput = document.getElementById("image-input");
             if (imageInput) imageInput.click();
         } catch (error) {
-            console.error("❌ Erreur lors de la vérification du statut premium :", error);
+            console.error("❌ Erreur lors de la vérification du statut premium et du quota d'images :", error);
             alert("Erreur lors de la vérification de votre compte. Veuillez réessayer.");
         }
     });
 }
+
 
 // ✅ Vérifier que l'input image existe avant d'ajouter l'event listener
 const imageInput = document.getElementById("image-input");

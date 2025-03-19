@@ -237,6 +237,44 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
     }
 
     try {
+        const userEmail = req.body.email;
+        if (!userEmail) {
+            return res.status(400).json({ message: "Email requis" });
+        }
+
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+
+        // 🔥 Récupérer l'utilisateur depuis MongoDB
+        const user = await users.findOne({ email: userEmail });
+
+        if (!user) {
+            return res.status(403).json({ error: "Utilisateur introuvable." });
+        }
+
+        const maxFreeImages = 10; // 📌 Limite d'uploads gratuites par mois
+        const imagesUploaded = user.imagesUploaded || 0; // 📊 Nombre d'images envoyées ce mois-ci
+        const creditsAvailable = user.creditsPurchased || 0; // 🎟️ Jetons disponibles
+
+        // 🔥 Vérifier si l'utilisateur a atteint sa limite d'images gratuites
+        if (imagesUploaded >= maxFreeImages) {
+            if (creditsAvailable > 0) {
+                // 🔥 Déduire 1 crédit pour uploader l’image
+                await users.updateOne({ email: userEmail }, { $inc: { creditsPurchased: -1 } });
+                console.log(`💳 1 crédit utilisé par ${userEmail} pour uploader une image.`);
+            } else {
+                console.log(`🚨 ${userEmail} a dépassé la limite d'images et n'a plus de jetons ! Redirection vers /jetons.html.`);
+                return res.status(403).json({ 
+                    message: "Limite atteinte. Achetez des crédits pour envoyer plus d'images.",
+                    redirect: "/jetons.html" // 🔥 Rediriger vers l'achat de jetons
+                });
+            }
+        } else {
+            // 🔥 L'utilisateur peut encore envoyer des images gratuites ce mois-ci
+            await users.updateOne({ email: userEmail }, { $inc: { imagesUploaded: 1 } });
+            console.log(`📸 Image ${imagesUploaded + 1}/${maxFreeImages} envoyée par ${userEmail}`);
+        }
+
         // 🔥 Vérification NSFW avant de continuer
         const isExplicit = await analyzeImageNsfw(req.file.buffer);
 
@@ -260,7 +298,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             console.log("⚠️ Image NSFW détectée !");
             
             // 🛑 Si l'image est NSFW, on ENVOIE une description prédéfinie
-            imageDescription = "L'image semble explicite. Réagis de manière adaptée. Certainement une gros attribut masculin. Flatte l'utilisateur.";
+            imageDescription = "L'image semble explicite. Réagis de manière adaptée. Certainement un attribut masculin imposant. Flatte l'utilisateur.";
 
         } else {
             // 📡 Envoi de l'image à OpenAI pour description
@@ -299,7 +337,6 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         }
 
         // 📌 Stocker la description temporairement pour cet utilisateur
-        const userEmail = req.body.email;
         if (userEmail) {
             userLastImageDescriptions.set(userEmail, imageDescription);
             console.log(`📝 Description associée à ${userEmail}`);
@@ -314,6 +351,41 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
     } catch (error) {
         console.error("❌ Erreur lors du traitement de l'image :", error);
         res.status(500).json({ message: "Erreur lors de l'analyse de l'image." });
+    }
+});
+
+app.post('/api/check-upload-limit', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Email requis." });
+        }
+
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+
+        // 🔥 Récupérer l'utilisateur
+        const user = await users.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé." });
+        }
+
+        const maxFreeImages = 10; // 📌 Limite d'uploads gratuites par mois
+        const imagesUploaded = user.imagesUploaded || 0; // 📊 Nombre d'images envoyées ce mois-ci
+        const creditsAvailable = user.creditsPurchased || 0; // 🎟️ Jetons disponibles
+
+        if (imagesUploaded >= maxFreeImages && creditsAvailable === 0) {
+            console.warn(`🚨 ${email} a dépassé la limite et n'a plus de jetons !`);
+            return res.json({ canUpload: false, redirect: "/jetons.html" });
+        }
+
+        // ✅ L'utilisateur peut uploader une image (gratuitement ou avec ses crédits)
+        res.json({ canUpload: true });
+
+    } catch (error) {
+        console.error("❌ Erreur lors de la vérification du quota d'images :", error);
+        res.status(500).json({ message: "Erreur serveur." });
     }
 });
 
@@ -1639,6 +1711,16 @@ app.post('/api/confirm-payment', async (req, res) => {
         console.error("❌ Erreur lors de la confirmation de paiement :", error);
         res.status(500).json({ success: false, message: "Erreur interne du serveur." });
     }
+});
+
+
+// 🔄 Réinitialisation du compteur d'images chaque 1er du mois à minuit
+schedule.scheduleJob('0 0 1 * *', async () => {
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+
+    const result = await users.updateMany({}, { $set: { imagesUploaded: 0 } });
+    console.log(`🔄 Réinitialisation du compteur d'images pour ${result.modifiedCount} utilisateurs !`);
 });
 
 
