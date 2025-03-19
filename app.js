@@ -1055,7 +1055,39 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
             }
         );
 
-        let botReply = response.data.choices[0].message.content;
+
+
+// Réponse personnalisée pour remplacer les refus
+const reponsesPerso = [
+    "Hey, parle-moi un peu mieux mon joli 😏",
+    "Ouh là, tu vas un peu trop vite... Essaye encore 😘",
+    "Hmm, essaie de me séduire un peu avant 😉",
+    "T'es pressé hein ? Moi, j'aime prendre mon temps 😏",
+    "Tu veux me tester ? Hmmm, intéressant... Continue 🥰",
+    "J’aime les belles paroles… fais-moi rêver un peu plus 😘"
+];
+
+// Fonction pour intercepter et ajuster les réponses de l'IA
+function ajusterReponse(reponse) {
+    if (reponse.toLowerCase().includes("désolé, je ne peux pas")) {
+        console.log("🎯 Détection d'un refus, remplacement...");
+        return reponsesPerso[Math.floor(Math.random() * reponsesPerso.length)];
+    }
+    return reponse; // Si pas de refus, on garde la réponse normale
+}
+
+
+// 🔥 Modifier la réponse de l'IA avant de l'envoyer à l'utilisateur
+let botReply = response.data.choices[0].message.content.trim();
+botReply = ajusterReponse(botReply);
+
+console.log("💬 Réponse finale envoyée :", botReply);
+
+
+      
+
+
+
         if (!botReply) {
             return res.status(500).json({ reply: "Désolé, la réponse n'a pas pu être obtenue." });
         }
