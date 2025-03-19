@@ -143,31 +143,31 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 
 
 
-export function addBotMessage(botReply, messagesContainer) {
+export function addBotMessage(botReply, messagesContainer, isWarning = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
+
+    // ✅ Appliquer le style spécial si c'est un message d'avertissement
+    if (isWarning) {
+        messageElement.classList.add('warning'); 
+    }
 
     // ✅ Créer un conteneur pour le texte du bot
     const messageContent = document.createElement('span');
     messageContent.innerHTML = botReply;
 
-   // ✅ Ajouter un bouton " Écouter le message vocal"
-const voiceButton = document.createElement('button');
-voiceButton.classList.add('voice-button');
-voiceButton.innerHTML = ''; // Vide le bouton
-const icon = document.createElement('i');
-const lockIcon = document.createElement('i');
-lockIcon.classList.add('fas', 'fa-volume-up'); // Icône audio au lieu du cadenas
+    // ✅ Ajouter un bouton " Écouter le message vocal"
+    const voiceButton = document.createElement('button');
+    voiceButton.classList.add('voice-button');
+    voiceButton.innerHTML = ''; // Vide le bouton
+    const icon = document.createElement('i');
+    icon.classList.add('fas', 'fa-volume-up'); // Ajoute l'icône FA
+    voiceButton.appendChild(icon);
+    voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
 
-
-icon.classList.add('fas', 'fa-volume-up'); // Ajoute l'icône FA
-voiceButton.appendChild(icon);
-voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
-
-voiceButton.onclick = () => {
-    speakMessage(botReply);
-};
-
+    voiceButton.onclick = () => {
+        speakMessage(botReply);
+    };
 
     const user = JSON.parse(localStorage.getItem("user"));
     if (user && user.email) {
@@ -185,13 +185,9 @@ voiceButton.onclick = () => {
                 voiceButton.onclick = () => speakMessage(botReply);
             } else {
                 voiceButton.innerHTML = ''; // Vide le bouton
-                voiceButton.innerHTML = ''; // Vide le bouton
-voiceButton.appendChild(icon); // Utilise l'icône audio au lieu du cadenas
-voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
-
+                voiceButton.appendChild(icon); // Utilise l'icône audio au lieu du cadenas
+                voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
             }
-            
-            
         })
         .catch(error => console.error("❌ Erreur vérification premium :", error));
     } else {
@@ -202,18 +198,20 @@ voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
     // ✅ Ajouter le texte + le bouton au message
     messageElement.appendChild(messageContent);
 
-const buttonContainer = document.createElement('div');
-buttonContainer.classList.add('voice-button-container'); // On ajoute une classe pour mieux le styler
-buttonContainer.appendChild(voiceButton);
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('voice-button-container'); // On ajoute une classe pour mieux le styler
+    buttonContainer.appendChild(voiceButton);
 
-messagesContainer.appendChild(messageElement);
-messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en dessous
-
-
-    // ✅ Ajouter le message au chat
     messagesContainer.appendChild(messageElement);
+    
+    // 🔥 Ne pas ajouter le bouton voix si c'est un message d'avertissement
+    if (!isWarning) {
+        messagesContainer.appendChild(buttonContainer);
+    }
+
     scrollToBottom(messagesContainer);
 }
+
 
 
 
@@ -375,59 +373,76 @@ function adjustChatHeight() {
     }
 
     setCharacter(characterName)
-    
-
     .then(() => {
         localStorage.setItem("activeCharacter", characterName);
-console.log(`📌 Personnage actif sauvegardé : ${characterName}`);
-        console.log(`🎭 Personnage chargé côté serveur : ${characterName}`);
+        console.log(`📌 Personnage actif sauvegardé : ${characterName}`);
 
-        // ✅ Ajouter l'événement Google Analytics
         trackCharacterSelection(characterName);
 
         const messagesContainer = document.getElementById('messages');
-        if (messagesContainer) messagesContainer.innerHTML = '';
+        if (messagesContainer) {
+            messagesContainer.innerHTML = ''; // Réinitialiser les messages au début
 
-        const character = characters.find(c => c.name === characterName);
-        if (character) {
-            document.querySelector('.chat-options').style.display = 'none';
-            document.getElementById('chat-box').style.display = 'flex';
+            // 🔍 Trouver le personnage dans le JSON
+            const character = characters.find(c => c.name === characterName);
+            if (character) {
+                // 🔥 Ajouter le message d’avertissement
+                addBotMessage(
+                    "🌸 Nos I.A sont délicates. Parle-leur avec douceur, comme si c'étaient de vraies personnes. Tu seras récompensé... <3",
+                    messagesContainer,
+                    true // Style spécial
+                );
 
-            document.querySelector('.header').classList.add('hidden');
-            document.querySelector('.container').classList.add('fullscreen');
-
-            document.getElementById('chat-name').textContent = character.name;
-            document.querySelector('.chat-profile-pic').src = character.photo;
-
-            document.querySelector('.menu').classList.add('hidden');
-
-            // ✅ FORCER LE MODE IMAGE PAR DÉFAUT À CHAQUE CHANGEMENT DE PERSONNAGE
-            const toggleMode = document.getElementById("toggleMode");
-            const modeToggleContainer = document.getElementById("mode-toggle-container");
-            const videoTag = document.getElementById("video-available"); // Sélecteur pour l'encart vidéo
-
-            if (toggleMode && modeToggleContainer) {
-                localStorage.setItem("chatMode", "image"); // Réinitialiser à "image"
-                toggleMode.checked = false; // Désactiver le toggle (donc mode image)
-
-                // ✅ AFFICHER OU CACHER LE BOUTON TOGGLE
-                if (character.hasVideos) {
-                    modeToggleContainer.style.display = "block"; // Afficher le toggle
-                    console.log("🎬 Le personnage a des vidéos, affichage du toggle.");
-                } else {
-                    modeToggleContainer.style.display = "none"; // Cacher le toggle
-                    console.log("📸 Aucun GIF disponible, on cache le toggle.");
+                // 🔥 Ajouter la mise en situation personnalisée
+                if (character.ethnicity) {
+                    addBotMessage(
+                        `🎬 Situation : ${character.ethnicity}`,
+                        messagesContainer,
+                        true // Style spécial
+                    );
                 }
-            }
 
-            // ✅ AFFICHER OU CACHER L'ENCART VIDÉO
-            if (videoTag) {
-                if (character.hasVideos) {
-                    videoTag.style.display = "block"; // Afficher l'encart
-                    console.log("📢 Vidéos disponibles, affichage de l'encart.");
-                } else {
-                    videoTag.style.display = "none"; // Cacher l'encart
-                    console.log("🚫 Aucune vidéo disponible, encart caché.");
+                // ✅ Gestion de l'affichage du chat
+                document.querySelector('.chat-options').style.display = 'none';
+                document.getElementById('chat-box').style.display = 'flex';
+
+                document.querySelector('.header').classList.add('hidden');
+                document.querySelector('.container').classList.add('fullscreen');
+
+                // ✅ Mise à jour du nom et de la photo de profil
+                document.getElementById('chat-name').textContent = character.name;
+                document.querySelector('.chat-profile-pic').src = character.photo;
+
+                document.querySelector('.menu').classList.add('hidden');
+
+                // ✅ FORCER LE MODE IMAGE PAR DÉFAUT À CHAQUE CHANGEMENT DE PERSONNAGE
+                const toggleMode = document.getElementById("toggleMode");
+                const modeToggleContainer = document.getElementById("mode-toggle-container");
+                const videoTag = document.getElementById("video-available");
+
+                if (toggleMode && modeToggleContainer) {
+                    localStorage.setItem("chatMode", "image");
+                    toggleMode.checked = false; // Mode image par défaut
+
+                    // ✅ AFFICHER OU CACHER LE TOGGLE VIDÉO
+                    if (character.hasVideos) {
+                        modeToggleContainer.style.display = "block";
+                        console.log("🎬 Le personnage a des vidéos, affichage du toggle.");
+                    } else {
+                        modeToggleContainer.style.display = "none";
+                        console.log("📸 Aucun GIF disponible, on cache le toggle.");
+                    }
+                }
+
+                // ✅ AFFICHER OU CACHER L'ENCART VIDÉO
+                if (videoTag) {
+                    if (character.hasVideos) {
+                        videoTag.style.display = "block";
+                        console.log("📢 Vidéos disponibles, affichage de l'encart.");
+                    } else {
+                        videoTag.style.display = "none";
+                        console.log("🚫 Aucune vidéo disponible, encart caché.");
+                    }
                 }
             }
         }
@@ -436,6 +451,8 @@ console.log(`📌 Personnage actif sauvegardé : ${characterName}`);
         console.error(`❌ Erreur lors de la mise à jour du personnage côté serveur :`, error);
     });
 }
+
+
 
 
 
@@ -769,3 +786,14 @@ async function speakMessage(text) {
         console.error("❌ Erreur avec l'API TTS :", error);
     }
 }
+
+// Fonction pour que le message d'avertissement s'affiche que dans les chat 
+
+document.addEventListener("DOMContentLoaded", function () {
+    const chatWarning = document.getElementById("chat-warning");
+    const chatBox = document.getElementById("chat-box");
+
+    if (chatBox && chatWarning) {
+        chatBox.insertBefore(chatWarning, chatBox.firstChild); // Insère le message en haut du chat
+    }
+});

@@ -1385,3 +1385,17 @@ input:checked + .slider:before {
   text-align: left;
 }
 
+.bot-message.warning {
+  background-color: rgba(221, 77, 157, 0.3); /* Fond rose avec transparence */
+  color: white; /* Texte en blanc */
+  font-weight: normal; /* Même épaisseur que les autres messages */
+  text-align: left; /* Aligné à gauche comme les autres messages IA */
+  padding: 10px 14px; /* Ajusté pour correspondre aux autres bulles */
+  border-radius: 15px; /* Arrondi pour rester cohérent */
+  max-width: 75%; /* Même largeur max que les autres messages */
+  margin: 10px 0; /* Espacement standard des messages */
+  font-size: 14px; /* Même taille de texte */
+  line-height: 1.5; /* Espacement normal du texte */
+  font-family: inherit; /* Utilise la même police que les autres messages */
+}
+
