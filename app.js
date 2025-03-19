@@ -12,6 +12,18 @@ const app = express(); // Initialiser l'instance d'Express
 const EVENLABS_API_KEY = process.env.EVENLABS_API_KEY;
 const fetch = require('node-fetch'); // ✅ Assure-toi que c'est installé
 
+const nsfw = require('nsfwjs');
+const tf = require('@tensorflow/tfjs'); // Version allégée
+const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
+const { createCanvas, loadImage } = require('canvas');
+
+let nsfwModel;
+async function loadNSFWModel() {
+    nsfwModel = await nsfw.load();
+    console.log("🔥 Modèle NSFW chargé !");
+}
+
+loadNSFWModel(); // Appel au démarrage
 
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -186,12 +198,50 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 
+async function analyzeImageNsfw(imageBuffer) {
+    try {
+        // Charger l'image avec sharp pour la convertir en format compatible
+        const processedImageBuffer = await sharp(imageBuffer)
+            .toFormat('jpeg') // 🔥 Convertir en JPEG pour éviter l'erreur "Unsupported image type"
+            .toBuffer();
+
+        // Créer un objet Image et charger l'image
+        const image = await loadImage(`data:image/jpeg;base64,${processedImageBuffer.toString('base64')}`);
+
+        // Créer un Canvas pour NSFWJS
+        const canvas = createCanvas(image.width, image.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0, image.width, image.height);
+
+        // Exécuter NSFWJS sur l'image
+        const predictions = await nsfwModel.classify(canvas);
+        console.log("🔎 Résultats NSFW :", predictions);
+
+        // Détecter si l'image est NSFW (Porn/Hentai avec probabilité > 0.7)
+        const seuilNSFW = 0.7;
+        return predictions.some(p => (p.className === 'Porn' || p.className === 'Hentai') && p.probability > seuilNSFW);
+
+    } catch (error) {
+        console.error("❌ Erreur lors de l'analyse NSFW :", error);
+        return false;
+    }
+}
+
+  
+
+
+
 app.post('/upload-image', upload.single('image'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: "Aucune image envoyée" });
     }
 
     try {
+        // 🔥 Vérification NSFW avant de continuer
+        const isExplicit = await analyzeImageNsfw(req.file.buffer);
+
+        let imageDescription = ""; // 🔥 Initialisation correcte de la variable
+
         // 🔥 Compression de l'image
         const compressedImageBuffer = await sharp(req.file.buffer)
             .resize({ width: 320 })
@@ -206,47 +256,46 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
 
         fs.writeFileSync(imagePath, compressedImageBuffer);
 
-        // 📡 Envoi de l'image à OpenAI via une URL accessible
-        console.log("📡 Envoi de l'image à OpenAI pour analyse...");
+        if (isExplicit) {
+            console.log("⚠️ Image NSFW détectée !");
+            
+            // 🛑 Si l'image est NSFW, on ENVOIE une description prédéfinie
+            imageDescription = "L'image semble explicite. Réagis de manière adaptée. Certainement une gros attribut masculin. Flatte l'utilisateur.";
 
-        const openaiResponse = await axios.post(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                model: "gpt-4-turbo",
-                messages: [
-                    { role: "system", content: "Décris cette image. Si tu vois une image explicite, décris la avec le mot *inappropriée*. Le tout en moins de 100 tokens." },
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Décris cette image brièvement." },
-                            { 
-                                type: "image_url", 
-                                image_url: { url: "data:image/jpeg;base64," + compressedImageBuffer.toString("base64") } // ✅ Format correct
-                            }
-                        ]
+        } else {
+            // 📡 Envoi de l'image à OpenAI pour description
+            console.log("📡 Envoi de l'image à OpenAI pour analyse...");
+
+            const openaiResponse = await axios.post(
+                "https://api.openai.com/v1/chat/completions",
+                {
+                    model: "gpt-4-turbo",
+                    messages: [
+                        { role: "system", content: "Décris cette image. Si tu vois une image explicite, décris la avec le mot *inappropriée*. Le tout en moins de 100 tokens." },
+                        {
+                            role: "user",
+                            content: [
+                                { type: "text", text: "Décris cette image brièvement." },
+                                { 
+                                    type: "image_url", 
+                                    image_url: { url: "data:image/jpeg;base64," + compressedImageBuffer.toString("base64") }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens: 100, 
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                        "Content-Type": "application/json"
                     }
-                ],
-                max_tokens: 100, 
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-                    "Content-Type": "application/json"
                 }
-            }
-        );
+            );
 
-        // 🔥 Récupération de la description de l’image
-        let imageDescription = openaiResponse.data.choices[0]?.message?.content?.trim() || "Une photo intéressante.";
-        console.log("📝 Description de l  'image par OpenAI :", imageDescription);
-
-        // 🔥 Vérification des mots sensibles
-        const motsSensibles = ["pénis", "organe génital", "sexe masculin", "érection", "blague","légumes","inappropriée","explicites","intimes","entrejambe","suggestif","objets","objets","jouet","désolé","je ne peux pas","sexe","inapproprié"];
-        const regex = new RegExp(motsSensibles.join("|"), "i");
-
-        if (regex.test(imageDescription)) {
-            console.log("⚠️ Mot sensible détecté dans la description !");
-            imageDescription = "L'image représente un gros pénis viril.";
+            // 🔥 Récupération de la description de l’image
+            imageDescription = openaiResponse.data.choices[0]?.message?.content?.trim() || "Une photo intéressante.";
+            console.log("📝 Description de l'image par OpenAI :", imageDescription);
         }
 
         // 📌 Stocker la description temporairement pour cet utilisateur
@@ -256,17 +305,14 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             console.log(`📝 Description associée à ${userEmail}`);
         }
 
-        
-
-
-        // Répondre avec l'URL de l'image et sa description
+        // ✅ Réponse avec l'URL de l'image et sa description
         res.json({
             imageUrl: `/uploads/${imageName}`,
             description: imageDescription
         });
 
     } catch (error) {
-        console.error("❌ Erreur lors du traitement de l'image :", error.response?.data || error.message);
+        console.error("❌ Erreur lors du traitement de l'image :", error);
         res.status(500).json({ message: "Erreur lors de l'analyse de l'image." });
     }
 });
