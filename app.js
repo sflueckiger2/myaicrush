@@ -1182,17 +1182,36 @@ const reponsesPerso = [
     "Hmm, essaie de me séduire un peu avant 😉",
     "T'es pressé hein ? Moi, j'aime prendre mon temps 😏",
     "Tu veux me tester ? Hmmm, intéressant... Continue 🥰",
-    "J’aime les belles paroles… fais-moi rêver un peu plus 😘"
+    "Uhuh, toi alors ! Si tu me dis des mots doux, alors on verra...",
+    "T'es un sacré filou, sois plus tendre avec moi <3",
+    "J'aimerais vraiment... mais tu dois gagner mon cœur pour en voir plus.",
+    "Hii, tu me gênes 🙈. Sois plus mignon, mon joli, je te récompenserai.",
+    "Wow, tu y vas fort ! Calme-toi un peu, bel étalon. Si tu es tendre avec moi, je te montrerai...",
+    "Humm, fais-moi rêver encore un peu avant 😘",
+    "Ohlala, t’es vraiment impatient toi… Un peu de patience et de charme, et qui sait ? 😏",
+    "Hmm… Tu sais que la séduction, c’est un art ? Montre-moi ce que tu sais faire. 😉",
+    "Oh, tu es audacieux... mais j’aime ça. Continue, tu es sur la bonne voie. 😘",
+    "Ahah, tu me fais rougir 🙈. Essaye encore, mais avec plus de douceur…",
+    "Hmmm, j’adore quand tu insistes, mais il faut me faire fondre un peu plus. 🥰",
+    "Tu veux tout, tout de suite ? Moi, j’aime qu’on me fasse languir…",
+    "Oh toi… tu me donnes envie de jouer. Essaye encore, mais avec plus de subtilité. 😏",
+    "Si tu trouves les bons mots, peut-être que je me laisserai tenter… 😘",
+    "Ohh, tu veux vraiment me faire craquer ? Flatte-moi un peu plus, et on verra…",
+    "Humm… c’est tentant, mais il va falloir me séduire encore un peu. 😉"
 ];
 
 // Fonction pour intercepter et ajuster les réponses de l'IA
 function ajusterReponse(reponse) {
-    if (reponse.toLowerCase().includes("désolé, je ne peux pas")) {
+    const refusRegex = /désolé[e]?,?( mais)? je ne peux pas/i;
+
+    if (refusRegex.test(reponse.toLowerCase())) {
         console.log("🎯 Détection d'un refus, remplacement...");
         return reponsesPerso[Math.floor(Math.random() * reponsesPerso.length)];
     }
+
     return reponse; // Si pas de refus, on garde la réponse normale
 }
+
 
 
 // 🔥 Modifier la réponse de l'IA avant de l'envoyer à l'utilisateur
