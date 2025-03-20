@@ -771,54 +771,67 @@ function removeAccents(str) {
 }
 
 // Fonction pour changer le personnage actif
-// Fonction pour changer le personnage actif
-app.post('/setCharacter', (req, res) => {
-  console.log('🔄 Requête reçue pour changer de personnage :', req.body);
-
-  const { email, name } = req.body;
-  if (!email || !name) {
-      return res.status(400).json({ success: false, message: "Email et personnage requis." });
-  }
-
-  const character = characters.find(c => c.name === name);
-  if (!character) {
-      return res.status(400).json({ success: false, message: "Personnage inconnu." });
-  }
-
-  // ✅ Stocker le personnage pour cet utilisateur uniquement
-  userCharacters.set(email, character);
-  console.log(`✅ Personnage défini pour ${email} : ${character.name}`);
-
-  // ✅ Réinitialiser l'historique de conversation uniquement pour cet utilisateur
-  userConversationHistory.set(email, []);
-
-  // ✅ Réinitialiser le statut d'envoi des photos pour cet utilisateur
-  userPhotoStatus.set(email, {
-      photoSentAtLittleCrush: false,
-      photoSentAtBigCrush: false,
-      photoSentAtPerfectCrush: false
+app.post('/setCharacter', async (req, res) => {
+    console.log('🔄 Requête reçue pour changer de personnage :', req.body);
+  
+    const { email, name } = req.body;
+    if (!email || !name) {
+        return res.status(400).json({ success: false, message: "Email et personnage requis." });
+    }
+  
+    const character = characters.find(c => c.name === name);
+    if (!character) {
+        return res.status(400).json({ success: false, message: "Personnage inconnu." });
+    }
+  
+    try {
+        // ✅ Stocker le personnage pour cet utilisateur uniquement (mémoire)
+        userCharacters.set(email, character);
+        console.log(`✅ Personnage défini pour ${email} : ${character.name}`);
+  
+        // ✅ Réinitialiser l'historique de conversation uniquement pour cet utilisateur
+        userConversationHistory.set(email, []);
+  
+        // ✅ Réinitialiser le statut d'envoi des photos pour cet utilisateur
+        userPhotoStatus.set(email, {
+            photoSentAtLittleCrush: false,
+            photoSentAtBigCrush: false,
+            photoSentAtPerfectCrush: false
+        });
+  
+        // 🔥 Sauvegarde du personnage en base de données
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+        await users.updateOne({ email }, { $set: { selectedCharacter: name } }, { upsert: true });
+  
+        console.log(`💾 Personnage sauvegardé en base pour ${email} : ${name}`);
+  
+        res.json({ success: true, message: `${name} est maintenant actif.` });
+  
+    } catch (error) {
+        console.error("❌ Erreur lors de la sauvegarde en base :", error);
+        res.status(500).json({ success: false, message: "Erreur serveur lors de la mise à jour du personnage." });
+    }
   });
-
-  res.json({ success: true, message: `${name} est maintenant actif.` });
-});
-
-// Ajouter un message à l'historique
-function addMessageToHistory(email, role, content) {
-  if (!content) return;
-
-  if (!userConversationHistory.has(email)) {
-    userConversationHistory.set(email, []);
+  
+  // Ajouter un message à l'historique
+  function addMessageToHistory(email, role, content) {
+    if (!content) return;
+  
+    if (!userConversationHistory.has(email)) {
+      userConversationHistory.set(email, []);
+    }
+  
+    const history = userConversationHistory.get(email);
+    history.push({ role, content });
+  
+    if (history.length > 15) {
+      history.shift(); // ✅ Garde seulement les 15 derniers messages
+    }
+  
+    userConversationHistory.set(email, history);
   }
-
-  const history = userConversationHistory.get(email);
-  history.push({ role, content });
-
-  if (history.length > 15) {
-    history.shift(); // ✅ Garde seulement les 15 derniers messages
-  }
-
-  userConversationHistory.set(email, history);
-}
+  
 
 
 // FONCTION POUR GOOGLE AUTH
@@ -1095,11 +1108,34 @@ app.post('/message', async (req, res) => {
 
         userLevel = userLevels.get(email) || 1.0;
 
-        const userCharacter = userCharacters.get(email);
-        if (!userCharacter) {
-            console.error(`❌ Aucun personnage actif trouvé pour ${email}`);
-            return res.status(400).json({ reply: "Aucun personnage sélectionné." });
+        let userCharacter = userCharacters.get(email);
+
+if (!userCharacter) {
+    console.log(`🔍 Aucun personnage en mémoire pour ${email}, récupération en base...`);
+
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+        const user = await users.findOne({ email });
+
+        if (user && user.selectedCharacter) {
+            const storedCharacter = characters.find(c => c.name === user.selectedCharacter);
+            if (storedCharacter) {
+                userCharacters.set(email, storedCharacter);
+                console.log(`✅ Personnage restauré depuis MongoDB : ${storedCharacter.name}`);
+                userCharacter = storedCharacter;
+            }
         }
+    } catch (error) {
+        console.error("❌ Erreur lors de la récupération du personnage depuis MongoDB :", error);
+    }
+
+    if (!userCharacter) {
+        console.error(`❌ Impossible de récupérer un personnage pour ${email}`);
+        return res.status(400).json({ reply: "Aucun personnage sélectionné." });
+    }
+}
+
 
         const userLevelDescription = userLevel >= 1.1
             ? `The user is at the ${
