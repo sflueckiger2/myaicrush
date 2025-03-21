@@ -19,37 +19,32 @@
     gtag('config', 'G-FJ5S0H9B1R');
   </script>
 
-<!-- Meta Pixel Facebook -->
-<script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window,document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
+  <!-- Meta Pixel Facebook -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
 
-  fbq('init', '955861022940111'); // Ton Pixel ID
+    fbq('init', '955861022940111');
+    fbq('track', 'InitiateCheckout', {
+      value: 0.00,
+      currency: 'EUR'
+    });
 
-  // ✅ Envoi de l'événement "InitiateCheckout" pour traquer les visites sur la page Premium
-  fbq('track', 'InitiateCheckout', {
-    value: 0.00, // Facultatif, tu peux mettre 0 si ce n'est pas un paiement direct
-    currency: 'EUR'
-  });
-
-  // ✅ Capture du FBP et stockage local pour l'API Conversion plus tard
-  fbq(function() {
-    var fbp_cookie = document.cookie.split('; ').find(row => row.startsWith('_fbp='));
-    if (fbp_cookie) {
-      var fbp_value = fbp_cookie.split('=')[1];
-      console.log("FBP capturé :", fbp_value);
-      localStorage.setItem('fbp_value', fbp_value);
-    }
-  });
-</script>
-
-
+    fbq(function() {
+      var fbp_cookie = document.cookie.split('; ').find(row => row.startsWith('_fbp='));
+      if (fbp_cookie) {
+        var fbp_value = fbp_cookie.split('=')[1];
+        console.log("FBP capturé :", fbp_value);
+        localStorage.setItem('fbp_value', fbp_value);
+      }
+    });
+  </script>
 </head>
 <body>
   <!-- Menu Hamburger -->
@@ -61,7 +56,6 @@
       <li><a href="index.html">Choisis ta partenaire</a></li>
       <li><a href="profile.html">Ton profil</a></li>
       <li><a href="premium.html">Premium</a></li>
-     
       <li><a href="contact.html">Contact</a></li>
     </ul>
   </nav>
@@ -73,30 +67,12 @@
       Débloque des conversations illimitées, des photos <u><b>sans flou</b></u> et du contenu intime avec toutes nos <span style="font-family:'Times New Roman', Times, serif;">I.A</span> (vidéos, messages vocaux...).
     </p>
     <p class="p-description"><b>⚠️ <u>Attention</u></b> : la plupart de nos abonnés ne peuvent plus s’en passer.</p>
-    <center><img style="width:270px; margin:auto;"src="/images/market/promo-premium.gif" alt="Chargement de la vidéo..." class="hanae-image"></center>
-    <!-- Section des plans -->
-    <div class="pricing-section">
-      <div class="pricing-card">
-        <h2>Abonnement Mensuel</h2>
-        <p class="price">9,90€/mois</p>
-        <p>Facturé chaque mois, annule quand tu veux.</p>
-        <button id="monthlyCheckoutButton" class="checkout-button">Choisir le plan mensuel</button>
-      </div>
-      <div class="pricing-card popular" style="position: relative;">
-        <!-- Bandeau -50% -->
-        <div class="discount-banner">
-          -50% de réduction !
-        </div>
-        
-        <h2>Abonnement Annuel</h2>
-        <p class="price">4,95€/mois</p>
-        <p>Économise 50% avec notre abonnement annuel !</p>
-        <button id="annualCheckoutButton" class="checkout-button">Choisir le plan annuel</button>
-      </div>
-      
+    <center><img style="width:270px; margin:auto;" src="/images/market/promo-premium.gif" alt="Chargement de la vidéo..." class="hanae-image"></center>
+
+    <!-- Section des plans dynamiques -->
+    <div id="pricing-container" class="pricing-section">
+      <!-- Les offres s’afficheront ici dynamiquement -->
     </div>
-
-
 
     <!-- Section des avantages -->
     <div class="premium-benefits">
@@ -113,35 +89,88 @@
         <li><span class="benefit-icon"></span> Aucun historique de tes messages</li>
         <li><span class="benefit-icon"></span> Annule à tout moment, sans aucun frais</li>
         <li><span class="benefit-icon"></span> La meilleure plateforme francophone</li>
-
       </ul>
     </div>
   </div>
 
- <!-- Icônes de sécurité -->
-<div class="security-section">
-  <div class="security-item">
-    <i class="fas fa-lock"></i>
-    <p>100% Sécurisé</p>
+  <!-- Icônes de sécurité -->
+  <div class="security-section">
+    <div class="security-item">
+      <i class="fas fa-lock"></i>
+      <p>100% Sécurisé</p>
+    </div>
+    <div class="security-item">
+      <i class="fas fa-mask"></i>
+      <p>Confidentialité totale</p>
+    </div>
   </div>
-  <div class="security-item">
-    <i class="fas fa-mask"></i>
-    <p>Confidentialité totale</p>
-  </div>
-</div>
 
-<script>
-  window.STRIPE_MODE = "live"; // live ou test selon ton besoin
-  window.STRIPE_PRICE_ID_LIVE_MONTHLY = "price_1R288qAOSHX0SgbTCgRDHuka";
-  window.STRIPE_PRICE_ID_LIVE_ANNUAL = "price_1R28ADAOSHX0SgbTfwDtAQRQ";
-  window.STRIPE_PRICE_ID_TEST_MONTHLY = "price_1QP4dCAOSHX0SgbTY5N4QrsW";
-  window.STRIPE_PRICE_ID_TEST_ANNUAL = "price_1QPRXpAOSHX0SgbT8GfUUtvL";
-</script>
+  <script>
+    window.STRIPE_MODE = "live";
+    window.STRIPE_PRICE_ID_LIVE_MONTHLY = "price_1R288qAOSHX0SgbTCgRDHuka";
+    window.STRIPE_PRICE_ID_LIVE_ANNUAL = "price_1R28ADAOSHX0SgbTfwDtAQRQ";
+    window.STRIPE_PRICE_ID_TEST_MONTHLY = "price_1QP4dCAOSHX0SgbTY5N4QrsW";
+    window.STRIPE_PRICE_ID_TEST_ANNUAL = "price_1QPRXpAOSHX0SgbT8GfUUtvL";
+  </script>
 
-
-
-  <!-- Inclure les fichiers JavaScript -->
+  <!-- Scripts -->
   <script type="module" src="./scripts/menu.js"></script>
   <script type="module" src="./scripts/stripe-frontend.js"></script>
+
+  <!-- Script de génération dynamique des prix -->
+  <script>
+    async function loadPricingPlans() {
+      const pricingSection = document.getElementById('pricing-section');
+      if (!pricingSection) return;
+
+      try {
+        const response = await fetch('/pricing-config.json');
+        const pricingData = await response.json();
+        const mode = window.STRIPE_MODE || "live";
+
+        const plans = [pricingData.default_price, ...(pricingData.active_tests?.[0]?.variants || [])];
+
+        plans.forEach((plan, index) => {
+          const card = document.createElement('div');
+          card.className = 'pricing-card';
+          if (index === 1) card.classList.add('popular');
+
+          if (plan.promo) {
+            const promoBanner = document.createElement('div');
+            promoBanner.className = 'discount-banner';
+            promoBanner.textContent = plan.promo;
+            card.appendChild(promoBanner);
+          }
+
+          const title = document.createElement('h2');
+          title.textContent = `Abonnement ${plan.name}`;
+          card.appendChild(title);
+
+          const price = document.createElement('p');
+          price.className = 'price';
+          price.textContent = `${plan.price}€/${plan.duration}`;
+          card.appendChild(price);
+
+          const desc = document.createElement('p');
+          desc.textContent = plan.description;
+          card.appendChild(desc);
+
+          const button = document.createElement('button');
+          button.className = 'checkout-button';
+          button.textContent = plan.button_text;
+
+          const priceId = mode === "live" ? plan.stripe_id_live : plan.stripe_id_test;
+          button.addEventListener('click', () => handleCheckout(priceId, plan.name.toLowerCase()));
+          card.appendChild(button);
+
+          pricingSection.appendChild(card);
+        });
+      } catch (error) {
+        console.error("❌ Erreur chargement pricing-config.json :", error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPricingPlans);
+  </script>
 </body>
 </html>
