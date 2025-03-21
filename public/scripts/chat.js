@@ -84,7 +84,7 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
         .then(({ isPremium }) => {
             if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
                 addBotMessage(
-                    `Tu as dépassé ta limite de messages gratuits. <a href="premium.html" style="color: blue; text-decoration: underline;">Deviens un membre Premium</a> pour débloquer les messages illimités.`,
+                    `Tu as dépassé ta limite de messages gratuits. <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">Deviens un membre Premium</a> pour débloquer les messages illimités.`,
                     messagesContainer
                 );
                 hideTypingIndicator(); // ✅ Masquer immédiatement si on ne peut pas envoyer

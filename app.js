@@ -540,55 +540,77 @@ app.post('/api/change-password', async (req, res) => {
 
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {
-  console.log('📡 Requête reçue sur /api/create-checkout-session');
-  console.log('Corps de la requête :', req.body);
+    console.log('📡 Requête reçue sur /api/create-checkout-session');
+    console.log('Corps de la requête :', req.body);
+  
+    try {
+        const { planType, email } = req.body;
+  
+        if (!planType || !email) {
+            return res.status(400).json({ message: "Email et planType requis." });
+        }
+  
+        console.log('📦 Plan sélectionné :', planType);
+        console.log('📧 Email reçu :', email);
+  
+        // 🔥 Charger le fichier pricing-config.json pour chercher le bon priceId
+        const configPath = path.join(__dirname, 'public', 'pricing-config.json');
 
-  try {
-      const { planType, email } = req.body;
 
-      if (!planType) {
-          return res.status(400).json({ message: "Invalid plan type." });
-      }
 
-      console.log('📦 Plan sélectionné :', planType);
-      console.log('📧 Email reçu :', email);
-
-      // Sélectionne l'ID de prix en fonction du mode Stripe et du plan choisi
-      const priceId = process.env.STRIPE_MODE === "live"
-          ? (planType === "monthly" ? process.env.STRIPE_PRICE_ID_LIVE_MONTHLY : process.env.STRIPE_PRICE_ID_LIVE_ANNUAL)
-          : (planType === "monthly" ? process.env.STRIPE_PRICE_ID_TEST_MONTHLY : process.env.STRIPE_PRICE_ID_TEST_ANNUAL);
-
-      if (!priceId) {
-          throw new Error(`❌ Error: No valid price ID found for plan type: ${planType}`);
-      }
-
-      console.log('💳 Price ID utilisé :', priceId);
-
-      // Création de la session Stripe
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        mode: 'subscription',
-        customer_email: email,
-        metadata: {
-          fbp: req.body.fbp || null, // ✅ OK, récupère fbp du frontend
-          fbc: req.body.fbc || null, // ✅ Ajoute fbc mais SANS utiliser localStorage
-          fbqPurchaseEventID: `purchase_${Date.now()}`
-      },
-      
-        line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType === 'monthly' ? 9.90 : 59}`,
-        cancel_url: `${process.env.BASE_URL}/premium.html`
-    });
-    
-
-      console.log('✅ Session Checkout créée avec succès :', session.url);
-      res.json({ url: session.url });
-
-  } catch (error) {
-      console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
-      res.status(500).json({ message: 'Failed to create checkout session' });
-  }
-});
+        const rawData = fs.readFileSync(configPath);
+        const pricingConfig = JSON.parse(rawData);
+  
+        const stripeMode = process.env.STRIPE_MODE || "live";
+  
+        // 🔍 On cherche dans default + tests
+        const allPlans = [
+            ...(pricingConfig.default_price.variants || []),
+            ...(pricingConfig.active_tests[0]?.variants || [])
+        ];
+  
+        const selectedPlan = allPlans.find(p =>
+            p.name.toLowerCase().includes(planType.toLowerCase())
+        );
+  
+        if (!selectedPlan) {
+            throw new Error(`❌ Plan "${planType}" non trouvé dans le fichier pricing-config.json`);
+        }
+  
+        const priceId = stripeMode === "live"
+            ? selectedPlan.stripe_id_live
+            : selectedPlan.stripe_id_test;
+  
+        if (!priceId) {
+            throw new Error(`❌ Aucun price ID défini pour le mode ${stripeMode} sur le plan "${planType}"`);
+        }
+  
+        console.log('💳 Price ID utilisé :', priceId);
+  
+        // ✅ Création de la session Stripe
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            customer_email: email,
+            metadata: {
+                fbp: req.body.fbp || null,
+                fbc: req.body.fbc || null,
+                fbqPurchaseEventID: `purchase_${Date.now()}`
+            },
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType}`,
+            cancel_url: `${process.env.BASE_URL}/premium.html`
+        });
+  
+        console.log('✅ Session Checkout créée avec succès :', session.url);
+        res.json({ url: session.url });
+  
+    } catch (error) {
+        console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
+        res.status(500).json({ message: 'Failed to create checkout session' });
+    }
+  });
+  
 
 
 
@@ -994,7 +1016,7 @@ app.get('/get-image/:token', async (req, res) => {
           // ✅ EXTRAIT UNIQUEMENT LA PREMIÈRE FRAME et la transforme en image fixe floutée avec un flou plus fort
           imageBuffer = await sharp(gifBuffer, { animated: false }) // 🔥 Transforme le GIF en image statique
               .resize({ width: 500 }) // ✅ Taille optimisée
-              .blur(35) // 🔥 Flou renforcé (10 → 15)
+              .blur(45) // 🔥 Flou renforcé (10 → 15)
               .jpeg({ quality: 70 }) // ✅ Compression JPEG pour ultra-rapidité
               .toBuffer();
   
@@ -1003,7 +1025,7 @@ app.get('/get-image/:token', async (req, res) => {
           console.log("🖼️ Floutage d'une image standard...");
           imageBuffer = await sharp(imagePath)
               .resize({ width: 700 }) // ✅ Taille optimisée
-              .blur(35) // 🔥 Flou renforcé (15 → 25)
+              .blur(45) // 🔥 Flou renforcé (15 → 25)
               .jpeg({ quality: 65 }) // ✅ Compression plus forte (70 → 65)
               .toBuffer();
       }
