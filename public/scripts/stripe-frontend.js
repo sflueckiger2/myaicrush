@@ -46,6 +46,26 @@ document.addEventListener('DOMContentLoaded', () => {
     displaySubscriptionInfo(); // Affiche les infos d'abonnement dès le chargement
 });
 
+
+
+
+//fonction pour le JSON AB TEST PRIX
+
+// Charger la configuration des prix depuis pricing-config.json
+async function loadPricingConfig() {
+    try {
+        const response = await fetch('/IA/pricing-config.json'); // 🔥 Ajuste le chemin si nécessaire
+        if (!response.ok) throw new Error("Impossible de charger la configuration des prix");
+
+        const pricingConfig = await response.json();
+        return pricingConfig;
+    } catch (error) {
+        console.error("❌ Erreur lors du chargement de la configuration des prix :", error);
+        return null;
+    }
+}
+
+
 // Fonction pour vérifier l'utilisateur et démarrer le paiement Stripe
 function handleCheckout(priceId, planType) {
     const user = JSON.parse(localStorage.getItem('user'));

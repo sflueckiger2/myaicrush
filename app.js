@@ -29,6 +29,12 @@ const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
 
+//Cookie Pour les AB TEST 
+const cookieParser = require('cookie-parser');
+
+
+
+
 
 // ✅ Sélection dynamique de la clé Stripe
 const stripeMode = process.env.STRIPE_MODE || "live"; // "live" par défaut
@@ -124,6 +130,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
 
 app.use(express.json());
+app.use(cookieParser());
 
 
 // Middleware pour servir les fichiers statiques, sauf pour les images
@@ -1779,6 +1786,54 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 });
 
 
+
+//ROUTE POUR AB TEST
+
+
+const PRICING_CONFIG_PATH = path.join(__dirname, 'pricing-config.json');
+
+// 🔄 Fonction pour charger la config de pricing
+function loadPricingConfig() {
+    try {
+        const rawData = fs.readFileSync(PRICING_CONFIG_PATH);
+        return JSON.parse(rawData);
+    } catch (error) {
+        console.error("❌ Erreur lors du chargement de pricing-config.json :", error);
+        return { active_tests: [], default_price: {} };
+    }
+}
+
+// 📢 Route API pour obtenir les offres dynamiques
+app.get('/get-pricing', (req, res) => {
+    const pricingConfig = loadPricingConfig();
+    const activeTests = pricingConfig.active_tests;
+    const defaultPrice = pricingConfig.default_price;
+
+    let selectedVariant;
+
+    if (activeTests.length > 0) {
+        // 📌 Vérifier si l'utilisateur a déjà une variante en cookie
+        if (req.cookies.pricingVariant) {
+            selectedVariant = JSON.parse(req.cookies.pricingVariant);
+        } else {
+            // 🎲 Sélection aléatoire d'une variante A/B
+            const test = activeTests[0]; // Prend le premier test actif
+            selectedVariant = test.variants[Math.floor(Math.random() * test.variants.length)];
+
+            // 🍪 Stocker la variante dans un cookie (1 an)
+            res.cookie('pricingVariant', JSON.stringify(selectedVariant), {
+                maxAge: 365 * 24 * 60 * 60 * 1000, // 1 an
+                httpOnly: true
+            });
+        }
+
+        console.log("🎯 Variante sélectionnée pour cet utilisateur :", selectedVariant);
+        return res.json({ pricing: [selectedVariant] });
+    }
+
+    // 🔄 Si aucun test actif, on retourne le tarif par défaut
+    return res.json({ pricing: [defaultPrice] });
+});
 
 
 // Connecter à la base de données avant de démarrer le serveur
