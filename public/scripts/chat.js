@@ -581,7 +581,7 @@ if (uploadBtn) {
 
             // ✅ Si tout est OK, ouvrir l'explorateur de fichiers pour sélectionner une image
             const imageInput = document.getElementById("image-input");
-            if (imageInput) imageInput.click();
+           
         } catch (error) {
             console.error("❌ Erreur lors de la vérification du statut premium et du quota d'images :", error);
             alert("Erreur lors de la vérification de votre compte. Veuillez réessayer.");
