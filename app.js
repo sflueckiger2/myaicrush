@@ -1226,12 +1226,13 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
             {
                 model: "gpt-3.5-turbo",
                 messages: messages,
-                max_tokens: 300,
-                temperature: 0.7,
-                top_p: 0.9,
-                frequency_penalty: 0.7,
-                presence_penalty: 0.5,
-            },
+                max_tokens: 350,
+                temperature: 0.8,
+                top_p: 1.0,
+                frequency_penalty: 0.3,
+                presence_penalty: 0.8,
+              }
+              ,
             {
                 headers: {
                     Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
