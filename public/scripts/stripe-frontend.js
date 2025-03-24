@@ -136,6 +136,9 @@ function handleCheckout(priceId, planType) {
     startCheckout(priceId, user.email, planType);
 }
 
+const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+const testId = selectedTest?.id || 'default';
+
 // Fonction pour démarrer le paiement Stripe
 async function startCheckout(priceId, email, planType) {
     try {
@@ -147,7 +150,7 @@ async function startCheckout(priceId, email, planType) {
         const response = await fetch(`${BASE_URL}/api/create-checkout-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ priceId, email, planType })
+            body: JSON.stringify({ priceId, email, planType, testId })
         });
 
         if (!response.ok) {

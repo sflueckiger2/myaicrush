@@ -16,8 +16,14 @@
       dataLayer.push(arguments);
     }
     gtag('js', new Date());
-    gtag('config', 'G-FJ5S0H9B1R');
+  
+    // ✅ Envoie le chemin + query string à GA
+    const fullUrl = window.location.pathname + window.location.search;
+    gtag('config', 'G-FJ5S0H9B1R', {
+      page_path: fullUrl
+    });
   </script>
+  
 </head>
 <body>
   <!-- Menu Hamburger -->

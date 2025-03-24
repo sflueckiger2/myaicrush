@@ -555,9 +555,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
   
         // 🔥 Charger le fichier pricing-config.json pour chercher le bon priceId
         const configPath = path.join(__dirname, 'public', 'pricing-config.json');
-
-
-
         const rawData = fs.readFileSync(configPath);
         const pricingConfig = JSON.parse(rawData);
   
@@ -586,7 +583,10 @@ app.post('/api/create-checkout-session', async (req, res) => {
         }
   
         console.log('💳 Price ID utilisé :', priceId);
-  
+
+        // ✅ On récupère l’ID du test actif (ou "default" si aucun)
+        const testId = pricingConfig.active_tests?.[0]?.id || 'default';
+
         // ✅ Création de la session Stripe
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -598,7 +598,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 fbqPurchaseEventID: `purchase_${Date.now()}`
             },
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType === 'monthly' ? 9.90 : planType === 'trimestriel' ? 29.90 : 59}&plan=${planType}`,
+            success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType === 'monthly' ? 9.90 : planType === 'trimestriel' ? 29.90 : 59}&plan=${planType}&ab=${testId}`,
             cancel_url: `${process.env.BASE_URL}/premium.html`
         });
   
@@ -609,7 +609,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
         console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
         res.status(500).json({ message: 'Failed to create checkout session' });
     }
-  });
+});
+
   
 
 
