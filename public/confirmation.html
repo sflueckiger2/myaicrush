@@ -9,20 +9,58 @@
   <link rel="stylesheet" href="styles.css">
 
   <!-- Google Analytics (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-  
-    // ✅ Envoie le chemin + query string à GA
-    const fullUrl = window.location.pathname + window.location.search;
-    gtag('config', 'G-FJ5S0H9B1R', {
-      page_path: fullUrl
+  <!-- Google Analytics (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+
+  gtag('js', new Date());
+
+  // ✅ Envoie le chemin complet à GA
+  const fullUrl = window.location.pathname + window.location.search;
+  gtag('config', 'G-FJ5S0H9B1R', {
+    page_path: fullUrl
+  });
+
+  // ✅ Variables pour A/B test et conversion
+  const params = new URLSearchParams(window.location.search);
+  const abFromUrl = params.get("ab");
+  const amount = params.get("amount");
+  const plan = params.get("plan") || "unknown";
+  const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+  const abFromStorage = selectedTest?.id || "unknown";
+
+  // ✅ Envoi d’un event clair pour tracking A/B (ab_test_conversion)
+  if (abFromUrl) {
+    gtag('event', 'ab_test_conversion', {
+      event_category: 'A/B Testing',
+      event_label: abFromUrl
     });
-  </script>
+    console.log("📊 GA Event : ab_test_conversion =", abFromUrl);
+  }
+
+  // ✅ Envoi d’un event e-commerce complet (purchase)
+  if (selectedTest && amount) {
+    gtag('event', 'purchase', {
+      value: parseFloat(amount),
+      currency: 'EUR',
+      items: [{
+        item_name: plan,
+        item_category: abFromStorage,
+        price: parseFloat(amount)
+      }]
+    });
+    console.log("🎯 GA Event : purchase =", {
+      value: amount,
+      plan,
+      abTestId: abFromStorage
+    });
+  }
+</script>
+
   
 </head>
 <body>
@@ -127,36 +165,7 @@
   </script>
   
   
-  <script>
-  window.dataLayer = window.dataLayer || [];
-
-  // Récupérer l’info du localStorage
-  const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
-  const urlParams = new URLSearchParams(window.location.search);
-  const amount = urlParams.get("amount"); // ex: 59
-  const plan = urlParams.get("plan") || "unknown"; // facultatif si tu passes plan=mensuel dans l’URL
-
-  if (selectedTest && amount) {
-    const abTestId = selectedTest.id || "unknown";
-
-    // Envoi à Google Analytics
-    gtag('event', 'purchase', {
-      value: parseFloat(amount),
-      currency: 'EUR',
-      items: [{
-        item_name: plan,
-        item_category: abTestId,
-        price: parseFloat(amount)
-      }]
-    });
-
-    console.log("🎯 GA Purchase Event envoyé :", {
-      value: amount,
-      plan,
-      abTestId
-    });
-  }
-</script>
+ 
 
  
 <noscript>
