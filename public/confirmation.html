@@ -121,6 +121,37 @@
   </script>
   
   
+  <script>
+  window.dataLayer = window.dataLayer || [];
+
+  // Récupérer l’info du localStorage
+  const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+  const urlParams = new URLSearchParams(window.location.search);
+  const amount = urlParams.get("amount"); // ex: 59
+  const plan = urlParams.get("plan") || "unknown"; // facultatif si tu passes plan=mensuel dans l’URL
+
+  if (selectedTest && amount) {
+    const abTestId = selectedTest.id || "unknown";
+
+    // Envoi à Google Analytics
+    gtag('event', 'purchase', {
+      value: parseFloat(amount),
+      currency: 'EUR',
+      items: [{
+        item_name: plan,
+        item_category: abTestId,
+        price: parseFloat(amount)
+      }]
+    });
+
+    console.log("🎯 GA Purchase Event envoyé :", {
+      value: amount,
+      plan,
+      abTestId
+    });
+  }
+</script>
+
  
 <noscript>
   <img height="1" width="1" style="display:none"

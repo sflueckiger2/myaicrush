@@ -598,7 +598,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 fbqPurchaseEventID: `purchase_${Date.now()}`
             },
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType}`,
+            success_url: `${process.env.BASE_URL}/confirmation.html?amount=${planType === 'monthly' ? 9.90 : planType === 'trimestriel' ? 29.90 : 59}&plan=${planType}`,
             cancel_url: `${process.env.BASE_URL}/premium.html`
         });
   
