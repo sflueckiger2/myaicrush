@@ -902,7 +902,8 @@ async function addOrFindUser(email) {
 
 
 
-async function getRandomCharacterMedia(email, isPremium, userLevel, isGifMode) {
+async function getRandomCharacterMedia(email, isPremium, userLevel, isGifMode, isNymphoMode = false) {
+
 
   const userCharacter = userCharacters.get(email); // 🔥 Récupère le personnage spécifique de cet utilisateur
   if (!userCharacter) {
@@ -916,13 +917,21 @@ async function getRandomCharacterMedia(email, isPremium, userLevel, isGifMode) {
 
   let levelFolder;
 
-  if (userLevel < 1.7) {
-      levelFolder = `${sanitizedCharacterName}1`; // Little Crush
-  } else if (userLevel < 2.2) {
-      levelFolder = `${sanitizedCharacterName}2`; // Big Crush
-  } else {
-      levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
-  }
+  // 🔥 Si le mode nympho est activé, forcer le dossier "4" (niveau spécial)
+if (isNymphoMode) {
+    levelFolder = `${sanitizedCharacterName}4`;
+    console.log(`💋 Mode nympho activé pour ${email}, utilisation du dossier ${levelFolder}`);
+} else {
+    if (userLevel < 1.7) {
+        levelFolder = `${sanitizedCharacterName}1`; // Little Crush
+    } else if (userLevel < 2.2) {
+        levelFolder = `${sanitizedCharacterName}2`; // Big Crush
+    } else {
+        levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
+    }
+}
+
+
 
   const imageDir = path.join(__dirname, 'public', 'images', sanitizedCharacterName, levelFolder);
   console.log(`📂 Chemin du dossier média pour ${email} : ${imageDir}`);
@@ -958,7 +967,8 @@ async function getRandomCharacterMedia(email, isPremium, userLevel, isGifMode) {
       if (!isPremium) { // 🔥 Appliquer les règles de floutage SEULEMENT pour les non-premium
           const userPhotoData = userPhotoStatus.get(email) || { photoSentAtLittleCrush: false };
 
-          if (userLevel > 1.6) {
+          if (userLevel > 1.6 || isNymphoMode) {
+
               isBlurred = true; // Flouter pour les niveaux élevés
           } else if (!firstFreeImageSent.has(email)) {
               console.log(`🎁 Première image claire offerte à ${email}`);
@@ -1110,13 +1120,96 @@ function adjustUserLevel(email, comfortLevel) {
 }
 
 
+//ROUTE ACTIVER NYMPHO
+
+// 🔥 Pour stocker le statut nympho
+const userNymphoStatus = new Map();
+
+// ✅ Activation du mode nympho avec consommation unique de jetons (durée : 24h)
+app.post('/api/activate-nympho-mode', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Email manquant" });
+
+    const activeCharacter = userCharacters.get(email);
+    if (!activeCharacter || !activeCharacter.name) {
+        return res.status(400).json({ success: false, message: "Personnage non défini." });
+    }
+
+    const characterName = activeCharacter.name;
+    const now = Date.now();
+
+    try {
+        const db = client.db("MyAICrush");
+        const users = db.collection("users");
+
+        const user = await users.findOne({ email });
+        if (!user) return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
+
+        const jetons = user.creditsPurchased || 0;
+        const nymphoData = user.nymphoUnlocked || {};
+
+        const currentExpiration = nymphoData[characterName];
+
+        // ✅ Vérifie si déjà activé
+        if (currentExpiration && currentExpiration > now) {
+            return res.json({ success: true, alreadyActive: true });
+        }
+
+        // ❌ Pas assez de jetons
+        if (jetons < 10) {
+            return res.status(403).json({ success: false, message: "Pas assez de jetons", redirect: "/jetons.html" });
+        }
+
+        // ✅ Déduire les jetons et enregistrer l’activation pour 24h
+        const expiresAt = now + 24 * 60 * 60 * 1000;
+
+        await users.updateOne(
+            { email },
+            {
+                $set: { [`nymphoUnlocked.${characterName}`]: expiresAt },
+                $inc: { creditsPurchased: -10 }
+            }
+        );
+
+        userNymphoStatus.set(`${email}_${characterName}`, { active: true, expiresAt });
+
+        console.log(`💋 Nympho activé pour ${characterName} par ${email} jusqu'à ${new Date(expiresAt).toLocaleString()}`);
+
+        return res.json({ success: true, expiresAt });
+    } catch (err) {
+        console.error("❌ Erreur activation mode nympho :", err);
+        return res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+});
+
+
+
+
+//ROUTE DESACTIVER NYMPHO
+
+app.post('/api/deactivate-nympho-mode', (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: "Email manquant" });
+    }
+
+    userNymphoStatus.set(email, false);
+    console.log(`😇 Mode nymphomane désactivé pour ${email}`);
+
+    res.json({ success: true, message: "Mode nymphomane désactivé" });
+});
+
+
 
 // Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {
     console.log("📥 Requête reçue - Body :", req.body);
 
     try {
-        let { message, email, mode } = req.body;
+        let { message, email, mode, nymphoMode } = req.body;
+        const isNymphoMode = userNymphoStatus.get(email) === true;
+console.log(`💋 Mode nympho actif pour ${email} ? ${isNymphoMode}`);
 
         // Si c'est une image envoyée, on modifie le message pour que l'IA le comprenne mieux
         if (message === "[PHOTO ENVOYÉE]") {
@@ -1186,19 +1279,27 @@ if (!userCharacter) {
             } level.` 
             : "";
 
-        const systemPrompt = `
-            Profil : ${userCharacter.prompt.profile}
-            Temperament : ${userCharacter.prompt.temperament}
-            Objective : ${userCharacter.prompt.objective}
+            let systemPrompt;
 
-            Level System:
-            - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
-            - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
-
-            ${userLevelDescription}
-
-            After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
-        `;
+            if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
+                systemPrompt = userCharacter.prompt.fullPromptNympho;
+                console.log("💋 Prompt nympho utilisé !");
+            } else {
+                systemPrompt = `
+                    Profil : ${userCharacter.prompt.profile}
+                    Temperament : ${userCharacter.prompt.temperament}
+                    Objective : ${userCharacter.prompt.objective}
+            
+                    Level System:
+                    - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
+                    - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
+            
+                    ${userLevelDescription}
+            
+                    After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
+                `;
+            }
+            
 
         // Construire le contexte du chat pour OpenAI
         const conversationHistory = userConversationHistory.get(email) || [];
@@ -1361,7 +1462,8 @@ console.log("💬 Réponse finale envoyée :", botReply);
         if (sendPhoto) {
             console.log("📸 Envoi d'une image confirmé. Appel de getRandomCharacterMedia()...");
 
-            const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif");
+            const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif", nymphoMode === true);
+
 
             if (imageResult && imageResult.token) {
                 responseData.imageUrl = `/get-image/${imageResult.token}`;
@@ -1871,6 +1973,56 @@ app.get('/get-pricing', (req, res) => {
     // 🔄 Si aucun test actif, on retourne le tarif par défaut
     return res.json({ pricing: [defaultPrice] });
 });
+
+
+//ROUTE NYMPHO
+
+app.post('/api/unlock-nympho', async (req, res) => {
+    const { email, characterName } = req.body;
+
+    if (!email || !characterName) {
+        return res.status(400).json({ message: "Email et nom du personnage requis." });
+    }
+
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+
+        const user = await users.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur introuvable." });
+        }
+
+        const alreadyUnlocked = user.nymphoUnlocked?.[characterName];
+        if (alreadyUnlocked) {
+            return res.status(400).json({ message: "Mode déjà activé pour ce personnage." });
+        }
+
+        const cost = 50;
+        const credits = user.creditsPurchased || 0;
+
+        if (credits < cost) {
+            return res.status(403).json({ message: "Pas assez de jetons." });
+        }
+
+        // 🔥 Déduction et activation en une seule commande
+        await users.updateOne(
+            { email },
+            {
+                $inc: { creditsPurchased: -cost },
+                $set: { [`nymphoUnlocked.${characterName}`]: true }
+            }
+        );
+
+        console.log(`🔥 Mode nymphomane activé pour ${email} sur ${characterName}`);
+        res.json({ success: true, message: "Mode nymphomane activé avec succès !" });
+
+    } catch (error) {
+        console.error("❌ Erreur dans /api/unlock-nympho :", error);
+        res.status(500).json({ message: "Erreur serveur lors de l'activation du mode." });
+    }
+});
+
 
 
 // Connecter à la base de données avant de démarrer le serveur

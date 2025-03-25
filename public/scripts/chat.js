@@ -24,6 +24,82 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
     console.warn("⚠️ 'toggleMode' non trouvé sur cette page.");
 }
 
+//MODE NYMPHO 
+const nymphoToggle = document.getElementById("nymphoModeToggle");
+
+if (nymphoToggle) {
+  // 🔥 Toujours forcer le mode à "false" au chargement
+  localStorage.setItem("nymphoMode", "false");
+  nymphoToggle.checked = false;
+
+  nymphoToggle.addEventListener("change", async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || !user.email) {
+      alert("Tu dois être connecté pour activer ce mode.");
+      nymphoToggle.checked = false;
+      return;
+    }
+
+    // ✅ Vérifie si l'utilisateur est premium
+    const premiumCheck = await fetch(`${BASE_URL}/api/is-premium`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    });
+
+    const { isPremium } = await premiumCheck.json();
+
+    if (!isPremium) {
+      alert("Ce mode est réservé aux membres Premium 😈");
+      window.location.href = "/premium.html";
+      nymphoToggle.checked = false;
+      return;
+    }
+
+    if (nymphoToggle.checked) {
+      // ✅ Confirmation du coût
+      const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 10 jetons. Es-tu sûr ? (valable pendant 24h)");
+      if (!confirmation) {
+        nymphoToggle.checked = false;
+        return;
+      }
+
+      // 🔥 Appelle l’API d’activation du mode nympho
+      try {
+        const response = await fetch(`${BASE_URL}/api/activate-nympho-mode`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          localStorage.setItem("nymphoMode", "true");
+          alert("💋 Mode Nymphomane activé !");
+        } else if (data.redirect) {
+          // 🔁 Pas assez de jetons => redirige
+          window.location.href = data.redirect;
+        } else {
+          alert("❌ Erreur : " + data.message);
+          nymphoToggle.checked = false;
+        }
+      } catch (err) {
+        console.error("❌ Erreur API nympho :", err);
+        alert("Erreur lors de l’activation.");
+        nymphoToggle.checked = false;
+      }
+    } else {
+      // 🔕 Mode désactivé manuellement
+      localStorage.setItem("nymphoMode", "false");
+      alert("Mode Nymphomane désactivé.");
+    }
+  });
+} else {
+  console.warn("⚠️ Toggle 'nymphoModeToggle' non trouvé.");
+}
+
+
 
 
 
@@ -98,7 +174,9 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 body: JSON.stringify({ 
                     message: userMessage, 
                     email: user?.email, 
-                    mode: localStorage.getItem("chatMode") || "image" 
+                    mode: localStorage.getItem("chatMode") || "image" ,
+                    nymphoMode: localStorage.getItem("nymphoMode") === "true"
+
                 }),
             })
             .then(response => response.json())
@@ -385,6 +463,19 @@ function adjustChatHeight() {
 
             // 🔍 Trouver le personnage dans le JSON
             const character = characters.find(c => c.name === characterName);
+
+            // ✅ Gérer l'affichage du toggle "Mode Nymphomane"
+const nymphoToggleWrapper = document.getElementById("nympho-mode-toggle-wrapper"); // 👉 le conteneur du bouton
+if (nymphoToggleWrapper) {
+    if (character.hasNymphoMode) {
+        nymphoToggleWrapper.style.display = "inline-flex"; // ou "block" selon ton style
+        console.log("🔥 Le personnage a un mode nympho, toggle affiché.");
+    } else {
+        nymphoToggleWrapper.style.display = "none";
+        console.log("🚫 Pas de mode nympho, toggle masqué.");
+    }
+}
+
             if (character) {
                 // 🔥 Ajouter le message d’avertissement
                 addBotMessage(
@@ -411,7 +502,16 @@ function adjustChatHeight() {
 
                 // ✅ Mise à jour du nom et de la photo de profil
                 document.getElementById('chat-name').textContent = character.name;
-                document.querySelector('.chat-profile-pic').src = character.photo;
+
+                // 🔥 Gérer le mode nympho pour la photo
+const isNympho = localStorage.getItem("nymphoMode") === "true";
+if (isNympho && character.images?.nympho) {
+    // Remplace la photo par une image du dossier nympho (tu peux en choisir une aléatoire si tu veux)
+    character.photo = `${character.images.nympho}/preview.webp`;
+    console.log("🌶️ Mode nymphomane actif : image modifiée !");
+}
+document.querySelector('.chat-profile-pic').src = character.photo;
+
 
                 document.querySelector('.menu').classList.add('hidden');
 

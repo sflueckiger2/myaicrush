@@ -1440,3 +1440,6 @@ input:checked + .slider:before {
   font-family: inherit; /* Utilise la même police que les autres messages */
 }
 
+#nymphoModeToggle {
+  display: none;
+}
