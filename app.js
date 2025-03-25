@@ -1248,8 +1248,8 @@ app.post('/message', async (req, res) => {
 
     try {
         let { message, email, mode, nymphoMode } = req.body;
-        const isNymphoMode = userNymphoStatus.get(email) === true;
-console.log(`💋 Mode nympho actif pour ${email} ? ${isNymphoMode}`);
+      
+
 
         // Si c'est une image envoyée, on modifie le message pour que l'IA le comprenne mieux
         if (message === "[PHOTO ENVOYÉE]") {
@@ -1312,6 +1312,21 @@ if (!userCharacter) {
     }
 }
 
+  // ✅ Vérification en base de données du mode Nympho
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+  const user = await users.findOne({ email });
+  let isNymphoMode = false;
+  
+  if (user && user.nymphoUnlocked) {
+      const nymphoExpiration = user.nymphoUnlocked[userCharacter.name];
+  
+      if (nymphoExpiration && typeof nymphoExpiration === 'number') {
+          isNymphoMode = nymphoExpiration > Date.now();
+      }
+  }
+  
+  console.log(`💋 Mode nympho actif pour ${email} avec ${userCharacter.name} ? ${isNymphoMode}`);
 
         const userLevelDescription = userLevel >= 1.1
             ? `The user is at the ${
@@ -1502,7 +1517,8 @@ console.log("💬 Réponse finale envoyée :", botReply);
         if (sendPhoto) {
             console.log("📸 Envoi d'une image confirmé. Appel de getRandomCharacterMedia()...");
 
-            const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif", nymphoMode === true);
+            const imageResult = await getRandomCharacterMedia(email, isPremium, userLevel, mode === "gif", isNymphoMode);
+
 
 
             if (imageResult && imageResult.token) {
