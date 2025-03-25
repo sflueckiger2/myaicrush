@@ -207,26 +207,40 @@ if (!fs.existsSync(uploadDir)) {
 
 async function analyzeImageNsfw(imageBuffer) {
     try {
-        // Charger l'image avec sharp pour la convertir en format compatible
+        // 🔄 Convertir l'image en JPEG pour compatibilité
         const processedImageBuffer = await sharp(imageBuffer)
-            .toFormat('jpeg') // 🔥 Convertir en JPEG pour éviter l'erreur "Unsupported image type"
+            .toFormat('jpeg')
             .toBuffer();
 
-        // Créer un objet Image et charger l'image
+        // 📸 Charger l’image
         const image = await loadImage(`data:image/jpeg;base64,${processedImageBuffer.toString('base64')}`);
 
-        // Créer un Canvas pour NSFWJS
+        // 🖼️ Créer un canvas pour analyse
         const canvas = createCanvas(image.width, image.height);
         const ctx = canvas.getContext('2d');
         ctx.drawImage(image, 0, 0, image.width, image.height);
 
-        // Exécuter NSFWJS sur l'image
+        // 🔍 Prédiction NSFW
         const predictions = await nsfwModel.classify(canvas);
-        console.log("🔎 Résultats NSFW :", predictions);
 
-        // Détecter si l'image est NSFW (Porn/Hentai avec probabilité > 0.7)
-        const seuilNSFW = 0.7;
-        return predictions.some(p => (p.className === 'Porn' || p.className === 'Hentai') && p.probability > seuilNSFW);
+        // 🧠 Tri des résultats pour inspection
+        const sorted = predictions.sort((a, b) => b.probability - a.probability);
+        console.log("🔎 Résultats NSFW (triés) :", sorted);
+
+        // 🔧 Seuils personnalisés
+        const seuilPorn = 0.80;   // Avant : 0.85
+const seuilHentai = 0.80; // Avant : 0.85
+const seuilSexy = 0.97;   // Avant : 0.95
+
+
+        const isExplicit = predictions.some(pred => {
+            if (pred.className === 'Porn' && pred.probability > seuilPorn) return true;
+            if (pred.className === 'Hentai' && pred.probability > seuilHentai) return true;
+            if (pred.className === 'Sexy' && pred.probability > seuilSexy) return true;
+            return false;
+        });
+
+        return isExplicit;
 
     } catch (error) {
         console.error("❌ Erreur lors de l'analyse NSFW :", error);
@@ -234,7 +248,6 @@ async function analyzeImageNsfw(imageBuffer) {
     }
 }
 
-  
 
 
 
