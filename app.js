@@ -1201,6 +1201,46 @@ app.post('/api/deactivate-nympho-mode', (req, res) => {
 });
 
 
+// route pour check le status NYMPHO
+app.post('/api/check-nympho-status', async (req, res) => {
+    const { email, character } = req.body;
+  
+    if (!email || !character) {
+        return res.status(400).json({ alreadyUnlocked: false, message: "Email ou personnage manquant." });
+    }
+  
+    try {
+        const database = client.db("MyAICrush");
+        const users = database.collection("users");
+  
+        const user = await users.findOne({ email });
+  
+        if (!user || !user.nymphoUnlocked) {
+            return res.json({ alreadyUnlocked: false });
+        }
+  
+        const unlockTimestamp = user.nymphoUnlocked[character];
+
+        if (!unlockTimestamp || typeof unlockTimestamp !== 'number') {
+            return res.json({ alreadyUnlocked: false });
+        }
+
+        const now = Date.now();
+
+        if (unlockTimestamp > now) {
+            return res.json({ alreadyUnlocked: true });
+        } else {
+            return res.json({ alreadyUnlocked: false });
+        }
+  
+    } catch (err) {
+        console.error("❌ Erreur lors de la vérification du statut nympho :", err);
+        return res.status(500).json({ alreadyUnlocked: false, message: "Erreur interne du serveur." });
+    }
+});
+
+  
+
 
 // Endpoint principal pour gérer les messages
 app.post('/message', async (req, res) => {

@@ -24,23 +24,25 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
     console.warn("⚠️ 'toggleMode' non trouvé sur cette page.");
 }
 
-//MODE NYMPHO 
+// MODE NYMPHO
 const nymphoToggle = document.getElementById("nymphoModeToggle");
 
 if (nymphoToggle) {
-  // 🔥 Toujours forcer le mode à "false" au chargement
+  // Toujours désactiver au chargement
   localStorage.setItem("nymphoMode", "false");
   nymphoToggle.checked = false;
 
   nymphoToggle.addEventListener("change", async () => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.email) {
+    const activeCharacter = localStorage.getItem("activeCharacter");
+
+    if (!user || !user.email || !activeCharacter) {
       alert("Tu dois être connecté pour activer ce mode.");
       nymphoToggle.checked = false;
       return;
     }
 
-    // ✅ Vérifie si l'utilisateur est premium
+    // Vérifie si l'utilisateur est premium
     const premiumCheck = await fetch(`${BASE_URL}/api/is-premium`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -56,20 +58,31 @@ if (nymphoToggle) {
       return;
     }
 
+    // Vérifie si le mode est déjà activé pour ce personnage
+    const statusCheck = await fetch(`${BASE_URL}/api/check-nympho-status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email, character: activeCharacter }),
+    });
+
+    const { alreadyUnlocked } = await statusCheck.json();
+
     if (nymphoToggle.checked) {
-      // ✅ Confirmation du coût
-      const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 10 jetons. Es-tu sûr ? (valable pendant 24h)");
-      if (!confirmation) {
-        nymphoToggle.checked = false;
-        return;
+      if (!alreadyUnlocked) {
+        // Confirmation UNIQUEMENT si pas encore acheté
+        const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 10 jetons. Es-tu sûr ? (valable 24h)");
+        if (!confirmation) {
+          nymphoToggle.checked = false;
+          return;
+        }
       }
 
-      // 🔥 Appelle l’API d’activation du mode nympho
+      // Activation côté serveur
       try {
         const response = await fetch(`${BASE_URL}/api/activate-nympho-mode`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email }),
+          body: JSON.stringify({ email: user.email, character: activeCharacter }),
         });
 
         const data = await response.json();
@@ -78,7 +91,6 @@ if (nymphoToggle) {
           localStorage.setItem("nymphoMode", "true");
           alert("💋 Mode Nymphomane activé !");
         } else if (data.redirect) {
-          // 🔁 Pas assez de jetons => redirige
           window.location.href = data.redirect;
         } else {
           alert("❌ Erreur : " + data.message);
@@ -90,7 +102,7 @@ if (nymphoToggle) {
         nymphoToggle.checked = false;
       }
     } else {
-      // 🔕 Mode désactivé manuellement
+      // Désactivation manuelle
       localStorage.setItem("nymphoMode", "false");
       alert("Mode Nymphomane désactivé.");
     }
@@ -98,6 +110,8 @@ if (nymphoToggle) {
 } else {
   console.warn("⚠️ Toggle 'nymphoModeToggle' non trouvé.");
 }
+
+
 
 
 
