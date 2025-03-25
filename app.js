@@ -1316,15 +1316,22 @@ if (!userCharacter) {
   const database = client.db("MyAICrush");
   const users = database.collection("users");
   const user = await users.findOne({ email });
-  let isNymphoMode = false;
+  let isNymphoMode = nymphoMode === true;  // ✅ Prend explicitement la valeur envoyée par le frontend
+
   
   if (user && user.nymphoUnlocked) {
-      const nymphoExpiration = user.nymphoUnlocked[userCharacter.name];
-  
-      if (nymphoExpiration && typeof nymphoExpiration === 'number') {
-          isNymphoMode = nymphoExpiration > Date.now();
-      }
-  }
+    const nymphoExpiration = user.nymphoUnlocked[userCharacter.name];
+
+    if (nymphoExpiration && typeof nymphoExpiration === 'number') {
+        const isBackendActive = nymphoExpiration > Date.now();
+        isNymphoMode = isNymphoMode && isBackendActive; // ✅ Vérifie aussi côté backend
+    } else {
+        isNymphoMode = false; // ✅ sécurité si expiration manquante ou invalide
+    }
+} else {
+    isNymphoMode = false; // ✅ sécurité si l'utilisateur n'a jamais activé le mode
+}
+
   
   console.log(`💋 Mode nympho actif pour ${email} avec ${userCharacter.name} ? ${isNymphoMode}`);
 
