@@ -1261,30 +1261,16 @@ input:checked + .slider:before {
 
 /* 🔴 Badge rouge pour "Nouvelle sur MyAiCrush" */
 .new-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  
   background-color: #ff4757; /* Rouge */
-  color: white;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: bold;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  
 }
 
 /* 🟢 Badge vert pour "🎥 Vidéos disponibles" */
 .video-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+ 
   background-color: #28a745; /* Vert */
-  color: white;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: bold;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  
 }
 
 /* 🔴 Bordure lumineuse rouge pour "Nouvelle sur MyAiCrush" */
@@ -1442,4 +1428,43 @@ input:checked + .slider:before {
 
 #nymphoModeToggle {
   display: none;
+}
+
+/* 🟣 Badge violet pour "🥵 Mode Nympho disponible" */
+.nympho-badge {
+  
+  background-color: #8a2be2; /* Couleur par défaut (vert vidéo) */
+  
+}
+
+
+/* 🟣 Bordure lumineuse violette pour "🥵 Mode Nympho disponible" */
+.chat-card.nympho {
+  border: 3px solid #8a2be2;
+  box-shadow: 0px 0px 15px rgba(138, 43, 226, 0.8);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* Effet lumineux renforcé au survol */
+.chat-card.nympho:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 0px 25px rgba(138, 43, 226, 1);
+}
+
+.character-badge {
+  position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 480px) {
+  .character-badge {
+    font-size: 12px; /* Un poil plus gros sur mobile */
+  }
 }

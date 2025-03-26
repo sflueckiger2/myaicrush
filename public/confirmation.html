@@ -35,14 +35,15 @@
     // ✅ Event purchase (inclut l'ID de test en tant que item_category)
     if (selectedTest && amount) {
       gtag('event', 'purchase', {
-        value: parseFloat(amount),
-        currency: 'EUR',
-        items: [{
-          item_name: plan,
-          item_category: abFromStorage,
-          price: parseFloat(amount)
-        }]
-      });
+  value: parseFloat(amount),
+  currency: 'EUR',
+  abTestId: abFromStorage, // ✅ MAINTENANT ça va remonter
+  items: [{
+    item_name: plan,
+    price: parseFloat(amount)
+  }]
+});
+
 
       console.log("🎯 GA Event : purchase =", {
         value: amount,

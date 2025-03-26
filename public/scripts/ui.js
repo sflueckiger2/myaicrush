@@ -38,9 +38,11 @@ export function generateChatOptions(characters) {
         card.className = 'chat-card';
 
         if (character.new) {
-            card.classList.add('new'); // ✅ Appliquer la classe "new" pour le contour rouge
+            card.classList.add('new');
         } else if (character.hasVideos) {
-            card.classList.add('hasVideos'); // ✅ Appliquer la classe "hasVideos" pour le contour vert
+            card.classList.add('hasVideos');
+        } else if (character.hasNymphoMode) {
+            card.classList.add('nympho'); // 🟣 pour mode nympho
         }
 
         card.addEventListener('click', () => startChat(character.name));
@@ -50,10 +52,13 @@ export function generateChatOptions(characters) {
 
         if (character.new) {
             badgeText = "Nouvelle sur MyAiCrush";
-            badgeClass = "new-badge"; 
+            badgeClass = "new-badge";
         } else if (character.hasVideos) {
             badgeText = "🎥 Vidéos disponibles";
-            badgeClass = "video-badge"; 
+            badgeClass = "video-badge";
+        } else if (character.hasNymphoMode) {
+            badgeText = "🥵 Mode Nympho";
+            badgeClass = "nympho-badge";
         }
 
         if (badgeText) {
