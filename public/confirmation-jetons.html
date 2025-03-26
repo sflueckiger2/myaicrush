@@ -15,9 +15,24 @@
     function gtag() {
       dataLayer.push(arguments);
     }
+  
     gtag('js', new Date());
-    gtag('config', 'G-FJ5S0H9B1R');
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      const amount = new URLSearchParams(window.location.search).get('amount') || 10;
+  
+      // ✅ Envoi d’un événement personnalisé à GA4 pour achat de jetons
+      gtag('config', 'G-FJ5S0H9B1R');
+      gtag('event', 'token_purchase', {
+        value: parseFloat(amount),
+        currency: 'EUR',
+        item_name: 'Jetons',
+        price: parseFloat(amount)
+      });
+    });
   </script>
+  
+
 </head>
 <body>
   <!-- Menu Hamburger -->
@@ -87,22 +102,19 @@
   
     fbq('init', '955861022940111'); // ✅ Ton Pixel ID
   
-    // 🔥 Génération d'un eventID unique pour éviter les doublons
-    var purchaseEventID = 'purchase_' + Date.now();
-  
-    // ✅ Récupération dynamique du montant depuis l'URL (par défaut : 10€)
-    var urlParams = new URLSearchParams(window.location.search);
-    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 10;
-  
-    // ✅ Envoi de l'événement "Purchase" avec la vraie valeur
-    fbq('track', 'Purchase', {
-      value: amount, // 🔥 Montant dynamique
-      currency: 'EUR'
-    }, {
-      eventID: purchaseEventID // ✅ Clé pour éviter les doublons
-    });
-  
-    // ✅ Suppression du stockage inutile pour l’API CAPI (car désactivée)
+   // ✅ Suivi personnalisé pour l'achat de jetons
+var urlParams = new URLSearchParams(window.location.search);
+var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 20;
+
+var tokenEventId = 'token_purchase_' + Date.now();
+
+fbq('trackCustom', 'TokenPurchase', {
+  value: amount,
+  currency: 'EUR'
+}, {
+  eventID: tokenEventId
+});
+
   </script>
   
   <script>
@@ -164,11 +176,10 @@
     </script>
     
   
- 
-<noscript>
-  <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Purchase&noscript=1"/>
-</noscript>
+
+
+
+
 
 </body>
 </html>

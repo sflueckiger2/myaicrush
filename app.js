@@ -1870,7 +1870,11 @@ app.post('/api/buy-tokens', async (req, res) => {
             mode: 'payment',
             customer_email: email,
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${
+                tokensAmount === "10" ? 5 :
+                tokensAmount === "50" ? 25 :
+                tokensAmount === "100" ? 39 : 20
+              }`,                         
             cancel_url: `${process.env.BASE_URL}/jetons.html`
         });
 
