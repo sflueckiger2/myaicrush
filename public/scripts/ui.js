@@ -46,27 +46,39 @@ export function generateChatOptions(characters) {
         }
 
         card.addEventListener('click', () => startChat(character.name));
+// Déterminer les badges à afficher
+let badgesToShow = [];
 
-        let badgeText = "";
-        let badgeClass = ""; 
+if (character.new) {
+    badgesToShow.push({ text: "Nouvelle sur MyAiCrush", class: "new-badge" });
+}
+if (character.hasVideos) {
+    badgesToShow.push({ text: "🎥 Vidéos disponibles", class: "video-badge" });
+}
+if (character.hasNymphoMode) {
+    badgesToShow.push({ text: "🥵 Mode Nympho", class: "nympho-badge" });
+}
 
-        if (character.new) {
-            badgeText = "Nouvelle sur MyAiCrush";
-            badgeClass = "new-badge";
-        } else if (character.hasVideos) {
-            badgeText = "🎥 Vidéos disponibles";
-            badgeClass = "video-badge";
-        } else if (character.hasNymphoMode) {
-            badgeText = "🥵 Mode Nympho";
-            badgeClass = "nympho-badge";
-        }
+// Bordure prioritaire (vert > rouge > violet)
+if (character.hasVideos) {
+    card.classList.add("hasVideos");
+} else if (character.new) {
+    card.classList.add("new");
+} else if (character.hasNymphoMode) {
+    card.classList.add("nympho");
+}
 
-        if (badgeText) {
-            const badge = document.createElement('div');
-            badge.classList.add('character-badge', badgeClass);
-            badge.textContent = badgeText;
-            card.appendChild(badge);
-        }
+// Afficher tous les badges empilés
+badgesToShow.forEach(({ text, class: className }, index) => {
+    const badge = document.createElement('div');
+    badge.classList.add('character-badge', className);
+    badge.textContent = text;
+    badge.style.top = `${10 + (index * 28)}px`; // empile les badges verticalement
+    card.appendChild(badge);
+});
+
+        
+
 
         const img = document.createElement('img');
         img.src = character.photo;

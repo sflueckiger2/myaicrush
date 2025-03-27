@@ -1850,12 +1850,15 @@ app.post('/api/buy-tokens', async (req, res) => {
 
         // Sélectionne l'ID de prix en fonction du mode Stripe et du montant
         const priceId = process.env.STRIPE_MODE === "live"
-            ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
-               tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
-               process.env.PRICE_ID_LIVE_100_TOKENS)
-            : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
-               tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
-               process.env.PRICE_ID_TEST_100_TOKENS);
+        ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
+           tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
+           tokensAmount === "100" ? process.env.PRICE_ID_LIVE_100_TOKENS :
+           tokensAmount === "300" ? process.env.PRICE_ID_LIVE_300_TOKENS : null)
+        : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
+           tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
+           tokensAmount === "100" ? process.env.PRICE_ID_TEST_100_TOKENS :
+           tokensAmount === "300" ? process.env.PRICE_ID_TEST_300_TOKENS : null);
+    
 
         if (!priceId) {
             console.error("❌ Erreur : Aucun prix trouvé pour ce montant de jetons.");
@@ -1873,7 +1876,8 @@ app.post('/api/buy-tokens', async (req, res) => {
             success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${
                 tokensAmount === "10" ? 5 :
                 tokensAmount === "50" ? 25 :
-                tokensAmount === "100" ? 39 : 20
+                tokensAmount === "100" ? 39 :
+                tokensAmount === "300" ? 99 : 20
               }`,                         
             cancel_url: `${process.env.BASE_URL}/jetons.html`
         });
@@ -1946,10 +1950,13 @@ app.post('/api/confirm-payment', async (req, res) => {
             [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
             [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
             [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
+            [process.env.PRICE_ID_LIVE_300_TOKENS]: 300, // Ajouté
             [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
             [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
-            [process.env.PRICE_ID_TEST_100_TOKENS]: 100
+            [process.env.PRICE_ID_TEST_100_TOKENS]: 100,
+            [process.env.PRICE_ID_TEST_300_TOKENS]: 300  // Ajouté
         };
+        
 
         const priceId = session.line_items.data[0]?.price?.id;
         const tokensPurchased = priceIdMapping[priceId] || 0;

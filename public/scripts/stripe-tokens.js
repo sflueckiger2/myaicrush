@@ -8,7 +8,8 @@ const STRIPE_MODE = window.STRIPE_MODE || "live"; // Mode "live" par défaut
 const STRIPE_PRICE_IDS = {
     "10": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTbme4bKp1" : "price_1R3epsAOSHX0SgbTsDSpNp1n",
     "50": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTtyLJcLqm" : "price_1R3eqfAOSHX0SgbTkfKuzSK6",
-    "100": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTKRTHbCOe" : "price_1R3erLAOSHX0SgbT9WkZvQt6"
+    "100": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTKRTHbCOe" : "price_1R3erLAOSHX0SgbT9WkZvQt6",
+     "300": STRIPE_MODE === "live" ? "price_1R7IBOAOSHX0SgbTZiOOaMie" : "price_1R7IcuAOSHX0SgbTucYIAHAP"
 };
 
 document.addEventListener('DOMContentLoaded', () => {
