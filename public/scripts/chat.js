@@ -89,7 +89,7 @@ if (nymphoToggle) {
 
         if (response.ok && data.success) {
           localStorage.setItem("nymphoMode", "true");
-          alert("💋 Mode Nymphomane activé !");
+          
         } else if (data.redirect) {
           window.location.href = data.redirect;
         } else {
@@ -104,7 +104,7 @@ if (nymphoToggle) {
     } else {
       // Désactivation manuelle
       localStorage.setItem("nymphoMode", "false");
-      alert("Mode Nymphomane désactivé.");
+      
     }
   });
 } else {
