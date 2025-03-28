@@ -19,6 +19,10 @@
     gtag('js', new Date());
   
     document.addEventListener("DOMContentLoaded", () => {
+      const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+const abFromStorage = selectedTest?.id || "unknown";
+
+
       const amount = new URLSearchParams(window.location.search).get('amount') || 10;
   
       // ✅ Envoi d’un événement personnalisé à GA4 pour achat de jetons
