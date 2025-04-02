@@ -1748,7 +1748,7 @@ app.post('/api/tts', async (req, res) => {
         }
 
         const max_free_minutes = 1; // ⏳ 2 minutes gratuites par mois
-        const words_per_second = 3.7; // 🔥 Approximation : 2.5 mots/seconde
+        const words_per_second = 3.3; // 🔥 Approximation : 2.5 mots/seconde
         const estimated_seconds = text.split(" ").length / words_per_second;
         const estimated_minutes = estimated_seconds / 60;
 
