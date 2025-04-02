@@ -505,7 +505,7 @@ if (nymphoToggleWrapper) {
 // 🎧 Afficher ou cacher l'icône téléphone selon le personnage
 const callButton = document.getElementById("audio-call-btn");
 if (callButton) {
-  if (character.callaudio === true) {
+  if (character.hasAudioCall === true) {
     callButton.style.display = "inline-block"; // ou "flex" selon ton style
     console.log("📞 Icône téléphone affichée");
   } else {
@@ -961,6 +961,28 @@ async function handleAudioCallClick() {
       return;
     }
   
+    // 🔒 Vérifie si l'utilisateur est premium
+    try {
+      const checkPremium = await fetch(`${BASE_URL}/api/is-premium`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+  
+      const { isPremium } = await checkPremium.json();
+  
+      if (!isPremium) {
+        alert("Les appels sont réservés aux membres Premium 😈");
+        window.location.href = "premium.html";
+        return;
+      }
+    } catch (err) {
+      console.error('❌ Erreur lors de la vérification du statut premium :', err);
+      alert('Erreur serveur lors de la vérification du compte.');
+      return;
+    }
+  
+    // ✅ Si l’utilisateur est premium, on continue
     const confirmCall = confirm("📞 Un appel coûte 10 jetons pour 10 minutes. On commence ?");
     if (!confirmCall) return;
   
@@ -983,9 +1005,8 @@ async function handleAudioCallClick() {
   
       const widget = document.querySelector('elevenlabs-convai');
       if (widget) {
-        widget.style.display = "block";        // 👈 le rendre visible
-        widget.setAttribute("open", "");       // 👈 ouvrir le widget
-  
+        widget.style.display = "block";
+        widget.setAttribute("open", "");
       }
   
     } catch (err) {
@@ -993,6 +1014,9 @@ async function handleAudioCallClick() {
       alert('Erreur serveur lors du démarrage de l’appel.');
     }
   }
+
+  
+  
   
   // ✅ Ajouter l'écouteur sur l’icône téléphone
   document.addEventListener("DOMContentLoaded", function () {

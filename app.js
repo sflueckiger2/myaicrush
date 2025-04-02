@@ -2117,7 +2117,7 @@ app.post('/api/start-call', async (req, res) => {
       if (user.creditsPurchased < 10) {
         return res.status(403).json({
           success: false,
-          message: "Un appel coûte 10 jetons pour 10 minutes. Tu n'as pas assez de jetons.",
+          message: "Tu n'as pas assez de jetons pour faire un appel audio.",
           redirect: "/jetons.html"
         });
       }
