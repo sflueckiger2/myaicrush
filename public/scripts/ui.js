@@ -37,13 +37,17 @@ export function generateChatOptions(characters) {
         const card = document.createElement('div');
         card.className = 'chat-card';
 
-        if (character.new) {
-            card.classList.add('new');
-        } else if (character.hasVideos) {
-            card.classList.add('hasVideos');
-        } else if (character.hasNymphoMode) {
-            card.classList.add('nympho'); // 🟣 pour mode nympho
-        }
+       // Bordure prioritaire (vert > rouge > violet > bleu)
+if (character.hasVideos) {
+    card.classList.add("hasVideos");
+} else if (character.new) {
+    card.classList.add("new");
+} else if (character.hasNymphoMode) {
+    card.classList.add("nympho");
+} else if (character.hasAudioCall) {
+    card.classList.add("callAudio");
+}
+
 
         card.addEventListener('click', () => startChat(character.name));
 // Déterminer les badges à afficher
@@ -59,6 +63,10 @@ if (character.hasNymphoMode) {
     badgesToShow.push({ text: "🥵 Mode Nympho", class: "nympho-badge" });
 }
 
+if (character.hasAudioCall) {
+    badgesToShow.push({ text: "📞 Appel audio", class: "call-audio-badge" });
+}
+
 // Bordure prioritaire (vert > rouge > violet)
 if (character.hasVideos) {
     card.classList.add("hasVideos");
@@ -66,7 +74,10 @@ if (character.hasVideos) {
     card.classList.add("new");
 } else if (character.hasNymphoMode) {
     card.classList.add("nympho");
+} else if (character.hasAudioCall) {
+    card.classList.add("callAudio");
 }
+
 
 // Afficher tous les badges empilés
 badgesToShow.forEach(({ text, class: className }, index) => {
@@ -111,6 +122,10 @@ export function setupBackButton() {
         document.querySelector('.container').classList.remove('fullscreen');
         document.querySelector('.menu').classList.remove('hidden');
 
+        // Fermer le widget audio si actif
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget) widget.removeAttribute("open");
+
         // Réinitialiser le niveau utilisateur
         resetUserLevel(); // Appeler la fonction pour remettre le niveau à 1.0
 
@@ -118,6 +133,7 @@ export function setupBackButton() {
         resetChatState();
     });
 }
+
 
 export function toggleSignupModal(show) {
     const signupModal = document.getElementById('signup-modal');

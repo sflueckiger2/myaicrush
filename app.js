@@ -2098,6 +2098,50 @@ app.post('/api/unlock-nympho', async (req, res) => {
 });
 
 
+// APPEL EN LIVE 
+// ✅ Vérifie qu'on peut démarrer un appel
+
+app.post('/api/start-call', async (req, res) => {
+    const { email } = req.body;
+  
+    if (!email) return res.status(400).json({ success: false, message: "Email requis." });
+  
+    try {
+      const db = client.db('MyAICrush');
+      const users = db.collection('users');
+  
+      const user = await users.findOne({ email });
+  
+      if (!user) return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
+  
+      if (user.creditsPurchased < 10) {
+        return res.status(403).json({
+          success: false,
+          message: "Un appel coûte 10 jetons pour 10 minutes. Tu n'as pas assez de jetons.",
+          redirect: "/jetons.html"
+        });
+      }
+  
+      // ✅ Déduit immédiatement 10 jetons
+      await users.updateOne({ email }, { $inc: { creditsPurchased: -10, audioMinutesUsed: 10 } });
+  
+      console.log(`📞 Appel de 10 minutes démarré, 10 jetons déduits (${email}).`);
+  
+      res.json({ success: true, message: "Appel de 10 minutes démarré. 10 jetons déduits." });
+  
+    } catch (error) {
+      console.error('Erreur démarrage appel:', error);
+      res.status(500).json({ success: false, message: "Erreur serveur au démarrage de l'appel." });
+    }
+  });
+  
+
+
+
+
+  
+  
+
 
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {

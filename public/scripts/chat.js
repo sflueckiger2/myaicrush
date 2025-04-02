@@ -477,7 +477,19 @@ function adjustChatHeight() {
 
             // 🔍 Trouver le personnage dans le JSON
             const character = characters.find(c => c.name === characterName);
+// 🔄 Mise à jour dynamique de l'agent-id du widget ElevenLabs
+const widget = document.querySelector('elevenlabs-convai');
+if (widget) {
+    if (character.agent?.id) {
+        widget.setAttribute('agent-id', character.agent.id);
+        console.log("🎙️ Agent ElevenLabs défini :", character.agent.id);
+    } else {
+        widget.removeAttribute('agent-id');
+        console.warn("⚠️ Aucun agent-id défini pour ce personnage.");
+    }
+}
 
+            
             // ✅ Gérer l'affichage du toggle "Mode Nymphomane"
 const nymphoToggleWrapper = document.getElementById("nympho-mode-toggle-wrapper"); // 👉 le conteneur du bouton
 if (nymphoToggleWrapper) {
@@ -489,6 +501,19 @@ if (nymphoToggleWrapper) {
         console.log("🚫 Pas de mode nympho, toggle masqué.");
     }
 }
+
+// 🎧 Afficher ou cacher l'icône téléphone selon le personnage
+const callButton = document.getElementById("audio-call-btn");
+if (callButton) {
+  if (character.callaudio === true) {
+    callButton.style.display = "inline-block"; // ou "flex" selon ton style
+    console.log("📞 Icône téléphone affichée");
+  } else {
+    callButton.style.display = "none";
+    console.log("📵 Ce personnage ne permet pas les appels audio");
+  }
+}
+
 
             if (character) {
                 // 🔥 Ajouter le message d’avertissement
@@ -923,3 +948,99 @@ document.addEventListener("DOMContentLoaded", function () {
         chatBox.insertBefore(chatWarning, chatBox.firstChild); // Insère le message en haut du chat
     }
 });
+
+
+// ✅ Fonction pour gérer le clic sur l'icône téléphone (Appel Audio)
+async function handleAudioCallClick() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const activeCharacter = localStorage.getItem('activeCharacter');
+  
+    if (!user || !user.email || !activeCharacter) {
+      alert("Tu dois être connecté pour utiliser cette fonctionnalité.");
+      window.location.href = 'profile.html';
+      return;
+    }
+  
+    const confirmCall = confirm("📞 Un appel coûte 10 jetons pour 10 minutes. On commence ?");
+    if (!confirmCall) return;
+  
+    try {
+      const response = await fetch(`${BASE_URL}/api/start-call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email })
+      });
+  
+      const data = await response.json();
+  
+      if (!data.success) {
+        alert(data.message);
+        if (data.redirect) window.location.href = data.redirect;
+        return;
+      }
+  
+      alert("✅ C'est validé ! Clique sur la petite bulle en bas de ton écran pour commencer l'appel");
+  
+      const widget = document.querySelector('elevenlabs-convai');
+      if (widget) {
+        widget.style.display = "block";        // 👈 le rendre visible
+        widget.setAttribute("open", "");       // 👈 ouvrir le widget
+  
+      }
+  
+    } catch (err) {
+      console.error('❌ Erreur pendant l’appel audio :', err);
+      alert('Erreur serveur lors du démarrage de l’appel.');
+    }
+  }
+  
+  // ✅ Ajouter l'écouteur sur l’icône téléphone
+  document.addEventListener("DOMContentLoaded", function () {
+    const phoneIcon = document.getElementById("audio-call-btn");
+    if (phoneIcon) {
+      phoneIcon.addEventListener("click", handleAudioCallClick);
+    } else {
+      console.warn("❌ Bouton appel audio non trouvé.");
+    }
+  });
+  
+  // ✅ Masquer le widget ElevenLabs par défaut sauf si on est dans le chat
+document.addEventListener("DOMContentLoaded", () => {
+    const widget = document.getElementById("audio-widget");
+  
+    if (!widget) return;
+  
+    const isOnChatPage = document.getElementById("chat-box")?.style.display === "flex";
+  
+    if (!isOnChatPage) {
+      widget.style.display = "none"; // 👈 masque sur la homepage
+    }
+  });
+  
+  
+  function hideAudioWidgetIfNotInChat() {
+    const widget = document.getElementById("audio-widget");
+    const chatBox = document.getElementById("chat-box");
+  
+    if (!widget || !chatBox) return;
+  
+    const isChatVisible = chatBox.style.display === "flex";
+  
+    if (!isChatVisible) {
+      widget.style.display = "none";
+      widget.removeAttribute("open");
+    }
+  }
+  
+  // 🔁 Surveille tous les clics pour détecter si on sort du chat
+  document.addEventListener("click", () => {
+    setTimeout(hideAudioWidgetIfNotInChat, 100); // petit délai pour laisser le temps à l’UI de changer
+  });
+  
+  // 🔁 Surveille aussi les changements d’affichage du chat (au cas où)
+  const observer = new MutationObserver(hideAudioWidgetIfNotInChat);
+  const chatBox = document.getElementById("chat-box");
+  if (chatBox) {
+    observer.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
+  }
+  
