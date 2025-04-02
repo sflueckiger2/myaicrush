@@ -1012,7 +1012,7 @@ async function handleAudioCallClick() {
             widget.removeAttribute("open");
             widget.style.display = "none";
             alert("⏱️ L'appel a duré 10 minutes et a été automatiquement terminé.");
-          }, 10 * 1 * 1000); // 10 minutes
+          }, 10 * 60 * 1000); // 10 minutes
         } else {
           console.error("❌ Widget ElevenLabs introuvable.");
         }
