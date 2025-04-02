@@ -1007,7 +1007,17 @@ async function handleAudioCallClick() {
       if (widget) {
         widget.style.display = "block";
         widget.setAttribute("open", "");
-      }
+        // ⏱️ Fermeture auto après 10 min
+        setTimeout(() => {
+            widget.removeAttribute("open");
+            widget.style.display = "none";
+            alert("⏱️ L'appel a duré 10 minutes et a été automatiquement terminé.");
+          }, 10 * 1 * 1000); // 10 minutes
+        } else {
+          console.error("❌ Widget ElevenLabs introuvable.");
+        }
+
+
   
     } catch (err) {
       console.error('❌ Erreur pendant l’appel audio :', err);
@@ -1016,7 +1026,7 @@ async function handleAudioCallClick() {
   }
 
   
-  
+
   
   // ✅ Ajouter l'écouteur sur l’icône téléphone
   document.addEventListener("DOMContentLoaded", function () {
