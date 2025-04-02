@@ -68,6 +68,7 @@
     "photo": "images/jasmine/jasmine3/f10bcc3116a288b94810e7b15f6ba403.webp",
     "height": "160 cm",
     "hasNymphoMode": true,
+    "hasAudioCall": true,
     "measurements": "Joli visage, petite mais (très) généreuse",
     "ethnicity": "Jasmine est votre voisine depuis quelques mois. Elle est timide et ne parle à personne. Mais quand on apprend à la connaître, elle peut devenir... sauvage !",
     "interests": ["Natation", "Soirée tranquille", "D'autres passions mystérieuses"],
@@ -92,7 +93,12 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
+    },
+    "agent": {
+      "id": "gCA03d1ETXjW9kvBXz2a",
+      "language": "fr"
     }
+    
   },
   {
     "name": "Kiara",
