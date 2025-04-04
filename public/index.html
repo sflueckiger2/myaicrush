@@ -201,6 +201,18 @@
 <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
 
 
+<script>
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const tp = params.get("tp");
+    if (tp) {
+      // Stocke le paramètre "tp" dans un cookie pour 30 jours
+      const expiration = new Date();
+      expiration.setTime(expiration.getTime() + (30*24*60*60*1000)); // 30 jours
+      document.cookie = `forcedTp=${tp}; expires=${expiration.toUTCString()}; path=/`;
+    }
+  })();
+</script>
 
 
 

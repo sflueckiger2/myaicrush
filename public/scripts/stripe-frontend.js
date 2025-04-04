@@ -1,10 +1,16 @@
 // Définir l'URL de base dynamiquement (s'applique à localhost ou Render)
 const BASE_URL = window.location.origin;
 
+
+
+
 // Détecter le mode Stripe en fonction du backend
 const STRIPE_MODE = window.STRIPE_MODE || "live"; // Mode "live" par défaut
 
 console.log(`🚀 Mode Stripe actif : ${STRIPE_MODE.toUpperCase()}`);
+
+
+
 
 // Charger la configuration des prix depuis pricing-config.json
 async function loadPricingConfig() {
@@ -30,34 +36,70 @@ async function loadPricingConfig() {
             return [pricingConfig.default_price]; 
         }
 
-        let selectedTest = localStorage.getItem("selectedPricingTest");
+      // 🔍 Si un tarif est forcé via l’URL (ex: ?tp=low), il écrase l’A/B test
+// Fonction pour lire une valeur dans les cookies
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+  }
+  
+  const forcedKey = getCookie("forcedTp");
 
-        if (!selectedTest) {
-            const randomTest = Math.floor(Math.random() * pricingConfig.active_tests.length);
-            selectedTest = pricingConfig.active_tests[randomTest];
-            localStorage.setItem("selectedPricingTest", JSON.stringify(selectedTest));
-        } else {
-            selectedTest = JSON.parse(selectedTest);
-        }
+if (forcedKey) {
+    try {
+        const forcedRes = await fetch("/forced-pricing.json");
+        const forcedConfig = await forcedRes.json();
 
-        console.log("🎯 Version de l'A/B test sélectionnée :", selectedTest);
+        if (forcedConfig[forcedKey]) {
+            const forcedPlan = forcedConfig[forcedKey];
+            console.log(`🎯 Tarif forcé via paramètre tp=${forcedKey}`, forcedPlan);
 
-        if (!selectedTest.variants || selectedTest.variants.length === 0) {
-            console.warn("⚠️ Aucun variant trouvé, affichage du prix par défaut.");
-            
-            // 🔥 Log en console
-            console.log("📊 Un utilisateur voit le pricing par défaut.");
-
-            // 🔥 Event Google Analytics
-            gtag('event', 'default_price_shown', {
+            // 👉 Event GA (optionnel)
+            gtag('event', 'forced_price_url', {
                 'event_category': 'Pricing',
-                'event_label': 'Default Price Used'
+                'event_label': `Tarif forcé : ${forcedKey}`
             });
 
-            return [pricingConfig.default_price]; 
+            return [forcedPlan];
+        } else {
+            console.warn(`⚠️ Clé inconnue dans forced-pricing.json : ${forcedKey}`);
         }
+    } catch (err) {
+        console.error("❌ Erreur lors du chargement du plan forcé :", err);
+    }
+}
 
-        return selectedTest.variants;
+
+let selectedTest = localStorage.getItem("selectedPricingTest");
+
+if (!selectedTest) {
+    const randomTest = Math.floor(Math.random() * pricingConfig.active_tests.length);
+    selectedTest = pricingConfig.active_tests[randomTest];
+    localStorage.setItem("selectedPricingTest", JSON.stringify(selectedTest));
+} else {
+    selectedTest = JSON.parse(selectedTest);
+}
+
+console.log("🎯 Version de l'A/B test sélectionnée :", selectedTest);
+
+if (!selectedTest.variants || selectedTest.variants.length === 0) {
+    console.warn("⚠️ Aucun variant trouvé, affichage du prix par défaut.");
+
+    // 🔥 Log en console
+    console.log("📊 Un utilisateur voit le pricing par défaut.");
+
+    // 🔥 Event Google Analytics
+    gtag('event', 'default_price_shown', {
+        'event_category': 'Pricing',
+        'event_label': 'Default Price Used'
+    });
+
+    return [pricingConfig.default_price]; 
+}
+
+return selectedTest.variants;
+
+
     } catch (error) {
         console.error("❌ Erreur lors du chargement de la configuration des prix :", error);
         return [pricingConfig.default_price];
@@ -260,3 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+
+
+
+
+
