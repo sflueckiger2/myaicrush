@@ -5,7 +5,7 @@
     "price": 9.90,
     "duration": "mois",
     "description": "Facturé chaque mois, annule quand tu veux.",
-    "button_text": "Choisir le plan mensuel",
+    "button_text": "Devenir premium",
     "stripe_id_live": "price_1R288qAOSHX0SgbTCgRDHuka",
     "stripe_id_test": "price_1QP4dCAOSHX0SgbTY5N4QrsW",
     "promo": null
