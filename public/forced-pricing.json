@@ -1,24 +1,24 @@
-
 {
-    "low": {
-      "name": "Mensuel",
-      "price": 9.90,
-      "duration": "mois",
-      "description": "Facturé chaque mois, annule quand tu veux.",
-      "button_text": "Choisir le plan mensuel",
-      "stripe_id_live": "price_1R288qAOSHX0SgbTCgRDHuka",
-      "stripe_id_test": "price_1QP4dCAOSHX0SgbTY5N4QrsW",
-      "promo": null
-    },
-    "supercheap": {
-      "name": "Test",
-      "price": 4.90,
-      "duration": "mois",
-      "description": "Tarif test temporaire.",
-      "button_text": "Tester pour 4,90€",
-      "stripe_id_live": "price_XXXX",
-      "stripe_id_test": "price_YYYY",
-      "promo": "-80% aujourd'hui"
-    }
+  "low": {
+    "test_id": "forced_9_90_euros",
+    "name": "Mensuel",
+    "price": 9.90,
+    "duration": "mois",
+    "description": "Facturé chaque mois, annule quand tu veux.",
+    "button_text": "Choisir le plan mensuel",
+    "stripe_id_live": "price_1R288qAOSHX0SgbTCgRDHuka",
+    "stripe_id_test": "price_1QP4dCAOSHX0SgbTY5N4QrsW",
+    "promo": null
+  },
+  "supercheap": {
+    "test_id": "forced_supercheap_001",
+    "name": "Test",
+    "price": 4.90,
+    "duration": "mois",
+    "description": "Tarif test temporaire.",
+    "button_text": "Tester pour 4,90€",
+    "stripe_id_live": "price_XXXX",
+    "stripe_id_test": "price_YYYY",
+    "promo": "-80% aujourd'hui"
   }
-  
+}

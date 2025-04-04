@@ -9,33 +9,70 @@
   <link rel="stylesheet" href="styles.css">
 
   <!-- Google Analytics (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+
+  gtag('js', new Date());
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const fullUrl = window.location.pathname + window.location.search;
+    gtag('config', 'G-FJ5S0H9B1R', {
+      page_path: fullUrl
+    });
+
+    const amount = new URLSearchParams(window.location.search).get('amount') || 10;
+
+    const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+    let abTestId = selectedTest?.id || "unknown";
+
+    if (abTestId === "unknown") {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
+      const forcedTp = cookie ? cookie.split('=')[1] : null;
+
+      if (forcedTp) {
+        fetch('/forced-pricing.json')
+          .then(res => res.json())
+          .then(config => {
+            const forcedPlan = config[forcedTp];
+            if (forcedPlan && forcedPlan.test_id) {
+              abTestId = forcedPlan.test_id;
+              localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId }));
+            }
+            triggerTokenEvent();
+          })
+          .catch(err => {
+            console.error("❌ Erreur forced-pricing.json :", err);
+            triggerTokenEvent();
+          });
+      } else {
+        triggerTokenEvent();
+      }
+    } else {
+      triggerTokenEvent();
     }
- 
-    gtag('js', new Date());
-  
-    document.addEventListener("DOMContentLoaded", () => {
-      const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
-const abFromStorage = selectedTest?.id || "unknown";
 
-
-      const amount = new URLSearchParams(window.location.search).get('amount') || 10;
-  
-      // ✅ Envoi d’un événement personnalisé à GA4 pour achat de jetons
-      gtag('config', 'G-FJ5S0H9B1R');
+    function triggerTokenEvent() {
       gtag('event', 'token_purchase', {
         value: parseFloat(amount),
         currency: 'EUR',
         item_name: 'Jetons',
         price: parseFloat(amount),
-        abTestId: abFromStorage // <-- 🔥 Ajouté ici !
+        abTestId: abTestId
       });
-    });
-  </script>
+
+      console.log("🎯 GA Event : token_purchase =", {
+        value: amount,
+        abTestId
+      });
+    }
+  });
+</script>
+
+
   
 
 </head>

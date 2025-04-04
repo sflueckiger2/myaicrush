@@ -8,7 +8,7 @@
   <title>Confirmation d'achat</title>
   <link rel="stylesheet" href="styles.css">
 
- <!-- Google Analytics (gtag.js) -->
+<!-- Google Analytics (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -19,40 +19,66 @@
   gtag('js', new Date());
 
   document.addEventListener('DOMContentLoaded', () => {
-    // ✅ Envoie le chemin complet à GA
     const fullUrl = window.location.pathname + window.location.search;
     gtag('config', 'G-FJ5S0H9B1R', {
       page_path: fullUrl
     });
 
-    // ✅ Variables pour A/B test et conversion
     const params = new URLSearchParams(window.location.search);
     const amount = params.get("amount");
     const plan = params.get("plan") || "unknown";
+
     const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
-    const abFromStorage = selectedTest?.id || "unknown";
+    let abTestId = selectedTest?.id || "unknown";
 
-    // ✅ Event purchase (inclut l'ID de test en tant que item_category)
-    if (selectedTest && amount) {
+    // 🔍 Si aucun test enregistré, on essaie via cookie et JSON forcé
+    if (abTestId === "unknown") {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
+      const forcedTp = cookie ? cookie.split('=')[1] : null;
+
+      if (forcedTp) {
+        fetch('/forced-pricing.json')
+          .then(res => res.json())
+          .then(config => {
+            const forcedPlan = config[forcedTp];
+            if (forcedPlan && forcedPlan.test_id) {
+              abTestId = forcedPlan.test_id;
+              localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId }));
+            }
+            triggerGAEvent(); // ✅ Lancer GA après avoir le bon ID
+          })
+          .catch(err => {
+            console.error("❌ Erreur forced-pricing.json :", err);
+            triggerGAEvent(); // fallback avec "unknown"
+          });
+      } else {
+        triggerGAEvent();
+      }
+    } else {
+      triggerGAEvent(); // cas classique : test déjà en localStorage
+    }
+
+    function triggerGAEvent() {
+      if (!amount) return;
       gtag('event', 'purchase', {
-  value: parseFloat(amount),
-  currency: 'EUR',
-  abTestId: abFromStorage, // ✅ MAINTENANT ça va remonter
-  items: [{
-    item_name: plan,
-    price: parseFloat(amount)
-  }]
-});
-
+        value: parseFloat(amount),
+        currency: 'EUR',
+        abTestId: abTestId,
+        items: [{
+          item_name: plan,
+          price: parseFloat(amount)
+        }]
+      });
 
       console.log("🎯 GA Event : purchase =", {
         value: amount,
         plan,
-        abTestId: abFromStorage
+        abTestId
       });
     }
   });
 </script>
+
 
 
   
