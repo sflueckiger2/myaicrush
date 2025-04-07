@@ -1043,11 +1043,14 @@ text-align: left;
 
 /* Boutons spécifiques */
 .profile-button.danger {
-  background-color: #dd4d9d; /* Variation pour les actions sensibles */
+  background-color: #393956; /* Variation pour les actions sensibles */
+  color : grey;
+  font-size: 13px;
+
 }
 
 .profile-button.danger:hover {
-  background-color: #b0003a;
+  background-color: #393956;
 }
 
 /* Conteneur pour les utilisateurs connectés */

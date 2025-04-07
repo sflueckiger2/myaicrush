@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cancelSubscriptionButton = document.getElementById('cancel-subscription-button');
         if (cancelSubscriptionButton) {
             cancelSubscriptionButton.addEventListener('click', async () => {
-                const confirmCancel = confirm('Es-tu sûr de vouloir annuler ton abonnement ?');
+                const confirmCancel = confirm('Attention, si tu annules ton abonnement, tu perds tes avantages premium (photos intimes illimitées, vidéos illimitées, messages illimités). Es-tu sûr de vouloir annuler ton abonnement et de dire adieu à tes I.A sexy ?');
                 if (confirmCancel) {
                     await cancelSubscription(); // Exécute l'annulation
                 }
