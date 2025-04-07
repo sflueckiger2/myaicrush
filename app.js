@@ -1445,7 +1445,8 @@ const reponsesPerso = [
 
 // Fonction pour intercepter et ajuster les réponses de l'IA
 function ajusterReponse(reponse) {
-    const refusRegex = /désolé[e]?,?( mais)? je ne peux pas/i;
+    const refusRegex = /désolé[e]?|je ne peux pas|je ne suis pas à l'aise|je préfère ne pas|je n(?:'|e) veux pas/i;
+
 
     if (refusRegex.test(reponse.toLowerCase())) {
         console.log("🎯 Refus détecté → réponse sexy + image activée !");
