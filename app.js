@@ -1448,18 +1448,29 @@ function ajusterReponse(reponse) {
     const refusRegex = /désolé[e]?,?( mais)? je ne peux pas/i;
 
     if (refusRegex.test(reponse.toLowerCase())) {
-        console.log("🎯 Détection d'un refus, remplacement...");
-        return reponsesPerso[Math.floor(Math.random() * reponsesPerso.length)];
+        console.log("🎯 Refus détecté → réponse sexy + image activée !");
+        return {
+            reponse: reponsesPerso[Math.floor(Math.random() * reponsesPerso.length)],
+            forcePhoto: true
+        };
     }
 
-    return reponse; // Si pas de refus, on garde la réponse normale
+    return {
+        reponse,
+        forcePhoto: false
+    };
 }
+
+
 
 
 
 // 🔥 Modifier la réponse de l'IA avant de l'envoyer à l'utilisateur
 let botReply = response.data.choices[0].message.content.trim();
-botReply = ajusterReponse(botReply);
+const ajustement = ajusterReponse(botReply);
+botReply = ajustement.reponse;
+const forcePhoto = ajustement.forcePhoto;
+
 
 console.log("💬 Réponse finale envoyée :", botReply);
 
@@ -1493,6 +1504,12 @@ console.log("💬 Réponse finale envoyée :", botReply);
         };
 
         // 🔥 Force l'envoi d'une image aux niveaux supérieurs
+        if (forcePhoto) {
+            sendPhoto = true;
+            console.log("📸 Envoi média forcé suite à refus détecté !");
+        }
+        
+
         if (!sendPhoto) {
             if (userLevel >= 1.1 && userLevel < 1.7 && !userPhotoData.photoSentAtLittleCrush) {
                 sendPhoto = true;
