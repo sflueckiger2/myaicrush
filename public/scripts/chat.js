@@ -961,6 +961,18 @@ async function handleAudioCallClick() {
       return;
     }
   
+    // 🔍 Trouver le personnage actif
+    const character = characters.find(c => c.name === activeCharacter);
+    if (!character) {
+      alert("❌ Personnage introuvable.");
+      return;
+    }
+  
+    if (!character.agent?.id) {
+      alert("❌ Aucun agent vocal défini pour ce personnage.");
+      return;
+    }
+  
     // 🔒 Vérifie si l'utilisateur est premium
     try {
       const checkPremium = await fetch(`${BASE_URL}/api/is-premium`, {
@@ -983,7 +995,7 @@ async function handleAudioCallClick() {
     }
   
     // ✅ Si l’utilisateur est premium, on continue
-    const confirmCall = confirm("📞 Un appel coûte 10 jetons pour 10 minutes. On commence ?");
+    const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 10 jetons pour 10 minutes. On commence ?`);
     if (!confirmCall) return;
   
     try {
@@ -1001,32 +1013,47 @@ async function handleAudioCallClick() {
         return;
       }
   
-      alert("✅ C'est validé ! Clique sur la petite bulle en bas de ton écran pour commencer l'appel");
+      alert(`✅ C'est validé ! Clique sur le micro en bas de ton écran  pour démarrer ton appel avec ${character.name} ❤️ (il peut mettre 5 secondes à apparaître)`);
   
-      const widget = document.querySelector('elevenlabs-convai');
-      if (widget) {
-        widget.style.display = "block";
-        widget.setAttribute("open", "");
-        // ⏱️ Fermeture auto après 10 min
-        setTimeout(() => {
-            widget.removeAttribute("open");
-            widget.style.display = "none";
-            alert("⏱️ L'appel a duré 10 minutes et a été automatiquement terminé.");
-          }, 10 * 60 * 1000); // 10 minutes
-        } else {
-          console.error("❌ Widget ElevenLabs introuvable.");
+      const widget = document.getElementById("audio-widget");
+  
+      if (!widget || !(widget instanceof HTMLElement)) {
+        console.error("❌ Le container pour PlayAI est invalide :", widget);
+        alert("Erreur technique : le conteneur audio est introuvable.");
+        return;
+      }
+  
+      widget.innerHTML = ""; // Vide le contenu précédent
+      widget.style.display = "block";
+  
+      // 🔁 Fermer l'ancien widget si actif
+      if (window.playAIWidgetInstance?.close) {
+        try {
+          window.playAIWidgetInstance.close();
+        } catch (e) {
+          console.warn("⚠️ Erreur lors de la fermeture précédente :", e);
         }
-
-
+      }
+  
+      // ✅ Lancer l'agent Play.ai
+      console.log("🎯 Lancement agent vocal :", character.agent.id);
+      window.playAIWidgetInstance = PlayAI.open(character.agent.id, {
+        darkMode: true
+      });
+      
+  
+      // ⏱️ Fermeture auto après 10 minutes
+      setTimeout(() => {
+        widget.style.display = "none";
+        alert(`⏱️ L'appel avec ${character.name} a été automatiquement terminé.`);
+      }, 10 * 60 * 1000);
   
     } catch (err) {
       console.error('❌ Erreur pendant l’appel audio :', err);
       alert('Erreur serveur lors du démarrage de l’appel.');
     }
   }
-
   
-
   
   // ✅ Ajouter l'écouteur sur l’icône téléphone
   document.addEventListener("DOMContentLoaded", function () {
