@@ -6,6 +6,8 @@
     "photo": "images/chloe/chloe3/video-chloe-bouncing-danse-pink.gif",
     "height": "170 cm",
     "hasVideos": true,
+    "hasNymphoMode": true,
+    "hasAudioCall": true,
     "measurements": "Mince avec une silhouette captivante",
     "ethnicity": "Chloé est ton ex, vous avez rompu il y a longtemps, mais elle est toujours folle de toi. Elle est hyper jalouse de ta nouvelle copine et est prête à tout pour te reconquérir.",
     "interests": ["Sport", "Lecture", "Séduction"],
@@ -26,8 +28,13 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.1
+    },
+    "agent": {
+      "id": "MHw71EGumJY1Sat7r2L8W",
+      "language": "fr"
     }
   },
+
 
 
   
