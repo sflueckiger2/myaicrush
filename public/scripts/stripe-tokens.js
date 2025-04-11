@@ -12,6 +12,15 @@ const STRIPE_PRICE_IDS = {
      "300": STRIPE_MODE === "live" ? "price_1R7IBOAOSHX0SgbTZiOOaMie" : "price_1R7IcuAOSHX0SgbTucYIAHAP"
 };
 
+// ✅ Autoriser le clic sur les images avec data-tokens
+document.querySelectorAll('.token-image[data-tokens]').forEach(img => {
+    img.addEventListener('click', () => {
+        const tokensAmount = img.dataset.tokens;
+        handleTokenCheckout(tokensAmount);
+    });
+});
+
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.tokenCheckoutButton').forEach(button => {
         button.addEventListener('click', () => {

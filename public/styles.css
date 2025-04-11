@@ -1403,15 +1403,7 @@ input:checked + .slider:before {
   margin-right: 5px; /* Ajoute un petit espace entre l'icône et le texte */
 }
 
-.token-image {
-  width: 150px;  /* Taille de l'image */
-  height: 150px; /* Carré */
-  object-fit: cover; /* S'assure que l'image reste bien proportionnée */
-  margin: 10px auto; /* Centre l'image */
-  display: block; /* Évite les marges blanches */
-  border-radius: 10px; /* Coins légèrement arrondis */
-  
-}
+
 
 .token-benefits {
   list-style-type: disc; /* Points classiques */
@@ -1532,3 +1524,31 @@ input:checked + .slider:before {
   font-size: 18px;
   color: #4CAF50;
 }
+
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 0px;     /* Un peu d'espace horizontal */
+  row-gap: 0px;         /* ✅ Supprime presque tout l’espace entre les lignes */
+  justify-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.token-image {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  border-radius: 14px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.token-image:hover {
+  transform: scale(1.05);
+}
+
+
+
