@@ -841,6 +841,9 @@ app.post('/setCharacter', async (req, res) => {
             photoSentAtBigCrush: false,
             photoSentAtPerfectCrush: false
         });
+        userLevels.set(email, 1.0);
+console.log(`🔄 Niveau utilisateur réinitialisé à 1.0 pour ${email}`);
+
   
         // 🔥 Sauvegarde du personnage en base de données
         const database = client.db('MyAICrush');
