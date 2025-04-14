@@ -1766,7 +1766,7 @@ app.post('/api/tts', async (req, res) => {
         }
 
         const max_free_minutes = 1; // ⏳ 2 minutes gratuites par mois
-        const words_per_second = 3.3; // 🔥 Approximation : 2.5 mots/seconde
+        const words_per_second = 3.0; // 🔥 Approximation : 2.5 mots/seconde
         const estimated_seconds = text.split(" ").length / words_per_second;
         const estimated_minutes = estimated_seconds / 60;
 
@@ -1785,6 +1785,11 @@ app.post('/api/tts', async (req, res) => {
             const creditsNeeded = Math.floor(paidMinutes); // ❗ Déduction **seulement** quand 1 min complète est atteinte
             
             console.log(`💳 Minutes payantes accumulées : ${paidMinutes.toFixed(2)} min (${creditsNeeded} crédits nécessaires)`);
+
+            if (newAudioMinutesUsed > max_free_minutes && user.creditsPurchased === 0) {
+                return res.status(403).json({ redirect: "/jetons.html" });
+            }
+            
 
             if (creditsNeeded > 0) {
                 if (user.creditsPurchased < creditsNeeded) {
