@@ -828,7 +828,7 @@ app.post('/setCharacter', async (req, res) => {
     }
   
     try {
-        // ✅ Stocker le personnage pour cet utilisateur uniquement (mémoire)
+        // ✅ Stocker le personnage pour cet utilisateur uniquement (mémoiree)
         userCharacters.set(email, character);
         console.log(`✅ Personnage défini pour ${email} : ${character.name}`);
   
