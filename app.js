@@ -551,6 +551,85 @@ app.post('/api/change-password', async (req, res) => {
 });
 
 
+app.post('/api/reset-password', async (req, res) => {
+    const { email, token, newPassword } = req.body;
+
+    if (!email || !token || !newPassword) {
+        return res.status(400).json({ message: "Données manquantes." });
+    }
+
+    try {
+        const db = client.db('MyAICrush');
+        const users = db.collection('users');
+
+        const user = await users.findOne({ email, resetToken: token });
+
+        if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+            return res.status(400).json({ message: "Lien expiré ou invalide." });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await users.updateOne(
+            { email },
+            {
+                $set: { password: hashedPassword },
+                $unset: { resetToken: "", resetTokenExpires: "" }
+            }
+        );
+
+        res.json({ message: "Mot de passe mis à jour avec succès." });
+    } catch (err) {
+        console.error("❌ Erreur maj mdp:", err);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+app.post('/api/generate-reset-token', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: "Email requis." });
+    }
+
+    try {
+        const db = client.db('MyAICrush');
+        const users = db.collection('users');
+
+        const user = await users.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé." });
+        }
+
+        // Générer un token aléatoire
+        const token = crypto.randomBytes(20).toString('hex');
+        const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heure
+
+        // Enregistrer dans MongoDB
+        await users.updateOne(
+            { email },
+            {
+                $set: {
+                    resetToken: token,
+                    resetTokenExpires: expiration
+                }
+            }
+        );
+
+        // 💡 Afficher le lien dans la console
+        console.log(`🔗 Lien de reset : ${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(email)}&token=${token}`);
+
+        res.json({ message: "Token généré.", token });
+
+    } catch (err) {
+        console.error("❌ Erreur génération token :", err);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+
+
 // Route pour créer une session de paiement Stripe
 app.post('/api/create-checkout-session', async (req, res) => {
     console.log('📡 Requête reçue sur /api/create-checkout-session');
