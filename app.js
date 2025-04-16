@@ -636,7 +636,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     console.log('Corps de la requête :', req.body);
   
     try {
-        const { planType, email } = req.body;
+        const { planType, email, testId } = req.body;
   
         if (!planType || !email) {
             return res.status(400).json({ message: "Email et planType requis." });
@@ -651,20 +651,29 @@ app.post('/api/create-checkout-session', async (req, res) => {
         const pricingConfig = JSON.parse(rawData);
   
         const stripeMode = process.env.STRIPE_MODE || "live";
+
+        let selectedPlan;
+
+if (testId && testId !== 'default') {
+    const activeTest = pricingConfig.active_tests.find(test => test.id === testId);
+    if (activeTest) {
+        selectedPlan = activeTest.variants.find(p => p.name.toLowerCase().includes(planType.toLowerCase()));
+    }
+}
+
+if (!selectedPlan) {
+    selectedPlan = pricingConfig.default_price.variants.find(p => p.name.toLowerCase().includes(planType.toLowerCase()));
+}
+
+if (!selectedPlan) {
+    throw new Error(`❌ Plan "${planType}" non trouvé pour le test "${testId || 'default'}" dans pricing-config.json`);
+}
+
   
         // 🔍 On cherche dans default + tests
-        const allPlans = [
-            ...(pricingConfig.default_price.variants || []),
-            ...(pricingConfig.active_tests[0]?.variants || [])
-        ];
-  
-        const selectedPlan = allPlans.find(p =>
-            p.name.toLowerCase().includes(planType.toLowerCase())
-        );
-  
-        if (!selectedPlan) {
-            throw new Error(`❌ Plan "${planType}" non trouvé dans le fichier pricing-config.json`);
-        }
+       // Fusionner toutes les variantes de tous les tests actifs
+const allTestVariants = pricingConfig.active_tests.flatMap(test => test.variants);
+
   
         const priceId = stripeMode === "live"
             ? selectedPlan.stripe_id_live
@@ -677,7 +686,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
         console.log('💳 Price ID utilisé :', priceId);
 
         // ✅ On récupère l’ID du test actif (ou "default" si aucun)
-        const testId = pricingConfig.active_tests?.[0]?.id || 'default';
+        const activeTestId = pricingConfig.active_tests?.[0]?.id || 'default';
+
 
         // ✅ Création de la session Stripe
         const session = await stripe.checkout.sessions.create({
