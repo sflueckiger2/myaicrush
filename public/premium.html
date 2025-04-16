@@ -2,32 +2,7 @@
 <html lang="en">
 <head>
 
-  <script>
-    // Change la date ici pour relancer le vidage de cache
-    const forceCacheClearKey = "premiumCacheClear_20250416";
-  
-    if (!localStorage.getItem(forceCacheClearKey)) {
-      // 🧹 Supprime tous les caches du navigateur (Service Workers, fetch, etc.)
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          for (let name of names) caches.delete(name);
-        });
-      }
-  
-      // 🔄 Vide le localStorage et sessionStorage
-      localStorage.clear();
-      sessionStorage.clear();
-  
-      // ✅ Empêche de répéter le nettoyage
-      localStorage.setItem(forceCacheClearKey, "true");
-  
-      // 💬 Console log
-      console.log("🧼 Cache vidé pour premium.html. Rechargement en cours...");
-  
-      // 🔁 Recharge la page (force un nouveau fetch)
-      location.reload(true);
-    }
-  </script>
+
   
 
 
