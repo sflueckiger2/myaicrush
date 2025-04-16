@@ -127,25 +127,25 @@ if (!pricingContainer) {
 
     plans.forEach(plan => {
         const priceId = STRIPE_MODE === "live" ? plan.stripe_id_live : plan.stripe_id_test;
-
-        const planHtml = `
-        <div class="pricing-card plan ${plan.promo ? "popular" : ""}">
-        ${plan.promo && plan.promo !== "null" && plan.promo !== null && plan.promo.trim() !== "" ? `<div class="promo">${plan.promo}</div>` : ""}
-
-
-            <h3 class="plan-title">${plan.name}</h3>
-        <p class="price">${Number.isInteger(plan.price) ? plan.price : plan.price.toFixed(2)}€ / ${plan.duration}</p>
-
-            <p class="description">${plan.description}</p>
-            <button class="checkout-button" data-price-id="${priceId}" data-plan-type="${plan.name.toLowerCase()}">
-                ${plan.button_text}
-            </button>
-        </div>
-    `;
     
-
-        pricingContainer.innerHTML += planHtml;
+        if (!plan.image) {
+            console.warn(`❌ Aucune image définie pour le plan ${plan.name}`);
+            return;
+        }
+    
+        const imageElement = document.createElement('img');
+        imageElement.src = plan.image;
+        imageElement.alt = `Plan ${plan.name}`;
+        imageElement.style = "cursor: pointer; max-width: 300px; width: 100%; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2);";
+    
+        // Lien vers Stripe
+        imageElement.addEventListener('click', () => {
+            handleCheckout(priceId, plan.name.toLowerCase());
+        });
+    
+        pricingContainer.appendChild(imageElement);
     });
+    
 
     document.querySelectorAll('.checkout-button').forEach(button => {
         button.addEventListener('click', () => {
