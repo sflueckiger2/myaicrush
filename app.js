@@ -133,6 +133,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.json')) {
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Pragma', 'no-cache'); // pour compatibilité IE
+        console.log(`🛑 Cache désactivé pour : ${filePath}`);
+      }
+    }
+  }));
+  
 // Middleware pour servir les fichiers statiques, sauf pour les images
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
