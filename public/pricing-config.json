@@ -44,11 +44,11 @@
 
                 {
                     "name": "Annuel",
-                 "price": 99.00,
+                 "price": 89.00,
                  "duration": "an",
                  "description": "",
                  "button_text": "Choisir le plan annuel",
-                 "stripe_id_live": "price_1REZc2AOSHX0SgbTI3f0NQ1k",
+                 "stripe_id_live": "price_1RElbZAOSHX0SgbTjdEFJX96",
                  "stripe_id_test": "price_1REZdWAOSHX0SgbT3b78t4jM",
                  "promo": "-77% de réduction !",
                  "image": "/images/market/plan-annuel.webp"
@@ -80,19 +80,9 @@
                 "stripe_id_live": "price_1R288qAOSHX0SgbTCgRDHuka",
                 "stripe_id_test": "price_1QP4dCAOSHX0SgbTY5N4QrsW",
                 "promo": null,
-                "image": "/images/market/plan-trimestriel.webp"
-            },
-            {
-                "name": "Annuel",
-                "price": 59.00,
-                "duration": "an",
-                "description": "Économise 50% avec notre abonnement annuel !",
-                "button_text": "Choisir le plan annuel",
-                "stripe_id_live": "price_1R28ADAOSHX0SgbTfwDtAQRQ",
-                "stripe_id_test": "price_1QPRXpAOSHX0SgbT8GfUUtvL",
-                "promo": "-50% de réduction !",
-                "image": "/images/market/plan-trimestriel.webp"
+                "image": "/images/market/plan-mensuel-9-90.webp"
             }
+            
         ]
     }
 }
