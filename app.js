@@ -2159,12 +2159,26 @@ app.post('/api/confirm-payment', async (req, res) => {
         const users = database.collection('users');
 
         const user = await users.findOne({ email });
+
+        if (user.usedStripeSessions && user.usedStripeSessions.includes(sessionId)) {
+            console.warn(`⚠️ Tentative de double utilisation de la session Stripe : ${sessionId}`);
+            return res.status(400).json({ success: false, message: "Cette session a déjà été utilisée." });
+        }
+
+        
         if (!user) {
             return res.status(404).json({ success: false, message: "Utilisateur introuvable en base de données." });
         }
 
-        await users.updateOne({ email }, { $inc: { creditsPurchased: tokensPurchased } });
+        await users.updateOne(
+            { email },
+            {
+              $inc: { creditsPurchased: tokensPurchased },
+              $push: { usedStripeSessions: sessionId }
+            }
+          );
 
+          
         console.log(`✅ ${tokensPurchased} jetons ajoutés avec succès pour ${email}`);
 
         res.json({ success: true, tokens: tokensPurchased });
