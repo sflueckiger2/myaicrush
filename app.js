@@ -1946,7 +1946,7 @@ app.post('/api/tts', async (req, res) => {
         } else {
             // ✅ L'utilisateur a dépassé ses minutes gratuites → Utilisation des crédits
             const paidMinutes = newAudioMinutesUsed - max_free_minutes;
-            const creditsNeeded = Math.floor(paidMinutes); // ❗ Déduction **seulement** quand 1 min complète est atteinte
+            const creditsNeeded = Math.floor(paidMinutes * 5); // ❗ Déduction **seulement** quand 1 min complète est atteinte
             
             console.log(`💳 Minutes payantes accumulées : ${paidMinutes.toFixed(2)} min (${creditsNeeded} crédits nécessaires)`);
 
