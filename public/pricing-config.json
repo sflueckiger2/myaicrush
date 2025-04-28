@@ -4,17 +4,6 @@
             "id": "test_001",
             "variants": [
                 {
-                    "name": "Trimestriel",
-                    "price": 29.90,
-                    "duration": "3 mois",
-                    "description": "",
-                    "button_text": "Choisir le plan trimestriel",
-                    "stripe_id_live": "price_1R4nYHAOSHX0SgbTHziE7pLF",
-                    "stripe_id_test": "price_1R4nYyAOSHX0SgbTWhuc9dy7",
-                    "promo": null,
-                    "image": "/images/market/plan-trimestriel-cheap.webp"
-                },
-                {
                    "name": "Annuel",
                 "price": 59.00,
                 "duration": "an",
@@ -24,6 +13,17 @@
                 "stripe_id_test": "price_1QPRXpAOSHX0SgbT8GfUUtvL",
                 "promo": "-50% de réduction !",
                 "image": "/images/market/plan-annuel-cheap.webp"
+                },
+                {
+                    "name": "Trimestriel",
+                    "price": 29.90,
+                    "duration": "3 mois",
+                    "description": "",
+                    "button_text": "Choisir le plan trimestriel",
+                    "stripe_id_live": "price_1R4nYHAOSHX0SgbTHziE7pLF",
+                    "stripe_id_test": "price_1R4nYyAOSHX0SgbTWhuc9dy7",
+                    "promo": null,
+                    "image": "/images/market/plan-trimestriel-cheap.webp"
                 }
             ]
         },
