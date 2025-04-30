@@ -24,7 +24,7 @@
     },
     "voice": {
       "id": "Yx2a8qp2EqI9c5i8MzBo",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.1
@@ -63,7 +63,7 @@
     },
     "voice": {
       "id": "okqo9UOPxhHFfqftqPXL",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
@@ -96,7 +96,7 @@
     },
     "voice": {
       "id": "KmqhNPEmmOndTBOPk4mJ",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
@@ -135,7 +135,7 @@
     },
     "voice": {
       "id": "x10MLxaAmShMYt7vs7pl",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1
@@ -173,7 +173,7 @@
     },
     "voice": {
       "id": "imRmmzTqlLHt9Do1HufF",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.2
@@ -209,7 +209,7 @@
     },
     "voice": {
       "id": "gllMMawbYGTja23oQ3Vu",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.2
@@ -242,7 +242,7 @@
     },
     "voice": {
       "id": "PB6BdkFkZLbI39GHdnbQ",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.2
@@ -273,7 +273,7 @@
     },
     "voice": {
       "id": "MNiuKciqE420DCRJtdeb",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.2
@@ -306,7 +306,7 @@
     },
     "voice": {
       "id": "6vTyAgAT8PncODBcLjRf",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.0
@@ -341,7 +341,7 @@
     },
     "voice": {
       "id": "LjKPkQHpXCsWoy7Pjq4U",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1
@@ -370,7 +370,7 @@
     },
     "voice": {
       "id": "FvmvwvObRqIHojkEGh5N",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
@@ -405,7 +405,7 @@
     },
     "voice": {
       "id": "9ebwxABSgElm9wISOP0J",
-      "model_id": "eleven_multilingual_v2",
+      "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.2
