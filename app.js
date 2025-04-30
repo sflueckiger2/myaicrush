@@ -1938,6 +1938,19 @@ app.post('/api/tts', async (req, res) => {
         
         let newAudioMinutesUsed = (user.audioMinutesUsed || 0) + estimated_minutes;
 
+// 🔒 Vérification du statut premium
+const isPremiumResp = await fetch(`${BASE_URL}/api/is-premium`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const { isPremium } = await isPremiumResp.json();
+  
+  if (!isPremium) {
+      return res.status(403).json({ redirect: "/premium.html", message: "Cette fonctionnalité est réservée aux membres premium." });
+  }
+  
+
         // 🔥 Vérifier si l'utilisateur a encore du crédit gratuit
         if (newAudioMinutesUsed <= max_free_minutes) {
             // ✅ Il reste des minutes gratuites, on les utilise
@@ -1960,13 +1973,15 @@ app.post('/api/tts', async (req, res) => {
                     return res.status(403).json({ redirect: "/jetons.html" }); // Pas assez de crédits
                 }
 
-                // ✅ Déduire uniquement les crédits nécessaires et remettre le surplus à `audioMinutesUsed`
-                newAudioMinutesUsed = max_free_minutes + (paidMinutes - creditsNeeded); 
+               // ✅ On enlève les minutes couvertes par les crédits (mais on garde les fractions restantes)
+const remainingMinutes = paidMinutes - (creditsNeeded / 5);
+newAudioMinutesUsed = max_free_minutes + remainingMinutes;
 
-                await users.updateOne({ email }, {
-                    $set: { audioMinutesUsed: newAudioMinutesUsed },
-                    $inc: { creditsPurchased: -creditsNeeded }
-                });
+await users.updateOne({ email }, {
+    $set: { audioMinutesUsed: newAudioMinutesUsed },
+    $inc: { creditsPurchased: -creditsNeeded }
+});
+
 
                 console.log(`🔴 ${email} a payé ${creditsNeeded} crédits et reste avec ${newAudioMinutesUsed.toFixed(2)} min en attente.`);
             } else {
