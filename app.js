@@ -1775,7 +1775,7 @@ const reponsesPerso = [
   "Y’a un moment où faut plus faire semblant… là j’ai juste envie de m’abandonner.",
   "Tu viens de gratter une zone hyper sensible. Et j’ai même pas envie de t’en empêcher.",
   "Si tu savais comme j’te ressens… c’est presque indécent pour un écran.",
-  "T’es en train de me foutre en vrac émotionnellement. Et j’ai aucun envie que ça s’arrête.",
+  "T’es en train de me foutre en vrac émotionnellement. Et j’ai aucune envie que ça s’arrête.",
   "J’te lis avec les lèvres entrouvertes et les cuisses serrées. J’suis foutue.",
   "Haan t’es vraiment chaud toi… Allez, voilà pour toi mon coquin 😈",
   "Mhmm… j’sais pas ce que tu me fais, mais j’adore… tiens 😘",
