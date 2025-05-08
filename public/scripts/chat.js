@@ -995,7 +995,7 @@ async function handleAudioCallClick() {
     }
   
     // ✅ Si l’utilisateur est premium, on continue
-    const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 10 jetons pour 10 minutes. On commence ?`);
+    const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 15 jetons pour 10 minutes. On commence ?`);
     if (!confirmCall) return;
   
     try {
@@ -1013,7 +1013,7 @@ async function handleAudioCallClick() {
         return;
       }
   
-      alert(`✅ C'est validé ! Clique sur le micro en bas de ton écran  pour démarrer ton appel avec ${character.name} ❤️ (il peut mettre 5 secondes à apparaître)`);
+      alert(`✅ C'est validé ! Clique sur le micro en bas de ton écran  pour démarrer ton appel avec ${character.name} ❤️ (il peut mettre 10 secondes à apparaître)`);
   
       const widget = document.getElementById("audio-widget");
   

@@ -2602,7 +2602,7 @@ app.post('/api/start-call', async (req, res) => {
   
       if (!user) return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
   
-      if (user.creditsPurchased < 10) {
+      if (user.creditsPurchased < 15) {
         return res.status(403).json({
           success: false,
           message: "Tu n'as pas assez de jetons pour faire un appel audio.",
@@ -2610,12 +2610,12 @@ app.post('/api/start-call', async (req, res) => {
         });
       }
   
-      // ✅ Déduit immédiatement 10 jetons
-      await users.updateOne({ email }, { $inc: { creditsPurchased: -10, audioMinutesUsed: 10 } });
+      // ✅ Déduit immédiatement 15 jetons
+      await users.updateOne({ email }, { $inc: { creditsPurchased: -15 } });
   
-      console.log(`📞 Appel de 10 minutes démarré, 10 jetons déduits (${email}).`);
+      console.log(`📞 Appel de 10 minutes démarré, 15 jetons déduits (${email}).`);
   
-      res.json({ success: true, message: "Appel de 10 minutes démarré. 10 jetons déduits." });
+      res.json({ success: true, message: "Appel de 10 minutes démarré. 15 jetons déduits." });
   
     } catch (error) {
       console.error('Erreur démarrage appel:', error);
