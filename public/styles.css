@@ -15,6 +15,7 @@ body {
   justify-content: flex-start;
   min-height: 100vh;
   margin: 0;
+  padding-top: 60px; /* espace pour laisser la place à la bannière */
 }
 
 /* Centrer le header en haut de la page */
@@ -1552,3 +1553,45 @@ input:checked + .slider:before {
 
 
 
+/* BANNIERE PREMIUM */
+
+
+  .dynamic-banner {
+    position: fixed;
+    top: 20px; /* ✅ en dessous du menu (ajuste si nécessaire) */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(to right, #8a2be2, #dd4d9d);
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    z-index: 1; /* assez haut pour rester visible */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+
+.dynamic-banner .plan-icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.dynamic-banner .plan-text {
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.dynamic-banner .plan-discount {
+  background-color: #ff4b9b;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: white;
+}

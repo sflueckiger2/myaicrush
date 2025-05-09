@@ -58,7 +58,9 @@
     </script>
   </head>
   <body>
-  
+    <div id="cheaper-plan-dynamic-banner"></div>
+    
+    
     <nav class="menu">
       <button id="menu-toggle" class="menu-toggle">
         <span class="hamburger"></span>
@@ -187,6 +189,7 @@
     
     <script type="module" src="./scripts/main.js"></script>
     <script type="module" src="./scripts/menu.js"></script>
+    
 
     <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
     <script>
@@ -242,6 +245,49 @@
       document.cookie = `forcedTp=${tp}; expires=${expiration.toUTCString()}; path=/`;
     }
   })();
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const container = document.getElementById("cheaper-plan-dynamic-banner");
+    const chatBox = document.getElementById("chat-box");
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || !user.email || !container || !chatBox) return;
+
+    try {
+      const res = await fetch(`${window.location.origin}/api/is-premium`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email })
+      });
+
+      const { isPremium } = await res.json();
+
+      const banner = document.createElement("a");
+      banner.className = "dynamic-banner";
+      banner.href = isPremium ? "jetons.html" : "premium.html";
+      banner.innerHTML = `
+        ${isPremium
+          ? `<i class="fas fa-coins plan-icon"></i>
+             <span class="plan-text">Recharger ses jetons</span>
+             <span class="plan-discount">➡️ Jetons</span>`
+          : `<span class="plan-icon">💎</span>
+             <span class="plan-text">Premium</span>
+             <span class="plan-discount">50% de réduction</span>`}
+      `;
+
+      container.appendChild(banner);
+
+      // ✅ Observer si le chat est actif pour masquer/afficher la bannière
+      const observer = new MutationObserver(() => {
+        banner.style.display = (chatBox.style.display === "flex") ? "none" : "flex";
+      });
+
+      observer.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
+
+    } catch (err) {
+      console.error("❌ Erreur bannière dynamique :", err);
+    }
+  });
 </script>
 
 
