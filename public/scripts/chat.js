@@ -995,7 +995,7 @@ async function handleAudioCallClick() {
     }
   
     // ✅ Si l’utilisateur est premium, on continue
-    const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 15 jetons pour 10 minutes. On commence ?`);
+    const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 20 jetons pour 10 minutes. On commence ?`);
     if (!confirmCall) return;
   
     try {
