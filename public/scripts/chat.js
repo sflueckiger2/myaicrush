@@ -70,7 +70,7 @@ if (nymphoToggle) {
     if (nymphoToggle.checked) {
       if (!alreadyUnlocked) {
         // Confirmation UNIQUEMENT si pas encore acheté
-        const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 10 jetons. Es-tu sûr ? (valable 24h)");
+        const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 25 jetons. Es-tu sûr ? (valable 24h)");
         if (!confirmation) {
           nymphoToggle.checked = false;
           return;

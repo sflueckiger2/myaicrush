@@ -1258,7 +1258,7 @@ app.post('/api/activate-nympho-mode', async (req, res) => {
         }
 
         // ❌ Pas assez de jetons
-        if (jetons < 10) {
+        if (jetons < 25) {
             return res.status(403).json({ success: false, message: "Pas assez de jetons", redirect: "/jetons.html" });
         }
 
@@ -1269,7 +1269,7 @@ app.post('/api/activate-nympho-mode', async (req, res) => {
             { email },
             {
                 $set: { [`nymphoUnlocked.${characterName}`]: expiresAt },
-                $inc: { creditsPurchased: -10 }
+                $inc: { creditsPurchased: -25 }
             }
         );
 
@@ -2602,7 +2602,7 @@ app.post('/api/start-call', async (req, res) => {
   
       if (!user) return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
   
-      if (user.creditsPurchased < 15) {
+      if (user.creditsPurchased < 20) {
         return res.status(403).json({
           success: false,
           message: "Tu n'as pas assez de jetons pour faire un appel audio.",
@@ -2610,12 +2610,12 @@ app.post('/api/start-call', async (req, res) => {
         });
       }
   
-      // ✅ Déduit immédiatement 15 jetons
-      await users.updateOne({ email }, { $inc: { creditsPurchased: -15 } });
+      // ✅ Déduit immédiatement 20 jetons
+      await users.updateOne({ email }, { $inc: { creditsPurchased: -20 } });
   
-      console.log(`📞 Appel de 10 minutes démarré, 15 jetons déduits (${email}).`);
+      console.log(`📞 Appel de 10 minutes démarré, 20 jetons déduits (${email}).`);
   
-      res.json({ success: true, message: "Appel de 10 minutes démarré. 15 jetons déduits." });
+      res.json({ success: true, message: "Appel de 10 minutes démarré. 20 jetons déduits." });
   
     } catch (error) {
       console.error('Erreur démarrage appel:', error);
