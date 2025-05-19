@@ -17,13 +17,17 @@ const tf = require('@tensorflow/tfjs'); // Version allégée
 const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
 const { createCanvas, loadImage } = require('canvas');
 
-let nsfwModel;
-async function loadNSFWModel() {
-    nsfwModel = await nsfw.load();
-    console.log("🔥 Modèle NSFW chargé !");
+let nsfwModel = null;
+
+async function getNSFWModel() {
+    if (!nsfwModel) {
+        console.log("📦 Chargement du modèle NSFW à la volée...");
+        nsfwModel = await nsfw.load();
+        console.log("✅ Modèle NSFW chargé !");
+    }
+    return nsfwModel;
 }
 
-loadNSFWModel(); // Appel au démarrage
 
 const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -231,7 +235,9 @@ async function analyzeImageNsfw(imageBuffer) {
         ctx.drawImage(image, 0, 0, image.width, image.height);
 
         // 🔍 Prédiction NSFW
-        const predictions = await nsfwModel.classify(canvas);
+        const model = await getNSFWModel();
+const predictions = await model.classify(canvas);
+
 
         // 🧠 Tri des résultats pour inspection
         const sorted = predictions.sort((a, b) => b.probability - a.probability);
