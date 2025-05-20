@@ -17,7 +17,19 @@ const tf = require('@tensorflow/tfjs'); // Version allégée
 const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
 const { createCanvas, loadImage } = require('canvas');
 
+// 📦 Chargement du mapping Cloudflare (local path → CDN URL)
+let cloudflareMap = {};
+try {
+    const raw = fs.readFileSync(path.join(__dirname, 'cloudflare-map.json'), 'utf8');
+    cloudflareMap = JSON.parse(raw);
+    console.log("✅ Mapping Cloudflare chargé !");
+} catch (err) {
+    console.warn("⚠️ Impossible de charger cloudflare-map.json :", err.message);
+}
+
+
 let nsfwModel = null;
+
 
 async function getNSFWModel() {
     if (!nsfwModel) {
@@ -450,13 +462,21 @@ let firstFreeImageSent = new Map(); // Stocke les utilisateurs qui ont déjà re
 // Générer un token sécurisé pour accéder à l'image
 function generateImageToken(imagePath, isBlurred) {
   const token = crypto.randomBytes(20).toString('hex');
-  imageTokens.set(token, { imagePath, isBlurred });
 
-  // Supprimer le token après 10 minutes
+  const cloudflareUrl = cloudflareMap[imagePath] || null;
+
+  imageTokens.set(token, {
+    imagePath,
+    isBlurred,
+    cloudflareUrl
+  });
+
+  // Supprimer après 10 min
   setTimeout(() => imageTokens.delete(token), 10 * 60 * 1000);
 
   return token;
 }
+
 
 
 
@@ -1052,8 +1072,9 @@ if (isNymphoMode) {
 
       // 🔥 Sélection des fichiers en fonction du mode
       const mediaFiles = fs.readdirSync(imageDir).filter(file => 
-          isGifMode ? file.endsWith('.gif') : !file.endsWith('.gif')
-      );
+    isGifMode ? file.endsWith('_animated.webp') : (!file.endsWith('_animated.webp') && file.endsWith('.webp'))
+);
+
 
       if (mediaFiles.length === 0) {
           console.error(`⚠️ Aucun fichier trouvé dans ${imageDir}`);
@@ -1123,7 +1144,16 @@ app.get('/get-image/:token', async (req, res) => {
       return res.status(403).send('Access Denied'); // Répondre une seule fois
     }
 
-    const { imagePath, isBlurred } = imageData;
+        const { imagePath, isBlurred, cloudflareUrl } = imageData;
+
+    // 🔁 Si l’image n’est pas floutée et a une version Cloudflare → Rediriger
+    if (!isBlurred && cloudflareUrl) {
+        console.log(`🔁 Redirection CDN Cloudflare : ${cloudflareUrl}`);
+        return res.redirect(302, cloudflareUrl);
+    }
+
+
+
     console.log(`📸 Chargement de l'image : ${imagePath} (Floutée : ${isBlurred})`);
 
     if (!fs.existsSync(imagePath)) {
@@ -1131,7 +1161,15 @@ app.get('/get-image/:token', async (req, res) => {
       return res.status(404).send('Image non trouvée');
     }
 
-    let contentType = imagePath.endsWith('.gif') ? 'image/gif' : 'image/jpeg';
+   let contentType;
+if (imagePath.endsWith('.webp')) {
+  contentType = 'image/webp';
+} else if (imagePath.endsWith('.jpg') || imagePath.endsWith('.jpeg')) {
+  contentType = 'image/jpeg';
+} else {
+  contentType = 'application/octet-stream';
+}
+
 
     let imageBuffer;
     

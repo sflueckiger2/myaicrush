@@ -360,7 +360,10 @@ messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en de
 
     // ✅ Ajouter l'image en dessous du texte
     const imageElement = document.createElement('img');
-    imageElement.src = `${BASE_URL}${imageUrl}`;
+  imageElement.src = imageUrl.startsWith('/get-image/')
+  ? imageUrl
+  : `/get-image/${imageUrl.split('/').pop()}`;
+
     imageElement.alt = 'Image générée par l\'IA';
     imageElement.classList.add('chat-image');
 
