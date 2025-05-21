@@ -29,7 +29,8 @@ export function initializeUIEvents(sendBtn, userInput, addUserMessageHandler) {
 
 // ✅ Générer dynamiquement les options de chat avec les badges "Nouvelle" et "Vidéos disponibles"
 
-export function generateChatOptions(characters) {
+export function generateChatOptions(characters, isPremium = false) {
+
     const chatOptions = document.querySelector('.chat-options');
     chatOptions.innerHTML = ''; // Nettoyer le conteneur avant d'ajouter les options
 
@@ -110,29 +111,30 @@ badgesToShow.forEach(({ text, class: className }, index) => {
         card.appendChild(content);
         chatOptions.appendChild(card);
 
-                // ✅ Insérer la première bannière après la 2e IA
-        if (chatOptions.children.length === 2) {
-            const banner1 = document.createElement("div");
-            banner1.className = "horizontal-banner";
-            banner1.innerHTML = `
-                <a href="premium.html" target="_blank">
-                    <img src="images/banners/banner1.webp" alt="Premium" class="banner-image">
-                </a>
-            `;
-            chatOptions.appendChild(banner1);
-        }
+       // ✅ Insérer la première bannière après la 2e IA
+if (chatOptions.children.length === 2) {
+    const banner1 = document.createElement("div");
+    banner1.className = "horizontal-banner";
+    banner1.innerHTML = `
+        <a href="${isPremium ? 'jetons.html' : 'premium.html'}" target="_blank">
+            <img src="images/banners/${isPremium ? 'banner1-premium' : 'banner1'}.webp" alt="Bannière 1" class="banner-image">
+        </a>
+    `;
+    chatOptions.appendChild(banner1);
+}
 
-        // ✅ Insérer la deuxième bannière après la 6e IA
-        if (chatOptions.children.length === 7) {
-            const banner2 = document.createElement("div");
-            banner2.className = "horizontal-banner";
-            banner2.innerHTML = `
-                <a href="jetons.html" target="_blank">
-                    <img src="images/banners/banner2.webp" alt="Jetons" class="banner-image">
-                </a>
-            `;
-            chatOptions.appendChild(banner2);
-        }
+// ✅ Insérer la deuxième bannière après la 6e IA
+if (chatOptions.children.length === 7) {
+    const banner2 = document.createElement("div");
+    banner2.className = "horizontal-banner";
+    banner2.innerHTML = `
+        <a href="${isPremium ? 'jetons.html' : 'premium.html'}" target="_blank">
+            <img src="images/banners/${isPremium ? 'banner2-premium' : 'banner2'}.webp" alt="Bannière 2" class="banner-image">
+        </a>
+    `;
+    chatOptions.appendChild(banner2);
+}
+
 
     });
 }
