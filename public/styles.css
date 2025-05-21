@@ -1605,6 +1605,18 @@ form label {
   margin-right: auto;
 }
 
+.horizontal-banner {
+  width: 100%;
+  margin: 10px 0;
+  grid-column: 1 / -1; /* 👉 occupe toute la ligne en mode grid */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 
+}
 
+.horizontal-banner img.banner-image {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+}
 

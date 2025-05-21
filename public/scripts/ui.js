@@ -109,6 +109,31 @@ badgesToShow.forEach(({ text, class: className }, index) => {
         card.appendChild(img);
         card.appendChild(content);
         chatOptions.appendChild(card);
+
+                // ✅ Insérer la première bannière après la 2e IA
+        if (chatOptions.children.length === 2) {
+            const banner1 = document.createElement("div");
+            banner1.className = "horizontal-banner";
+            banner1.innerHTML = `
+                <a href="premium.html" target="_blank">
+                    <img src="images/banners/banner1.webp" alt="Premium" class="banner-image">
+                </a>
+            `;
+            chatOptions.appendChild(banner1);
+        }
+
+        // ✅ Insérer la deuxième bannière après la 6e IA
+        if (chatOptions.children.length === 7) {
+            const banner2 = document.createElement("div");
+            banner2.className = "horizontal-banner";
+            banner2.innerHTML = `
+                <a href="jetons.html" target="_blank">
+                    <img src="images/banners/banner2.webp" alt="Jetons" class="banner-image">
+                </a>
+            `;
+            chatOptions.appendChild(banner2);
+        }
+
     });
 }
 
