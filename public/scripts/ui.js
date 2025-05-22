@@ -55,17 +55,17 @@ if (character.hasVideos) {
 let badgesToShow = [];
 
 if (character.new) {
-    badgesToShow.push({ text: "Nouvelle sur MyAiCrush", class: "new-badge" });
+    badgesToShow.push({ text: "Nouvelle", class: "new-badge" });
 }
 if (character.hasVideos) {
-    badgesToShow.push({ text: "🎥 Vidéos disponibles", class: "video-badge" });
+    badgesToShow.push({ text: "🎥 Vidéos", class: "video-badge" });
 }
 if (character.hasNymphoMode) {
-    badgesToShow.push({ text: "🥵 Mode Nympho", class: "nympho-badge" });
+    badgesToShow.push({ text: "🥵 Nympho", class: "nympho-badge" });
 }
 
 if (character.hasAudioCall) {
-    badgesToShow.push({ text: "📞 Appel audio", class: "call-audio-badge" });
+    badgesToShow.push({ text: "📞 Appel", class: "call-audio-badge" });
 }
 
 // Bordure prioritaire (vert > rouge > violet)
@@ -85,7 +85,7 @@ badgesToShow.forEach(({ text, class: className }, index) => {
     const badge = document.createElement('div');
     badge.classList.add('character-badge', className);
     badge.textContent = text;
-    badge.style.top = `${10 + (index * 28)}px`; // empile les badges verticalement
+    badge.style.top = `${10 + (index * 25)}px`; // empile les badges verticalement
     card.appendChild(badge);
 });
 
