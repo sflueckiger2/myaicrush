@@ -34,7 +34,7 @@ body {
 /* Style du conteneur principal */
 .container {
   background-color: #2b2b3d;
-  padding: 20px;
+  padding: 5px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   max-width: 700px;
@@ -72,8 +72,14 @@ p {
 /* Style pour la section des options de chat */
 .chat-options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* ✅ 2 colonnes dès le mobile */
-  gap: 15px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px; /* Par défaut sur mobile */
+}
+
+@media (min-width: 768px) {
+  .chat-options {
+    gap: 15px; /* Plus d’espace sur desktop */
+  }
 }
 
 .chat-card {
