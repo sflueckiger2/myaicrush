@@ -5,12 +5,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const html = await res.text();
     document.body.insertAdjacentHTML("afterbegin", html);
 
-    // 🔘 Ajout des événements une fois le menu inséré
+    // 🎯 Sélection des éléments
     const toggleButton = document.getElementById("menu-toggle");
     const closeButton = document.getElementById("menu-close");
     const menu = document.querySelector(".menu");
     const menuItems = document.getElementById("menu-items");
 
+    // 🎬 Ajout des événements d'ouverture/fermeture
     toggleButton?.addEventListener("click", () => {
       menu.classList.add("open");
       menuItems.classList.add("visible");
@@ -21,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       menuItems.classList.remove("visible");
     });
 
-    // 🌟 Bannière premium ou jetons
+    // 💎 Bannière premium ou jetons
     const bannerContainer = document.getElementById("menu-banner-container");
     const user = JSON.parse(localStorage.getItem("user"));
     if (user?.email && bannerContainer) {
@@ -43,6 +44,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
       bannerContainer.appendChild(banner);
     }
+
+    // 👀 Observer l'ouverture du chat pour cacher le menu
+    const chatBox = document.getElementById("chat-box");
+
+    if (chatBox && toggleButton && menu) {
+      const observer = new MutationObserver(() => {
+        const isChatOpen = getComputedStyle(chatBox).display === "flex";
+
+        // Masquer le bouton et le menu quand le chat est ouvert
+        toggleButton.style.display = isChatOpen ? "none" : "block";
+        menu.style.display = isChatOpen ? "none" : "flex";
+
+        // Fermer le menu si un chat démarre
+        if (isChatOpen) {
+          menu.classList.remove("open");
+          menuItems.classList.remove("visible");
+        }
+      });
+
+      observer.observe(chatBox, { attributes: true, attributeFilter: ["style"] });
+    }
+
   } catch (err) {
     console.error("❌ Erreur chargement menu :", err);
   }
