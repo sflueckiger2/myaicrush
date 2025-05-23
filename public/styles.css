@@ -431,59 +431,146 @@ p {
 
 /* Style du menu */
 
-/* Style général du menu */
+/* ==== Nouveau menu  ==== */
+
+
 .menu {
-  position: fixed; /* Fixe le menu en haut de la page */
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  z-index: 1000; /* Le place au-dessus des autres éléments */
-
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 10px 0;
+  width: 240px;
+  height: 100vh;
+  background-color: #191a2a;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+   transform: translateX(-100%); /* 💡 menu caché au départ */
+  transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1); /* 💃 glissement sexy */
+   background: rgba(25, 26, 42, 0.5); /* ✅ fond sombre semi-transparent */
+  backdrop-filter: blur(12px);       /* ✅ effet de flou sexy */
+  
   
 }
 
+.menu.open {
+  transform: translateX(0);
+  z-index:3000;
+}
+
+.menu-toggle {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1100;
+  background: #191a2a;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.hamburger {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  position: relative;
+}
+.hamburger::before,
+.hamburger::after {
+  content: "";
+  width: 25px;
+  height: 3px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  position: absolute;
+  left: 0;
+  transition: transform 0.3s ease;
+}
+.hamburger::before {
+  top: -8px;
+}
+.hamburger::after {
+  top: 8px;
+}
+
+.menu-close {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 3001;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: background 0.3s;
+}
+
+.menu-close:hover {
+ background: none; 
+}
+
+.menu.open + #menu-toggle {
+  display: none;
+}
+
+
 .menu-items {
   list-style: none;
-  margin: 0;
-  padding: 0;
+  padding: 0 20px;
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  margin-top: 40px;
 }
 
 .menu-items li {
-  display: inline;
+  width: 100%;
 }
 
 .menu-items li a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0px 0px 17px;
+  color: white;
   text-decoration: none;
-  color: #ffffff;
   font-size: 16px;
-  padding: 10px 15px;
-  transition: background-color 0.3s, color 0.3s;
+  border-radius: 12px;
+  transition: background-color 0.3s ease;
 }
-
 .menu-items li a:hover {
-  background-color: #dd4d9d;
-  color: #ffffff;
-  border-radius: 5px;
+  
 }
 
-/* Bouton hamburger pour mobile */
-.menu-toggle {
-  display: block;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 10px;
+.menu-items li a i {
   font-size: 18px;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
+  min-width: 20px;
 }
+
+/* Bannière dans le menu */
+#menu-banner-container {
+  margin-top: auto;
+  padding: 0px;
+  width: 100%;
+}
+
+.menu-banner-image {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+
 
 .hamburger {
   display: block;
@@ -515,9 +602,7 @@ p {
 }
 
 /* Masquer le menu par défaut sur mobile */
-.menu-items.hidden {
-  display: none;
-}
+
 
 .menu-items.visible {
   display: flex;
@@ -527,14 +612,14 @@ p {
   top: 50px;
   left: 0;
   right: 0;
-  background-color: #2b2b3d;
   padding: 10px 0;
 }
+
 
 /* Adaptation pour mobile */
 @media (max-width: 768px) {
   .menu-items {
-    display: none;
+    
     flex-direction: column;
   }
 
@@ -546,7 +631,6 @@ p {
 
 @media (min-width: 768px) {
   .menu-items {
-    display: none; /* Masqué par défaut sur desktop également */
     flex-direction: column; /* Conserve la disposition en colonne */
   }
 
