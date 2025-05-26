@@ -33,15 +33,17 @@ body {
 
 /* Style du conteneur principal */
 .container {
-  background-color: #2b2b3d;
-  padding: 5px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  max-width: 700px;
+  background: rgba(25, 26, 42, 0.6);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  padding: 30px 20px;
+  max-width: 750px;
+  margin: 0 auto;
   text-align: center;
-  width: 100%;
-  margin: 0 auto; /* Centre la .container horizontalement */
 }
+
 
 /* Mode plein écran pour le conteneur */
 .container.fullscreen {
@@ -742,11 +744,15 @@ p {
 }
 
 .p-title {
-  font-size: 1.5em;
-  color: white;
-  margin-bottom: 10px;
-  
+  font-size: 2em;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
 }
+
 
 .p-description {
   font-size: 1.1em;
@@ -778,14 +784,16 @@ text-align: left;
 }
 
 .benefit-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background-color: #dd4d9d;
+  background: linear-gradient(145deg, #ff4b9b, #8a2be2);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
   display: inline-block;
   margin-right: 10px;
   position: relative;
 }
+
 
 .benefit-icon::before {
   content: '✔';
@@ -986,19 +994,27 @@ text-align: left;
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #16ca00;
+  color: #ffffff; /* blanc */
   font-size: 1em;
   text-align: center;
+  opacity: 0.85; /* plus doux */
 }
 
 .security-item i {
   font-size: 36px;
   margin-bottom: 10px;
+  background: linear-gradient(to right, #8a2be2, #dd4d9d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 6px rgba(221, 77, 157, 0.6);
+  transition: transform 0.3s ease;
 }
 
+
 .security-item p {
-  margin: 0;
-  font-size: 0.9em;
+  color: #ffffff;
+  font-size: 0.95em;
+  font-weight: 500;
 }
 
 /* Section des garanties */
@@ -1724,11 +1740,13 @@ form label {
 }
 
 .testimonial-title {
-  font-size: 1.5em;
-  color: white;
+  font-size: 1.8em;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
   margin-bottom: 30px;
 }
-
 .testimonial-grid {
   display: grid;
   gap: 20px;
@@ -1748,13 +1766,14 @@ form label {
 }
 
 .testimonial-card {
-  background-color: #393956;
+  background-color: rgba(57, 57, 86, 0.85);
   border-radius: 12px;
   padding: 20px;
   color: #ffffff;
   text-align: left;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .testimonial-stars {
@@ -1774,4 +1793,68 @@ form label {
   font-weight: bold;
   font-size: 0.85em;
   text-align: right;
+}
+
+
+.faq-section {
+  max-width: 700px;
+  margin: 60px auto;
+  padding: 0 20px;
+  text-align: left;
+}
+
+.faq-title {
+  font-size: 1.8em;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+  margin-bottom: 30px;
+  text-align: center;
+  
+}
+
+.faq-item {
+  margin-bottom: 15px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #2b2b3d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.faq-question {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.1em;
+  color: white;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #393956;
+  transition: background 0.3s;
+}
+
+.faq-question:hover {
+  background-color: #4b4b6d;
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  background-color: #2b2b3d;
+  transition: max-height 0.4s ease;
+  padding: 0 15px;
+}
+
+.faq-answer.open {
+  padding: 15px;
+  max-height: 500px;
+}
+
+.faq-answer p {
+  color: #ccc;
+  font-size: 1em;
+  margin: 0;
 }

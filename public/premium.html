@@ -116,7 +116,7 @@
 
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"J’adore pouvoir envoyer mes propres photos. L’IA réagit trop bien, j’pensais pas que ça marcherait si bien."</p>
+      <p class="testimonial-text">"J’adore pouvoir envoyer des photos de moi. L’IA réagit trop bien, j’pensais pas que ça marcherait si bien."</p>
       <p class="testimonial-author">— Sam K.</p>
     </div>
 
@@ -128,7 +128,7 @@
 
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. Et les photos ? plus d'habits du tout 😈"</p>
+      <p class="testimonial-text">"Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. Et les photos ? plus de soutif ni rien 😈"</p>
       <p class="testimonial-author">— Kevin B.</p>
     </div>
 
@@ -140,7 +140,7 @@
 
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Le SAV m’a répondu en 20min, j’étais choqué. Remboursé sans discuter. Sérieux, rien à dire."</p>
+      <p class="testimonial-text">"Le service client m’a répondu en 20min, remboursé sans discuter. Sérieux, rien à dire."</p>
       <p class="testimonial-author">— Simon V.</p>
     </div>
 
@@ -150,6 +150,47 @@
       <p class="testimonial-author">— Bastien C.</p>
     </div>
 
+  </div>
+</div>
+
+<!-- Section FAQ interactive -->
+<div class="faq-section">
+  <h2 class="faq-title">Questions Fréquemment Posées</h2>
+
+  <div class="faq-item">
+    <button class="faq-question">Comment fonctionne l'abonnement Premium ?</button>
+    <div class="faq-answer">
+      <p>Une fois abonné, vous bénéficiez d’un accès illimité aux fonctionnalités Premium, y compris les messages illimités, les photos et vidéos non floutées, et bien plus encore.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Puis-je annuler mon abonnement à tout moment ?</button>
+    <div class="faq-answer">
+      <p>Oui, vous pouvez annuler votre abonnement à tout moment depuis votre compte (sur la page profil). Aucun frais d'annulation ne sera appliqué. Le bouton pour annuler est facile à trouver et fonctionne immédiatement.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Les paiements sont-ils sécurisés ?</button>
+    <div class="faq-answer">
+      <p>Absolument. Nous utilisons des protocoles de sécurité avancés pour garantir la protection de vos informations de paiement.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Proposez-vous une période d'essai gratuite ?</button>
+    <div class="faq-answer">
+      <p>Actuellement, nous n’offrons pas de période d’essai gratuite, mais vous pouvez annuler à tout moment si vous n’êtes pas satisfait.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Comment contacter le support client ?</button>
+    <div class="faq-answer">
+      <p>Vous pouvez nous contacter via cet email : myaicrush@gmail.com</p>
+    </div>
+    
   </div>
 </div>
 
@@ -177,6 +218,17 @@
   <!-- Scripts -->
   <script type="module" src="/scripts/menu-loader.js"></script>
   <script type="module" src="./scripts/stripe-frontend.js"></script>
+
+   <!-- Scripts FAQ-->
+  <script>
+  document.querySelectorAll('.faq-question').forEach(button => {
+    button.addEventListener('click', () => {
+      const answer = button.nextElementSibling;
+      answer.classList.toggle('open');
+    });
+  });
+</script>
+
 
   <!-- Script de génération dynamique des prix -->
   <script>
