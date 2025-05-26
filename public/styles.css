@@ -57,7 +57,7 @@ body {
 
 /* Style du titre */
 h1 {
-  color: #dd4d9d;
+  color: white;
   font-size: 24px;
   margin-bottom: 10px;
 }
@@ -743,7 +743,7 @@ p {
 
 .p-title {
   font-size: 1.5em;
-  color: #dd4d9d;
+  color: white;
   margin-bottom: 10px;
   
 }
@@ -1099,7 +1099,7 @@ text-align: left;
 /* Titre des sections */
 .profile-section h2 {
   font-size: 1.5rem;
-  color: #dd4d9d; /* Votre couleur principale */
+  color: white ; /* Votre couleur principale */
   margin-bottom: 10px;
 }
 
@@ -1713,3 +1713,65 @@ form label {
   display: block;
 }
 
+
+
+/* Section Témoignages */
+.testimonial-section {
+  margin: 50px auto;
+  max-width: 900px;
+  padding: 20px;
+  text-align: center;
+}
+
+.testimonial-title {
+  font-size: 1.5em;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.testimonial-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+  .testimonial-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1000px) {
+  .testimonial-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.testimonial-card {
+  background-color: #393956;
+  border-radius: 12px;
+  padding: 20px;
+  color: #ffffff;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.testimonial-stars {
+  color: gold;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.testimonial-text {
+  font-style: italic;
+  font-size: 0.95em;
+  margin-bottom: 10px;
+}
+
+.testimonial-author {
+  color: #ccc;
+  font-weight: bold;
+  font-size: 0.85em;
+  text-align: right;
+}
