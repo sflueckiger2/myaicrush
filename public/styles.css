@@ -133,20 +133,30 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  height: 100vh; /* Prend toute la hauteur par défaut */
-  overflow-y: auto; /* Permet de faire défiler le contenu si nécessaire */
-  position: relative; /* Permet des ajustements dynamiques */
-  transition: height 0.3s ease; /* Transition fluide pour le changement de hauteur */
+  height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  transition: height 0.3s ease;
+  background: transparent;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(221, 77, 157, 0.08);
+  z-index: 1; /* ✅ Place le contenu au-dessus du ::before */
 }
+
+
+
 
 /* En-tête du chat */
 #chat-header {
   display: flex;
   align-items: center;
   padding-bottom: 10px;
+  padding-top: 10px;
   border-bottom: 1px solid #444;
   margin-bottom: 10px;
+      background: linear-gradient(to right, rgba(43, 43, 61, 0.8), rgba(30, 30, 47, 0.4));
 }
+
 #back-btn {
   background: none;
   border: none;
@@ -167,32 +177,45 @@ p {
 }
 
 .chat-profile-pic {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #dd4d9d, #8a2be2);
+  padding: 2px;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(221, 77, 157, 0.6);
   margin-right: 10px;
-  border: 2px solid #dd4d9d;
-  object-fit: cover; /* Maintient le ratio de l'image */
 }
 
 #chat-name {
-  font-size: 1.2em;
-  color: #dd4d9d;
+  font-size: 1.3em;
+  font-weight: bold;
+  background: white;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-left: 5px;
 }
+
 
 /* Style des messages */
 #messages {
-  display: flex; /* Active le Flexbox */
-  flex-direction: column; /* Empile les messages verticalement */
-  gap: 10px; /* Ajoute un espacement entre chaque message */
-  flex: 1; /* Prend tout l'espace disponible entre l'en-tête et la zone de saisie */
-  overflow-y: auto; /* Permet le défilement vertical si nécessaire */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
   padding: 10px;
-  background-color: #2e2e44; /* Couleur de fond */
-  border-radius: 8px; /* Coins arrondis */
   margin-bottom: 10px;
-  padding-bottom: 80px; /* Maintient un espace en bas pour la saisie */
+  padding-bottom: 80px;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.02);
 }
+
+#messages {
+  position: relative;
+  z-index: 1;
+}
+
 .user-message, .bot-message {
   max-width: 70%;
   padding: 10px;
@@ -204,44 +227,64 @@ p {
 }
 
 .user-message {
-  background-color: #dd4d9d!important;
+  background: linear-gradient(135deg, #dd4d9d, #8a2be2);
   color: #ffffff;
   align-self: flex-end;
   text-align: right;
+  box-shadow: 0 0 10px rgba(221, 77, 157, 0.3);
 }
 
 .bot-message {
-  background-color: #393956;
+  background: linear-gradient(to bottom right, #2f2f4f, #3d2d5a);
   color: #ffffff;
   align-self: flex-start;
   text-align: left;
   margin-right: auto;
+  border-radius: 20px;
+  padding: 12px 16px;
+  max-width: 75%;
+  font-size: 0.9em;
+  position: relative;
+  
+  transition: box-shadow 0.3s ease;
 }
+
+
+
 
 /* Zone de saisie */
 #input-area {
-  position: fixed; /* Fixe en bas par défaut */
+  position: fixed;
   bottom: 0;
   width: 100%;
-  background-color: #2e2e44;
+  background-color: rgba(46, 46, 68, 0.4);
   padding: 10px;
   display: flex;
   gap: 10px;
   align-items: center;
-  z-index: 1000; /* Toujours visible au-dessus */
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
 #user-input {
   flex: 1;
   padding: 10px;
   border-radius: 20px;
-  border: 1px solid #555;
+  border: 1px solid #dd4d9d;
   background-color: #1e1e2f;
   color: #ffffff;
+  box-shadow: 0 0 8px rgba(221, 77, 157, 0.15);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#user-input:focus {
+  border-color: #ff78b0;
+  outline: none;
+  box-shadow: 0 0 12px rgba(255, 120, 176, 0.6);
 }
 
 #send-btn {
-  background-color: #dd4d9d;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
   border: none;
   padding: 10px;
   border-radius: 50%;
@@ -253,12 +296,15 @@ p {
   color: #ffffff;
   font-size: 1.5em;
   cursor: pointer;
+  box-shadow: 0 0 8px rgba(221, 77, 157, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 #send-btn:hover {
-  background-color: #dd4d9d;
   transform: scale(1.1);
+  box-shadow: 0 0 14px rgba(255, 120, 176, 0.5);
 }
+
 
 /* Styles pour l'image générée */
 .generated-image {
@@ -1170,17 +1216,28 @@ text-align: left;
 
 /* Partie connexion*/
 /* Champs du formulaire */
+/* Champs du formulaire - version sexy */
 form input[type="email"],
 form input[type="password"] {
   width: 90%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #cccccc;
-  border-radius: 5px;
-  font-size: 1rem;
-  background-color: #2b2b3d;
-  color: white;
+  padding: 12px 15px;
+  margin: 12px auto;
+  border: 1px solid #dd4d9d;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  background-color: #1e1e2f;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(221, 77, 157, 0.2);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
+
+form input[type="email"]:focus,
+form input[type="password"]:focus {
+  border-color: #ff78b0;
+  outline: none;
+  box-shadow: 0 0 12px rgba(255, 120, 176, 0.6);
+}
+
 
 /* Placeholder des champs */
 form input::placeholder {
@@ -1359,7 +1416,7 @@ img.chat-image {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: #444;
   transition: 0.4s;
   border-radius: 20px;
 }
@@ -1377,12 +1434,14 @@ img.chat-image {
 }
 
 input:checked + .slider {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #dd4d9d, #8a2be2);
+  box-shadow: 0 0 8px rgba(221, 77, 157, 0.7);
 }
 
 input:checked + .slider:before {
   transform: translateX(14px);
 }
+
 
 /* 🔴 Badge rouge pour "Nouvelle sur MyAiCrush" */
 .new-badge {
@@ -1442,22 +1501,23 @@ input:checked + .slider:before {
 
 
 #upload-btn {
-  background: none;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
   border: none;
   cursor: pointer;
   font-size: 20px;
-  color: #fff;
   padding: 8px;
-  transition: transform 0.2s ease-in-out;
-}
-
-#upload-btn:hover {
-  transform: scale(1.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(221, 77, 157, 0.4);
 }
 
 #upload-btn i {
-  color: #dd4d9d;
+  color: white;
 }
+
+
 
 .image-message {
   background-color: #dd4d9d; /* Rose comme les messages utilisateur */
@@ -1482,19 +1542,26 @@ input:checked + .slider:before {
   padding: 4px 10px;
   font-size: 12px;  /* 🔹 Taille réduite */
   font-weight: bold;
-  color: #dd4d9d;  /* 🌸 Texte en rose */
   background-color: transparent;
-  border: 1px solid #dd4d9d;
+  border: 1px solid;
+  border-image: linear-gradient(to right, #dd4d9d, #8a2be2);
+  border-image-slice: 1;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   text-align: center;
   width: fit-content;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-image: linear-gradient(to right, #dd4d9d, #8a2be2);
+  -webkit-text-fill-color: transparent;
 }
 
 .voice-button:hover {
-  background-color: #dd4d9d;
+  background-image: linear-gradient(to right, #dd4d9d, #8a2be2);
   color: white;
+  -webkit-text-fill-color: white;
 }
 
 .voice-button:active {
@@ -1503,10 +1570,13 @@ input:checked + .slider:before {
 
 /* 🔊 Icône FontAwesome */
 .voice-button i {
-  color: #dd4d9d;  /* 🌸 Icône en rose */
   font-size: 12px;
   margin-right: 6px;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
+
 
 .small-icon {
   font-size: 12px; /* Ajuste la taille selon tes besoins */
@@ -1530,18 +1600,22 @@ input:checked + .slider:before {
 }
 
 .bot-message.warning {
-  background-color: rgba(221, 77, 157, 0.3); /* Fond rose avec transparence */
-  color: white; /* Texte en blanc */
-  font-weight: normal; /* Même épaisseur que les autres messages */
-  text-align: left; /* Aligné à gauche comme les autres messages IA */
-  padding: 10px 14px; /* Ajusté pour correspondre aux autres bulles */
-  border-radius: 15px; /* Arrondi pour rester cohérent */
-  max-width: 75%; /* Même largeur max que les autres messages */
-  margin: 10px 0; /* Espacement standard des messages */
-  font-size: 14px; /* Même taille de texte */
-  line-height: 1.5; /* Espacement normal du texte */
-  font-family: inherit; /* Utilise la même police que les autres messages */
+  background: linear-gradient(135deg, rgba(221, 77, 157, 0.5), rgba(138, 43, 226, 0.5));
+  color: #ffe4f2;
+  font-weight: 500;
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: 16px;
+  max-width: 75%;
+  margin: 12px 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  font-family: inherit;
+  box-shadow: 0 0 12px rgba(221, 77, 157, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
 }
+
 
 #nymphoModeToggle {
   display: none;
@@ -1610,30 +1684,37 @@ input:checked + .slider:before {
 
 
 .audio-call-btn {
-  background: none;
+  background-color: #1dd193; /* ✅ Vert doux, pas trop flashy */
   border: none;
-  padding: 5px 10px;
-  margin-right: 10px;
+  padding: 6px;
+  border-radius: 50%;
+  margin: 0 10 0 15px; /* Garde l’espacement avec la photo */
   font-size: 18px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4CAF50;
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.6); /* Halo lumineux vert */
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-.audio-call-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.9); /* Halo renforcé */
+  box-shadow: none; /* ❌ Supprime l’effet de glow */
+  transition: none; /* ❌ Supprime les animations inutiles */
 }
 
 .audio-call-btn i {
   font-size: 18px;
-  color: #4CAF50;
+  color: white;
 }
+
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 6px rgba(0, 255, 180, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 255, 180, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 6px rgba(0, 255, 180, 0.4);
+  }
+}
+
 
 .token-grid {
   display: grid;
@@ -1874,19 +1955,37 @@ form label {
   transition: opacity 0.3s ease;
 }
 
-.loader-ring {
-  border: 5px solid transparent;
-  border-top: 5px solid #dd4d9d;
-  border-right: 5px solid #8a2be2;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
+.heart-loader {
+  position: relative;
+  width: 60px;
+  height: 54px;
   margin-bottom: 15px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.heart {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 54px;
+  background: linear-gradient(to bottom, transparent 50%, #dd4d9d 50%, #8a2be2 100%);
+
+  background-size: 100% 200%;
+  background-position: 0% 0%;
+  clip-path: path("M30 52 L10 32 A10 10 0 0 1 30 12 A10 10 0 0 1 50 32 Z");
+  animation: fillHeart 1s ease-in-out infinite;
+
 }
+
+@keyframes fillHeart {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+
+
 

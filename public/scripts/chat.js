@@ -554,6 +554,35 @@ if (isNympho && character.images?.nympho) {
 }
 document.querySelector('.chat-profile-pic').src = character.photo;
 
+// 🔥 Mise à jour dynamique de l'image de fond du chat uniquement sur mobile
+const chatBox = document.getElementById("chat-box");
+if (chatBox) {
+    if (window.innerWidth < 768) {  // ✅ Seulement si écran < 768px (mobile/tablette)
+        const bgImage = character.backgroundPhoto || character.photo;
+
+chatBox.style.backgroundImage = `url('${bgImage}')`;
+chatBox.style.backgroundSize = 'cover';
+chatBox.style.backgroundPosition = 'center';
+chatBox.style.backgroundRepeat = 'no-repeat';
+chatBox.style.backdropFilter = 'blur(12px)';
+chatBox.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+chatBox.style.backgroundBlendMode = 'darken';
+
+        chatBox.style.backgroundSize = 'cover';
+        chatBox.style.backgroundPosition = 'center';
+        chatBox.style.backgroundRepeat = 'no-repeat';
+        chatBox.style.backdropFilter = 'blur(12px)';
+        chatBox.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        chatBox.style.backgroundBlendMode = 'darken';
+    } else {
+        // ✅ Si desktop, on remet le fond d’origine (gris)
+        chatBox.style.backgroundImage = '';
+        chatBox.style.backgroundColor = 'linear-gradient(to bottom, #1e1e2f, #2e2e44)';
+        chatBox.style.backdropFilter = '';
+        chatBox.style.backgroundBlendMode = '';
+    }
+}
+
 
                 document.querySelector('.menu').classList.add('hidden');
 

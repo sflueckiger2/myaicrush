@@ -31,9 +31,12 @@
   <body>
 
     <div id="loader">
-  <div class="loader-ring"></div>
+  <div class="heart-loader">
+    <div class="heart"></div>
+  </div>
   <p>Chargement en cours...</p>
 </div>
+
 
     <div id="cheaper-plan-dynamic-banner"></div>
     
@@ -43,7 +46,7 @@
     <!-- Garder le header en haut de la page, en dehors de .container -->
     <div class="header">
       <br><h1>Choisis ta partenaire :</h1>
-      <center><p>Gagne sa confiance et passe un moment inoubliable avec elle.</p></center>
+      <center><p>C’est pas des princesses… elles gémissent et crient ton prénom.</p></center>
     </div>
 
     <!-- Conteneur principal pour les options de chat et le chat -->
@@ -258,13 +261,23 @@
 <script type="module" src="/scripts/menu-loader.js"></script>
 
 <script>
-  window.addEventListener("load", () => {
-    const loader = document.getElementById("loader");
-    if (loader) {
-      loader.style.opacity = "0";
-      setTimeout(() => loader.remove(), 300); // fade + suppression
-    }
-  });
+window.addEventListener("load", () => {
+  const loader = document.getElementById("loader");
+  const heart = document.querySelector(".heart");
+
+  if (heart) {
+    const perf = window.performance.timing;
+    const duration = Math.max(0.5, (perf.loadEventEnd - perf.navigationStart) / 1000); // en secondes
+
+    heart.style.animationDuration = duration + "s";
+  }
+
+  if (loader) {
+    loader.style.opacity = "0";
+    setTimeout(() => loader.remove(), 500); // fade + suppression
+  }
+});
+
 </script>
 
 

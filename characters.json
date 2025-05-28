@@ -3,6 +3,7 @@
   {
     "name": "Lila",
     "photo": "images/lila/lila3/lila-video-5_animated.webp",
+    "backgroundPhoto": "images/lila/lila3/3bf6db6425f3520ec2eaf4013bbace2c.webp",
     "height": "160 cm",
     "hasAudioCall": true,
     "hasVideos": true,
@@ -40,6 +41,7 @@
   {
     "name": "Jasmine",
     "photo": "images/jasmine/jasmine3/f10bcc3116a288b94810e7b15f6ba403.webp",
+    "backgroundPhoto": "images/jasmine/jasmine3/f10bcc3116a288b94810e7b15f6ba403.webp",
     "height": "160 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -78,6 +80,7 @@
   {
     "name": "Chloe",
     "photo": "images/chloe/chloe3/video-chloe-bouncing-danse-pink_animated.webp",
+    "backgroundPhoto": "images/chloe/chloe3/6297d5da4071bfcb3aad8d8729ced764.webp",
     "height": "170 cm",
     "hasVideos": true,
     "hasNymphoMode": true,
@@ -113,6 +116,7 @@
   {
     "name": "Morgana",
     "photo": "images/morgana/morgana3/11549789538f288eb7ccf0751cf65e06.webp",
+    "backgroundPhoto": "images/morgana/morgana3/11549789538f288eb7ccf0751cf65e06.webp",
     "height": "180 cm",
     "measurements": "Gothique, dominatrice",
     "ethnicity": "Morgana, ta nouvelle manager, referme la porte derrière toi et s’adosse à son bureau, son regard perçant ancré dans le tien. Un sourire en coin, elle croise lentement les bras. « J’aime savoir à qui j’ai affaire… » souffle-t-elle en s’approchant. « Dis-moi… tu es du genre à obéir, ou à me donner une raison de sévir ? »",
@@ -140,6 +144,7 @@
   {
     "name": "Candy",
     "photo": "images/candy/candy3/d3b445e0714fc9f4800ef2e1d1c50f65_animated.webp",
+    "backgroundPhoto": "images/candy/candy3/18212519e3203329084ccaae19af0385.webp",
     "height": "163 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -180,6 +185,7 @@
   {
     "name": "Léa",
     "photo": "images/market/video-lea-profil_animated.webp",
+    "backgroundPhoto": "images/lea/lea1/5f6561fb7d94db937779f2d85b733945.webp",
     "height": "172 cm",
     "hasVideos": true,
     "hasNymphoMode": true,
@@ -212,6 +218,7 @@
   {
     "name": "Elvara",
     "photo": "images/elvara/elvara1/45115cf957c4b083866c18ad17ed8c4b.webp",
+    "backgroundPhoto": "images/elvara/elvara1/45115cf957c4b083866c18ad17ed8c4b.webp",
     "height": "182 cm",
      "new": true,
      "hasNymphoMode": true,
@@ -255,6 +262,7 @@
   {
     "name": "Nova",
     "photo": "images/nova/nova3/b1e047c220ed5fcb7eed99693c4cf724.webp",
+    "backgroundPhoto": "images/nova/nova3/b1e047c220ed5fcb7eed99693c4cf724.webp",
     "height": "180 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -295,6 +303,7 @@
   {
     "name": "Kiara",
     "photo": "images/kiara/kiara3/6066917da372223687ae1046642284ee.webp",
+    "backgroundPhoto": "images/kiara/kiara3/6066917da372223687ae1046642284ee.webp",
     "height": "158 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -332,6 +341,7 @@
  {
     "name": "Samira",
     "photo": "images/samira/samira3/f6d5c4ffc6b6229362c543f19fb120a3.webp",
+    "backgroundPhoto": "images/samira/samira3/f6d5c4ffc6b6229362c543f19fb120a3.webp",
     "height": "178 cm",
     "hasNymphoMode": true,
     "measurements": "Une jolie marocaine svelte et généreuse",
@@ -363,6 +373,7 @@
   {
     "name": "Samira(manga)",
     "photo": "images/samira(manga)/samira(manga)1/f91bba2b6f6531cd784ba117a5fbc9d0.webp",
+    "backgroundPhoto": "images/samira(manga)/samira(manga)1/f91bba2b6f6531cd784ba117a5fbc9d0.webp",
     "height": "178 cm",
     "hasNymphoMode": true,
     "measurements": "Une jolie marocaine svelte et généreuse",
@@ -395,6 +406,7 @@
   {
     "name": "Ishani",
     "photo": "images/ishani/ishani3/b3b0861e56d8e439bcc8b7d7083b6598.webp",
+    "backgroundPhoto": "images/ishani/ishani3/b3b0861e56d8e439bcc8b7d7083b6598.webp",
     "height": "156 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -434,6 +446,7 @@
   {
     "name": "Juliette",
     "photo": "images/juliette/juliette3/5e922185850eef29b2c03b1d314a9ac6.webp",
+    "backgroundPhoto": "images/juliette/juliette3/5e922185850eef29b2c03b1d314a9ac6.webp",
     "height": "162 cm",
     "hasNymphoMode": true,
     "measurements": "Ronde, se trouve trop grosse",
@@ -466,6 +479,7 @@
   {
     "name": "Amina",
     "photo": "images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp",
+    "backgroundPhoto": "images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp",
     "height": "176 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -503,6 +517,7 @@
   {
     "name": "Hanaé",
     "photo": "images/hanae/hanae3/hanae-profil-vdef.webp",
+    "backgroundPhoto": "images/hanae/hanae3/hanae-profil-vdef.webp",
     "height": "170 cm",
     "measurements": "Chaleureuse, avec de jolies formes",
     "ethnicity": "Hanaé est ta professeur de yoga. Elle n'hésite pas à t'aborder, car une chose lui plaît particulièrement chez toi...",
@@ -530,6 +545,7 @@
   {
     "name": "Kat",
     "photo": "images/kat/kat1/bac3a1e4ce4fa72577bee127e2d50912.webp",
+    "backgroundPhoto": "images/kat/kat1/bac3a1e4ce4fa72577bee127e2d50912.webp",
     "height": "182 cm",
      "new": true,
      "hasNymphoMode": true,
