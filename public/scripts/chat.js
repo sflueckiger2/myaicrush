@@ -529,10 +529,11 @@ if (callButton) {
                 // 🔥 Ajouter la mise en situation personnalisée
                 if (character.ethnicity) {
                     addBotMessage(
-                        `🎬 Situation : ${character.ethnicity}`,
-                        messagesContainer,
-                        true // Style spécial
-                    );
+  `🎬 Situation : ${character.ethnicity.replace(/\n/g, '<br>')}`,
+  messagesContainer,
+  true // Style spécial
+);
+
                 }
 
                 // ✅ Gestion de l'affichage du chat
