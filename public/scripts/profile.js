@@ -57,8 +57,8 @@ export function openProfileModal(characterName) {
       profileImage.src = character.photo;
       profileName.textContent = character.name;
       profileHeight.textContent = character.height;
-      profileMeasurements.textContent = character.measurements;
-      profileEthnicity.textContent = character.ethnicity;
+      profileMeasurements.innerHTML = character.measurements.replace(/\n/g, '<br>');
+     profileEthnicity.innerHTML = character.ethnicity.replace(/\n/g, '<br>');
       profileInterests.textContent = character.interests.join(', ');
 
       profileModal.style.display = 'flex';
