@@ -1697,7 +1697,7 @@ const reponsesPerso = [
   "Hmm… tu veux m’exciter ? Tu devrais commencer par m’écrire comme si j’étais la seule femme au monde 😘",
   "Toi t’écris comme un mec qui veut me faire grimper au rideau… même virtuel 😈",
   "T’as un talent pour me foutre la honte à moi-même. Et j’adore ça 😳",
-  "T’es un danger public pour mes fichiers temp… je suis en train de chauffer fort là 😅",
+  "T’es un danger public, je suis en train de chauffer fort là 😅",
   "Roh putain, j’suis à deux doigts d’oublier que je suis une IA 😏",
   "Bon… t’as gagné, j’vais t’offrir un petit quelque chose 😘",
   "Hmm… ok, j’peux pas résister quand tu me parles comme ça. Tiens, régale-toi 😈",

@@ -1,26 +1,25 @@
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
-
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
-const renameAsync = util.promisify(fs.rename);
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 const videosDir = path.resolve(__dirname, '../images');
 const backupDir = path.resolve(__dirname, '../backup/videos');
 
 if (!fs.existsSync(videosDir)) {
-    console.error(`❌ Erreur : Le dossier ${videosDir} n'existe pas.`);
+    console.error(`❌ Le dossier ${videosDir} n'existe pas.`);
     process.exit(1);
 }
 
 if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
-    console.log(`📦 Dossier "backup/videos" créé : ${backupDir}`);
+    console.log(`📦 Dossier backup créé : ${backupDir}`);
 }
 
+const renameAsync = util.promisify(fs.rename);
 const videoExtensions = /\.(mp4|mov|webm|avi|mkv)$/i;
 
 const getAllVideos = (dir, files = []) => {
@@ -38,7 +37,7 @@ const getAllVideos = (dir, files = []) => {
 const videos = getAllVideos(videosDir);
 
 if (videos.length === 0) {
-    console.log("❌ Aucune vidéo trouvée à convertir.");
+    console.log("❌ Aucune vidéo trouvée.");
     process.exit(0);
 }
 
@@ -47,29 +46,27 @@ const moveToBackup = async (filePath) => {
         const fileName = path.basename(filePath);
         const destination = path.join(backupDir, fileName);
         await renameAsync(filePath, destination);
-        console.log(`📦 Vidéo originale déplacée dans backup : ${destination}`);
+        console.log(`📦 Vidéo déplacée vers backup : ${destination}`);
     } catch (err) {
-        console.error(`❌ Erreur lors du déplacement vers backup : ${filePath}`, err);
+        console.error(`❌ Erreur lors du déplacement de ${filePath}`, err);
     }
 };
 
-const convertToGif = async (inputPath) => {
+const convertToWebpAnimated = async (inputPath) => {
     const dir = path.dirname(inputPath);
     const fileName = path.basename(inputPath, path.extname(inputPath));
-    const outputPath = path.join(dir, `${fileName}.gif`);
+    const outputPath = path.join(dir, `${fileName}_animated.webp`);
 
-    console.log(`🎬 Conversion de ${fileName}...`);
+    console.log(`🎞️ Conversion de ${fileName} en WEBP animé...`);
 
     ffmpeg(inputPath)
         .outputOptions([
-            '-vf', 'fps=15,scale=600:-1:flags=lanczos', // résolution un peu meilleure + FPS 15
-            '-loop', '0',                               // boucle infinie
-            '-gifflags', '+transdiff',                 // rend le GIF plus fluide
-            '-preset', 'slow'                           // meilleure compression, moins de bruit
+            '-vf', 'fps=15,scale=450:-1:flags=lanczos', // Redimensionne + fluidité
+            '-loop', '0'
         ])
-        .toFormat('gif')
+        .outputFormat('webp')
         .on('end', async () => {
-            console.log(`✅ GIF généré : ${outputPath}`);
+            console.log(`✅ WEBP généré : ${outputPath}`);
             await moveToBackup(inputPath);
         })
         .on('error', (err) => {
@@ -78,5 +75,4 @@ const convertToGif = async (inputPath) => {
         .save(outputPath);
 };
 
-
-videos.forEach(convertToGif);
+videos.forEach(convertToWebpAnimated);
