@@ -46,7 +46,8 @@ export function openProfileModal(characterName) {
 
   if (character) {
     const profileModal = document.getElementById('profile-modal');
-    const profileImage = document.getElementById('profile-image-full');
+    let profileImage = document.getElementById('profile-image-full');
+
     const profileName = document.getElementById('profile-name');
     const profileHeight = document.getElementById('profile-height');
     const profileMeasurements = document.getElementById('profile-measurements');
@@ -54,7 +55,26 @@ export function openProfileModal(characterName) {
     const profileInterests = document.getElementById('profile-interests');
 
     if (profileModal && profileImage && profileName && profileHeight && profileMeasurements && profileEthnicity && profileInterests) {
-      profileImage.src = character.photo;
+      // Remplacer l'image par une vidéo si c'est un .mp4
+if (character.photo.endsWith('.mp4')) {
+  const video = document.createElement('video');
+  video.src = character.photo;
+  video.autoplay = true;
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.style.width = '100%';
+  video.style.borderRadius = '12px';
+
+  const imageContainer = document.getElementById('profile-image-full').parentNode;
+  const oldImg = document.getElementById('profile-image-full');
+  if (oldImg) oldImg.remove();
+  video.id = 'profile-image-full'; // pour garder la même logique
+  imageContainer.insertBefore(video, imageContainer.firstChild);
+} else {
+  profileImage.src = character.photo;
+}
+
       profileName.textContent = character.name;
       profileHeight.textContent = character.height;
       profileMeasurements.innerHTML = character.measurements.replace(/\n/g, '<br>');

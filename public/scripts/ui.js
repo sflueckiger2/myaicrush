@@ -92,9 +92,25 @@ badgesToShow.forEach(({ text, class: className }, index) => {
         
 
 
-        const img = document.createElement('img');
-        img.src = character.photo;
-        img.alt = character.name;
+        let media;
+
+if (character.photo.endsWith('.mp4')) {
+    media = document.createElement('video');
+    media.src = character.photo;
+    media.autoplay = true;
+    media.muted = true;
+    media.loop = true;
+    media.playsInline = true;
+} else {
+    media = document.createElement('img');
+    media.src = character.photo;
+    media.alt = character.name;
+}
+
+media.style.width = '100%';
+media.style.height = '100%';
+media.style.objectFit = 'cover';
+
 
         const content = document.createElement('div');
         content.className = 'card-content';
@@ -107,7 +123,8 @@ badgesToShow.forEach(({ text, class: className }, index) => {
 
         content.appendChild(title);
         content.appendChild(description);
-        card.appendChild(img);
+        card.appendChild(media);
+
         card.appendChild(content);
         chatOptions.appendChild(card);
 

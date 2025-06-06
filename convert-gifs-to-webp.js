@@ -1,57 +1,29 @@
-import fs from 'fs';
-import path from 'path';
-import sharp from 'sharp';
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
 
-const IMAGE_DIR = './public/images';
-const TARGET_WIDTH = 450;
+// ✅ Dossier à tester
+const testDir = path.join('C:', 'Users', 'sflückiger', 'Documents', 'IA', 'public', 'images', 'lila', 'lila1');
 
-// Lister tous les GIFs
-function getAllGifs(dirPath, gifs = []) {
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+fs.readdir(testDir, (err, files) => {
+  if (err) return console.error("❌ Erreur lecture dossier :", err);
 
-  for (let entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-      getAllGifs(fullPath, gifs);
-    } else if (entry.isFile() && fullPath.toLowerCase().endsWith('.gif')) {
-      gifs.push(fullPath);
+  files.forEach(file => {
+    if (file.endsWith('_animated.webp')) {
+      const input = path.join(testDir, file);
+      const output = input.replace('_animated.webp', '.mp4');
+
+      // ✅ ffmpeg conversion
+      const cmd = `ffmpeg -y -i "${input}" -movflags faststart -pix_fmt yuv420p "${output}"`;
+      console.log(`🎬 Conversion : ${file} → ${path.basename(output)}`);
+
+      exec(cmd, (err, stdout, stderr) => {
+        if (err) {
+          console.error(`❌ Erreur conversion ${file} :`, err.message);
+        } else {
+          console.log(`✅ Fichier converti : ${output}`);
+        }
+      });
     }
-  }
-
-  return gifs;
-}
-
-// Conversion + ajout de suffixe + suppression du GIF
-async function convertGifToWebp(gifPath) {
-  const dir = path.dirname(gifPath);
-  const baseName = path.basename(gifPath, '.gif');
-  const webpPath = path.join(dir, `${baseName}_animated.webp`);
-
-  try {
-    await sharp(gifPath, { animated: true })
-      .resize({ width: TARGET_WIDTH })
-      .webp({ quality: 80, effort: 4, lossless: false, animated: true })
-      .toFile(webpPath);
-
-    console.log(`✅ Converti : ${gifPath} → ${webpPath}`);
-
-    fs.unlinkSync(gifPath);
-    console.log(`🗑️ Supprimé : ${gifPath}`);
-  } catch (err) {
-    console.error(`❌ Échec conversion : ${gifPath}`, err.message);
-  }
-}
-
-// Lancer
-async function processAllGifs() {
-  const gifs = getAllGifs(IMAGE_DIR);
-  console.log(`🔍 ${gifs.length} GIF(s) trouvé(s).`);
-
-  for (let gifPath of gifs) {
-    await convertGifToWebp(gifPath);
-  }
-
-  console.log("✅ Conversion + suppression terminée !");
-}
-
-processAllGifs();
+  });
+});
