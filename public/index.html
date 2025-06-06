@@ -267,25 +267,16 @@ window.addEventListener("load", () => {
 
   if (!loader) return;
 
-  // Récupère le temps de chargement réel
-  const end = window.performance.timing?.loadEventEnd || Date.now();
-  const start = window.performance.timing?.navigationStart || Date.now();
-  const realDuration = Math.max(300, end - start);
-
-  // Sécurité anti-bug
-  const maxTimeout = 2000;
-  const timeout = Math.min(realDuration, maxTimeout);
-
-  // 🟣 Cœur : toujours une animation douce (min 1.5s)
+  // ✅ Animation du cœur toujours douce
   if (heart) {
     heart.style.animationDuration = "1.5s";
   }
 
-  // ✅ Loader : disparaît dès que la page est prête, max 2s
+  // ✅ Sécurité absolue : suppression après 2s max
   setTimeout(() => {
     loader.style.opacity = "0";
     setTimeout(() => loader.remove(), 500);
-  }, timeout);
+  }, 2000);
 });
 </script>
 
