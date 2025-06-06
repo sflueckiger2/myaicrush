@@ -157,7 +157,7 @@
     </footer>
     
     <script type="module" src="./scripts/main.js"></script>
-    <script type="module" src="./scripts/menu.js"></script>
+    
     
 
     <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
@@ -265,20 +265,32 @@ window.addEventListener("load", () => {
   const loader = document.getElementById("loader");
   const heart = document.querySelector(".heart");
 
+  if (!loader) return;
+
+  // Récupère le temps de chargement réel
+  const end = window.performance.timing?.loadEventEnd || Date.now();
+  const start = window.performance.timing?.navigationStart || Date.now();
+  const realDuration = Math.max(300, end - start);
+
+  // Sécurité anti-bug
+  const maxTimeout = 2000;
+  const timeout = Math.min(realDuration, maxTimeout);
+
+  // 🟣 Cœur : toujours une animation douce (min 1.5s)
   if (heart) {
-    const perf = window.performance.timing;
-    const duration = Math.max(0.5, (perf.loadEventEnd - perf.navigationStart) / 1000); // en secondes
-
-    heart.style.animationDuration = duration + "s";
+    heart.style.animationDuration = "1.5s";
   }
 
-  if (loader) {
+  // ✅ Loader : disparaît dès que la page est prête, max 2s
+  setTimeout(() => {
     loader.style.opacity = "0";
-    setTimeout(() => loader.remove(), 500); // fade + suppression
-  }
+    setTimeout(() => loader.remove(), 500);
+  }, timeout);
 });
-
 </script>
+
+
+
 
 
 
