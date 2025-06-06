@@ -30,7 +30,12 @@
   </head>
   <body>
 
-    
+    <div id="loader">
+  <div class="heart-loader">
+    <div class="heart"></div>
+  </div>
+  <p>Chargement en cours...</p>
+</div>
 
 
     <div id="cheaper-plan-dynamic-banner"></div>
@@ -255,25 +260,7 @@
 </script>
 <script type="module" src="/scripts/menu-loader.js"></script>
 
-<script>
-window.addEventListener("load", () => {
-  const loader = document.getElementById("loader");
-  const heart = document.querySelector(".heart");
 
-  if (!loader) return;
-
-  // ✅ Animation du cœur toujours douce
-  if (heart) {
-    heart.style.animationDuration = "1.5s";
-  }
-
-  // ✅ Sécurité absolue : suppression après 2s max
-  setTimeout(() => {
-    loader.style.opacity = "0";
-    setTimeout(() => loader.remove(), 500);
-  }, 1500);
-});
-</script>
 
 
 
