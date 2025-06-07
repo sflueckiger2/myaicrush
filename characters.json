@@ -2,7 +2,7 @@
   
   {
     "name": "Lila",
-    "photo": "images/lila/lila3/lila-video-5_animated.webp",
+    "photo": "images/lila/lila3/lila-video-5.mp4",
     "backgroundPhoto": "images/lila/lila3/3bf6db6425f3520ec2eaf4013bbace2c.webp",
     "height": "160 cm",
     "hasAudioCall": true,
@@ -79,7 +79,7 @@
 
   {
     "name": "Chloe",
-    "photo": "images/chloe/chloe3/video-chloe-bouncing-danse-pink_animated.webp",
+    "photo": "images/chloe/chloe3/video-chloe-bouncing-danse-pink.mp4",
     "backgroundPhoto": "images/chloe/chloe3/6297d5da4071bfcb3aad8d8729ced764.webp",
     "height": "170 cm",
     "hasVideos": true,
@@ -143,7 +143,7 @@
 
   {
     "name": "Candy",
-    "photo": "images/candy/candy3/d3b445e0714fc9f4800ef2e1d1c50f65_animated.webp",
+    "photo": "images/candy/candy3/d3b445e0714fc9f4800ef2e1d1c50f65.mp4",
     "backgroundPhoto": "images/candy/candy3/18212519e3203329084ccaae19af0385.webp",
     "height": "163 cm",
      "hasNymphoMode": true,
@@ -184,7 +184,7 @@
 
   {
     "name": "Léa",
-    "photo": "images/market/video-lea-profil_animated.webp",
+    "photo": "images/market/video-lea-profil.mp4",
     "backgroundPhoto": "images/lea/lea1/5f6561fb7d94db937779f2d85b733945.webp",
     "height": "172 cm",
     "hasVideos": true,
