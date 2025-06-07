@@ -170,6 +170,7 @@ p {
   align-items: center;
   border-radius: 50%;
   transition: background-color 0.3s;
+  margin-left: 10px;
 }
 
 #back-btn:hover {
@@ -187,6 +188,19 @@ p {
   box-shadow: 0 0 10px rgba(221, 77, 157, 0.6);
   margin-right: 10px;
 }
+
+video.chat-profile-pic {
+  object-fit: cover;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #dd4d9d, #8a2be2);
+  padding: 2px;
+  box-shadow: 0 0 10px rgba(221, 77, 157, 0.6);
+  margin-right: 10px;
+}
+
 
 #chat-name {
   font-size: 1.3em;
@@ -1987,5 +2001,10 @@ form label {
 }
 
 
-
+.chat-video {
+  max-width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+}
 

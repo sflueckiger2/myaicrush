@@ -1,6 +1,8 @@
 import { scrollToBottom } from './utils.js';
 import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
+import { openProfileModal } from './profile.js';
+
 
 let firstPhotoSent = false;
 let dailyMessageCount = 0;
@@ -205,9 +207,17 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 }
 
                 if (data.imageUrl) {
-                    console.log(`📌 Image reçue : ${data.imageUrl} - Floutée : ${data.isBlurred}`);
-                    addBotImageMessage(data.reply, data.imageUrl, isPremium, messagesContainer, data.isBlurred);
-                } else {
+    addBotImageMessage(
+        data.reply,
+        data.imageUrl,
+        isPremium,
+        messagesContainer,
+        data.isBlurred,
+        data.mediaType // ✅ on transmet le type ici
+    );
+}
+
+                else {
                     addBotMessage(data.reply, messagesContainer);
                 }
 
@@ -308,7 +318,8 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
 
 
 
-export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer, isBlurredFromBackend = null) {
+export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContainer, isBlurredFromBackend = null, mediaType = 'image') {
+
     console.log("🖼️ Ajout d'une image au chat...");
     console.log(`📌 Image URL reçue : ${imageUrl}`);
     console.log(`🔎 isBlurred reçu du backend : ${isBlurredFromBackend}`);
@@ -359,13 +370,30 @@ messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en de
 
 
     // ✅ Ajouter l'image en dessous du texte
-    const imageElement = document.createElement('img');
-  imageElement.src = imageUrl.startsWith('/get-image/')
-  ? imageUrl
-  : `/get-image/${imageUrl.split('/').pop()}`;
+    
+    let mediaElement;
+const isVideo = mediaType === 'video';
 
-    imageElement.alt = 'Image générée par l\'IA';
-    imageElement.classList.add('chat-image');
+
+if (isVideo) {
+    mediaElement = document.createElement('video');
+    mediaElement.src = imageUrl.startsWith('/get-image/')
+      ? imageUrl
+      : `/get-image/${imageUrl.split('/').pop()}`;
+    mediaElement.autoplay = true;
+    mediaElement.loop = true;
+    mediaElement.muted = true;
+    mediaElement.playsInline = true;
+    mediaElement.classList.add('chat-video'); // tu peux créer une classe CSS dédiée
+} else {
+    mediaElement = document.createElement('img');
+    mediaElement.src = imageUrl.startsWith('/get-image/')
+      ? imageUrl
+      : `/get-image/${imageUrl.split('/').pop()}`;
+    mediaElement.alt = 'Image générée par l\'IA';
+    mediaElement.classList.add('chat-image');
+}
+
 
     // 🔥 Gestion du flou pour les non-premiums
     let isBlurred = isBlurredFromBackend !== null ? isBlurredFromBackend : imageUrl.includes('/get-image/');
@@ -385,12 +413,13 @@ messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en de
             window.location.href = '/premium.html';
         };
 
-        imageContainer.appendChild(imageElement);
+        imageContainer.appendChild(mediaElement);
         imageContainer.appendChild(unlockButton);
         messageElement.appendChild(imageContainer);
     } else {
         console.log("🌟 Image claire affichée, pas de bouton.");
-        messageElement.appendChild(imageElement);
+        messageElement.appendChild(mediaElement);
+
     }
 
     messagesContainer.appendChild(messageElement);
@@ -553,7 +582,37 @@ if (isNympho && character.images?.nympho) {
     character.photo = `${character.images.nympho}/preview.webp`;
     console.log("🌶️ Mode nymphomane actif : image modifiée !");
 }
-document.querySelector('.chat-profile-pic').src = character.photo;
+
+const profileContainer = document.querySelector('.chat-profile-pic').parentNode;
+const oldMedia = document.querySelector('.chat-profile-pic');
+if (oldMedia) oldMedia.remove();
+
+let newMedia;
+if (character.photo.endsWith('.mp4')) {
+    newMedia = document.createElement('video');
+    newMedia.src = character.photo;
+    newMedia.autoplay = true;
+    newMedia.loop = true;
+    newMedia.muted = true;
+    newMedia.playsInline = true;
+} else {
+    newMedia = document.createElement('img');
+    newMedia.src = character.photo;
+}
+
+newMedia.classList.add('chat-profile-pic');
+newMedia.style.cursor = 'pointer';
+const callButton = document.getElementById("audio-call-btn");
+if (callButton) {
+  profileContainer.insertBefore(newMedia, callButton);
+} else {
+  profileContainer.appendChild(newMedia); // fallback
+}
+;
+
+// Réactiver le clic pour ouvrir la modale de profil
+newMedia.addEventListener("click", () => openProfileModal(character.name));
+
 
 // 🔥 Mise à jour dynamique de l'image de fond du chat uniquement sur mobile
 const chatBox = document.getElementById("chat-box");
@@ -811,7 +870,8 @@ if (imageInput) {
                 imageElement.style.maxWidth = "200px";
                 imageElement.style.borderRadius = "10px";
 
-                imageMessageElement.appendChild(imageElement);
+                messageElement.appendChild(mediaElement);
+
                 messagesContainer.appendChild(imageMessageElement);
                 scrollToBottom(messagesContainer);
 

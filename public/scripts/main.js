@@ -41,10 +41,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    document.querySelector('.chat-profile-pic').addEventListener('click', function () {
+    const profilePic = document.querySelector('.chat-profile-pic');
+if (profilePic) {
+    profilePic.addEventListener('click', function () {
         const currentCharacterName = document.getElementById('chat-name').textContent;
         openProfileModal(currentCharacterName);
     });
+}
+
 
     document.getElementById('profile-modal').addEventListener('click', closeProfileModal);
     document.getElementById('close-modal-btn').addEventListener('click', closeProfileModal);

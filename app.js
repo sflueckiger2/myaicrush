@@ -1071,9 +1071,23 @@ if (isNymphoMode) {
       }
 
       // 🔥 Sélection des fichiers en fonction du mode
-      const mediaFiles = fs.readdirSync(imageDir).filter(file => 
-    isGifMode ? file.endsWith('_animated.webp') : (!file.endsWith('_animated.webp') && file.endsWith('.webp'))
-);
+    const allFiles = fs.readdirSync(imageDir);
+
+let mediaFiles = [];
+
+if (isGifMode) {
+    const mp4Files = allFiles.filter(file => file.toLowerCase().endsWith('.mp4'));
+    if (mp4Files.length > 0) {
+        mediaFiles = mp4Files;
+    } else {
+        mediaFiles = allFiles.filter(file => file.endsWith('_animated.webp'));
+    }
+} else {
+    mediaFiles = allFiles.filter(file =>
+        !file.endsWith('_animated.webp') && file.endsWith('.webp')
+    );
+}
+
 
 
       if (mediaFiles.length === 0) {
@@ -1118,9 +1132,11 @@ if (isNymphoMode) {
       console.log(`📸 Média ${isBlurred ? "flouté" : "non flouté"} envoyé pour ${email}`);
 
       return { 
-          token: generateImageToken(mediaPath, isBlurred), 
-          isBlurred: isBlurred // ✅ On ajoute bien isBlurred dans l'objet retourné
-      };
+    token: generateImageToken(mediaPath, isBlurred), 
+    isBlurred: isBlurred,
+    fileName: randomMedia // ⬅️ Ajouté pour déduire le type de fichier
+};
+
 
   } catch (err) {
       console.error(`❌ Erreur lors de la récupération du média pour ${email} :`, err);
@@ -2024,11 +2040,19 @@ console.log("💬 Réponse finale envoyée :", botReply);
 
 
 
-            if (imageResult && imageResult.token) {
-                responseData.imageUrl = `/get-image/${imageResult.token}`;
-                responseData.isBlurred = imageResult.isBlurred;
-                console.log(`✅ Image envoyée avec succès. Floutée: ${imageResult.isBlurred}`);
-            } else {
+          if (imageResult && imageResult.token) {
+    responseData.imageUrl = `/get-image/${imageResult.token}`;
+    responseData.isBlurred = imageResult.isBlurred;
+
+    // 🆕 On regarde l’extension du fichier original
+    const ext = path.extname(imageResult.fileName || '').toLowerCase();
+    responseData.mediaType = ext === '.mp4' ? 'video' : 'image';
+
+    console.log(`✅ Média envoyé : ${ext === '.mp4' ? '🎥 vidéo' : '🖼 image'} - Flouté : ${imageResult.isBlurred}`);
+}
+
+
+            else {
                 console.error("⚠️ Aucune image trouvée !");
                 responseData.reply += " (Désolé, aucune image disponible)";
             }
