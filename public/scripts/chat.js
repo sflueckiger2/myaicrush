@@ -17,11 +17,44 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
     const currentMode = localStorage.getItem("chatMode") || "image";
     toggleMode.checked = currentMode === "gif";
 
-    toggleMode.addEventListener("change", () => {
+   
+    toggleMode.addEventListener("change", async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.email) {
+        alert("Tu dois être connecté pour activer ce mode.");
+        toggleMode.checked = false;
+        return;
+    }
+
+    try {
+        const premiumCheck = await fetch(`${BASE_URL}/api/is-premium`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email }),
+        });
+
+        const { isPremium } = await premiumCheck.json();
+
+        if (!isPremium) {
+            alert("🎥 Le mode vidéo est réservé aux membres Premium. Tu veux voir ses vidéos ? 😈");
+            toggleMode.checked = false;
+            window.location.href = "/premium.html";
+            return;
+        }
+
+        // ✅ Si Premium, autorise le changement de mode
         const newMode = toggleMode.checked ? "gif" : "image";
         localStorage.setItem("chatMode", newMode);
         console.log(`🎬 Mode changé : ${newMode}`);
-    });
+    } catch (error) {
+        console.error("Erreur lors de la vérification du statut premium :", error);
+        toggleMode.checked = false;
+        alert("Erreur lors de la vérification du compte. Merci de réessayer.");
+    }
+});
+
+
 } else {
     console.warn("⚠️ 'toggleMode' non trouvé sur cette page.");
 }
