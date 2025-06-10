@@ -1987,7 +1987,8 @@ form label {
   background-size: 100% 200%;
   background-position: 0% 0%;
   clip-path: path("M30 52 L10 32 A10 10 0 0 1 30 12 A10 10 0 0 1 50 32 Z");
-  animation: fillHeart 2s ease-in-out infinite;
+  animation: fillHeart 5s ease-in-out forwards;
+
 
 }
 
@@ -2006,5 +2007,19 @@ form label {
   border-radius: 12px;
   object-fit: cover;
   display: block;
+}
+
+
+.loader-text {
+  opacity: 0;
+  transition: opacity 1s ease;
+  font-size: 1em;
+  text-align: center;
+  margin-top: 20px;
+  color: white;
+  max-width: 80%;
+}
+.loader-text.visible {
+  opacity: 1;
 }
 
