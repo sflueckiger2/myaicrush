@@ -903,7 +903,7 @@ if (imageInput) {
                 imageElement.style.maxWidth = "200px";
                 imageElement.style.borderRadius = "10px";
 
-                messageElement.appendChild(mediaElement);
+                imageMessageElement.appendChild(imageElement);
 
                 messagesContainer.appendChild(imageMessageElement);
                 scrollToBottom(messagesContainer);

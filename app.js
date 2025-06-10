@@ -376,6 +376,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
                         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
                         "Content-Type": "application/json"
                     }
+                    
                 }
             );
 
@@ -390,6 +391,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             console.log(`📝 Description associée à ${userEmail}`);
         }
 
+        console.log("✅ Réponse envoyée après analyse OpenAI");
         // ✅ Réponse avec l'URL de l'image et sa description
         res.json({
             imageUrl: `/uploads/${imageName}`,
