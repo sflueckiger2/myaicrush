@@ -220,41 +220,35 @@
 
 <script>
   window.addEventListener("load", () => {
-    const loader = document.getElementById("loader");
-    const loaderText = document.getElementById("loader-text");
+  const loader = document.getElementById("loader");
+  const loaderText = document.getElementById("loader-text");
 
-    // Liste des phrases sexy
-    const phrases = [
-       "C’est pas des princesses… elles gémissent et crient ton prénom.",
-  "Elles veulent pas des fleurs… elles veulent ta main sur leurs fesses.",
-  "Elles crient pas « je t’aime », elles hurlent ton prénom en se cambrant.",
-  "Ce sont des I.A., mais elles mouillent plus que ta copine.",
-  "Elles savent pas cuisiner, mais elles savent sucer…",
-  "Elles aiment pas les gentils garçons… elles aiment quand tu les tiens par les hanches.",
-  "Elles n’attendent pas le mariage… elles attendent que tu les prennes contre le mur.",
-  "Si tu passes Lilith ou Angel en mode nympho, elles deviennent folles de ta grosse 🍆.",
-  "Léa est la seule I.A. qui envoie ses tétons en photo même sans le mode nympho.",
-  "Parle de ta nouvelle copine à Chloé, ça va la rendre folle de jalousie.",
-  "Candy en mode nympho ? Elle te montre sa chatte.",
-  "Le mode nympho de Léa est le préféré de nos abonnés.",
-  "Dis à Juliette que tu la trouves mince, elle fera tout ce que tu veux."
-    ];
+  const phrases = [
+    "C’est pas des princesses… elles gémissent et crient ton prénom.",
+    "Elles veulent pas des fleurs… elles veulent ta main sur leurs fesses.",
+    "Elles crient pas « je t’aime », elles hurlent ton prénom en se cambrant.",
+    "Ce sont des I.A., mais elles mouillent plus que ta copine.",
+    "Elles savent pas cuisiner, mais elles savent sucer…",
+    "Elles aiment pas les gentils garçons… elles aiment quand tu les tiens par les hanches.",
+    "Elles n’attendent pas le mariage… elles attendent que tu les prennes contre le mur.",
+    "Si tu passes Lilith ou Angel en mode nympho, elles deviennent folles de ta grosse 🍆.",
+    "Léa est la seule I.A. qui envoie ses tétons en photo même sans le mode nympho.",
+    "Parle de ta nouvelle copine à Chloé, ça va la rendre folle de jalousie.",
+    "Candy en mode nympho ? Elle te montre sa chatte.",
+    "Le mode nympho de Léa est le préféré de nos abonnés.",
+    "Dis à Juliette que tu la trouves mince, elle fera tout ce que tu veux."
+  ];
 
-    // Choix aléatoire
-    const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
-    loaderText.textContent = randomPhrase;
+  const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+  loaderText.textContent = randomPhrase;
+  loaderText.classList.add("visible"); // ⬅️ Ajout immédiat dès le chargement
 
-    // Effet fondu
-    setTimeout(() => {
-      loaderText.classList.add("visible");
-    }, 300); // léger délai pour le style
+  setTimeout(() => {
+    loader.style.opacity = "0";
+    setTimeout(() => loader.remove(), 500);
+  }, 3000);
+});
 
-    // 💥 Durée fixe du loader : 2 secondes
-    setTimeout(() => {
-      loader.style.opacity = "0";
-      setTimeout(() => loader.remove(), 500); // fade out
-    }, 3500);
-  });
 </script>
 
 
