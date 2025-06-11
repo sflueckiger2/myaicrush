@@ -11,7 +11,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyAICrush</title>
-    <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
 
   
     
@@ -219,7 +219,7 @@
 
 
 <script>
-  window.addEventListener("load", () => {
+ document.addEventListener("DOMContentLoaded", () => {
   const loader = document.getElementById("loader");
   const loaderText = document.getElementById("loader-text");
 
@@ -236,18 +236,21 @@
     "Parle de ta nouvelle copine à Chloé, ça va la rendre folle de jalousie.",
     "Candy en mode nympho ? Elle te montre sa chatte.",
     "Le mode nympho de Léa est le préféré de nos abonnés.",
+    "De nouvelles I.A. Tous les mois",
+    "« ⭐ Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf. »",
     "Dis à Juliette que tu la trouves mince, elle fera tout ce que tu veux."
   ];
 
   const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
   loaderText.textContent = randomPhrase;
-  loaderText.classList.add("visible"); // ⬅️ Ajout immédiat dès le chargement
+  loaderText.classList.add("visible");
 
   setTimeout(() => {
     loader.style.opacity = "0";
     setTimeout(() => loader.remove(), 500);
   }, 3000);
 });
+
 
 </script>
 

@@ -2012,7 +2012,7 @@ form label {
 
 .loader-text {
   opacity: 0;
-  transition: opacity 1s ease;
+  transition: opacity 3s ease;
   font-size: 1em;
   text-align: center;
   margin-top: 20px;
