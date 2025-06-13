@@ -419,6 +419,21 @@ if (isVideo) {
     mediaElement.setAttribute('loop', '');
     mediaElement.setAttribute('muted', '');
     mediaElement.setAttribute('playsinline', ''); // important pour iOS
+    // ✅ Patch spécial iOS : forcer visibilité et lecture
+mediaElement.style.maxWidth = '100%';
+mediaElement.style.height = 'auto';
+mediaElement.style.display = 'block';
+
+setTimeout(() => {
+  if (typeof mediaElement.play === 'function') {
+    mediaElement.play().then(() => {
+      console.log("🎬 Lecture forcée réussie sur iOS");
+    }).catch(err => {
+      console.warn("⛔ Lecture bloquée sur iOS :", err);
+    });
+  }
+}, 100);
+
     mediaElement.classList.add('chat-video');
 }
  else {
