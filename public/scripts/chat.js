@@ -470,7 +470,39 @@ if (isVideo) {
         messageElement.appendChild(imageContainer);
     } else {
         console.log("🌟 Image claire affichée, pas de bouton.");
-        messageElement.appendChild(mediaElement);
+        if (isVideo) {
+    const rawVideoHTML = `
+        <video 
+            src="${imageUrl.startsWith('http') ? imageUrl : `/get-image/${imageUrl.split('/').pop()}`}" 
+            autoplay 
+            loop 
+            muted 
+            playsinline 
+            class="chat-video" 
+            style="max-width: 100%; height: auto; display: block;">
+        </video>
+    `;
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = rawVideoHTML.trim();
+    const injectedVideo = wrapper.firstChild;
+
+    setTimeout(() => {
+        const playPromise = injectedVideo.play?.();
+        if (playPromise && typeof playPromise.then === 'function') {
+            playPromise.then(() => {
+                console.log("🎬 Lecture forcée réussie (injected)");
+            }).catch(err => {
+                console.warn("⛔ Lecture bloquée même injectée :", err);
+            });
+        }
+    }, 100);
+
+    messageElement.appendChild(injectedVideo);
+} else {
+    messageElement.appendChild(mediaElement);
+}
+
 
     }
 
