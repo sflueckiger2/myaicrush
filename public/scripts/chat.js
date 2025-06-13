@@ -414,32 +414,29 @@ if (isVideo) {
     const isAbsoluteUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
     const finalUrl = isAbsoluteUrl ? imageUrl : `/get-image/${imageUrl.split('/').pop()}`;
 
-    const source = document.createElement('source');
-source.setAttribute('src', finalUrl);
-source.setAttribute('type', 'video/mp4');
-mediaElement.appendChild(source);
-
-    mediaElement.setAttribute('autoplay', '');
-    mediaElement.setAttribute('loop', '');
-    mediaElement.setAttribute('muted', '');
-    mediaElement.setAttribute('playsinline', ''); // important pour iOS
-    // ✅ Patch spécial iOS : forcer visibilité et lecture
-mediaElement.style.maxWidth = '100%';
-mediaElement.style.height = 'auto';
-mediaElement.style.display = 'block';
-
-setTimeout(() => {
-  if (typeof mediaElement.play === 'function') {
-    mediaElement.play().then(() => {
-      console.log("🎬 Lecture forcée réussie sur iOS");
-    }).catch(err => {
-      console.warn("⛔ Lecture bloquée sur iOS :", err);
-    });
-  }
-}, 100);
-
+    mediaElement.src = finalUrl;
+    mediaElement.autoplay = true;
+    mediaElement.loop = true;
+    mediaElement.muted = true;
+    mediaElement.playsInline = true;
     mediaElement.classList.add('chat-video');
+
+    mediaElement.style.maxWidth = '100%';
+    mediaElement.style.height = 'auto';
+    mediaElement.style.display = 'block';
+
+    setTimeout(() => {
+      const playPromise = mediaElement.play?.();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          console.log("🎬 Lecture forcée réussie sur iOS");
+        }).catch(err => {
+          console.warn("⛔ Lecture bloquée sur iOS :", err);
+        });
+      }
+    }, 100);
 }
+
  else {
     mediaElement = document.createElement('img');
     mediaElement.src = imageUrl.startsWith('/get-image/')
