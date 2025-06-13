@@ -1179,14 +1179,19 @@ app.get('/get-image/:token', async (req, res) => {
       return res.status(404).send('Image non trouvée');
     }
 
-   let contentType;
+    let contentType;
 if (imagePath.endsWith('.webp')) {
   contentType = 'image/webp';
 } else if (imagePath.endsWith('.jpg') || imagePath.endsWith('.jpeg')) {
   contentType = 'image/jpeg';
+} else if (imagePath.endsWith('.gif')) {
+  contentType = 'image/gif';
+} else if (imagePath.endsWith('.mp4')) {
+  contentType = 'video/mp4';
 } else {
   contentType = 'application/octet-stream';
 }
+
 
 
     let imageBuffer;
@@ -1226,11 +1231,17 @@ if (imagePath.endsWith('.webp')) {
 
 
 
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=604800, immutable', // Cache efficace
-    });
-    res.end(imageBuffer, 'binary'); // ✅ Une seule réponse
+   res.setHeader('Content-Type', contentType);
+res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+
+if (imagePath.endsWith('.mp4')) {
+  console.log("🎬 Envoi direct du flux vidéo .mp4");
+  const stream = fs.createReadStream(imagePath);
+  stream.pipe(res);
+} else {
+  res.end(imageBuffer, 'binary');
+}
+
   } catch (error) {
     console.error("❌ Erreur lors du chargement de l'image :", error);
     if (!res.headersSent) {
