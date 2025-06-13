@@ -289,7 +289,10 @@ video.chat-profile-pic {
   color: #ffffff;
   box-shadow: 0 0 8px rgba(221, 77, 157, 0.15);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 16px; /* ✅ anti zoom iOS */
+  -webkit-text-size-adjust: 100%;
 }
+
 
 #user-input:focus {
   border-color: #ff78b0;
