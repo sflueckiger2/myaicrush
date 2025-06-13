@@ -1234,11 +1234,44 @@ if (imagePath.endsWith('.webp')) {
    res.setHeader('Content-Type', contentType);
 res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
 
+
 if (imagePath.endsWith('.mp4')) {
   console.log("🎬 Envoi direct du flux vidéo .mp4");
-  const stream = fs.createReadStream(imagePath);
-  stream.pipe(res);
-} else {
+
+  const stat = fs.statSync(imagePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    const chunkSize = (end - start) + 1;
+    const file = fs.createReadStream(imagePath, { start, end });
+
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': contentType,
+    });
+
+    file.pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': fileSize,
+      'Content-Type': contentType,
+      'Accept-Ranges': 'bytes',
+    });
+
+    fs.createReadStream(imagePath).pipe(res);
+  }
+
+  return; // ✅ Important : on sort ici pour éviter res.end() plus bas
+}
+
+else {
   res.end(imageBuffer, 'binary');
 }
 

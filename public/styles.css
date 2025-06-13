@@ -2023,3 +2023,7 @@ form label {
   opacity: 1;
 }
 
+video {
+  background-color: black; /* ✅ évite l'écran gris */
+  object-fit: cover;
+}
