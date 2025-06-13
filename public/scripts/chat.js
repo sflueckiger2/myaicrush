@@ -414,7 +414,11 @@ if (isVideo) {
     const isAbsoluteUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
     const finalUrl = isAbsoluteUrl ? imageUrl : `/get-image/${imageUrl.split('/').pop()}`;
 
-    mediaElement.setAttribute('src', finalUrl);
+    const source = document.createElement('source');
+source.setAttribute('src', finalUrl);
+source.setAttribute('type', 'video/mp4');
+mediaElement.appendChild(source);
+
     mediaElement.setAttribute('autoplay', '');
     mediaElement.setAttribute('loop', '');
     mediaElement.setAttribute('muted', '');
