@@ -410,15 +410,18 @@ const isVideo = mediaType === 'video';
 
 if (isVideo) {
     mediaElement = document.createElement('video');
-    mediaElement.src = imageUrl.startsWith('/get-image/')
-      ? imageUrl
-      : `/get-image/${imageUrl.split('/').pop()}`;
-    mediaElement.autoplay = true;
-    mediaElement.loop = true;
-    mediaElement.muted = true;
-    mediaElement.playsInline = true;
-    mediaElement.classList.add('chat-video'); // tu peux créer une classe CSS dédiée
-} else {
+
+    const isAbsoluteUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+    const finalUrl = isAbsoluteUrl ? imageUrl : `/get-image/${imageUrl.split('/').pop()}`;
+
+    mediaElement.setAttribute('src', finalUrl);
+    mediaElement.setAttribute('autoplay', '');
+    mediaElement.setAttribute('loop', '');
+    mediaElement.setAttribute('muted', '');
+    mediaElement.setAttribute('playsinline', ''); // important pour iOS
+    mediaElement.classList.add('chat-video');
+}
+ else {
     mediaElement = document.createElement('img');
     mediaElement.src = imageUrl.startsWith('/get-image/')
       ? imageUrl
