@@ -16,6 +16,8 @@ const nsfw = require('nsfwjs');
 const tf = require('@tensorflow/tfjs'); // Version allégée
 const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
 const { createCanvas, loadImage } = require('canvas');
+const userSentImages = new Map(); // email -> Set de noms d’images
+
 
 // 📦 Chargement du mapping Cloudflare (local path → CDN URL)
 let cloudflareMap = {};
@@ -1097,9 +1099,25 @@ if (isGifMode) {
           return null;
       }
 
-      const randomMedia = mediaFiles[Math.floor(Math.random() * mediaFiles.length)];
-      const mediaPath = path.join(imageDir, randomMedia);
-      console.log(`📸 Média sélectionné pour ${email} : ${mediaPath}`);
+      // 🆕 Empêcher les doublons d’image dans une même session
+const alreadySent = userSentImages.get(email) || new Set();
+const availableMedia = mediaFiles.filter(file => !alreadySent.has(file));
+
+// Si toutes les images ont été envoyées, on remet la liste à zéro
+if (availableMedia.length === 0) {
+    console.warn(`🚫 Toutes les images ont déjà été envoyées à ${email}. Réinitialisation.`);
+    availableMedia.push(...mediaFiles);
+    alreadySent.clear();
+}
+
+// 🎲 Sélection aléatoire d'une image non encore envoyée
+const randomMedia = availableMedia[Math.floor(Math.random() * availableMedia.length)];
+alreadySent.add(randomMedia);
+userSentImages.set(email, alreadySent);
+
+const mediaPath = path.join(imageDir, randomMedia);
+console.log(`📸 Média sélectionné pour ${email} : ${mediaPath}`);
+
 
       if (!fs.existsSync(mediaPath)) {
           console.error(`❌ Le fichier sélectionné ${mediaPath} n'existe pas.`);
