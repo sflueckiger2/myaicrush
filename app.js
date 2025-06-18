@@ -1052,9 +1052,9 @@ if (isNymphoMode) {
     levelFolder = `${sanitizedCharacterName}4`;
     console.log(`💋 Mode nympho activé pour ${email}, utilisation du dossier ${levelFolder}`);
 } else {
-    if (userLevel < 1.7) {
+    if (userLevel < 1.3) {
         levelFolder = `${sanitizedCharacterName}1`; // Little Crush
-    } else if (userLevel < 2.2) {
+    } else if (userLevel < 1.5) {
         levelFolder = `${sanitizedCharacterName}2`; // Big Crush
     } else {
         levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
@@ -1317,11 +1317,11 @@ function adjustUserLevel(email, comfortLevel) {
 
   if (levelChange > 0 && newLevel > previousLevel) {
     if (newLevel >= 1.1 && previousLevel < 1.1) return { message: "Bravo, tu lui plais.", type: "up" };
-    if (newLevel >= 1.7 && previousLevel < 1.7) return { message: "Elle est folle de toi.", type: "up" };
-    if (newLevel >= 2.2 && previousLevel < 2.2) return { message: "Wow, tu es son crush parfait !", type: "up" };
+    if (newLevel >= 1.3 && previousLevel < 1.3) return { message: "Elle est folle de toi.", type: "up" };
+    if (newLevel >= 1.5 && previousLevel < 1.5) return { message: "Wow, tu es son crush parfait !", type: "up" };
   } else if (levelChange < 0 && previousLevel > newLevel) {
-    if (newLevel < 1.2 && previousLevel >= 1.2) return { message: "Tu baisses dans son estime", type: "down" };
-    if (newLevel < 1.8 && previousLevel >= 1.8) return { message: "Elle n'a pas aimé ta réponse", type: "down" };
+    if (newLevel < 1.3 && previousLevel >= 1.3) return { message: "Tu baisses dans son estime", type: "down" };
+    if (newLevel < 1.5 && previousLevel >= 1.5) return { message: "Elle n'a pas aimé ta réponse", type: "down" };
   }
 
   return null;
@@ -2052,13 +2052,13 @@ console.log("💬 Réponse finale envoyée :", botReply);
         
 
         if (!sendPhoto) {
-            if (userLevel >= 1.1 && userLevel < 1.7 && !userPhotoData.photoSentAtLittleCrush) {
+            if (userLevel >= 1.1 && userLevel < 1.3 && !userPhotoData.photoSentAtLittleCrush) {
                 sendPhoto = true;
                 userPhotoData.photoSentAtLittleCrush = true;
-            } else if (userLevel >= 1.7 && userLevel < 2.2 && !userPhotoData.photoSentAtBigCrush) {
+            } else if (userLevel >= 1.3 && userLevel < 1.5 && !userPhotoData.photoSentAtBigCrush) {
                 sendPhoto = true;
                 userPhotoData.photoSentAtBigCrush = true;
-            } else if (userLevel >= 2.2 && !userPhotoData.photoSentAtPerfectCrush) {
+            } else if (userLevel >= 1.5 && !userPhotoData.photoSentAtPerfectCrush) {
                 sendPhoto = true;
                 userPhotoData.photoSentAtPerfectCrush = true;
             }

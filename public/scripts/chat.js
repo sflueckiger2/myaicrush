@@ -632,23 +632,43 @@ if (callButton) {
 }
 
 
-            if (character) {
-                // 🔥 Ajouter le message d’avertissement
-                addBotMessage(
-                    "🌸 Nos I.A sont délicates. Parle-leur avec douceur, comme si c'étaient de vraies personnes. Tu seras récompensé... <3",
-                    messagesContainer,
-                    true // Style spécial
-                );
+           if (character) {
+    if (character.introVideo) {
+        // 🔥 Ajouter la vidéo d’intro si disponible
+        const videoElement = document.createElement('video');
+        videoElement.src = character.introVideo;
+        videoElement.autoplay = true;
+        videoElement.loop = true;
+        videoElement.muted = true;
+        videoElement.playsInline = true;
+        videoElement.classList.add('chat-video');
+        videoElement.style.maxWidth = '100%';
+        videoElement.style.height = 'auto';
+        videoElement.style.display = 'block';
 
-                // 🔥 Ajouter la mise en situation personnalisée
-                if (character.ethnicity) {
-                    addBotMessage(
-  `🎬 Situation : ${character.ethnicity.replace(/\n/g, '<br>')}`,
-  messagesContainer,
-  true // Style spécial
-);
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('bot-message');
+        wrapper.appendChild(videoElement);
+        messagesContainer.appendChild(wrapper);
+        scrollToBottom(messagesContainer);
+    } else {
+        // 🔥 Message texte par défaut si pas de vidéo
+        addBotMessage(
+            "🌸 Nos I.A sont délicates. Parle-leur avec douceur, comme si c'étaient de vraies personnes. Tu seras récompensé... <3",
+            messagesContainer,
+            true
+        );
+    }
 
-                }
+    // 🎬 Toujours afficher la mise en situation personnalisée
+    if (character.ethnicity) {
+        addBotMessage(
+            `🎬 Situation : ${character.ethnicity.replace(/\n/g, '<br>')}`,
+            messagesContainer,
+            true
+        );
+    }
+
 
                 // ✅ Gestion de l'affichage du chat
                 document.querySelector('.chat-options').style.display = 'none';
