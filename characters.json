@@ -227,8 +227,9 @@
 
   {
     "name": "Candy",
-    "photo": "images/candy/candy3/d3b445e0714fc9f4800ef2e1d1c50f65.mp4",
+    "photo": "images/candy/candy3/candy-pic-profil-new.mp4",
     "backgroundPhoto": "images/candy/candy3/18212519e3203329084ccaae19af0385.webp",
+    "introVideo": "images/candy/candy3/candy-video-intro.mp4",
     "height": "163 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -268,8 +269,9 @@
 
   {
     "name": "Léa",
-    "photo": "images/market/video-lea-profil.mp4",
+    "photo": "images/lea/lea1/Lea-photo-profil-vdef.mp4",
     "backgroundPhoto": "images/lea/lea1/5f6561fb7d94db937779f2d85b733945.webp",
+    "introVideo": "images/lea/lea3/lea-video-intro.mp4",
     "height": "172 cm",
     "hasVideos": true,
     "hasNymphoMode": true,
