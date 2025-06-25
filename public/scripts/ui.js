@@ -55,7 +55,7 @@ if (character.hasVideos) {
 let badgesToShow = [];
 
 if (character.new) {
-    badgesToShow.push({ text: "Nouvelle", class: "new-badge" });
+    badgesToShow.push({ text: "Nouveau", class: "new-badge" });
 }
 if (character.hasVideos) {
     badgesToShow.push({ text: "🎥 Vidéos", class: "video-badge" });

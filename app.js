@@ -1334,12 +1334,12 @@ function adjustUserLevel(email, comfortLevel) {
   console.log(`📈 [${email}] Confort: ${comfortLevel}, Changement: ${levelChange}, Nouveau Niveau: ${newLevel}, Ancien Niveau: ${previousLevel}`);
 
   if (levelChange > 0 && newLevel > previousLevel) {
-    if (newLevel >= 1.1 && previousLevel < 1.1) return { message: "Bravo, tu lui plais.", type: "up" };
-    if (newLevel >= 1.3 && previousLevel < 1.3) return { message: "Elle est folle de toi.", type: "up" };
-    if (newLevel >= 1.5 && previousLevel < 1.5) return { message: "Wow, tu es son crush parfait !", type: "up" };
+    if (newLevel >= 1.1 && previousLevel < 1.1) return { message: "Niveau supérieur : tu débloques une photo.", type: "up" };
+    if (newLevel >= 1.3 && previousLevel < 1.3) return { message: "Niveau supérieur : photo sexy débloquée.", type: "up" };
+    if (newLevel >= 1.5 && previousLevel < 1.5) return { message: "Niveau supérieur : tu gagnes une photo intime", type: "up" };
   } else if (levelChange < 0 && previousLevel > newLevel) {
     if (newLevel < 1.3 && previousLevel >= 1.3) return { message: "Tu baisses dans son estime", type: "down" };
-    if (newLevel < 1.5 && previousLevel >= 1.5) return { message: "Elle n'a pas aimé ta réponse", type: "down" };
+    if (newLevel < 1.5 && previousLevel >= 1.5) return { message: "Ça ne lui a pas plu.", type: "down" };
   }
 
   return null;
