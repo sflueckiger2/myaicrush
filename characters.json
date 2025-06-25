@@ -279,7 +279,7 @@
     "3": "images/malik/malik3"
   },
   "voice": {
-    "id": "TX2kZ3p74QxVw5eJLYaa",
+    "id": "bU2VfAdiOb2Gv2eZWlFq",
     "model_id": "eleven_turbo_v2.5",
     "stability": 0.5,
     "similarity_boost": 0.88,
