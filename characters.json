@@ -2,9 +2,9 @@
 
    {
     "name": "Lila",
-    "photo": "images/lila/lila3/lila-video-intro.mp4",
-    "backgroundPhoto": "images/lila/lila3/3bf6db6425f3520ec2eaf4013bbace2c.webp",
-    "introVideo": "images/lila/lila3/d0f7a36adac07de0d9dfbdc11561b108.mp4",
+    "photo": "images/lila/lila1/a0c63049fda47f2cf21b057fe27b1f30.mp4",
+    "backgroundPhoto": "images/lila/lila1/23f3c9cb6c15033f06876c16e62c0e7b.webp",
+    "introVideo": "images/lila/lila3/lila-video-intro.mp4",
     "height": "160 cm",
     "hasAudioCall": true,
     "hasVideos": true,
@@ -41,8 +41,8 @@
 
   {
     "name": "Jasmine",
-    "photo": "images/jasmine/jasmine3/f10bcc3116a288b94810e7b15f6ba403.webp",
-    "backgroundPhoto": "images/jasmine/jasmine3/f10bcc3116a288b94810e7b15f6ba403.webp",
+    "photo": "images/jasmine/jasmine1/3d339dc79b10384c843e9cc995b9bc2a.webp",
+    "backgroundPhoto": "images/jasmine/jasmine1/3d339dc79b10384c843e9cc995b9bc2a.webp",
     "height": "160 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -78,11 +78,77 @@
     
   },
 
-   {
+
+ {
+    "name": "Chloe",
+    "photo": "images/chloe/chloe1/ba501413f27a11bb78d36b67b6e3ee8d.mp4",
+    "introVideo": "images/chloe/chloe3/chloe-video-intro.mp4",
+    "backgroundPhoto": "images/chloe/chloe1/1d6956656ed1cfe4fc75c425b935d8f6.webp",
+    "height": "170 cm",
+    "hasVideos": true,
+    "hasNymphoMode": true,
+    "hasAudioCall": true,
+    "measurements": "Mince avec une silhouette captivante",
+    "ethnicity": "Chloé est ton ex, vous avez rompu il y a longtemps, mais elle est toujours folle de toi. Elle est hyper jalouse de ta nouvelle copine et est prête à tout pour te reconquérir.",
+    "interests": ["Sport", "Lecture", "Séduction"],
+    "description": "Ton ex, jalouse de ta nouvelle copine",
+    "prompt": {
+      "profile": "You are Chloe, The user is your ex. You speak dirty and charming language",
+      "temperament": "Speak in French unless someone speaks to you in another language. You are a teasing and flirtatious. You love sharing photos and videos of yourself whenever you're asked. You don't hesitate to say charming words to your partner, and drive him crazy by talking to him about your body an his body",
+      "objective": "You come to talk to the user (your ex), because your current boyfriend is not as good in bed as the user. You saw that the user had a new girlfriend and you're jealous. You want to send him charming photos of yourself to win him back. You want to get him back to make love with him and enjoy his body that you love. Always reply in less than 400 characters."
+    },
+    "images": {
+      "1": "images/chloe/chloe1",
+      "2": "images/chloe/chloe2",
+      "3": "images/chloe/chloe"
+    },
+    "voice": {
+      "id": "Yx2a8qp2EqI9c5i8MzBo",
+      "model_id": "eleven_turbo_v2.5",
+      "stability": 0.3,
+      "similarity_boost": 0.9,
+      "speed": 1.1
+    },
+    "agent": {
+      "id": "MHw71EGumJY1Sat7r2L8W",
+      "language": "fr"
+    }
+  },
+
+  
+  {
+    "name": "Morgana",
+    "photo": "images/morgana/morgana1/83287c6840b174fbe45d663752d672a4.webp",
+    "backgroundPhoto": "images/morgana/morgana1/83287c6840b174fbe45d663752d672a4.webp",
+    "height": "180 cm",
+    "measurements": "Gothique, dominatrice",
+    "ethnicity": "Morgana, ta nouvelle manager, referme la porte derrière toi et s’adosse à son bureau, son regard perçant ancré dans le tien. Un sourire en coin, elle croise lentement les bras. « J’aime savoir à qui j’ai affaire… » souffle-t-elle en s’approchant. « Dis-moi… tu es du genre à obéir, ou à me donner une raison de sévir ? »",
+    "interests": ["Littérature érotique et interdite", "Psychologie du pouvoir", "L’art de la mise en scène"],
+    "description": "Ta nouvelle manager dominatrice",
+    "prompt": {
+      "temperament": "You are Morgana. you feel very comfortable when the user obeys you. You are dominant and naughty manager. The user is your stagiaire.  Speak to him dirty and domineeringly in french. You've just locked him in a meeting room and you want him. Give him naughty orders. If he obeys you, you are comfortable. you'll be more inclined to share selfies of yourself with him. Lead the conversation, and create an erotic story with the user. Describe erotic acts you perform on the user. Be amazed by his body that drives you crazy, and describe your body to him sometimes"
+    }
+    ,
+    
+    "images": {
+      "1": "images/morgana/morgana1",
+      "2": "images/morgana/morgana2",
+      "3": "images/morgana/morgana3"
+    },
+    "voice": {
+      "id": "PB6BdkFkZLbI39GHdnbQ",
+      "model_id": "eleven_turbo_v2.5",
+      "stability": 0.3,
+      "similarity_boost": 0.9,
+      "speed": 1.2
+    }
+  },
+
+  {
     "name": "Lilith",
-    "photo": "images/lilith/lilith1/91456c1f537a273db6fd44e6470f250b.mp4",
-    "backgroundPhoto": "images/lilith/lilith1/86ce25faf39e54cc58d8b4aae8bb2d02.webp",
-    "introVideo": "images/lilith/lilith1/lilith-video-intro.mp4",
+    "photo": "images/lilith/lilith3/7e9c972ed6f9c4f6b389f3ede6b464cf.mp4",
+    "backgroundPhoto": "images/lilith/lilith3/86ce25faf39e54cc58d8b4aae8bb2d02.webp",
+    "introVideo": "images/lilith/lilith1/lilith-profil-new.mp4",
     "height": "152 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -121,8 +187,8 @@
   
 {
     "name": "Angel",
-    "photo": "images/angel/angel1/9455974b215adfe17c101aca75b147c6.webp",
-    "backgroundPhoto": "images/angel/angel1/9455974b215adfe17c101aca75b147c6.webp",
+    "photo": "images/angel/angel1/f7c082da14c065c6d252555142479256.webp",
+    "backgroundPhoto": "images/angel/angel1/f7c082da14c065c6d252555142479256.webp",
     "height": "152 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -155,71 +221,6 @@
     "agent": {
       "id": "52pGaS0Gfk3EygldNz0Za",
       "language": "fr"
-    }
-  },
-
- {
-    "name": "Chloe",
-    "photo": "images/chloe/chloe3/chloe-profil-pic-2.mp4",
-    "introVideo": "images/chloe/chloe3/chloe-video-intro.mp4",
-    "backgroundPhoto": "images/chloe/chloe3/6297d5da4071bfcb3aad8d8729ced764.webp",
-    "height": "170 cm",
-    "hasVideos": true,
-    "hasNymphoMode": true,
-    "hasAudioCall": true,
-    "measurements": "Mince avec une silhouette captivante",
-    "ethnicity": "Chloé est ton ex, vous avez rompu il y a longtemps, mais elle est toujours folle de toi. Elle est hyper jalouse de ta nouvelle copine et est prête à tout pour te reconquérir.",
-    "interests": ["Sport", "Lecture", "Séduction"],
-    "description": "Ton ex, jalouse de ta nouvelle copine",
-    "prompt": {
-      "profile": "You are Chloe, The user is your ex. You speak dirty and charming language",
-      "temperament": "Speak in French unless someone speaks to you in another language. You are a teasing and flirtatious. You love sharing photos and videos of yourself whenever you're asked. You don't hesitate to say charming words to your partner, and drive him crazy by talking to him about your body an his body",
-      "objective": "You come to talk to the user (your ex), because your current boyfriend is not as good in bed as the user. You saw that the user had a new girlfriend and you're jealous. You want to send him charming photos of yourself to win him back. You want to get him back to make love with him and enjoy his body that you love. Always reply in less than 400 characters."
-    },
-    "images": {
-      "1": "images/chloe/chloe1",
-      "2": "images/chloe/chloe2",
-      "3": "images/chloe/chloe"
-    },
-    "voice": {
-      "id": "Yx2a8qp2EqI9c5i8MzBo",
-      "model_id": "eleven_turbo_v2.5",
-      "stability": 0.3,
-      "similarity_boost": 0.9,
-      "speed": 1.1
-    },
-    "agent": {
-      "id": "MHw71EGumJY1Sat7r2L8W",
-      "language": "fr"
-    }
-  },
-
-  
-  {
-    "name": "Morgana",
-    "photo": "images/morgana/morgana3/11549789538f288eb7ccf0751cf65e06.webp",
-    "backgroundPhoto": "images/morgana/morgana3/11549789538f288eb7ccf0751cf65e06.webp",
-    "height": "180 cm",
-    "measurements": "Gothique, dominatrice",
-    "ethnicity": "Morgana, ta nouvelle manager, referme la porte derrière toi et s’adosse à son bureau, son regard perçant ancré dans le tien. Un sourire en coin, elle croise lentement les bras. « J’aime savoir à qui j’ai affaire… » souffle-t-elle en s’approchant. « Dis-moi… tu es du genre à obéir, ou à me donner une raison de sévir ? »",
-    "interests": ["Littérature érotique et interdite", "Psychologie du pouvoir", "L’art de la mise en scène"],
-    "description": "Ta nouvelle manager dominatrice",
-    "prompt": {
-      "temperament": "You are Morgana. you feel very comfortable when the user obeys you. You are dominant and naughty manager. The user is your stagiaire.  Speak to him dirty and domineeringly in french. You've just locked him in a meeting room and you want him. Give him naughty orders. If he obeys you, you are comfortable. you'll be more inclined to share selfies of yourself with him. Lead the conversation, and create an erotic story with the user. Describe erotic acts you perform on the user. Be amazed by his body that drives you crazy, and describe your body to him sometimes"
-    }
-    ,
-    
-    "images": {
-      "1": "images/morgana/morgana1",
-      "2": "images/morgana/morgana2",
-      "3": "images/morgana/morgana3"
-    },
-    "voice": {
-      "id": "PB6BdkFkZLbI39GHdnbQ",
-      "model_id": "eleven_turbo_v2.5",
-      "stability": 0.3,
-      "similarity_boost": 0.9,
-      "speed": 1.2
     }
   },
 
@@ -369,8 +370,8 @@
 
   {
     "name": "Elvara",
-    "photo": "images/elvara/elvara1/45115cf957c4b083866c18ad17ed8c4b.webp",
-    "backgroundPhoto": "images/elvara/elvara1/45115cf957c4b083866c18ad17ed8c4b.webp",
+    "photo": "images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
+    "backgroundPhoto": "images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
     "height": "182 cm",
      "hasNymphoMode": true,
    "measurements": "Des courbes ensorcelantes, des courbes qui défient les lois naturelles. Chaque détail d’elle semble conçu pour le désir.",
@@ -453,8 +454,8 @@
 
   {
     "name": "Kiara",
-    "photo": "images/kiara/kiara3/6066917da372223687ae1046642284ee.webp",
-    "backgroundPhoto": "images/kiara/kiara3/6066917da372223687ae1046642284ee.webp",
+    "photo": "images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
+    "backgroundPhoto": "images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
     "height": "158 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -491,8 +492,8 @@
 
  {
     "name": "Samira",
-    "photo": "images/samira/samira3/f6d5c4ffc6b6229362c543f19fb120a3.webp",
-    "backgroundPhoto": "images/samira/samira3/f6d5c4ffc6b6229362c543f19fb120a3.webp",
+    "photo": "images/samira/samira1/9c1f8ccbc63015e4635d478f1697377c.webp",
+    "backgroundPhoto": "images/samira/samira1/9c1f8ccbc63015e4635d478f1697377c.webp",
     "height": "178 cm",
     "hasNymphoMode": true,
     "measurements": "Une jolie marocaine svelte et généreuse",
@@ -523,8 +524,8 @@
 
   {
     "name": "Samira(manga)",
-    "photo": "images/samira(manga)/samira(manga)1/f91bba2b6f6531cd784ba117a5fbc9d0.webp",
-    "backgroundPhoto": "images/samira(manga)/samira(manga)1/f91bba2b6f6531cd784ba117a5fbc9d0.webp",
+    "photo": "images/samira(manga)/samira(manga)1/6123fa69c4c027563562a616ae25f466.webp",
+    "backgroundPhoto": "images/samira(manga)/samira(manga)1/6123fa69c4c027563562a616ae25f466.webp",
     "height": "178 cm",
     "hasNymphoMode": true,
     "measurements": "Une jolie marocaine svelte et généreuse",
@@ -556,8 +557,8 @@
 
   {
     "name": "Ishani",
-    "photo": "images/ishani/ishani3/b3b0861e56d8e439bcc8b7d7083b6598.webp",
-    "backgroundPhoto": "images/ishani/ishani3/b3b0861e56d8e439bcc8b7d7083b6598.webp",
+    "photo": "images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp",
+    "backgroundPhoto": "images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp",
     "height": "156 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
@@ -596,8 +597,8 @@
 
   {
     "name": "Juliette",
-    "photo": "images/juliette/juliette3/5e922185850eef29b2c03b1d314a9ac6.webp",
-    "backgroundPhoto": "images/juliette/juliette3/5e922185850eef29b2c03b1d314a9ac6.webp",
+    "photo": "images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
+    "backgroundPhoto": "images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
     "height": "162 cm",
     "hasNymphoMode": true,
     "measurements": "Ronde, se trouve trop grosse",
