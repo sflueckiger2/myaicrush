@@ -49,6 +49,12 @@
       <br><h1>Choisis ta partenaire :</h1>
       <center><p>Elles ont l’air sages… mais attend de voir.</p></center>
     </div>
+    <div class="private-toggle-wrapper">
+  <button id="private-content-btn" class="private-toggle-btn">
+    🔒 Contenu privé
+  </button>
+</div>
+
 
     <!-- Conteneur principal pour les options de chat et le chat -->
     <div class="container">
@@ -305,6 +311,42 @@
 <script type="module" src="/scripts/menu-loader.js"></script>
 
 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const privateBtn = document.getElementById("private-content-btn");
+    if (!privateBtn) return;
+
+    privateBtn.addEventListener("click", async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.email) {
+        alert("Veuillez vous connecter pour accéder au contenu privé.");
+        window.location.href = "profile.html";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${window.location.origin}/api/is-premium`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+
+        const { isPremium } = await res.json();
+
+        if (isPremium) {
+          window.location.href = "contenu-prive.html";
+        } else {
+          alert("Les contenus privés sont réservés aux membres premium.");
+          window.location.href = "premium.html";
+        }
+
+      } catch (err) {
+        console.error("❌ Erreur lors de la vérification premium :", err);
+        alert("Erreur lors de la vérification. Veuillez réessayer plus tard.");
+      }
+    });
+  });
+</script>
 
 
 

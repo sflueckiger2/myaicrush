@@ -2303,3 +2303,26 @@ video {
 .lock-overlay i {
   pointer-events: none;
 }
+
+
+.private-toggle-wrapper {
+  text-align: center;
+  margin: 20px auto;
+}
+
+.private-toggle-btn {
+  background-color: transparent;
+  color: #dd4d9d;
+  border: 2px solid #dd4d9d;
+  padding: 8px 18px;
+  border-radius: 25px;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.private-toggle-btn:hover {
+  background-color: #dd4d9d;
+  color: white;
+}
