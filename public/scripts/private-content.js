@@ -35,7 +35,7 @@ async function loadUnlockedContents() {
   }
 }
 
-// ✅ Nouvelle fonction dédiée pour débloquer un contenu privé (consommer jetons)
+// ✅ Fonction pour débloquer un contenu privé
 async function handlePrivateUnlock(price, folder) {
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -58,13 +58,15 @@ async function handlePrivateUnlock(price, folder) {
       console.log(`✅ Contenu débloqué : ${folder}, nouveaux jetons : ${data.newTokens}`);
       return true;
     } else {
+      if (data.message) {
+        alert(data.message);
+      }
       if (data.redirect) {
         window.location.href = data.redirect;
-      } else {
-        alert(data.message || 'Erreur lors du déblocage.');
       }
       return false;
     }
+
   } catch (error) {
     console.error('❌ Erreur lors du déblocage :', error);
     alert("Impossible de débloquer ce contenu.");
@@ -72,7 +74,8 @@ async function handlePrivateUnlock(price, folder) {
   }
 }
 
-// Crée les cards HTML
+// ✅ Crée les nouvelles cartes style Candy
+
 function createPrivateContentCards(character, unlockedContents) {
   if (!character.privateContents || character.privateContents.length === 0) {
     return '';
@@ -83,20 +86,40 @@ function createPrivateContentCards(character, unlockedContents) {
   character.privateContents.forEach(content => {
     const isUnlocked = unlockedContents.includes(content.folder);
 
-    cardsHtml += `
-      <div class="private-card" style="position: relative;">
-        <img src="${content.preview}" alt="${content.title}" class="private-preview" style="filter: ${isUnlocked ? 'none' : 'blur(15px)'}; transition: filter 0.3s;">
-        <h3>${content.title}</h3>
-        <p>${content.description}</p>
-        <button class="unlock-button" data-folder="${content.folder}" data-price="${content.price}" style="background-color: ${isUnlocked ? '#4CAF50' : '#dd4d9d'};">
-          ${isUnlocked ? '✅ Voir le contenu' : `🔒 Débloquer pour ${content.price} jetons`}
-        </button>
-      </div>
-    `;
+    const profileExt = character.photo.split('.').pop().toLowerCase();
+    const isVideo = profileExt === 'mp4';
+
+    const profileMedia = isVideo
+      ? `<video class="profile-pic" src="${character.photo}" autoplay muted loop playsinline></video>`
+      : `<img class="profile-pic" src="${character.photo}" alt="Profil ${character.name}">`;
+
+   cardsHtml += `
+  <div class="private-content-card">
+    <div class="private-profile-header">
+      ${profileMedia}
+      <span class="private-profile-name">${character.name}</span>
+    </div>
+    <div class="preview-wrapper">
+      <img class="preview-image" src="${content.preview}" alt="${content.title}" style="filter: ${isUnlocked ? 'none' : 'blur(15px)'};">
+      ${!isUnlocked ? '<div class="lock-overlay"><i class="fas fa-lock"></i></div>' : ''}
+    </div>
+    <h3>${content.title}</h3>
+    <p class="description">${content.description}</p>
+    <div class="token-info"><i class="fas fa-coins"></i> ${content.price} Jetons</div>
+    <button class="unlock-btn" data-folder="${content.folder}" data-price="${content.price}" style="background-color: ${isUnlocked ? '#4CAF50' : '#dd4d9d'};">
+      ${isUnlocked ? '✅ Voir le contenu' : `Débloquer`}
+    </button>
+  </div>
+`;
+
+
   });
 
   return cardsHtml;
 }
+
+
+
 
 async function renderPrivateContents(characters) {
   const container = document.getElementById('private-contents');
@@ -112,33 +135,26 @@ async function renderPrivateContents(characters) {
   characters.forEach(character => {
     const cards = createPrivateContentCards(character, unlockedContents);
     if (cards) {
-      allContentsHtml += `
-        <h2>${character.name} — Contenus privés</h2>
-        <div class="private-cards-wrapper">
-          ${cards}
-        </div>
-      `;
+      allContentsHtml += cards;
     }
   });
 
   container.innerHTML = allContentsHtml;
 
   // Ajouter écouteurs
-  const unlockButtons = document.querySelectorAll('.unlock-button');
+  const unlockButtons = document.querySelectorAll('.unlock-btn');
   unlockButtons.forEach(button => {
     button.addEventListener('click', async (e) => {
       const folder = e.target.dataset.folder;
       const price = e.target.dataset.price;
-      const previewImg = e.target.closest('.private-card').querySelector('.private-preview');
+      const previewImg = e.target.closest('.private-content-card').querySelector('.preview-image');
       const isUnlocked = e.target.innerText.includes("Voir le contenu");
 
       if (isUnlocked) {
-        // 👉 Action "Voir le contenu"
         openPackModal(folder);
         return;
       }
 
-      // Sinon => achat (consomme jetons)
       const success = await handlePrivateUnlock(price, folder);
 
       if (success) {
@@ -150,7 +166,7 @@ async function renderPrivateContents(characters) {
   });
 }
 
-// 👉 Fonction pour ouvrir une modal ou rediriger
+// 👉 Fonction pour ouvrir la page pack
 function openPackModal(folder) {
   console.log(`📂 Ouvrir le pack : ${folder}`);
   window.location.href = `/pack.html?folder=${encodeURIComponent(folder)}`;

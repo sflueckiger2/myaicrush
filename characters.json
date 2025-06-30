@@ -42,7 +42,7 @@
       "title": "Astrid s'occupe de son mari",
       "preview": "images/astrid/astrid-private-preview.webp",
       "folder": "images/astrid/private1/",
-      "price": 250,
+      "price": 50,
       "description": "Une scène intime où ta guerrière viking montre son côté sauvage et dominant. Pour ceux qui osent la voir autrement…"
     }
   ]
@@ -84,7 +84,17 @@
     "agent": {
       "id": "IIi2lrTOnx20Sl65fXLWg", 
       "language": "fr"
+    },
+    "privateContents": [
+    {
+      "title": "Lila s'occupe de son mari",
+      "preview": "images/astrid/astrid-private-preview.webp",
+      "folder": "images/astrid/private1/",
+      "price": 50,
+      "description": "Une scène intime où ta guerrière viking montre son côté sauvage et dominant. Pour ceux qui osent la voir autrement…"
     }
+  ]
+    
   },
 
   {

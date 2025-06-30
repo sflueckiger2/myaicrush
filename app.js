@@ -2642,7 +2642,7 @@ app.post('/api/unlock-private-content', async (req, res) => {
         const jetons = user.creditsPurchased || 0;
 
         if (jetons < price) {
-            return res.status(403).json({ success: false, message: "Pas assez de jetons.", redirect: "/jetons.html" });
+            return res.status(403).json({ success: false, message: "Vous n'avez pas assez de jetons pour débloquer ce contenu privé.", redirect: "/jetons.html" });
         }
 
         // ✅ Déduire les jetons et marquer le contenu comme débloqué

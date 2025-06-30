@@ -2043,3 +2043,263 @@ video {
 .private-preview:hover {
   transform: scale(1.05); /* Petit zoom au survol */
 }
+
+/* ✅ Style général pour chaque carte privée */
+.private-card {
+  width: 100%;
+  max-width: 450px; /* 💡 Réduit la largeur sur desktop pour centrer joliment */
+  margin: 20px auto; /* Toujours centré */
+  text-align: center;
+  background-color: #2b2b3d;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+/* ✅ Images et vidéos dans les cartes */
+.private-card img.private-preview,
+.private-card video.private-preview {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+}
+
+.private-card img.private-preview:hover,
+.private-card video.private-preview:hover {
+  transform: scale(1.02);
+}
+
+/* ✅ Titres et descriptions */
+.private-card h3 {
+  color: #dd4d9d;
+  margin-top: 12px;
+  font-size: 1.4em;
+}
+
+.private-card p {
+  color: #d1d1e0;
+  margin: 8px 0 15px;
+  font-size: 1em;
+}
+
+/* ✅ Bouton de déblocage / voir le contenu */
+.private-card .unlock-button {
+  background-color: #dd4d9d;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.private-card .unlock-button:hover {
+  background-color: #c2185b;
+  transform: scale(1.05);
+}
+
+/* ✅ Responsive : ajustements sur mobile */
+@media (max-width: 768px) {
+  .private-card {
+    max-width: 90%;
+    margin: 15px auto;
+    padding: 10px;
+  }
+
+  .private-card h3 {
+    font-size: 1.2em;
+  }
+
+  .private-card p {
+    font-size: 0.95em;
+  }
+
+  .private-card .unlock-button {
+    padding: 10px 16px;
+    font-size: 0.95em;
+  }
+}
+
+/* ✅ Bouton positionné au milieu pour floutage */
+.private-unlock-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #dd4d9d;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.private-unlock-btn:hover {
+  background-color: #c2185b;
+}
+
+
+
+
+.private-unlock-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #dd4d9d;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.private-unlock-btn:hover {
+  background-color: #c2185b;
+}
+
+
+/* === Nouvelle carte style "Candy.ai" pour page contenu privé === */
+
+.private-content-card {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  background-color: #2b2b3d;
+  border-radius: 14px;
+  padding: 15px 15px 20px;
+  margin: 15px auto;
+  text-align: left;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  
+}
+
+.private-content-card:hover {
+  transform: scale(1.03);
+}
+
+.private-content-card img.preview-image {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+
+
+.private-content-card h3 {
+  font-size: 1.1em;
+  color: #dd4d9d;
+  margin: 8px 0 5px;
+}
+
+.private-content-card p.description {
+  font-size: 0.95em;
+  color: #ccc;
+  margin: 0 0 12px;
+  line-height: 1.3;
+  min-height: 45px; /* Pour unifier la hauteur */
+}
+
+.private-content-card .token-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95em;
+  color: #ffc107; /* Jaune style pièce */
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.private-content-card .token-info i {
+  color: #ffc107;
+}
+
+.private-content-card .unlock-btn {
+  display: block;
+  width: 100%;
+  background-color: #dd4d9d;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 0;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.private-content-card .unlock-btn:hover {
+  background-color: #c2185b;
+  transform: scale(1.03);
+}
+
+/* ✅ Responsive */
+@media (max-width: 768px) {
+  .private-content-card {
+    max-width: 90%;
+  }
+}
+
+
+.private-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.private-profile-header .profile-pic {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #dd4d9d;
+  flex-shrink: 0; /* ✅ Évite de rétrécir */
+}
+
+.private-profile-header .private-profile-name {
+  display: inline-block;
+  color: white;
+  font-weight: bold;
+  font-size: 1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ✅ si jamais ça dépasse */
+}
+
+.preview-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #dd4d9d;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  padding: 12px;
+  font-size: 24px;
+}
+
+.lock-overlay i {
+  pointer-events: none;
+}

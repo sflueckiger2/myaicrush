@@ -4,13 +4,57 @@
   <meta charset="UTF-8">
   <title>Pack Privé</title>
   <style>
-    body { background: #111; color: #fff; text-align: center; }
-    img, video { max-width: 90%; margin: 10px auto; display: block; border-radius: 8px; }
+    body {
+      background: #1e1e2f;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #dd4d9d, #8a2be2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #pack-content {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      justify-items: center;
+    }
+
+    
+
+    img, video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease;
+    }
+
+    img:hover, video:hover {
+      transform: scale(1.03);
+    }
+
+    video {
+      background-color: black;
+    }
+
+    p {
+      text-align: center;
+      font-size: 1em;
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
   <h1>🎁 Ton pack privé</h1>
-  <div id="pack-content"></div>
+  <div id="pack-content"><p>Chargement en cours...</p></div>
 
   <script>
     async function loadPack() {
@@ -21,7 +65,6 @@
         return;
       }
 
-      // Appel backend pour obtenir la liste des fichiers
       const response = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}`);
       const data = await response.json();
 
@@ -40,6 +83,7 @@
           video.src = file;
           video.controls = true;
           video.loop = true;
+          video.muted = false;
           container.appendChild(video);
         } else {
           const img = document.createElement('img');
