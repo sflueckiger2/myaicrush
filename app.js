@@ -2683,37 +2683,71 @@ app.post('/api/unlock-private-content', async (req, res) => {
 // Route fichiers privé
 const glob = require('glob');
 
-app.get('/api/list-pack-files', (req, res) => {
-  const folder = req.query.folder;
+app.get('/api/list-pack-files', async (req, res) => {
+    const folder = req.query.folder;
+    const email = req.query.email;
 
-  if (!folder || !folder.startsWith('images/')) {
-    return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
-  }
-
-  const fullPath = path.join(__dirname, 'public', folder);
-
-  glob(`${fullPath}/*.{webp,jpg,jpeg,png,mp4}`, (err, files) => {
-    if (err) {
-      console.error("❌ Erreur lors du listing du pack :", err);
-      return res.status(500).json({ files: [], photosCount: 0, videosCount: 0 });
+    if (!folder || !folder.startsWith('images/')) {
+        return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
     }
 
-    // ✅ Convertir les chemins absolus en relatifs corrects
-    const relativeFiles = files.map(f => {
-      let relativePath = path.relative(path.join(__dirname, 'public'), f);
-      relativePath = relativePath.replace(/\\/g, '/'); // Windows friendly
-      return `/${relativePath}`; // On force le slash initial
-    });
+    if (!email) {
+        console.warn("❌ Email manquant dans la requête /api/list-pack-files");
+        return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
+    }
 
-    // ✅ Compter photos et vidéos
-    const photosCount = relativeFiles.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i)).length;
-    const videosCount = relativeFiles.filter(f => f.match(/\.mp4$/i)).length;
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+        const user = await users.findOne({ email });
 
-    res.json({ files: relativeFiles, photosCount, videosCount });
-  });
+        if (!user) {
+            console.warn(`❌ Utilisateur introuvable: ${email}`);
+            return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+        }
+
+        // ✅ Vérifier statut premium
+        const subscriptionInfo = await getUserSubscription(email);
+        const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
+
+        if (!isPremium) {
+            console.warn(`🚫 Accès refusé (non-premium) pour ${email}`);
+            return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+        }
+
+        // ✅ Vérifier si le pack est débloqué
+        const unlockedContents = user.unlockedContents || [];
+        if (!unlockedContents.includes(folder)) {
+            console.warn(`🚫 Pack non débloqué (${folder}) pour ${email}`);
+            return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+        }
+
+        // ✅ Lister les fichiers
+        const fullPath = path.join(__dirname, 'public', folder);
+        glob(`${fullPath}/*.{webp,jpg,jpeg,png,mp4}`, (err, files) => {
+            if (err) {
+                console.error("❌ Erreur listing pack :", err);
+                return res.status(500).json({ files: [], photosCount: 0, videosCount: 0 });
+            }
+
+            const relativeFiles = files.map(f => {
+                let relativePath = path.relative(path.join(__dirname, 'public'), f);
+                relativePath = relativePath.replace(/\\/g, '/');
+                return `/${relativePath}`;
+            });
+
+            const photosCount = relativeFiles.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i)).length;
+            const videosCount = relativeFiles.filter(f => f.match(/\.mp4$/i)).length;
+
+            res.json({ files: relativeFiles, photosCount, videosCount });
+        });
+
+    } catch (error) {
+        console.error("❌ Erreur interne /api/list-pack-files :", error);
+        res.status(500).json({ files: [], photosCount: 0, videosCount: 0 });
+    }
 });
 
-  
   
 
 

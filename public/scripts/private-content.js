@@ -75,7 +75,6 @@ async function handlePrivateUnlock(price, folder) {
 }
 
 // ✅ Crée les nouvelles cartes style Candy
-
 function createPrivateContentCards(character, unlockedContents) {
   if (!character.privateContents || character.privateContents.length === 0) {
     return '';
@@ -93,7 +92,6 @@ function createPrivateContentCards(character, unlockedContents) {
       ? `<video class="profile-pic" src="${character.photo}" autoplay muted loop playsinline></video>`
       : `<img class="profile-pic" src="${character.photo}" alt="Profil ${character.name}">`;
 
-    // ✅ Ajouter le cadenas si non débloqué
     const lockIconHtml = !isUnlocked
       ? `<div class="lock-icon"><i class="fas fa-lock"></i></div>`
       : '';
@@ -122,10 +120,6 @@ function createPrivateContentCards(character, unlockedContents) {
   return cardsHtml;
 }
 
-
-
-
-
 async function renderPrivateContents(characters) {
   const container = document.getElementById('private-contents');
   if (!container) {
@@ -134,6 +128,8 @@ async function renderPrivateContents(characters) {
   }
 
   const unlockedContents = await loadUnlockedContents();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userEmail = user?.email || '';
 
   let allContentsHtml = '';
 
@@ -150,9 +146,10 @@ async function renderPrivateContents(characters) {
   const unlockButtons = document.querySelectorAll('.unlock-btn');
   unlockButtons.forEach(button => {
     button.addEventListener('click', async (e) => {
+      const card = e.target.closest('.private-content-card');
       const folder = e.target.dataset.folder;
       const price = e.target.dataset.price;
-      const previewImg = e.target.closest('.private-content-card').querySelector('.preview-image');
+      const previewImg = card.querySelector('.preview-image');
       const isUnlocked = e.target.innerText.includes("Voir le contenu");
 
       if (isUnlocked) {
@@ -166,17 +163,33 @@ async function renderPrivateContents(characters) {
         previewImg.style.filter = 'none';
         e.target.innerHTML = "✅ Voir le contenu";
         e.target.style.backgroundColor = "#4CAF50";
+
+        const lockIcon = card.querySelector('.lock-icon');
+        if (lockIcon) {
+          lockIcon.remove();
+        }
+
+        try {
+          const res = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}&email=${encodeURIComponent(userEmail)}`);
+          const data = await res.json();
+          const packInfo = card.querySelector('.pack-info');
+          if (packInfo) {
+            packInfo.innerHTML = `<i class="fas fa-image"></i> ${data.photosCount} • <i class="fas fa-video"></i> ${data.videosCount}`;
+          }
+        } catch (err) {
+          console.error(`❌ Erreur mise à jour pack ${folder}:`, err);
+        }
       }
     });
   });
 
-  // ✅ Charger les infos de pack (photos/videos) et les afficher
+  // ✅ Charger initialement les infos de pack
   document.querySelectorAll('.private-content-card').forEach(async (card) => {
     const folder = card.getAttribute('data-folder');
     if (!folder) return;
 
     try {
-      const res = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}`);
+      const res = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}&email=${encodeURIComponent(userEmail)}`);
       const data = await res.json();
 
       const packInfo = card.querySelector('.pack-info');
@@ -188,7 +201,6 @@ async function renderPrivateContents(characters) {
     }
   });
 }
-
 
 // 👉 Fonction pour ouvrir la page pack
 function openPackModal(folder) {

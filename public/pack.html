@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Pack Privé</title>
+  <meta name="robots" content="noindex, nofollow">
   <style>
     body {
       background: #1e1e2f;
@@ -27,15 +28,24 @@
       justify-items: center;
     }
 
-    
+  
+img, video {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease;
+}
 
+@media (min-width: 769px) {
     img, video {
-      width: 100%;
-      max-width: 400px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      transition: transform 0.3s ease;
+        max-width: 400px;
     }
+}
+
+
+
+
 
     img:hover, video:hover {
       transform: scale(1.03);
@@ -65,35 +75,61 @@
         return;
       }
 
-      const response = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}`);
-      const data = await response.json();
+      const user = JSON.parse(localStorage.getItem("user"));
+      const userEmail = user?.email || '';
 
-      if (!data.files || data.files.length === 0) {
-        document.getElementById('pack-content').innerHTML = "<p>Aucun fichier trouvé</p>";
-        return;
-      }
+      try {
+        const response = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}&email=${encodeURIComponent(userEmail)}`);
+        const data = await response.json();
 
-      const container = document.getElementById('pack-content');
-      container.innerHTML = '';
-
-      data.files.forEach(file => {
-        const ext = file.split('.').pop().toLowerCase();
-        if (ext === 'mp4') {
-          const video = document.createElement('video');
-          video.src = file;
-          video.controls = true;
-          video.loop = true;
-          video.muted = false;
-          container.appendChild(video);
-        } else {
-          const img = document.createElement('img');
-          img.src = file;
-          container.appendChild(img);
+        if (!data.files || data.files.length === 0) {
+          document.getElementById('pack-content').innerHTML = "<p>Aucun fichier trouvé</p>";
+          return;
         }
-      });
+
+        const container = document.getElementById('pack-content');
+        container.innerHTML = '';
+
+        data.files.forEach(file => {
+          const ext = file.split('.').pop().toLowerCase();
+          if (ext === 'mp4') {
+            const video = document.createElement('video');
+            video.src = file;
+            video.controls = true;
+            video.loop = true;
+            video.muted = false;
+            container.appendChild(video);
+          } else {
+            const img = document.createElement('img');
+            img.src = file;
+            container.appendChild(img);
+          }
+        });
+
+      } catch (error) {
+        console.error("❌ Erreur lors du chargement du pack :", error);
+        document.getElementById('pack-content').innerHTML = "<p>Erreur lors du chargement du pack</p>";
+      }
     }
 
     loadPack();
   </script>
+
+  <script type="module" src="./scripts/menu.js"></script>
+  
+  <script>
+  document.addEventListener("click", function(e) {
+    if (e.target.tagName === "IMG" || e.target.tagName === "VIDEO") {
+      if (e.target.requestFullscreen) {
+        e.target.requestFullscreen();
+      } else if (e.target.webkitRequestFullscreen) {
+        e.target.webkitRequestFullscreen();
+      } else if (e.target.msRequestFullscreen) {
+        e.target.msRequestFullscreen();
+      }
+    }
+  });
+</script>
+
 </body>
 </html>

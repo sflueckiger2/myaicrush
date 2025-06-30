@@ -26,7 +26,7 @@
     "nympho": "images/astrid/astrid4"
   },
   "voice": {
-    "id": "1zUSi8LeHs9M2mV8X6YS",
+    "id": "tMyQcCxfGDdIt7wJ2RQw",
     "model_id": "eleven_turbo_v2.5",
     "stability": 0.3,
     "similarity_boost": 0.9,
@@ -38,19 +38,13 @@
   },
 
   "privateContents": [
-    {
-      "title": "Astrid s'occupe du chef du village",
-      "preview": "images/astrid/astrid-private-preview.webp",
-      "folder": "images/astrid/private1/",
-      "price": 15,
-      "description": "Une scène intime où ta guerrière viking fais du bien à son mari... bien membré."
-    },
+    
  {
       "title": "Astrid choquée par la taille du chef adverse",
       "preview": "images/astrid/astrid-private-preview2.webp",
       "folder": "images/astrid/private2/",
-      "price": 40,
-      "description": "Le village d'Astrid est pris d'assaut par une tribu adverse. Pour sauver sa vie, elle n'a pas d'autre choix que de satisfaire leur chef... mais vu la taille, elle prend du plaisir."
+      "price": 35,
+      "description": "Le village d'Astrid est pris d'assaut par une tribu adverse. Pour sauver sa vie, elle n'a pas d'autre choix que de satisfaire leur chef… mais, vu sa taille, elle y prend malgré tout du plaisir."
     }
 
   ]
