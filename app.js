@@ -1561,32 +1561,42 @@ if (!userCharacter) {
   
   console.log(`💋 Mode nympho actif pour ${email} avec ${userCharacter.name} ? ${isNymphoMode}`);
 
-        const userLevelDescription = userLevel >= 1.1
-            ? `The user is at the ${
-                userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
-            } level.` 
-            : "";
+const userLevelDescription = userLevel >= 1.1
+    ? `The user is at the ${
+        userLevel >= 2.2 ? "Perfect Crush" : userLevel >= 1.7 ? "Big Crush" : "Little Crush"
+    } level.`
+    : "";
 
-            let systemPrompt;
+// ✅ Définir les prompts dynamiques
+const profile = isNymphoMode && userCharacter.prompt.profileNympho
+    ? userCharacter.prompt.profileNympho
+    : userCharacter.prompt.profile;
 
-            if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
-                systemPrompt = userCharacter.prompt.fullPromptNympho;
-                console.log("💋 Prompt nympho utilisé !");
-            } else {
-                systemPrompt = `
-                    Profil : ${userCharacter.prompt.profile}
-                    Temperament : ${userCharacter.prompt.temperament}
-                    Objective : ${userCharacter.prompt.objective}
-            
-                    Level System:
-                    - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
-                    - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
-            
-                    ${userLevelDescription}
-            
-                    After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
-                `;
-            }
+const temperament = isNymphoMode && userCharacter.prompt.temperamentNympho
+    ? userCharacter.prompt.temperamentNympho
+    : userCharacter.prompt.temperament;
+
+const objective = isNymphoMode && userCharacter.prompt.objectiveNympho
+    ? userCharacter.prompt.objectiveNympho
+    : userCharacter.prompt.objective;
+
+// ✅ Construire le prompt final complet
+const systemPrompt = `
+    Profil : ${profile}
+    Temperament : ${temperament}
+    Objective : ${objective}
+
+    Level System:
+    - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
+    - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
+
+    ${userLevelDescription}
+
+    After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
+`;
+
+console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
+
             
 
         // Construire le contexte du chat pour OpenAI
@@ -2670,14 +2680,14 @@ app.post('/api/unlock-private-content', async (req, res) => {
 
 
 
-//Route fichiers privé
+// Route fichiers privé
 const glob = require('glob');
 
 app.get('/api/list-pack-files', (req, res) => {
   const folder = req.query.folder;
 
   if (!folder || !folder.startsWith('images/')) {
-    return res.status(400).json({ files: [] });
+    return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
   }
 
   const fullPath = path.join(__dirname, 'public', folder);
@@ -2685,17 +2695,21 @@ app.get('/api/list-pack-files', (req, res) => {
   glob(`${fullPath}/*.{webp,jpg,jpeg,png,mp4}`, (err, files) => {
     if (err) {
       console.error("❌ Erreur lors du listing du pack :", err);
-      return res.status(500).json({ files: [] });
+      return res.status(500).json({ files: [], photosCount: 0, videosCount: 0 });
     }
 
-    // ✅ Convertir le chemin absolu en chemin relatif correct
+    // ✅ Convertir les chemins absolus en relatifs corrects
     const relativeFiles = files.map(f => {
       let relativePath = path.relative(path.join(__dirname, 'public'), f);
       relativePath = relativePath.replace(/\\/g, '/'); // Windows friendly
       return `/${relativePath}`; // On force le slash initial
     });
 
-    res.json({ files: relativeFiles });
+    // ✅ Compter photos et vidéos
+    const photosCount = relativeFiles.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i)).length;
+    const videosCount = relativeFiles.filter(f => f.match(/\.mp4$/i)).length;
+
+    res.json({ files: relativeFiles, photosCount, videosCount });
   });
 });
 

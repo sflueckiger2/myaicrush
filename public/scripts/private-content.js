@@ -93,30 +93,35 @@ function createPrivateContentCards(character, unlockedContents) {
       ? `<video class="profile-pic" src="${character.photo}" autoplay muted loop playsinline></video>`
       : `<img class="profile-pic" src="${character.photo}" alt="Profil ${character.name}">`;
 
-   cardsHtml += `
-  <div class="private-content-card">
-    <div class="private-profile-header">
-      ${profileMedia}
-      <span class="private-profile-name">${character.name}</span>
-    </div>
-    <div class="preview-wrapper">
-      <img class="preview-image" src="${content.preview}" alt="${content.title}" style="filter: ${isUnlocked ? 'none' : 'blur(15px)'};">
-      ${!isUnlocked ? '<div class="lock-overlay"><i class="fas fa-lock"></i></div>' : ''}
-    </div>
-    <h3>${content.title}</h3>
-    <p class="description">${content.description}</p>
-    <div class="token-info"><i class="fas fa-coins"></i> ${content.price} Jetons</div>
-    <button class="unlock-btn" data-folder="${content.folder}" data-price="${content.price}" style="background-color: ${isUnlocked ? '#4CAF50' : '#dd4d9d'};">
-      ${isUnlocked ? '✅ Voir le contenu' : `Débloquer`}
-    </button>
-  </div>
-`;
+    // ✅ Ajouter le cadenas si non débloqué
+    const lockIconHtml = !isUnlocked
+      ? `<div class="lock-icon"><i class="fas fa-lock"></i></div>`
+      : '';
 
-
+    cardsHtml += `
+      <div class="private-content-card" data-folder="${content.folder}">
+        <div class="private-profile-header">
+          ${profileMedia}
+          <span class="private-profile-name">${character.name}</span>
+        </div>
+        <div class="preview-wrapper">
+          ${lockIconHtml}
+          <img class="preview-image" src="${content.preview}" alt="${content.title}" style="filter: ${isUnlocked ? 'none' : 'blur(15px)'};">
+        </div>
+        <h3>${content.title}</h3>
+        <p class="description">${content.description}</p>
+        <div class="token-info"><i class="fas fa-coins"></i> ${content.price} Jetons</div>
+        <div class="pack-info" style="font-size: 0.9em; color: #d1d1e0;">Chargement…</div>
+        <button class="unlock-btn" data-folder="${content.folder}" data-price="${content.price}" style="background-color: ${isUnlocked ? '#4CAF50' : '#dd4d9d'};">
+          ${isUnlocked ? '✅ Voir le contenu' : `Débloquer`}
+        </button>
+      </div>
+    `;
   });
 
   return cardsHtml;
 }
+
 
 
 
@@ -141,7 +146,7 @@ async function renderPrivateContents(characters) {
 
   container.innerHTML = allContentsHtml;
 
-  // Ajouter écouteurs
+  // ✅ Ajouter écouteurs sur les boutons
   const unlockButtons = document.querySelectorAll('.unlock-btn');
   unlockButtons.forEach(button => {
     button.addEventListener('click', async (e) => {
@@ -164,7 +169,26 @@ async function renderPrivateContents(characters) {
       }
     });
   });
+
+  // ✅ Charger les infos de pack (photos/videos) et les afficher
+  document.querySelectorAll('.private-content-card').forEach(async (card) => {
+    const folder = card.getAttribute('data-folder');
+    if (!folder) return;
+
+    try {
+      const res = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}`);
+      const data = await res.json();
+
+      const packInfo = card.querySelector('.pack-info');
+      if (packInfo) {
+        packInfo.innerHTML = `<i class="fas fa-image"></i> ${data.photosCount} • <i class="fas fa-video"></i> ${data.videosCount}`;
+      }
+    } catch (err) {
+      console.error(`❌ Erreur infos pack ${folder}:`, err);
+    }
+  });
 }
+
 
 // 👉 Fonction pour ouvrir la page pack
 function openPackModal(folder) {
