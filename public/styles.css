@@ -2198,11 +2198,12 @@ video {
   padding: 15px 15px 20px;
   text-align: left;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
+  
+  margin:auto;
 }
 
 .private-content-card:hover {
-  transform: scale(1.03);
+ 
 }
 
 .private-content-card img.preview-image {

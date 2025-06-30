@@ -40,13 +40,12 @@
   "privateContents": [
     
  {
-      "title": "Astrid choquée par la taille du chef adverse",
+      "title": "Astrid choquée par la taille du chef rival",
       "preview": "images/astrid/astrid-private-preview2.webp",
       "folder": "images/astrid/private2/",
       "price": 35,
-      "description": "Le village d'Astrid est pris d'assaut par une tribu adverse. Pour sauver sa vie, elle n'a pas d'autre choix que de satisfaire leur chef… mais, vu sa taille, elle y prend malgré tout du plaisir."
+"description": "Le village d’Astrid est envahi par une tribu noire. Pour survivre, elle n’a d’autre choix que de s’offrir au chef rival… À sa grande surprise, elle se laisse emporter par l’intensité et la taille hors norme de son nouvel amant."
     }
-
   ]
 },
 
@@ -86,16 +85,8 @@
     "agent": {
       "id": "IIi2lrTOnx20Sl65fXLWg", 
       "language": "fr"
-    },
-    "privateContents": [
-    {
-      "title": "Lila s'occupe de son mari",
-      "preview": "images/astrid/astrid-private-preview.webp",
-      "folder": "images/astrid/private1/",
-      "price": 50,
-      "description": "Une scène intime où ta guerrière viking montre son côté sauvage et dominant. Pour ceux qui osent la voir autrement…"
     }
-  ]
+    
     
   },
 
