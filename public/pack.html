@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Pack Privé</title>
+  <style>
+    body { background: #111; color: #fff; text-align: center; }
+    img, video { max-width: 90%; margin: 10px auto; display: block; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>🎁 Ton pack privé</h1>
+  <div id="pack-content"></div>
+
+  <script>
+    async function loadPack() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const folder = urlParams.get('folder');
+      if (!folder) {
+        document.getElementById('pack-content').innerHTML = "<p>Dossier manquant</p>";
+        return;
+      }
+
+      // Appel backend pour obtenir la liste des fichiers
+      const response = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}`);
+      const data = await response.json();
+
+      if (!data.files || data.files.length === 0) {
+        document.getElementById('pack-content').innerHTML = "<p>Aucun fichier trouvé</p>";
+        return;
+      }
+
+      const container = document.getElementById('pack-content');
+      container.innerHTML = '';
+
+      data.files.forEach(file => {
+        const ext = file.split('.').pop().toLowerCase();
+        if (ext === 'mp4') {
+          const video = document.createElement('video');
+          video.src = file;
+          video.controls = true;
+          video.loop = true;
+          container.appendChild(video);
+        } else {
+          const img = document.createElement('img');
+          img.src = file;
+          container.appendChild(img);
+        }
+      });
+    }
+
+    loadPack();
+  </script>
+</body>
+</html>

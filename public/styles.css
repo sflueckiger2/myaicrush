@@ -2030,3 +2030,16 @@ video {
   background-color: black; /* ✅ évite l'écran gris */
   object-fit: cover;
 }
+
+.private-preview {
+  max-width: 300px; /* Largeur maximale (tu peux ajuster, ex: 250px) */
+  width: 100%;      /* Pour que ça s’adapte en responsive */
+  height: auto;     /* Pour garder les proportions */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+}
+
+.private-preview:hover {
+  transform: scale(1.05); /* Petit zoom au survol */
+}

@@ -2363,31 +2363,33 @@ app.post('/api/buy-tokens', async (req, res) => {
 
 // ✅ Route API pour récupérer le nombre de jetons de l'utilisateur
 app.post('/api/get-user-tokens', async (req, res) => {
-    try {
-        const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ message: "Email requis." });
-        }
-
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
-        // Récupérer l'utilisateur
-        const user = await users.findOne({ email });
-
-        if (!user) {
-            console.error("❌ Utilisateur non trouvé en base de données !");
-            return res.status(404).json({ message: "Utilisateur non trouvé." });
-        }
-
-        console.log("👤 Utilisateur trouvé, jetons :", user.creditsPurchased || 0);
-
-        res.json({ tokens: user.creditsPurchased || 0 }); // 0 si aucun jeton trouvé
-    } catch (error) {
-        console.error("❌ Erreur lors de la récupération des jetons :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
+    if (!email) {
+      return res.status(400).json({ message: "Email requis." });
     }
+
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+
+    const user = await users.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
+    }
+
+    console.log("👤 Utilisateur trouvé, jetons :", user.creditsPurchased || 0);
+    console.log("🔓 Contenus débloqués :", user.unlockedContents || []);
+
+    res.json({
+      tokens: user.creditsPurchased || 0,
+      unlockedContents: user.unlockedContents || []
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération des jetons :", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
 });
 
 
@@ -2619,8 +2621,83 @@ app.post('/api/start-call', async (req, res) => {
   });
   
 
+//ROUTE POUR CONTENU PRIVé
+app.post('/api/unlock-private-content', async (req, res) => {
+    const { email, price, folder } = req.body;
+
+    if (!email || !price || !folder) {
+        return res.status(400).json({ success: false, message: "Email, prix et dossier requis." });
+    }
+
+    try {
+        const db = client.db('MyAICrush');
+        const users = db.collection('users');
+
+        // Récupérer l'utilisateur
+        const user = await users.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
+        }
+
+        const jetons = user.creditsPurchased || 0;
+
+        if (jetons < price) {
+            return res.status(403).json({ success: false, message: "Pas assez de jetons.", redirect: "/jetons.html" });
+        }
+
+        // ✅ Déduire les jetons et marquer le contenu comme débloqué
+        const unlocked = user.unlockedContents || [];
+        if (!unlocked.includes(folder)) {
+            unlocked.push(folder);
+        }
+
+        await users.updateOne(
+            { email },
+            {
+                $inc: { creditsPurchased: -price },
+                $set: { unlockedContents: unlocked }
+            }
+        );
+
+        console.log(`✅ Contenu ${folder} débloqué pour ${email} (${price} jetons déduits).`);
+
+        res.json({ success: true, newTokens: jetons - price });
+    } catch (error) {
+        console.error("❌ Erreur /api/unlock-private-content :", error);
+        res.status(500).json({ success: false, message: "Erreur interne du serveur." });
+    }
+});
 
 
+
+//Route fichiers privé
+const glob = require('glob');
+
+app.get('/api/list-pack-files', (req, res) => {
+  const folder = req.query.folder;
+
+  if (!folder || !folder.startsWith('images/')) {
+    return res.status(400).json({ files: [] });
+  }
+
+  const fullPath = path.join(__dirname, 'public', folder);
+
+  glob(`${fullPath}/*.{webp,jpg,jpeg,png,mp4}`, (err, files) => {
+    if (err) {
+      console.error("❌ Erreur lors du listing du pack :", err);
+      return res.status(500).json({ files: [] });
+    }
+
+    // ✅ Convertir le chemin absolu en chemin relatif correct
+    const relativeFiles = files.map(f => {
+      let relativePath = path.relative(path.join(__dirname, 'public'), f);
+      relativePath = relativePath.replace(/\\/g, '/'); // Windows friendly
+      return `/${relativePath}`; // On force le slash initial
+    });
+
+    res.json({ files: relativeFiles });
+  });
+});
 
   
   
