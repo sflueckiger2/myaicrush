@@ -416,7 +416,17 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
+    },
+    "privateContents": [
+    
+ {
+      "title": "Léa : Selfies coquins dans sa salle de bain",
+      "preview": "images/lea/3d0148b3ba1851bfaf7532543a1097f5.webp",
+      "folder": "images/lea/salle-de-bain/",
+      "price": 15,
+"description": "En attendant votre nuit de noces, Léa t’a fait quelques selfies et vidéos coquines dans sa salle de bain. Parfois habillée, parfois moins."
     }
+  ]
   },
 
   {
