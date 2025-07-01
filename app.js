@@ -2686,40 +2686,45 @@ const glob = require('glob');
 app.get('/api/list-pack-files', async (req, res) => {
     const folder = req.query.folder;
     const email = req.query.email;
+    const publicInfoOnly = req.query.publicInfoOnly === 'true';
 
     if (!folder || !folder.startsWith('images/')) {
         return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
     }
 
-    if (!email) {
-        console.warn("❌ Email manquant dans la requête /api/list-pack-files");
-        return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
-    }
-
     try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-        const user = await users.findOne({ email });
+        let isAuthorized = false;
 
-        if (!user) {
-            console.warn(`❌ Utilisateur introuvable: ${email}`);
-            return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
-        }
+        if (!publicInfoOnly) {
+            if (!email) {
+                console.warn("❌ Email manquant dans la requête /api/list-pack-files");
+                return res.status(400).json({ files: [], photosCount: 0, videosCount: 0 });
+            }
 
-        // ✅ Vérifier statut premium
-        const subscriptionInfo = await getUserSubscription(email);
-        const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
+            const database = client.db('MyAICrush');
+            const users = database.collection('users');
+            const user = await users.findOne({ email });
 
-        if (!isPremium) {
-            console.warn(`🚫 Accès refusé (non-premium) pour ${email}`);
-            return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
-        }
+            if (!user) {
+                console.warn(`❌ Utilisateur introuvable: ${email}`);
+                return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+            }
 
-        // ✅ Vérifier si le pack est débloqué
-        const unlockedContents = user.unlockedContents || [];
-        if (!unlockedContents.includes(folder)) {
-            console.warn(`🚫 Pack non débloqué (${folder}) pour ${email}`);
-            return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+            const subscriptionInfo = await getUserSubscription(email);
+            const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
+
+            if (!isPremium) {
+                console.warn(`🚫 Accès refusé (non-premium) pour ${email}`);
+                return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+            }
+
+            const unlockedContents = user.unlockedContents || [];
+            if (!unlockedContents.includes(folder)) {
+                console.warn(`🚫 Pack non débloqué (${folder}) pour ${email}`);
+                return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
+            }
+
+            isAuthorized = true;
         }
 
         // ✅ Lister les fichiers
@@ -2739,7 +2744,11 @@ app.get('/api/list-pack-files', async (req, res) => {
             const photosCount = relativeFiles.filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i)).length;
             const videosCount = relativeFiles.filter(f => f.match(/\.mp4$/i)).length;
 
-            res.json({ files: relativeFiles, photosCount, videosCount });
+            res.json({
+                files: isAuthorized ? relativeFiles : [],
+                photosCount,
+                videosCount
+            });
         });
 
     } catch (error) {

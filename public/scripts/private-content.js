@@ -184,22 +184,26 @@ async function renderPrivateContents(characters) {
   });
 
   // ✅ Charger initialement les infos de pack
-  document.querySelectorAll('.private-content-card').forEach(async (card) => {
-    const folder = card.getAttribute('data-folder');
-    if (!folder) return;
+  
+document.querySelectorAll('.private-content-card').forEach(async (card) => {
+  const folder = card.getAttribute('data-folder');
+  if (!folder) return;
 
-    try {
-      const res = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}&email=${encodeURIComponent(userEmail)}`);
-      const data = await res.json();
+  try {
+    // ✅ Utiliser publicInfoOnly pour le chargement initial
+    const res = await fetch(`/api/list-pack-files?folder=${encodeURIComponent(folder)}&publicInfoOnly=true`);
+    const data = await res.json();
 
-      const packInfo = card.querySelector('.pack-info');
-      if (packInfo) {
-        packInfo.innerHTML = `<i class="fas fa-image"></i> ${data.photosCount} • <i class="fas fa-video"></i> ${data.videosCount}`;
-      }
-    } catch (err) {
-      console.error(`❌ Erreur infos pack ${folder}:`, err);
+    const packInfo = card.querySelector('.pack-info');
+    if (packInfo) {
+      packInfo.innerHTML = `<i class="fas fa-image"></i> ${data.photosCount} • <i class="fas fa-video"></i> ${data.videosCount}`;
     }
-  });
+  } catch (err) {
+    console.error(`❌ Erreur infos pack ${folder}:`, err);
+  }
+});
+
+
 }
 
 // 👉 Fonction pour ouvrir la page pack
