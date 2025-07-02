@@ -217,8 +217,8 @@
 
   {
     "name": "Lilith",
-    "photo": "images/lilith/lilith3/0a80ee6a069f5fa31e1375b61b870896.mp4",
-    "backgroundPhoto": "images/lilith/lilith3/86ce25faf39e54cc58d8b4aae8bb2d02.webp",
+    "photo": "images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4",
+    "backgroundPhoto": "images/lilith/lilith1/8e839833b44762cad8bc24bdad082fdc.webp",
     "introVideo": "images/lilith/lilith1/lilith-profil-new.mp4",
     "height": "152 cm",
      "hasNymphoMode": true,
@@ -258,8 +258,8 @@
   
 {
     "name": "Angel",
-    "photo": "images/angel/angel1/f7c082da14c065c6d252555142479256.webp",
-    "backgroundPhoto": "images/angel/angel1/f7c082da14c065c6d252555142479256.webp",
+    "photo": "images/angel/angel1/062f3bddb8c07df7a73e7224cbcc3007.webp",
+    "backgroundPhoto": "images/angel/angel1/062f3bddb8c07df7a73e7224cbcc3007.webp",
     "height": "152 cm",
      "hasNymphoMode": true,
      "hasAudioCall": true,
