@@ -85,7 +85,17 @@
     "agent": {
       "id": "IIi2lrTOnx20Sl65fXLWg", 
       "language": "fr"
-    }
+    },
+    "privateContents": [
+  {
+    "title": "Soirée Netflix ultra chaude avec Lila — pyjama, câlins… et beaucoup plus",
+    "preview": "images/lila/9ed273cd3b751b94094127df645c0641.webp",
+    "folder": "images/lila/netflix-pyjama/",
+    "price": 14,
+    "description": "Lila t’invite sur son canapé pour une fausse soirée Netflix. En pyjama (ou sans…), elle joue, s’étire, fait tomber le haut… Jusqu’à se retrouver toute nue sous sa couverture. Elle te chauffe, te provoque, et te montre que ce n’est clairement pas un film qu’elle veut ce soir…"
+  }
+]
+
     
     
   },
