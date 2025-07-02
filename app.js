@@ -165,8 +165,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
 app.use('/images', express.static(path.join(__dirname, 'public/images'), {
-  maxAge: '30d' // Cache pendant 30 jours
+  setHeaders: (res, filePath) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
 }));
+
 
 
 
