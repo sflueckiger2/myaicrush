@@ -11,7 +11,7 @@ const STRIPE_PRICE_IDS = {
     "100": STRIPE_MODE === "live" ? "price_1R3eoAAOSHX0SgbTKRTHbCOe" : "price_1R3erLAOSHX0SgbT9WkZvQt6",
      "300": STRIPE_MODE === "live" ? "price_1R7IBOAOSHX0SgbTZiOOaMie" : "price_1R7IcuAOSHX0SgbTucYIAHAP",
      "700": STRIPE_MODE === "live" ? "price_1RiHu2AOSHX0SgbT3dOeqWea" : "price_1RiHybAOSHX0SgbTLjP9DjQD",
-     "1000": STRIPE_MODE === "live" ? "price_1RiHw8AOSHX0SgbTWoS6CaBS" : "price_1RiHzCAOSHX0SgbT5NK40y8K"
+     "1000": STRIPE_MODE === "live" ? "price_1RiIXdAOSHX0SgbTdTThEZi6" : "price_1RiHzCAOSHX0SgbT5NK40y8K"
 };
 
 // ✅ Autoriser le clic sur les images avec data-tokens

@@ -2357,7 +2357,7 @@ app.post('/api/buy-tokens', async (req, res) => {
                        tokensAmount === "100" ? 39 :
                        tokensAmount === "300" ? 99 :
                        tokensAmount === "700" ? 199 :
-                       tokensAmount === "1000" ? 299 : 0;
+                       tokensAmount === "1000" ? 249 : 0;
 
         // ✅ Création de la session Stripe
         const session = await stripe.checkout.sessions.create({
