@@ -1179,7 +1179,7 @@ app.get('/get-image/:token', async (req, res) => {
     const imageData = imageTokens.get(token);
 
     if (!imageData) {
-      console.error("❌ Image token invalide ou expiré.");
+      console.error("Image token invalide ou expiré.");
       return res.status(403).send('Access Denied'); // Répondre une seule fois
     }
 
@@ -2320,7 +2320,6 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 
 
 // ✅ Route API pour acheter des jetons
-// ✅ Route API pour acheter des jetons (redirection vers Stripe)
 app.post('/api/buy-tokens', async (req, res) => {
     console.log('📡 Requête reçue pour l\'achat de jetons:', req.body);
 
@@ -2332,15 +2331,18 @@ app.post('/api/buy-tokens', async (req, res) => {
 
         // Sélectionne l'ID de prix en fonction du mode Stripe et du montant
         const priceId = process.env.STRIPE_MODE === "live"
-        ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
-           tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
-           tokensAmount === "100" ? process.env.PRICE_ID_LIVE_100_TOKENS :
-           tokensAmount === "300" ? process.env.PRICE_ID_LIVE_300_TOKENS : null)
-        : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
-           tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
-           tokensAmount === "100" ? process.env.PRICE_ID_TEST_100_TOKENS :
-           tokensAmount === "300" ? process.env.PRICE_ID_TEST_300_TOKENS : null);
-    
+            ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
+               tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
+               tokensAmount === "100" ? process.env.PRICE_ID_LIVE_100_TOKENS :
+               tokensAmount === "300" ? process.env.PRICE_ID_LIVE_300_TOKENS :
+               tokensAmount === "700" ? process.env.PRICE_ID_LIVE_700_TOKENS :
+               tokensAmount === "1000" ? process.env.PRICE_ID_LIVE_1000_TOKENS : null)
+            : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
+               tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
+               tokensAmount === "100" ? process.env.PRICE_ID_TEST_100_TOKENS :
+               tokensAmount === "300" ? process.env.PRICE_ID_TEST_300_TOKENS :
+               tokensAmount === "700" ? process.env.PRICE_ID_TEST_700_TOKENS :
+               tokensAmount === "1000" ? process.env.PRICE_ID_TEST_1000_TOKENS : null);
 
         if (!priceId) {
             console.error("❌ Erreur : Aucun prix trouvé pour ce montant de jetons.");
@@ -2349,18 +2351,21 @@ app.post('/api/buy-tokens', async (req, res) => {
 
         console.log(`💰 Création d'une session Stripe pour ${tokensAmount} jetons (${email})`);
 
-        // ✅ Création de la session Stripe avec le session_id dans `success_url`
+        // Détermine le montant affiché dans l'URL de succès
+        const amount = tokensAmount === "10" ? 5 :
+                       tokensAmount === "50" ? 25 :
+                       tokensAmount === "100" ? 39 :
+                       tokensAmount === "300" ? 99 :
+                       tokensAmount === "700" ? 199 :
+                       tokensAmount === "1000" ? 299 : 0;
+
+        // ✅ Création de la session Stripe
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'payment',
             customer_email: email,
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${
-                tokensAmount === "10" ? 5 :
-                tokensAmount === "50" ? 25 :
-                tokensAmount === "100" ? 39 :
-                tokensAmount === "300" ? 99 : 20
-              }`,                         
+            success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${amount}`,                         
             cancel_url: `${process.env.BASE_URL}/jetons.html`
         });
 
@@ -2372,6 +2377,7 @@ app.post('/api/buy-tokens', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+
 
 
 // ✅ Route API pour récupérer le nombre de jetons de l'utilisateur
