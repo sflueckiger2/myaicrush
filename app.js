@@ -1,4 +1,7 @@
 require('dotenv').config(); // Charger les variables d'environnement
+
+
+
 console.log("🔑 Clé API EvenLabs chargée :", process.env.EVENLABS_API_KEY ? "OK" : "❌ Manquante !");
 
 const express = require('express');
@@ -1634,26 +1637,29 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
         
 
         
-        console.log(`📡 Modèle utilisé pour la conversation : gpt-3.5-turbo`);
+    
+
 
         const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                model: "gpt-3.5-turbo",
-                messages: messages,
-                max_tokens: 350,
-                temperature: 0.8,
-                top_p: 1.0,
-                frequency_penalty: 0.3,
-                presence_penalty: 0.8,
-              }
-              ,
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-                },
-            }
-        );
+    'https://api.fireworks.ai/inference/v1/chat/completions',
+    {
+        model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
+        messages: messages,
+        max_tokens: 350,
+        temperature: 1.0,
+        top_p: 1.0,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.8
+
+    },
+    {
+        headers: {
+            Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
+            "Content-Type": "application/json"
+        },
+    }
+);
+
 
 
 
