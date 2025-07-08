@@ -1594,7 +1594,8 @@ const systemPrompt = `
 
     Level System:
     - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
-    - If you decide to send a photo, please include the tag "[PHOTO]" at the end of your message.
+    - Always include EXACTLY the tag "[PHOTO]" on a separate line at the end if you decide to send a photo. Never modify or add text inside the tag.
+
 
     ${userLevelDescription}
 
@@ -1939,7 +1940,7 @@ console.log("💬 Réponse finale envoyée :", botReply);
         botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
 
         // Déterminer si une photo doit être envoyée
-        let sendPhoto = botReply.includes("[PHOTO]") || botReply.includes("[VIDEO]");
+        let sendPhoto = botReply.match(/\[PHOTO.*?\]/i) || botReply.includes("[VIDEO]");
         let userPhotoData = userPhotoStatus.get(email) || {
             photoSentAtLittleCrush: false,
             photoSentAtBigCrush: false,
@@ -1969,8 +1970,9 @@ console.log("💬 Réponse finale envoyée :", botReply);
         userPhotoStatus.set(email, userPhotoData);
 
         // Nettoyer le tag PHOTO avant d'envoyer la réponse
-        botReply = botReply.replace("[PHOTO]", "").trim();
-        botReply = botReply.replace("[VIDEO]", "").trim();
+     botReply = botReply.replace(/\[PHOTO.*?\]/gi, "").trim();
+botReply = botReply.replace(/\[VIDEO.*?\]/gi, "").trim();
+
 
         // Préparer la réponse JSON
         let responseData = { reply: botReply };
