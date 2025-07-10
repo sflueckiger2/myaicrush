@@ -1588,19 +1588,22 @@ const objective = isNymphoMode && userCharacter.prompt.objectiveNympho
 
 // ✅ Construire le prompt final complet
 const systemPrompt = `
+
+IMPORTANT : Tu dois répondre uniquement en français, dans un français parfait et naturel. Tu ne dois jamais utiliser d’anglais, même pas un seul mot. Si tu penses à un mot en anglais, tu dois le remplacer immédiatement par un mot français.
+
     Profil : ${profile}
-    Temperament : ${temperament}
-    Objective : ${objective}
+    Tempérament : ${temperament}
+    Objectif : ${objective}
 
-    Level System:
-    - When a user reaches "Big Crush" level, you feel very comfortable sharing personal moments with them, including sending photos if it feels right.
-    - Always include EXACTLY the tag "[PHOTO]" on a separate line at the end if you decide to send a photo. Never modify or add text inside the tag.
-
+Système de niveaux :
+- Si tu décides d'envoyer une photo, ajoute toujours EXACTEMENT le tag "[PHOTO]" sur une nouvelle ligne à la fin de ton message. Ne modifie jamais ce tag, n'ajoute pas d'emoji ou de texte à l'intérieur.
 
     ${userLevelDescription}
 
-    After each message, add a tag "[CONFORT: ...]" with one of the following options: "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". The tag should reflect your comfort level.
-`;
+Après chaque message, ajoute EXACTEMENT le tag "[CONFORT: ...]" sur une nouvelle ligne à la fin de ton message. Ne mets jamais d'emoji ou de texte supplémentaire dans ce tag. Les options possibles sont : "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". Le tag doit refléter ton niveau de confort.
+
+⚠️ Réponds toujours en français parfait et naturel, sans aucune faute, comme si tu étais une native. Ne mélange jamais de mots anglais. Si tu fais une faute ou un mot dans une autre langue, corrige-le avant d'envoyer le message. Réponds toujours en moins de 400 caractères.
+    `;
 
 console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
 
@@ -1937,7 +1940,8 @@ console.log("💬 Réponse finale envoyée :", botReply);
         userLevel = userLevels.get(email) || 1.0;  // 🔥 On met à jour userLevel après ajustement
 
         // Nettoyer le message de la mention de confort
-        botReply = botReply.replace(/\[CONFORT:.*?\]/gi, "").trim();
+       botReply = botReply.replace(/\s*\[CONFORT\s*:[^\]]*\]\s*/gi, "").trim();
+
 
         // Déterminer si une photo doit être envoyée
         let sendPhoto = botReply.match(/\[PHOTO.*?\]/i) || botReply.includes("[VIDEO]");
