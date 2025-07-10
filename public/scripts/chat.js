@@ -5,8 +5,21 @@ import { openProfileModal } from './profile.js';
 
 
 let firstPhotoSent = false;
-let dailyMessageCount = 0;
 const DAILY_MESSAGE_LIMIT = 8;
+
+// ✅ Récupère la date d’aujourd’hui
+const today = new Date().toISOString().split('T')[0];
+const lastDate = localStorage.getItem("lastMessageDate");
+
+// ✅ Si nouvelle journée, on reset le compteur
+if (lastDate !== today) {
+    localStorage.setItem("dailyMessageCount", "0");
+    localStorage.setItem("lastMessageDate", today);
+}
+
+// ✅ Lire le compteur actuel (convertir en nombre)
+let dailyMessageCount = parseInt(localStorage.getItem("dailyMessageCount")) || 0;
+
 
 // Définir dynamiquement l'URL de base
 const BASE_URL = window.location.origin;
@@ -254,7 +267,11 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                     addBotMessage(data.reply, messagesContainer);
                 }
 
-                if (!isPremium) dailyMessageCount++;
+               if (!isPremium) {
+    dailyMessageCount++;
+    localStorage.setItem("dailyMessageCount", dailyMessageCount);
+}
+
 
                 if (typeof scrollToBottomCallback === 'function') {
                     scrollToBottomCallback(messagesContainer);

@@ -1587,8 +1587,28 @@ const objective = isNymphoMode && userCharacter.prompt.objectiveNympho
     : userCharacter.prompt.objective;
 
 // ✅ Construire le prompt final complet
-const systemPrompt = `
 
+let systemPrompt;
+
+if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
+    // ✅ Mode nympho actif et fullPromptNympho dispo : on l'utilise
+    systemPrompt = `
+IMPORTANT : Tu dois répondre uniquement en français, dans un français parfait et naturel. Tu ne dois jamais utiliser d’anglais, même pas un seul mot. Si tu penses à un mot en anglais, tu dois le remplacer immédiatement par un mot français.
+
+${userCharacter.prompt.fullPromptNympho}
+
+Système de niveaux :
+- Si tu décides d'envoyer une photo, ajoute toujours EXACTEMENT le tag "[PHOTO]" sur une nouvelle ligne à la fin de ton message. Ne modifie jamais ce tag, n'ajoute pas d'emoji ou de texte à l'intérieur.
+
+${userLevelDescription}
+
+Après chaque message, ajoute EXACTEMENT le tag "[CONFORT: ...]" sur une nouvelle ligne à la fin de ton message. Ne mets jamais d'emoji ou de texte supplémentaire dans ce tag. Les options possibles sont : "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". Le tag doit refléter ton niveau de confort.
+
+⚠️ Réponds toujours en français parfait et naturel, sans aucune faute, comme si tu étais une native. Ne mélange jamais de mots anglais. Si tu fais une faute ou un mot dans une autre langue, corrige-le avant d'envoyer le message. Réponds toujours en moins de 400 caractères.
+`;
+} else {
+    // ✅ Mode normal : on garde la construction classique
+    systemPrompt = `
 IMPORTANT : Tu dois répondre uniquement en français, dans un français parfait et naturel. Tu ne dois jamais utiliser d’anglais, même pas un seul mot. Si tu penses à un mot en anglais, tu dois le remplacer immédiatement par un mot français.
 
     Profil : ${profile}
@@ -1598,12 +1618,16 @@ IMPORTANT : Tu dois répondre uniquement en français, dans un français parfait
 Système de niveaux :
 - Si tu décides d'envoyer une photo, ajoute toujours EXACTEMENT le tag "[PHOTO]" sur une nouvelle ligne à la fin de ton message. Ne modifie jamais ce tag, n'ajoute pas d'emoji ou de texte à l'intérieur.
 
-    ${userLevelDescription}
+${userLevelDescription}
 
 Après chaque message, ajoute EXACTEMENT le tag "[CONFORT: ...]" sur une nouvelle ligne à la fin de ton message. Ne mets jamais d'emoji ou de texte supplémentaire dans ce tag. Les options possibles sont : "very comfortable", "comfortable", "neutral", "uncomfortable", "very uncomfortable". Le tag doit refléter ton niveau de confort.
 
 ⚠️ Réponds toujours en français parfait et naturel, sans aucune faute, comme si tu étais une native. Ne mélange jamais de mots anglais. Si tu fais une faute ou un mot dans une autre langue, corrige-le avant d'envoyer le message. Réponds toujours en moins de 400 caractères.
-    `;
+`;
+}
+
+
+
 
 console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
 
