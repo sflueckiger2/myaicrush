@@ -49,11 +49,10 @@
       <br><h1>Choisis ta partenaire :</h1>
       <center><p>Elles ont l’air sages… mais attend de voir.</p></center>
     </div>
-    <div class="private-toggle-wrapper">
-  <button id="private-content-btn" class="private-toggle-btn">
-    🔒 Contenu privé
-  </button>
-</div>
+
+
+ 
+
 
 
     <!-- Conteneur principal pour les options de chat et le chat -->
@@ -325,45 +324,103 @@
 <script type="module" src="/scripts/menu-loader.js"></script>
 
 
+
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const privateBtn = document.getElementById("private-content-btn");
-    if (!privateBtn) return;
 
-    privateBtn.addEventListener("click", async () => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user || !user.email) {
-        alert("Veuillez vous connecter pour accéder au contenu privé.");
-        window.location.href = "profile.html";
-        return;
-      }
+document.addEventListener("DOMContentLoaded", async () => {
+  const header = document.querySelector(".header");
 
-      try {
-        const res = await fetch(`${window.location.origin}/api/is-premium`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email })
-        });
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user || !user.email) return;
 
-        const { isPremium } = await res.json();
-
-        if (isPremium) {
-          window.location.href = "contenu-prive.html";
-        } else {
-          alert("Les contenus privés sont réservés aux membres premium.");
-          window.location.href = "premium.html";
-        }
-
-      } catch (err) {
-        console.error("❌ Erreur lors de la vérification premium :", err);
-        alert("Erreur lors de la vérification. Veuillez réessayer plus tard.");
-      }
+  try {
+    const res = await fetch(`${window.location.origin}/api/is-premium`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email })
     });
-  });
+
+    const { isPremium } = await res.json();
+
+    if (!isPremium) return;
+
+    // ✅ Créer une nouvelle div wrapper en dehors de container
+    const sliderSection = document.createElement("div");
+    sliderSection.className = "private-slider-section";
+    sliderSection.innerHTML = `
+      <div id="private-slider" class="private-slider">
+        <div class="slider-inner">
+          <img src="images/market/candy-slider-prive.webp" alt="Slide 1" />
+          <img src="images/market/lila-slider-prive.webp" alt="Slide 2" />
+          <img src="images/market/chloe-slider-prive.webp" alt="Slide 3" />
+          <img src="images/market/lea-slider-prive.webp" alt="Slide 4" />
+          <img src="images/market/hanae-slider-prive.webp" alt="Slide 5" />
+          <img src="images/market/astrid-slider-prive.webp" alt="Slide 6" />
+           <img src="images/market/angel-slider-prive.webp" alt="Slide 7" />
+        </div>
+        <button class="slider-arrow left-arrow">&#10094;</button>
+        <button class="slider-arrow right-arrow">&#10095;</button>
+      </div>
+    `;
+
+    // ✅ Insérer après le header
+    header.insertAdjacentElement("afterend", sliderSection);
+
+    const slider = sliderSection.querySelector("#private-slider");
+    const sliderInner = slider.querySelector(".slider-inner");
+    const slides = sliderInner.querySelectorAll("img");
+    const leftArrow = slider.querySelector(".left-arrow");
+    const rightArrow = slider.querySelector(".right-arrow");
+
+    let index = 0;
+    const totalSlides = slides.length;
+
+    function showSlide(i) {
+      const sliderWidth = slider.clientWidth;
+      sliderInner.style.transform = `translateX(-${i * sliderWidth}px)`;
+    }
+
+    function nextSlide() {
+      index = (index + 1) % totalSlides;
+      showSlide(index);
+    }
+
+    function prevSlide() {
+      index = (index - 1 + totalSlides) % totalSlides;
+      showSlide(index);
+    }
+
+    let autoSlide = setInterval(nextSlide, 3000);
+
+    rightArrow.addEventListener("click", (e) => {
+      e.stopPropagation();
+      nextSlide();
+      resetAuto();
+    });
+
+    leftArrow.addEventListener("click", (e) => {
+      e.stopPropagation();
+      prevSlide();
+      resetAuto();
+    });
+
+    function resetAuto() {
+      clearInterval(autoSlide);
+      autoSlide = setInterval(nextSlide, 3000);
+    }
+
+    slider.addEventListener("click", () => {
+      window.location.href = "contenu-prive.html";
+    });
+
+  } catch (err) {
+    console.error("❌ Erreur vérification premium :", err);
+  }
+});
+
+
+
 </script>
-
-
-
 
 
 

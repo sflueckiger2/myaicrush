@@ -2347,3 +2347,58 @@ video {
   background-color: #dd4d9d;
   color: white;
 }
+
+
+.private-slider-section {
+  display: flex;
+  justify-content: center;
+  margin: 20px auto; /* ✅ Marge autour */
+  width: 100%;
+}
+
+.private-slider {
+  position: relative;
+  width: 100%;
+  max-width: 500px; /* ✅ Largeur "2 cartes" environ sur desktop, ajuste si besoin */
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.slider-inner {
+  display: flex;
+  transition: transform 0.5s ease;
+  height: 100%;
+}
+
+.slider-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.left-arrow {
+  left: 5px;
+}
+
+.right-arrow {
+  right: 5px;
+}
+
+.slider-arrow:hover {
+  background-color: rgba(0,0,0,0.8);
+}
