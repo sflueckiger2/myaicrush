@@ -1317,7 +1317,8 @@ else {
 // Extraire le niveau de confort depuis la réponse du bot
 function extractComfortLevel(botReply) {
   const comfortMatch = botReply.match(/\[CONFORT:\s*(very comfortable|comfortable|neutral|uncomfortable|very uncomfortable)\]/i);
-  return comfortMatch ? comfortMatch[1].toLowerCase() : "neutral";
+  return comfortMatch ? comfortMatch[1].toLowerCase() : "comfortable";
+
 }
 
 // Ajuster le niveau de l'utilisateur en fonction du confort extrait
