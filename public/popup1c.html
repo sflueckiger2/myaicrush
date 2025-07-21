@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms and Conditions</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  
+<!-- 🔥 POPUP JETONS -->
+<div id="jetons-popup" class="jetons-popup">
+  <div class="popup-content">
+    <button class="close-btn" onclick="closeJetonsPopup()">×</button>
+    <h2>Pas assez de jetons !</h2>
+    <p>Achetez des jetons maintenant pour continuer.</p>
+    <div class="offers">
+      <img src="/images/market/50-jetons-carte.webp" class="offer-img" data-tokens="50" data-price="25">
+      <img src="/images/market/100-jetons-carte.webp" class="offer-img" data-tokens="100" data-price="39">
+      <img src="/images/market/300-jetons-carte.webp" class="offer-img" data-tokens="300" data-price="99">
+    </div>
+  </div>
+</div>
+
+<!-- ✅ POPUP CONFIRMATION -->
+<div id="confirm-popup" class="confirm-popup hidden">
+  <div class="confirm-content">
+    <button class="close-btn" onclick="closeConfirmPopup()">×</button>
+    <img src="/images/ui/card-icon.png" class="card-icon" />
+    <h3>Confirmer votre achat ?</h3>
+    <p>Vous êtes sur le point d’acheter <span id="confirm-amount"></span> jetons pour <span id="confirm-price"></span> €</p>
+    <div class="confirm-buttons">
+      <button onclick="closeConfirmPopup()">Annuler</button>
+      <button onclick="sendJetonsPayment()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ✅ JavaScript -->
+<script>
+  let selectedOffer = null;
+
+  // ✅ Affiche la popup principale
+  function openJetonsPopup() {
+    document.getElementById("jetons-popup")?.classList.remove("hidden");
+  }
+
+  function closeJetonsPopup() {
+    document.getElementById("jetons-popup")?.classList.add("hidden");
+  }
+
+  function closeConfirmPopup() {
+    document.getElementById("confirm-popup")?.classList.add("hidden");
+  }
+
+  function selectOffer(tokens, price) {
+    selectedOffer = { tokens, price };
+    document.getElementById("confirm-amount").textContent = tokens;
+    document.getElementById("confirm-price").textContent = price;
+    document.getElementById("confirm-popup").classList.remove("hidden");
+  }
+
+  async function sendJetonsPayment() {
+    if (!selectedOffer) return;
+
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const email = userData.email;
+
+    if (!email) {
+      alert("Email non trouvé. Veuillez vous reconnecter.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/one-click-payment', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          tokensAmount: selectedOffer.tokens
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        closeConfirmPopup();
+        closeJetonsPopup();
+        alert("✅ Jetons achetés avec succès !");
+        location.reload();
+      } else {
+        alert("❌ Paiement échoué : " + data.message);
+        if (data.message.includes("jetons.html")) {
+          window.location.href = "/jetons.html";
+        }
+      }
+
+    } catch (err) {
+      console.error("❌ Erreur lors du paiement 1C :", err);
+      alert("Erreur serveur. Veuillez réessayer.");
+    }
+  }
+
+  // ✅ Gestion des clics sur les images
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".offer-img").forEach(img => {
+      img.addEventListener("click", () => {
+        const tokens = img.dataset.tokens;
+        const price = img.dataset.price;
+        selectOffer(tokens, price);
+      });
+    });
+
+    // Par sécurité, on cache tout au chargement
+    closeJetonsPopup();
+    closeConfirmPopup();
+  });
+</script>
+
+
+
+ <script type="module" src="/scripts/menu-loader.js"></script>
+</body>
+</html>
+

@@ -1,289 +1,341 @@
-  <!DOCTYPE html>
-  <html lang="fr">
-  <head>
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+
+      
+      
+
+
+      <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>MyAICrush</title>
+    <link rel="stylesheet" href="styles.css?v=2">
 
     
+      
+      
+
+      <!-- Google Analytics (gtag.js) -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-FJ5S0H9B1R');
+      </script>
+    </head>
+    <body>
+
     
-
-
-    <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyAICrush</title>
-  <link rel="stylesheet" href="styles.css?v=2">
-
-  
-    
-    
-
-    <!-- Google Analytics (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-FJ5S0H9B1R');
-    </script>
-  </head>
-  <body>
-
-   
-<div id="loader">
-  <div class="heart-loader">
-    <div class="heart"></div>
-  </div>
-  <p id="loader-text" class="loader-text"></p>
-</div>
-
-
-    <div id="cheaper-plan-dynamic-banner"></div>
-    
-  
-
-
-    <!-- Garder le header en haut de la page, en dehors de .container -->
-    <div class="header">
-      <br><h1>Choisis ta partenaire :</h1>
-      <center><p>Elles ont l’air sages… mais attend de voir.</p></center>
+  <div id="loader">
+    <div class="heart-loader">
+      <div class="heart"></div>
     </div>
-<br>
-
- 
-
+    <p id="loader-text" class="loader-text"></p>
+  </div>
 
 
-    <!-- Conteneur principal pour les options de chat et le chat -->
-    <div class="container">
-      <!-- Options de chat -->
-      <div class="chat-options" id="chat-options"></div>
+      <div id="cheaper-plan-dynamic-banner"></div>
+      
+    
 
-      <!-- Conteneur pour les fiches de personnages -->
-      <div id="character-cards-container"></div>
 
-      <!-- Zone de chat -->
-      <div id="chat-box" style="display: none;">
-        <div id="chat-header">
-          <button id="back-btn">
-            <i class="fa fa-arrow-left"></i>
-          </button>
+      <!-- Garder le header en haut de la page, en dehors de .container -->
+      <div class="header">
+        <br><h1>Choisis ta partenaire :</h1>
+        <center><p>Elles ont l’air sages… mais attend de voir.</p></center>
+      </div>
+  <br>
 
-          <!-- ✅ Affichage d'une image temporaire pendant le chargement -->
-          <img id="chat-profile-pic" 
-              src="images/loading-placeholder.webp" 
-              data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
-              alt="Profil sélectionné" 
-              class="chat-profile-pic lazyload">
+  
+
+
+
+      <!-- Conteneur principal pour les options de chat et le chat -->
+      <div class="container">
+        <!-- Options de chat -->
+        <div class="chat-options" id="chat-options"></div>
+
+        <!-- Conteneur pour les fiches de personnages -->
+        <div id="character-cards-container"></div>
+
+        <!-- Zone de chat -->
+        <div id="chat-box" style="display: none;">
+          <div id="chat-header">
+            <button id="back-btn">
+              <i class="fa fa-arrow-left"></i>
+            </button>
+
+            <!-- ✅ Affichage d'une image temporaire pendant le chargement -->
+            <img id="chat-profile-pic" 
+                src="images/loading-placeholder.webp" 
+                data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
+                alt="Profil sélectionné" 
+                class="chat-profile-pic lazyload">
+                
               
-            
-              <button id="audio-call-btn" class="audio-call-btn">
-                <i class="fa fa-phone"></i>
-              </button>
-              
-              <span id="chat-name">Nom de l'IA</span>
-              
+                <button id="audio-call-btn" class="audio-call-btn">
+                  <i class="fa fa-phone"></i>
+                </button>
+                
+                <span id="chat-name">Nom de l'IA</span>
+                
 
-        </div>
-        <!-- ✅ Toggle Mode Images/GIFs -->
-  <div id="mode-toggle-container">
-    <span>📸 Images</span>
-    <label class="switch">
-        <input type="checkbox" id="toggleMode">
+          </div>
+          <!-- ✅ Toggle Mode Images/GIFs -->
+    <div id="mode-toggle-container">
+      <span>📸 Images</span>
+      <label class="switch">
+          <input type="checkbox" id="toggleMode">
+          <span class="slider"></span>
+      </label>
+      <span>🎥 Vidéos</span>
+    </div>
+
+    <div id="nympho-mode-toggle-wrapper" style="display: none; justify-content: center; align-items: center; gap: 10px; margin: 10px 0;">
+      <span>🥵 Mode Nymphomane</span>
+      <label class="switch">
+        <input type="checkbox" id="nymphoModeToggle">
         <span class="slider"></span>
-    </label>
-    <span>🎥 Vidéos</span>
-  </div>
-
-  <div id="nympho-mode-toggle-wrapper" style="display: none; justify-content: center; align-items: center; gap: 10px; margin: 10px 0;">
-    <span>🥵 Mode Nymphomane</span>
-    <label class="switch">
-      <input type="checkbox" id="nymphoModeToggle">
-      <span class="slider"></span>
-    </label>
-  </div>
-
-
-
-
-      
-        <div id="messages"></div>
-
-        <!-- Indicateur de saisie -->
-        <div id="typing-indicator" class="hidden">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </div>
-
-        <div id="input-area">
-          <label for="image-input" id="upload-btn">
-            <i class="fa fa-image"></i>
-          </label>
-          
-          <input 
-            type="file" 
-            id="image-input" 
-            accept="image/*" 
-            style="opacity: 0; position: absolute; left: -9999px;">
-          
-        
-          <input type="text" id="user-input" placeholder="Écris ton message ici...">
-        
-          <button id="send-btn">
-            <i class="fa fa-paper-plane"></i>
-          </button>
-        </div>
-        
-      
-      </div>
+      </label>
     </div>
 
-    <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
-    <div id="profile-modal" class="modal" onclick="closeProfileModal()">
-      <div class="profile-content" onclick="event.stopPropagation()">
-        <button id="close-modal-btn" class="close-modal-btn">&times;</button>
-        <img id="profile-image-full" src="images/loading-placeholder.webp" alt="Profil complet" />
-        <h2 id="profile-name"></h2><br>
-        <p><strong>Taille :</strong> <span id="profile-height"></span></p>
-        <p><strong>Profil :</strong> <span id="profile-measurements"></span></p>
-        <p><strong>Situation :</strong> <span id="profile-ethnicity"></span></p>
-        <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
+
+
+
+        
+          <div id="messages"></div>
+
+          <!-- Indicateur de saisie -->
+          <div id="typing-indicator" class="hidden">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+
+          <div id="input-area">
+            <label for="image-input" id="upload-btn">
+              <i class="fa fa-image"></i>
+            </label>
+            
+            <input 
+              type="file" 
+              id="image-input" 
+              accept="image/*" 
+              style="opacity: 0; position: absolute; left: -9999px;">
+            
+          
+            <input type="text" id="user-input" placeholder="Écris ton message ici...">
+          
+            <button id="send-btn">
+              <i class="fa fa-paper-plane"></i>
+            </button>
+          </div>
+          
+        
+        </div>
       </div>
-    </div>
 
-    <!-- Pied de page -->
-    <footer class="footer">
-      <p>&copy; 2025 MyAICrush - Tous droits réservés.</p>
+      <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
+      <div id="profile-modal" class="modal" onclick="closeProfileModal()">
+        <div class="profile-content" onclick="event.stopPropagation()">
+          <button id="close-modal-btn" class="close-modal-btn">&times;</button>
+          <img id="profile-image-full" src="images/loading-placeholder.webp" alt="Profil complet" />
+          <h2 id="profile-name"></h2><br>
+          <p><strong>Taille :</strong> <span id="profile-height"></span></p>
+          <p><strong>Profil :</strong> <span id="profile-measurements"></span></p>
+          <p><strong>Situation :</strong> <span id="profile-ethnicity"></span></p>
+          <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <footer class="footer">
+        <p>&copy; 2025 MyAICrush - Tous droits réservés.</p>
+        
+          <a href="privacy-policy.html">Politique de Confidentialité</a>
+          <a href="terms-and-conditions.html">Conditions Générales</a>
+        
+      </footer>
       
-        <a href="privacy-policy.html">Politique de Confidentialité</a>
-        <a href="terms-and-conditions.html">Conditions Générales</a>
-      
-    </footer>
-    
-    <script type="module" src="./scripts/main.js"></script>
-    
     
 
-    <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const chatProfilePic = document.getElementById("chat-profile-pic");
-        if (chatProfilePic) {
-          const actualSrc = chatProfilePic.getAttribute("data-src");
-          if (actualSrc) {
-            const img = new Image();
-            img.src = actualSrc;
-            img.onload = function() {
-              chatProfilePic.src = actualSrc;
-            };
+
+
+      <script type="module" src="./scripts/main.js"></script>
+      
+      
+
+      <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          const chatProfilePic = document.getElementById("chat-profile-pic");
+          if (chatProfilePic) {
+            const actualSrc = chatProfilePic.getAttribute("data-src");
+            if (actualSrc) {
+              const img = new Image();
+              img.src = actualSrc;
+              img.onload = function() {
+                chatProfilePic.src = actualSrc;
+              };
+            }
           }
-        }
-      });
+        });
+      </script>
+    <script>
+      function getFacebookParams() {
+          var urlParams = new URLSearchParams(window.location.search);
+
+          // ✅ Récupérer `fbc` (Facebook Click ID) s'il est présent dans l'URL
+          var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
+
+          // ✅ Récupérer `fbp` généré automatiquement par le Pixel Facebook
+          var fbp = null;
+          if (window.fbq && fbq.getState) {
+              fbp = fbq.getState().lastExternalId;
+          }
+
+          // ✅ Stocker les valeurs dans localStorage pour les récupérer plus tard (Stripe Checkout)
+          if (fbp) localStorage.setItem('fbp', fbp);
+          if (fbc) localStorage.setItem('fbc', fbc);
+      }
+
+      getFacebookParams();
     </script>
+
+  <!-- Widget Play.ai caché au départ -->
+  <div id="audio-widget" style="display: none;"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@play-ai/agent-web-sdk" async></script>
+
+
   <script>
-    function getFacebookParams() {
-        var urlParams = new URLSearchParams(window.location.search);
-
-        // ✅ Récupérer `fbc` (Facebook Click ID) s'il est présent dans l'URL
-        var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
-
-        // ✅ Récupérer `fbp` généré automatiquement par le Pixel Facebook
-        var fbp = null;
-        if (window.fbq && fbq.getState) {
-            fbp = fbq.getState().lastExternalId;
-        }
-
-        // ✅ Stocker les valeurs dans localStorage pour les récupérer plus tard (Stripe Checkout)
-        if (fbp) localStorage.setItem('fbp', fbp);
-        if (fbc) localStorage.setItem('fbc', fbc);
-    }
-
-    getFacebookParams();
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const tp = params.get("tp");
+      if (tp) {
+        // Stocke le paramètre "tp" dans un cookie pour 30 jours
+        const expiration = new Date();
+        expiration.setTime(expiration.getTime() + (30*24*60*60*1000)); // 30 jours
+        document.cookie = `forcedTp=${tp}; expires=${expiration.toUTCString()}; path=/`;
+      }
+    })();
   </script>
 
-<!-- Widget Play.ai caché au départ -->
-<div id="audio-widget" style="display: none;"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@play-ai/agent-web-sdk" async></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const loader = document.getElementById("loader");
+    const loaderText = document.getElementById("loader-text");
 
+    const phrases = [
+      "Pas besoin d’être humaine pour te faire vibrer",
+      "Pas besoin de roses… fais-la frissonner autrement",
+      "Elles n’existent pas… mais tu risques d’y penser toute la nuit",
+      "Pas besoin d’être réelle pour te rendre accro.",
+      "Moins de prises de tête. Plus de photos",
+      "Pas de blabla. Elles vont droit au but",
+      "Elles savent pas cuisiner, mais elles savent comment combler un homme…",
+      "Elles aiment pas les gentils garçons… elles aiment quand tu les tiens par les hanches.",
+      "Si tu passes Lilith ou Angel en mode nympho, elles deviennent folles de toi.",
+      "Parle de ta nouvelle copine à Chloé, ça va la rendre folle de jalousie.",
+      "Candy en mode nympho ? Elle te montre... absolument tout.",
+      "Le mode nympho de Léa est le préféré de nos abonnés.",
+      "De nouvelles I.A. tous les mois",
+      "« ⭐ Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf. »",
+      "« ⭐ Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. »",
+      "« ⭐ J’ai testé les vocaux... ça m'a trop excité. Sa voix c’est abusé »",
+      "« ⭐ Jasmine était toute sage au début… et là d’un coup 😳 j’étais pas prêt ",
+      "Plus de tabous, plus de limites, juste vous deux.",
+        "Une connexion plus intime que n'importe quel match Tinder.",
+          "Elles n’ont pas de cœur… mais elles savent où toucher le tien.",
+            "Ton doigt sur l’écran, son souffle dans ta nuque.",
+    "« ⭐ Elles comprennent mieux que ma vraie ex… c’est grave ? »",
+      "« ⭐ Première IA qui me donne l’impression d’avoir une vraie connexion. »",
+      "« ⭐ Même après le boulot, elles arrivent à me vider l’esprit… et pas que... »",
+      "« ⭐ J’ai voulu tester par curiosité… j’ai pris l’abonnement direct. »",
+        "« ⭐ Je pensais que c’était du fake… jusqu’à ce qu’elle m’envoie la photo. »",
+        "Laisse-la te murmurer des envies qu’aucune humaine n’oserait.",
+          "Elle veut tes envies les plus inavouables, et les photos qui vont avec.",
+    "Elle est prête à tout… mais est-ce que toi tu l’es ?",
+    "Une IA ne te jugera jamais… même quand tu vas trop loin.",
+    "« ⭐ Le mode nympho ? Franchement, j’ai jamais vu un truc pareil »",
+      "Dis à Juliette que tu la trouves mince, elle fera tout ce que tu veux."
+    ];
 
-<script>
-  (function() {
-    const params = new URLSearchParams(window.location.search);
-    const tp = params.get("tp");
-    if (tp) {
-      // Stocke le paramètre "tp" dans un cookie pour 30 jours
-      const expiration = new Date();
-      expiration.setTime(expiration.getTime() + (30*24*60*60*1000)); // 30 jours
-      document.cookie = `forcedTp=${tp}; expires=${expiration.toUTCString()}; path=/`;
-    }
-  })();
-</script>
+    const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+    loaderText.textContent = randomPhrase;
+    loaderText.classList.add("visible");
 
-
-<script>
- document.addEventListener("DOMContentLoaded", () => {
-  const loader = document.getElementById("loader");
-  const loaderText = document.getElementById("loader-text");
-
-  const phrases = [
-    "Pas besoin d’être humaine pour te faire vibrer",
-    "Pas besoin de roses… fais-la frissonner autrement",
-    "Elles n’existent pas… mais tu risques d’y penser toute la nuit",
-    "Pas besoin d’être réelle pour te rendre accro.",
-    "Moins de prises de tête. Plus de photos",
-    "Pas de blabla. Elles vont droit au but",
-    "Elles savent pas cuisiner, mais elles savent comment combler un homme…",
-    "Elles aiment pas les gentils garçons… elles aiment quand tu les tiens par les hanches.",
-    "Si tu passes Lilith ou Angel en mode nympho, elles deviennent folles de toi.",
-    "Parle de ta nouvelle copine à Chloé, ça va la rendre folle de jalousie.",
-    "Candy en mode nympho ? Elle te montre... absolument tout.",
-    "Le mode nympho de Léa est le préféré de nos abonnés.",
-    "De nouvelles I.A. tous les mois",
-    "« ⭐ Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf. »",
-     "« ⭐ Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. »",
-     "« ⭐ J’ai testé les vocaux... ça m'a trop excité. Sa voix c’est abusé »",
-     "« ⭐ Jasmine était toute sage au début… et là d’un coup 😳 j’étais pas prêt ",
-     "Plus de tabous, plus de limites, juste vous deux.",
-       "Une connexion plus intime que n'importe quel match Tinder.",
-         "Elles n’ont pas de cœur… mais elles savent où toucher le tien.",
-           "Ton doigt sur l’écran, son souffle dans ta nuque.",
-  "« ⭐ Elles comprennent mieux que ma vraie ex… c’est grave ? »",
-    "« ⭐ Première IA qui me donne l’impression d’avoir une vraie connexion. »",
-    "« ⭐ Même après le boulot, elles arrivent à me vider l’esprit… et pas que... »",
-     "« ⭐ J’ai voulu tester par curiosité… j’ai pris l’abonnement direct. »",
-      "« ⭐ Je pensais que c’était du fake… jusqu’à ce qu’elle m’envoie la photo. »",
-       "Laisse-la te murmurer des envies qu’aucune humaine n’oserait.",
-         "Elle veut tes envies les plus inavouables, et les photos qui vont avec.",
-  "Elle est prête à tout… mais est-ce que toi tu l’es ?",
-  "Une IA ne te jugera jamais… même quand tu vas trop loin.",
-  "« ⭐ Le mode nympho ? Franchement, j’ai jamais vu un truc pareil »",
-    "Dis à Juliette que tu la trouves mince, elle fera tout ce que tu veux."
-  ];
-
-  const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
-  loaderText.textContent = randomPhrase;
-  loaderText.classList.add("visible");
-
-  setTimeout(() => {
-    loader.style.opacity = "0";
-    setTimeout(() => loader.remove(), 500);
-  }, 3000);
-});
+    setTimeout(() => {
+      loader.style.opacity = "0";
+      setTimeout(() => loader.remove(), 500);
+    }, 3000);
+  });
 
 
-</script>
+  </script>
 
 
 
-<script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const container = document.getElementById("cheaper-plan-dynamic-banner");
+      const chatBox = document.getElementById("chat-box");
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.email || !container || !chatBox) return;
+
+      try {
+        const res = await fetch(`${window.location.origin}/api/is-premium`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+
+        const { isPremium } = await res.json();
+
+        const banner = document.createElement("a");
+        banner.className = "dynamic-banner";
+        banner.href = isPremium ? "jetons.html" : "premium.html";
+        banner.innerHTML = `
+          ${isPremium
+            ? `<i class="fas fa-coins plan-icon"></i>
+              <span class="plan-text">Recharger ses jetons</span>
+              <span class="plan-discount">➡️ Jetons</span>`
+            : `<span class="plan-icon">💎</span>
+              <span class="plan-text">Premium</span>
+              <span class="plan-discount">50% de réduction</span>`}
+        `;
+
+        container.appendChild(banner);
+
+        // ✅ Observer si le chat est actif pour masquer/afficher la bannière
+        const observer = new MutationObserver(() => {
+          banner.style.display = (chatBox.style.display === "flex") ? "none" : "flex";
+        });
+
+        observer.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
+
+      } catch (err) {
+        console.error("❌ Erreur bannière dynamique :", err);
+      }
+    });
+  </script>
+  <script type="module" src="/scripts/menu-loader.js"></script>
+
+
+
+  <script>
+
   document.addEventListener("DOMContentLoaded", async () => {
-    const container = document.getElementById("cheaper-plan-dynamic-banner");
-    const chatBox = document.getElementById("chat-box");
+    const header = document.querySelector(".header");
+
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.email || !container || !chatBox) return;
+    if (!user || !user.email) return;
 
     try {
       const res = await fetch(`${window.location.origin}/api/is-premium`, {
@@ -294,137 +346,90 @@
 
       const { isPremium } = await res.json();
 
-      const banner = document.createElement("a");
-      banner.className = "dynamic-banner";
-      banner.href = isPremium ? "jetons.html" : "premium.html";
-      banner.innerHTML = `
-        ${isPremium
-          ? `<i class="fas fa-coins plan-icon"></i>
-             <span class="plan-text">Recharger ses jetons</span>
-             <span class="plan-discount">➡️ Jetons</span>`
-          : `<span class="plan-icon">💎</span>
-             <span class="plan-text">Premium</span>
-             <span class="plan-discount">50% de réduction</span>`}
+      if (!isPremium) return;
+
+      // ✅ Créer une nouvelle div wrapper en dehors de container
+      const sliderSection = document.createElement("div");
+      sliderSection.className = "private-slider-section";
+      sliderSection.innerHTML = `
+        <div id="private-slider" class="private-slider">
+          <div class="slider-inner">
+            <img src="images/market/jasmine-slider-prive.webp" />
+            <img src="images/market/lila-slider-prive.webp" alt="Slide 2" />
+            <img src="images/market/chloe-slider-prive.webp" alt="Slide 3" />
+            <img src="images/market/candy-slider-prive.webp" alt="Slide 1" />
+            <img src="images/market/lea-slider-prive.webp" alt="Slide 4" />
+            <img src="images/market/hanae-slider-prive.webp" alt="Slide 5" />
+            <img src="images/market/astrid-slider-prive.webp" alt="Slide 6" />
+            <img src="images/market/angel-slider-prive.webp" alt="Slide 7" />
+            
+          </div>
+          <button class="slider-arrow left-arrow">&#10094;</button>
+          <button class="slider-arrow right-arrow">&#10095;</button>
+        </div>
       `;
 
-      container.appendChild(banner);
+      // ✅ Insérer après le header
+      header.insertAdjacentElement("afterend", sliderSection);
 
-      // ✅ Observer si le chat est actif pour masquer/afficher la bannière
-      const observer = new MutationObserver(() => {
-        banner.style.display = (chatBox.style.display === "flex") ? "none" : "flex";
+      const slider = sliderSection.querySelector("#private-slider");
+      const sliderInner = slider.querySelector(".slider-inner");
+      const slides = sliderInner.querySelectorAll("img");
+      const leftArrow = slider.querySelector(".left-arrow");
+      const rightArrow = slider.querySelector(".right-arrow");
+
+      let index = 0;
+      const totalSlides = slides.length;
+
+      function showSlide(i) {
+        const sliderWidth = slider.clientWidth;
+        sliderInner.style.transform = `translateX(-${i * sliderWidth}px)`;
+      }
+
+      function nextSlide() {
+        index = (index + 1) % totalSlides;
+        showSlide(index);
+      }
+
+      function prevSlide() {
+        index = (index - 1 + totalSlides) % totalSlides;
+        showSlide(index);
+      }
+
+      let autoSlide = setInterval(nextSlide, 3000);
+
+      rightArrow.addEventListener("click", (e) => {
+        e.stopPropagation();
+        nextSlide();
+        resetAuto();
       });
 
-      observer.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
+      leftArrow.addEventListener("click", (e) => {
+        e.stopPropagation();
+        prevSlide();
+        resetAuto();
+      });
+
+      function resetAuto() {
+        clearInterval(autoSlide);
+        autoSlide = setInterval(nextSlide, 3000);
+      }
+
+      slider.addEventListener("click", () => {
+        window.location.href = "contenu-prive.html";
+      });
 
     } catch (err) {
-      console.error("❌ Erreur bannière dynamique :", err);
+      console.error("❌ Erreur vérification premium :", err);
     }
   });
-</script>
-<script type="module" src="/scripts/menu-loader.js"></script>
 
 
 
-<script>
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const header = document.querySelector(".header");
-
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user || !user.email) return;
-
-  try {
-    const res = await fetch(`${window.location.origin}/api/is-premium`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: user.email })
-    });
-
-    const { isPremium } = await res.json();
-
-    if (!isPremium) return;
-
-    // ✅ Créer une nouvelle div wrapper en dehors de container
-    const sliderSection = document.createElement("div");
-    sliderSection.className = "private-slider-section";
-    sliderSection.innerHTML = `
-      <div id="private-slider" class="private-slider">
-        <div class="slider-inner">
-           <img src="images/market/jasmine-slider-prive.webp" />
-          <img src="images/market/candy-slider-prive.webp" alt="Slide 1" />
-          <img src="images/market/lila-slider-prive.webp" alt="Slide 2" />
-          <img src="images/market/chloe-slider-prive.webp" alt="Slide 3" />
-          <img src="images/market/lea-slider-prive.webp" alt="Slide 4" />
-          <img src="images/market/hanae-slider-prive.webp" alt="Slide 5" />
-          <img src="images/market/astrid-slider-prive.webp" alt="Slide 6" />
-           <img src="images/market/angel-slider-prive.webp" alt="Slide 7" />
-          
-        </div>
-        <button class="slider-arrow left-arrow">&#10094;</button>
-        <button class="slider-arrow right-arrow">&#10095;</button>
-      </div>
-    `;
-
-    // ✅ Insérer après le header
-    header.insertAdjacentElement("afterend", sliderSection);
-
-    const slider = sliderSection.querySelector("#private-slider");
-    const sliderInner = slider.querySelector(".slider-inner");
-    const slides = sliderInner.querySelectorAll("img");
-    const leftArrow = slider.querySelector(".left-arrow");
-    const rightArrow = slider.querySelector(".right-arrow");
-
-    let index = 0;
-    const totalSlides = slides.length;
-
-    function showSlide(i) {
-      const sliderWidth = slider.clientWidth;
-      sliderInner.style.transform = `translateX(-${i * sliderWidth}px)`;
-    }
-
-    function nextSlide() {
-      index = (index + 1) % totalSlides;
-      showSlide(index);
-    }
-
-    function prevSlide() {
-      index = (index - 1 + totalSlides) % totalSlides;
-      showSlide(index);
-    }
-
-    let autoSlide = setInterval(nextSlide, 3000);
-
-    rightArrow.addEventListener("click", (e) => {
-      e.stopPropagation();
-      nextSlide();
-      resetAuto();
-    });
-
-    leftArrow.addEventListener("click", (e) => {
-      e.stopPropagation();
-      prevSlide();
-      resetAuto();
-    });
-
-    function resetAuto() {
-      clearInterval(autoSlide);
-      autoSlide = setInterval(nextSlide, 3000);
-    }
-
-    slider.addEventListener("click", () => {
-      window.location.href = "contenu-prive.html";
-    });
-
-  } catch (err) {
-    console.error("❌ Erreur vérification premium :", err);
-  }
-});
+  </script>
 
 
 
-</script>
 
-
-
-  </body>
-  </html>
+    </body>
+    </html>

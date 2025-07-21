@@ -736,19 +736,28 @@ const allTestVariants = pricingConfig.active_tests.flatMap(test => test.variants
 
 
         // ✅ Création de la session Stripe
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'subscription',
-            customer_email: email,
-            metadata: {
-                fbp: req.body.fbp || null,
-                fbc: req.body.fbc || null,
-                fbqPurchaseEventID: `purchase_${Date.now()}`
-            },
-            line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.BASE_URL}/confirmation.html?amount=${selectedPlan.price}&plan=${planType}`,
-            cancel_url: `${process.env.BASE_URL}/premium.html`
-        });
+       const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'subscription',
+    customer_email: email,
+    payment_method_collection: 'always',
+    subscription_data: {
+        trial_settings: {
+            end_behavior: {
+                missing_payment_method: 'cancel'
+            }
+        }
+    },
+    metadata: {
+        fbp: req.body.fbp || null,
+        fbc: req.body.fbc || null,
+        fbqPurchaseEventID: `purchase_${Date.now()}`
+    },
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${process.env.BASE_URL}/confirmation.html?amount=${selectedPlan.price}&plan=${planType}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.BASE_URL}/premium.html`
+});
+
   
         console.log('✅ Session Checkout créée avec succès :', session.url);
         res.json({ url: session.url });
@@ -758,13 +767,6 @@ const allTestVariants = pricingConfig.active_tests.flatMap(test => test.variants
         res.status(500).json({ message: 'Failed to create checkout session' });
     }
 });
-
-  
-
-
-
-
-
 
 
 
@@ -2414,13 +2416,16 @@ app.post('/api/buy-tokens', async (req, res) => {
 
         // ✅ Création de la session Stripe
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'payment',
-            customer_email: email,
-            line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${amount}`,                         
-            cancel_url: `${process.env.BASE_URL}/jetons.html`
-        });
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: email,
+    payment_intent_data: {
+        setup_future_usage: 'off_session'
+    },
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${amount}`,
+    cancel_url: `${process.env.BASE_URL}/jetons.html`
+});
 
         console.log("✅ Session Stripe créée :", session.id);
         res.json({ url: session.url });
@@ -2430,6 +2435,7 @@ app.post('/api/buy-tokens', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+
 
 
 
@@ -2820,6 +2826,122 @@ app.get('/api/list-pack-files', async (req, res) => {
 });
 
   
+// ✅ Route pour enregistrer le customerId après un paiement
+app.post("/api/save-customer-id", async (req, res) => {
+  const { sessionId } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({ success: false, message: "sessionId manquant" });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    const email = session.customer_email;
+    const customerId = session.customer;
+
+    if (!email || !customerId) {
+      return res.status(400).json({ success: false, message: "Données manquantes dans la session Stripe" });
+    }
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+
+    const result = await users.updateOne(
+      { email },
+      { $set: { stripeCustomerId: customerId } }
+    );
+
+    console.log(`✅ customerId (${customerId}) enregistré pour ${email}`);
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération de la session Stripe :", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+
+
+// ✅ Route One-Click Payment pour acheter des jetons
+
+app.post('/api/one-click-payment', async (req, res) => {
+  const { email, tokensAmount } = req.body;
+
+  if (!email || !tokensAmount) {
+    return res.status(400).json({ success: false, message: "Email et quantité de jetons requis." });
+  }
+
+  try {
+    // 🔍 Récupérer le stripeCustomerId en base
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+    const user = await users.findOne({ email });
+
+    if (!user || !user.stripeCustomerId) {
+      return res.status(400).json({ success: false, message: "Client non enregistré pour le paiement 1C." });
+    }
+
+    const customerId = user.stripeCustomerId;
+
+    // 💰 Montants à ajuster selon tes tarifs
+    const amountMap = {
+      "50": 2500,
+      "100": 3900,
+      "300": 9900
+    };
+
+    const amount = amountMap[tokensAmount];
+
+    if (!amount) {
+      return res.status(400).json({ success: false, message: "Montant invalide" });
+    }
+
+    // ✅ Récupérer la dernière carte sauvegardée pour ce client
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+    });
+
+    if (!paymentMethods.data.length) {
+      return res.status(400).json({ success: false, message: "Aucune carte enregistrée." });
+    }
+
+    const defaultCard = paymentMethods.data[0].id;
+
+    // ✅ Créer et confirmer le PaymentIntent avec la carte
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'eur',
+      customer: customerId,
+      payment_method: defaultCard, // 💳 Carte enregistrée
+      confirm: true,
+      off_session: true,
+      description: `${tokensAmount} jetons (1C)`
+    });
+
+    console.log(`💸 Paiement 1C réussi : ${paymentIntent.id}`);
+
+    // 🎯 Tu peux ici ajouter les jetons au profil (ou appeler une fonction existante)
+    // await users.updateOne({ email }, { $inc: { tokens: parseInt(tokensAmount) } });
+
+    res.json({ success: true, paymentIntentId: paymentIntent.id });
+
+  } catch (error) {
+    console.error("❌ Erreur paiement 1C :", error.message);
+
+    // Gestion des erreurs Stripe "authentification requise"
+    if (error.code === 'authentication_required') {
+      return res.status(402).json({ 
+        success: false, 
+        message: "Authentification requise. Paiement impossible en 1C. Rediriger vers jetons.html." 
+      });
+    }
+
+    res.status(500).json({ success: false, message: "Erreur lors du paiement 1C." });
+  }
+});
+
 
 
 // Connecter à la base de données avant de démarrer le serveur
