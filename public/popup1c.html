@@ -11,7 +11,7 @@
   
 
   <!-- 🔥 POPUP JETONS visible au chargement -->
-  <div id="jetons-popup" class="jetons-popup">
+  <div id="jetons-popup" class="jetons-popup hidden">
     <div class="popup-content">
       <button class="close-btn" onclick="closeJetonsPopup()">×</button>
       <h2>Pas assez de jetons !</h2>
@@ -38,6 +38,14 @@
     </div>
   </div>
 
+  <!-- ❤️ Loader pendant le paiement 1C -->
+<!-- ✅ Loader pendant le paiement -->
+<div id="loader-overlay" class="loader-overlay hidden">
+  <div class="spinner"></div>
+  <p class="loader-text">Paiement en cours…</p>
+</div>
+
+
 
 <!-- ✅ JavaScript -->
 <script>
@@ -63,45 +71,53 @@
     }
 
     async function sendJetonsPayment() {
-      if (!selectedOffer) return;
+  if (!selectedOffer) return;
 
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      const email = userData.email;
+  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const email = userData.email;
 
-      if (!email) {
-        alert("Email non trouvé. Veuillez vous reconnecter.");
-        return;
-      }
+  if (!email) {
+    alert("Email non trouvé. Veuillez vous reconnecter.");
+    return;
+  }
 
-      try {
-        const res = await fetch('/api/one-click-payment', {
-          method: 'POST',
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            tokensAmount: selectedOffer.tokens
-          })
-        });
+  const loader = document.getElementById("loader-overlay");
+  loader.classList.remove("hidden"); // 👈 Affiche le loader
 
-        const data = await res.json();
+  try {
+    const res = await fetch('/api/one-click-payment', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        tokensAmount: selectedOffer.tokens
+      })
+    });
 
-        if (data.success) {
-          closeConfirmPopup();
-          closeJetonsPopup();
-          alert("✅ Jetons achetés avec succès !");
-          window.location.href = "/index.html";
-        } else {
-          alert("❌ Paiement échoué : " + data.message);
-          if (data.message.includes("jetons.html")) {
-            window.location.href = "/jetons.html";
-          }
-        }
+    const data = await res.json();
 
-      } catch (err) {
-        console.error("❌ Erreur lors du paiement 1C :", err);
-        alert("Erreur serveur. Veuillez réessayer.");
+    loader.classList.add("hidden"); // 👈 Cache le loader
+
+    if (data.success) {
+      closeConfirmPopup();
+      closeJetonsPopup();
+      alert("✅ Jetons achetés avec succès !");
+      window.location.href = "/index.html";
+    } else {
+      alert("❌ Paiement échoué : " + data.message);
+      if (data.message.includes("jetons.html")) {
+        window.location.href = "/jetons.html";
       }
     }
+
+  } catch (err) {
+    loader.classList.add("hidden"); // 👈 Cache le loader même en cas d’erreur
+    console.error("❌ Erreur lors du paiement 1C :", err);
+    alert("Erreur serveur. Veuillez réessayer.");
+  }
+}
+
+
 
     document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".offer-img").forEach(img => {
@@ -115,8 +131,25 @@
       // ✅ On ne cache QUE la confirmation, pas la popup principale
       closeConfirmPopup();
     });
+
+
+    // 👇 Rendez les fonctions accessibles globalement
+window.openJetonsPopup = openJetonsPopup;
+window.closeJetonsPopup = closeJetonsPopup;
+window.closeConfirmPopup = closeConfirmPopup;
+window.selectOffer = selectOffer;
+window.sendJetonsPayment = sendJetonsPayment;
+
   </script>
 
+
+<script>
+  if (window.location.pathname.endsWith("popup1c.html")) {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("jetons-popup")?.classList.remove("hidden");
+    });
+  }
+</script>
 
 
  <script type="module" src="/scripts/menu-loader.js"></script>

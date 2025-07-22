@@ -1392,8 +1392,9 @@ app.post('/api/activate-nympho-mode', async (req, res) => {
 
         // ❌ Pas assez de jetons
         if (jetons < 25) {
-            return res.status(403).json({ success: false, message: "Pas assez de jetons", redirect: "/jetons.html" });
-        }
+    return res.status(403).json({ success: false, message: "Pas assez de jetons", showJetonsPopup: true });
+}
+
 
         // ✅ Déduire les jetons et enregistrer l’activation pour 24h
         const expiresAt = now + 24 * 60 * 60 * 1000;
@@ -2954,6 +2955,47 @@ res.json({ success: true, paymentIntentId: paymentIntent.id });
     res.status(500).json({ success: false, message: "Erreur lors du paiement 1C." });
   }
 });
+
+
+// ✅ Version complète : éligible si customerId Stripe + carte enregistrée
+app.post("/api/check-one-click-eligibility", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ eligible: false, message: "Email manquant" });
+  }
+
+  try {
+    const db = client.db("MyAICrush");
+    const users = db.collection("users");
+
+    const user = await users.findOne({ email });
+
+    if (!user || !user.stripeCustomerId) {
+      return res.status(200).json({ eligible: false, reason: "Pas de stripeCustomerId" });
+    }
+
+    const customerId = user.stripeCustomerId;
+
+    // 🔍 Vérifie s’il a au moins une carte enregistrée
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+    });
+
+    if (!paymentMethods.data || paymentMethods.data.length === 0) {
+      return res.status(200).json({ eligible: false, reason: "Aucune carte enregistrée" });
+    }
+
+    // ✅ Tout est bon : éligible au 1C
+    return res.status(200).json({ eligible: true });
+
+  } catch (err) {
+    console.error("❌ Erreur vérif éligibilité 1C (complète) :", err);
+    return res.status(500).json({ eligible: false, message: "Erreur serveur" });
+  }
+});
+
 
 
 

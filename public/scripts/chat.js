@@ -4,6 +4,23 @@ import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 import { openProfileModal } from './profile.js';
 
 
+async function checkOneClickEligibility(email) {
+  try {
+    const res = await fetch("/api/check-one-click-eligibility", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    return data.eligible === true;
+  } catch (err) {
+    console.error("❌ Erreur API checkOneClickEligibility:", err);
+    return false;
+  }
+}
+
+
+
 let firstPhotoSent = false;
 const DAILY_MESSAGE_LIMIT = 8;
 
@@ -117,7 +134,6 @@ if (nymphoToggle) {
 
     if (nymphoToggle.checked) {
       if (!alreadyUnlocked) {
-        // Confirmation UNIQUEMENT si pas encore acheté
         const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 25 jetons. Es-tu sûr ? (valable 1h)");
         if (!confirmation) {
           nymphoToggle.checked = false;
@@ -130,20 +146,29 @@ if (nymphoToggle) {
         const response = await fetch(`${BASE_URL}/api/activate-nympho-mode`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email, character: activeCharacter }),
+          body: JSON.stringify({ email: user.email }),
         });
 
         const data = await response.json();
 
         if (response.ok && data.success) {
           localStorage.setItem("nymphoMode", "true");
-          
-        } else if (data.redirect) {
+                } else if (data?.showJetonsPopup) {
+          const eligible = await checkOneClickEligibility(user.email);
+          if (eligible) {
+            openJetonsPopup(); // ✅ Affiche la popup d’achat
+          } else {
+            window.location.href = "/jetons.html"; // ❌ Redirige si pas éligible
+          }
+
+        } else if (data?.redirect) {
           window.location.href = data.redirect;
         } else {
           alert("❌ Erreur : " + data.message);
-          nymphoToggle.checked = false;
         }
+
+        if (!data.success) nymphoToggle.checked = false;
+
       } catch (err) {
         console.error("❌ Erreur API nympho :", err);
         alert("Erreur lors de l’activation.");
@@ -152,7 +177,6 @@ if (nymphoToggle) {
     } else {
       // Désactivation manuelle
       localStorage.setItem("nymphoMode", "false");
-      
     }
   });
 } else {
@@ -160,6 +184,15 @@ if (nymphoToggle) {
 }
 
 
+function openJetonsPopup() {
+  const popup = document.getElementById("jetons-popup");
+  if (popup) {
+    popup.classList.remove("hidden");
+  } else {
+    console.warn("❌ Popup jetons non trouvée !");
+    window.location.href = "/jetons.html"; // 🔁 fallback de secours
+  }
+}
 
 
 
