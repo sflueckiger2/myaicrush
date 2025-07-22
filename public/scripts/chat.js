@@ -1159,21 +1159,27 @@ async function speakMessage(text) {
                     similarity_boost: character.voice.similarity_boost,
                     speed: character.voice.speed
                 },
-                email: user.email // 🔥 Ajout de l'email pour éviter l'erreur 400
+                email: user.email
             })
         });
-        
 
         if (!ttsResponse.ok) {
             const errorData = await ttsResponse.json();
-            if (errorData.redirect) {
-                console.warn("🚨 Limite atteinte, redirection vers", errorData.redirect);
-                window.location.href = errorData.redirect; // 🚀 Redirige automatiquement vers audio.html
+
+            // ✅ Affiche la popup si éligible au 1C
+            if (errorData.popup) {
+                openJetonsPopup(); // 👈 fonction déjà utilisée pour les contenus privés
                 return;
             }
+
+            if (errorData.redirect) {
+                console.warn("🚨 Limite atteinte, redirection vers", errorData.redirect);
+                window.location.href = errorData.redirect;
+                return;
+            }
+
             throw new Error("Erreur API TTS Backend");
         }
-        
 
         const audioBlob = await ttsResponse.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
@@ -1185,17 +1191,6 @@ async function speakMessage(text) {
         console.error("❌ Erreur avec l'API TTS :", error);
     }
 }
-
-// Fonction pour que le message d'avertissement s'affiche que dans les chat 
-
-document.addEventListener("DOMContentLoaded", function () {
-    const chatWarning = document.getElementById("chat-warning");
-    const chatBox = document.getElementById("chat-box");
-
-    if (chatBox && chatWarning) {
-        chatBox.insertBefore(chatWarning, chatBox.firstChild); // Insère le message en haut du chat
-    }
-});
 
 
 // ✅ Fonction pour gérer le clic sur l'icône téléphone (Appel Audio)

@@ -2300,13 +2300,49 @@ const isPremiumResp = await fetch(`${BASE_URL}/api/is-premium`, {
             console.log(`💳 Minutes payantes accumulées : ${paidMinutes.toFixed(2)} min (${creditsNeeded} crédits nécessaires)`);
 
             if (newAudioMinutesUsed > max_free_minutes && user.creditsPurchased === 0) {
-                return res.status(403).json({ redirect: "/jetons.html" });
+                if (creditsNeeded > 0) {
+  if (user.creditsPurchased < creditsNeeded) {
+    // ✅ Vérifie éligibilité au 1C
+    const eligibleRes = await fetch(`${BASE_URL}/api/check-one-click-eligibility`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const eligibleData = await eligibleRes.json();
+
+    if (eligibleData.eligible) {
+      return res.status(403).json({ popup: true });
+    } else {
+      return res.status(403).json({ redirect: "/jetons.html" });
+    }
+  }
+}
+
             }
             
 
             if (creditsNeeded > 0) {
                 if (user.creditsPurchased < creditsNeeded) {
-                    return res.status(403).json({ redirect: "/jetons.html" }); // Pas assez de crédits
+                   if (creditsNeeded > 0) {
+  if (user.creditsPurchased < creditsNeeded) {
+    // ✅ Vérifie éligibilité au 1C
+    const eligibleRes = await fetch(`${BASE_URL}/api/check-one-click-eligibility`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const eligibleData = await eligibleRes.json();
+
+    if (eligibleData.eligible) {
+      return res.status(403).json({ popup: true });
+    } else {
+      return res.status(403).json({ redirect: "/jetons.html" });
+    }
+  }
+}
+ // Pas assez de crédits
                 }
 
                // ✅ On enlève les minutes couvertes par les crédits (mais on garde les fractions restantes)
