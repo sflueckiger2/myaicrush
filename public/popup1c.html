@@ -102,7 +102,8 @@
       closeConfirmPopup();
       closeJetonsPopup();
       alert("✅ Jetons achetés avec succès !");
-      window.location.href = "/index.html";
+      closeConfirmPopup();
+closeJetonsPopup();
     } else {
       alert("❌ Paiement échoué : " + data.message);
       if (data.message.includes("jetons.html")) {

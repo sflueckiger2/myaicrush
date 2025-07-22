@@ -1,5 +1,16 @@
 console.log("🔐 Chargement du module Private Content");
 
+function openJetonsPopup() {
+  const popup = document.getElementById("jetons-popup");
+  if (popup) {
+    popup.classList.remove("hidden");
+  } else {
+    console.warn("❌ Popup jetons non trouvée !");
+    window.location.href = "/jetons.html"; // 🔁 fallback de secours
+  }
+}
+
+
 async function loadCharacters() {
   try {
     const response = await fetch('/characters.json');
@@ -46,24 +57,66 @@ async function handlePrivateUnlock(price, folder) {
   }
 
   try {
-    const response = await fetch('/api/unlock-private-content', {
+        const response = await fetch('/api/unlock-private-content', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: user.email, price: parseInt(price), folder })
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      console.error("❌ Erreur parsing JSON :", err);
+      alert("Erreur de communication avec le serveur.");
+      return false;
+    }
+
+    // 💥 On gère la réponse même si status != 200
+    if (response.status === 403 && data?.showJetonsPopup) {
+      const eligibleRes = await fetch('/api/check-one-click-eligibility', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email })
+      });
+
+      const eligibleData = await eligibleRes.json();
+      if (eligibleData.eligible) {
+        openJetonsPopup();
+      } else {
+        window.location.href = "/jetons.html";
+      }
+
+      return false;
+    }
+
 
     if (data.success) {
       console.log(`✅ Contenu débloqué : ${folder}, nouveaux jetons : ${data.newTokens}`);
       return true;
     } else {
       if (data.message) {
-        alert(data.message);
-      }
-      if (data.redirect) {
-        window.location.href = data.redirect;
-      }
+  console.warn(data.message);
+}
+
+if (data?.showJetonsPopup) {
+  // ✅ Check si éligible au 1C
+  const eligibleRes = await fetch('/api/check-one-click-eligibility', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: user.email })
+  });
+
+  const eligibleData = await eligibleRes.json();
+  if (eligibleData.eligible) {
+    openJetonsPopup();
+  } else {
+    window.location.href = "/jetons.html";
+  }
+
+  return false;
+}
+
       return false;
     }
 
