@@ -2920,12 +2920,25 @@ app.post('/api/one-click-payment', async (req, res) => {
       description: `${tokensAmount} jetons (1C)`
     });
 
-    console.log(`💸 Paiement 1C réussi : ${paymentIntent.id}`);
+   console.log(`💸 Paiement 1C réussi : ${paymentIntent.id}`);
 
-    // 🎯 Tu peux ici ajouter les jetons au profil (ou appeler une fonction existante)
-    // await users.updateOne({ email }, { $inc: { tokens: parseInt(tokensAmount) } });
+// 🛡 Vérifie si ce paymentIntent a déjà été utilisé
+if (user.usedStripeSessions?.includes(paymentIntent.id)) {
+  console.warn("⚠️ Paiement déjà enregistré, on ignore");
+  return res.status(400).json({ success: false, message: "Paiement déjà traité." });
+}
 
-    res.json({ success: true, paymentIntentId: paymentIntent.id });
+// ✅ Ajoute les jetons + enregistre l'ID Stripe utilisé
+await users.updateOne(
+  { email },
+  {
+    $inc: { creditsPurchased: parseInt(tokensAmount) },
+    $push: { usedStripeSessions: paymentIntent.id }
+  }
+);
+
+res.json({ success: true, paymentIntentId: paymentIntent.id });
+
 
   } catch (error) {
     console.error("❌ Erreur paiement 1C :", error.message);

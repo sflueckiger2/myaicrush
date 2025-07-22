@@ -2403,80 +2403,76 @@ video {
   background-color: rgba(0,0,0,0.8);
 }
 
-/* ✅ Popup fond général */
-.jetons-popup, .confirm-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
+/* ✅ Style général popup */
+    .jetons-popup, .confirm-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
 
-/* ✅ Contenu popup */
-.popup-content, .confirm-content {
-  background: #1e1e1e;
-  border-radius: 20px;
-  padding: 30px 20px;
-  text-align: center;
-  max-width: 90%;
-  box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
-  position: relative;
-  animation: popup-fade 0.3s ease;
-}
+    .popup-content, .confirm-content {
+      background: #1e1e1e;
+      border-radius: 20px;
+      padding: 30px 20px;
+      text-align: center;
+      max-width: 90%;
+      box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
+      position: relative;
+      animation: popup-fade 0.3s ease;
+    }
 
-/* ✅ Animation */
-@keyframes popup-fade {
-  from { transform: scale(0.9); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
+    @keyframes popup-fade {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
 
-/* ✅ Bouton fermeture */
-.close-btn {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  font-size: 22px;
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-}
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 22px;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
 
-/* ✅ Image carte jetons */
+
+    .card-icon {
+      width: 60px;
+      margin-bottom: 15px;
+    }
+
+    .confirm-buttons button {
+      background: #dd4d9d;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      margin: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .confirm-buttons button:first-child {
+      background: #333;
+    }
+
+ .offers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
 .offer-img {
-  width: 100px;
-  max-width: 120px;
-  margin: 15px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-.offer-img:hover {
-  transform: scale(1.05);
-}
-
-/* ✅ Icone carte */
-.card-icon {
-  width: 60px;
-  margin-bottom: 15px;
-}
-
-/* ✅ Boutons confirmation */
-.confirm-buttons button {
-  background: #dd4d9d;
-  color: white;
-  border: none;
-  padding: 10px 22px;
-  margin: 10px;
-  border-radius: 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
-.confirm-buttons button:first-child {
-  background: #333;
+  width: 100%;
+  max-width: none;
+  height: auto;
 }
