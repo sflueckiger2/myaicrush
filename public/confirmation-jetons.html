@@ -205,36 +205,7 @@ fbq('trackCustom', 'TokenPurchase', {
         }
     });
     </script>
-    
-  
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get("session_id");
-
-    if (sessionId) {
-      console.log("📦 Session ID détecté :", sessionId);
-
-      fetch("/api/save-customer-id", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          console.log("✅ customerId enregistré");
-        } else {
-          console.warn("⚠️ save-customer-id a répondu sans success :", data);
-        }
-      })
-      .catch(err => console.error("❌ Erreur save-customer-id :", err));
-    } else {
-      console.warn("⚠️ Aucun session_id trouvé dans l'URL");
-    }
-  });
-</script>
-
+ 
 
 
 

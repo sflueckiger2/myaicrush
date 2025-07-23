@@ -10,25 +10,29 @@
 <body>
   
 
-  <!-- 🔥 POPUP JETONS visible au chargement -->
-  <div id="jetons-popup" class="jetons-popup hidden">
-    <div class="popup-content">
-      <button class="close-btn" onclick="closeJetonsPopup()">×</button>
-      <h2>Pas assez de jetons !</h2>
-      <p>Achetez des jetons maintenant pour continuer.</p>
-      <div class="offers">
-        <img src="/images/market/50-jetons-carte.webp" class="offer-img" data-tokens="50" data-price="25">
-        <img src="/images/market/100-jetons-carte.webp" class="offer-img" data-tokens="100" data-price="39">
-        <img src="/images/market/300-jetons-carte.webp" class="offer-img" data-tokens="300" data-price="99">
-      </div>
+ <!-- 🔥 POPUP JETONS visible au chargement -->
+<div id="jetons-popup" class="jetons-popup hidden">
+  <div class="popup-content">
+    <button class="close-btn" onclick="closeJetonsPopup()">×</button>
+    <h2>Pas assez de jetons !</h2>
+    <p>Achète des jetons maintenant pour continuer.</p>
+    <div class="offers">
+      <img src="/images/market/carte-1c-50jetons.webp" class="offer-img" data-tokens="50" data-price="25">
+      <img src="/images/market/carte-1c-100jetons.webp" class="offer-img" data-tokens="100" data-price="39">
+      <img src="/images/market/carte-1c-300jetons.webp" class="offer-img" data-tokens="300" data-price="99">
     </div>
+    <p style="margin-top: 10px; font-size: 14px;">
+      <a href="/jetons.html" style="color: #dd4d9d; text-decoration: underline;">En savoir plus sur les jetons</a>
+    </p>
   </div>
+</div>
+
 
   <!-- ✅ POPUP CONFIRMATION cachée au démarrage -->
   <div id="confirm-popup" class="confirm-popup hidden">
     <div class="confirm-content">
       <button class="close-btn" onclick="closeConfirmPopup()">×</button>
-      <img src="/images/ui/card-icon.png" class="card-icon" />
+      <img src="/images/market/carte-credit.webp" class="card-icon" />
       <h3>Confirmer votre achat ?</h3>
       <p>Vous êtes sur le point d’acheter <span id="confirm-amount"></span> jetons pour <span id="confirm-price"></span> €</p>
       <div class="confirm-buttons">

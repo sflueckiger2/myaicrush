@@ -2418,14 +2418,15 @@ video {
     }
 
     .popup-content, .confirm-content {
-      background: #1e1e1e;
-      border-radius: 20px;
-      padding: 30px 20px;
-      text-align: center;
-      max-width: 90%;
-      box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
-      position: relative;
-      animation: popup-fade 0.3s ease;
+    background: #1e1e1e;
+    border-radius: 20px;
+    padding: 30px 2px;
+    text-align: center;
+    max-width: 450px;
+    width: 95%;
+    box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
+    position: relative;
+    animation: popup-fade 0.3s ease;
     }
 
     @keyframes popup-fade {
@@ -2468,7 +2469,7 @@ video {
  .offers {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 0px;
   margin-top: 20px;
 }
 .offer-img {

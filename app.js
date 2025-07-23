@@ -795,28 +795,54 @@ app.post('/api/get-user-subscription', async (req, res) => {
 
 //ROUTE POUR VERIFIER SI PREMIUM
 
-// Route pour vérifier si un utilisateur est premium
 app.post('/api/is-premium', async (req, res) => {
-  console.log('Requête reçue pour vérifier le statut premium');
+  console.log('📡 Requête reçue pour vérifier le statut premium');
   const { email } = req.body;
 
   if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+    return res.status(400).json({ message: 'Email requis' });
   }
 
   try {
-      // Appel à la fonction getUserSubscription pour vérifier l'abonnement
-      const subscriptionInfo = await getUserSubscription(email);
+    // 🔍 Recherche tous les clients Stripe ayant cet email
+    const customers = await stripe.customers.search({
+      query: `email:"${email}"`
+    });
 
-      const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
-      console.log(`Statut premium pour ${email}:`, isPremium);
+    if (!customers || customers.data.length === 0) {
+      console.log(`❌ Aucun client Stripe trouvé pour ${email}`);
+      return res.json({ isPremium: false });
+    }
 
-      res.json({ isPremium });
+    console.log(`👥 ${customers.data.length} clients Stripe trouvés pour ${email}`);
+
+    // ✅ Parcours tous les clients et cherche un abonnement actif ou annulé
+    for (const customer of customers.data) {
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: 'all',
+        limit: 10
+      });
+
+      const hasPremium = subscriptions.data.some(sub =>
+        sub.status === 'active' || sub.status === 'cancelled'
+      );
+
+      if (hasPremium) {
+        console.log(`✅ Abonnement premium trouvé sur le profil ${customer.id}`);
+        return res.json({ isPremium: true });
+      }
+    }
+
+    console.log(`❌ Aucun abonnement premium trouvé pour ${email}`);
+    return res.json({ isPremium: false });
+
   } catch (error) {
-      console.error('Erreur lors de la vérification du statut premium:', error.message);
-      res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
+    console.error('❌ Erreur lors de la vérification du statut premium:', error.message);
+    res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
   }
 });
+
 
 // ROUTE POUR ANNULER ABO STRIPE
 
@@ -2410,67 +2436,77 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 
 
 
-
-// ✅ Route API pour acheter des jetons
 app.post('/api/buy-tokens', async (req, res) => {
-    console.log('📡 Requête reçue pour l\'achat de jetons:', req.body);
+  console.log('📡 Requête reçue pour l\'achat de jetons:', req.body);
 
-    try {
-        const { tokensAmount, email } = req.body;
-        if (!tokensAmount || !email) {
-            return res.status(400).json({ message: "Email et quantité de jetons requis." });
-        }
-
-        // Sélectionne l'ID de prix en fonction du mode Stripe et du montant
-        const priceId = process.env.STRIPE_MODE === "live"
-            ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
-               tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
-               tokensAmount === "100" ? process.env.PRICE_ID_LIVE_100_TOKENS :
-               tokensAmount === "300" ? process.env.PRICE_ID_LIVE_300_TOKENS :
-               tokensAmount === "700" ? process.env.PRICE_ID_LIVE_700_TOKENS :
-               tokensAmount === "1000" ? process.env.PRICE_ID_LIVE_1000_TOKENS : null)
-            : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
-               tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
-               tokensAmount === "100" ? process.env.PRICE_ID_TEST_100_TOKENS :
-               tokensAmount === "300" ? process.env.PRICE_ID_TEST_300_TOKENS :
-               tokensAmount === "700" ? process.env.PRICE_ID_TEST_700_TOKENS :
-               tokensAmount === "1000" ? process.env.PRICE_ID_TEST_1000_TOKENS : null);
-
-        if (!priceId) {
-            console.error("❌ Erreur : Aucun prix trouvé pour ce montant de jetons.");
-            return res.status(400).json({ message: "Erreur de prix." });
-        }
-
-        console.log(`💰 Création d'une session Stripe pour ${tokensAmount} jetons (${email})`);
-
-        // Détermine le montant affiché dans l'URL de succès
-        const amount = tokensAmount === "10" ? 5 :
-                       tokensAmount === "50" ? 25 :
-                       tokensAmount === "100" ? 39 :
-                       tokensAmount === "300" ? 99 :
-                       tokensAmount === "700" ? 199 :
-                       tokensAmount === "1000" ? 249 : 0;
-
-        // ✅ Création de la session Stripe
-        const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    mode: 'payment',
-    customer_email: email,
-    payment_intent_data: {
-        setup_future_usage: 'off_session'
-    },
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${amount}`,
-    cancel_url: `${process.env.BASE_URL}/jetons.html`
-});
-
-        console.log("✅ Session Stripe créée :", session.id);
-        res.json({ url: session.url });
-
-    } catch (error) {
-        console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
-        res.status(500).json({ message: 'Erreur interne du serveur' });
+  try {
+    const { tokensAmount, email } = req.body;
+    if (!tokensAmount || !email) {
+      return res.status(400).json({ message: "Email et quantité de jetons requis." });
     }
+
+    // ✅ Sélection du bon priceId selon le mode et la quantité
+    const priceId = process.env.STRIPE_MODE === "live"
+      ? (tokensAmount === "10" ? process.env.PRICE_ID_LIVE_10_TOKENS :
+         tokensAmount === "50" ? process.env.PRICE_ID_LIVE_50_TOKENS :
+         tokensAmount === "100" ? process.env.PRICE_ID_LIVE_100_TOKENS :
+         tokensAmount === "300" ? process.env.PRICE_ID_LIVE_300_TOKENS :
+         tokensAmount === "700" ? process.env.PRICE_ID_LIVE_700_TOKENS :
+         tokensAmount === "1000" ? process.env.PRICE_ID_LIVE_1000_TOKENS : null)
+      : (tokensAmount === "10" ? process.env.PRICE_ID_TEST_10_TOKENS :
+         tokensAmount === "50" ? process.env.PRICE_ID_TEST_50_TOKENS :
+         tokensAmount === "100" ? process.env.PRICE_ID_TEST_100_TOKENS :
+         tokensAmount === "300" ? process.env.PRICE_ID_TEST_300_TOKENS :
+         tokensAmount === "700" ? process.env.PRICE_ID_TEST_700_TOKENS :
+         tokensAmount === "1000" ? process.env.PRICE_ID_TEST_1000_TOKENS : null);
+
+    if (!priceId) {
+      console.error("❌ Erreur : Aucun prix trouvé pour ce montant de jetons.");
+      return res.status(400).json({ message: "Erreur de prix." });
+    }
+
+    const amount = tokensAmount === "10" ? 5 :
+                   tokensAmount === "50" ? 25 :
+                   tokensAmount === "100" ? 39 :
+                   tokensAmount === "300" ? 99 :
+                   tokensAmount === "700" ? 199 :
+                   tokensAmount === "1000" ? 249 : 0;
+
+    // ✅ Vérifie s'il y a déjà un stripeCustomerId existant
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+    const user = await users.findOne({ email });
+
+    let customerOptions = {};
+    if (user?.stripeCustomerId) {
+      console.log(`🔁 Réutilisation du Stripe customer existant : ${user.stripeCustomerId}`);
+      customerOptions.customer = user.stripeCustomerId;
+    } else {
+      console.log(`🆕 Pas de customer ID : on utilise customer_email = ${email}`);
+      customerOptions.customer_email = email;
+    }
+
+    // ✅ Création de la session Stripe
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      ...customerOptions,
+      client_reference_id: email,
+      payment_intent_data: {
+        setup_future_usage: 'off_session'
+      },
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.BASE_URL}/confirmation-jetons.html?session_id={CHECKOUT_SESSION_ID}&amount=${amount}`,
+      cancel_url: `${process.env.BASE_URL}/jetons.html`
+    });
+
+    console.log("✅ Session Stripe créée avec succès :", session.id);
+    res.json({ url: session.url });
+
+  } catch (error) {
+    console.error('❌ Erreur lors de la création de la session Stripe:', error.message);
+    res.status(500).json({ message: 'Erreur interne du serveur' });
+  }
 });
 
 
@@ -2507,7 +2543,6 @@ app.post('/api/get-user-tokens', async (req, res) => {
   }
 });
 
-
 app.post('/api/confirm-payment', async (req, res) => {
     console.log("📡 Vérification d'un paiement via session Stripe...");
 
@@ -2517,32 +2552,39 @@ app.post('/api/confirm-payment', async (req, res) => {
     }
 
     try {
-        // ✅ Récupérer les détails de la session Stripe
-        const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ["line_items"] });
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ["line_items", "customer"]
+        });
 
         if (!session || session.payment_status !== "paid") {
             return res.status(400).json({ success: false, message: "Paiement non validé." });
         }
 
-        const email = session.customer_email;
+        const email = session.client_reference_id || session.customer_email;
         if (!email) {
             return res.status(400).json({ success: false, message: "Email introuvable." });
         }
 
-        console.log(`💰 Paiement validé pour ${email}`);
+        let stripeCustomerId = null;
+        if (typeof session.customer === "string") {
+            stripeCustomerId = session.customer;
+        } else if (session.customer?.id) {
+            stripeCustomerId = session.customer.id;
+        }
 
-        // 🔥 Mapping Price ID -> Jetons
+        console.log(`💰 Paiement validé pour ${email}`);
+        console.log("🔍 ID Stripe reçu :", stripeCustomerId);
+
         const priceIdMapping = {
             [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
             [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
             [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
-            [process.env.PRICE_ID_LIVE_300_TOKENS]: 300, // Ajouté
+            [process.env.PRICE_ID_LIVE_300_TOKENS]: 300,
             [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
             [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
             [process.env.PRICE_ID_TEST_100_TOKENS]: 100,
-            [process.env.PRICE_ID_TEST_300_TOKENS]: 300  // Ajouté
+            [process.env.PRICE_ID_TEST_300_TOKENS]: 300
         };
-        
 
         const priceId = session.line_items.data[0]?.price?.id;
         const tokensPurchased = priceIdMapping[priceId] || 0;
@@ -2551,35 +2593,45 @@ app.post('/api/confirm-payment', async (req, res) => {
             return res.status(400).json({ success: false, message: "Jetons non détectés." });
         }
 
-        console.log(`🎟 Créditer ${tokensPurchased} jetons à ${email}`);
-
-        // ✅ Mettre à jour la base de données
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
-
+        const db = client.db('MyAICrush');
+        const users = db.collection('users');
         const user = await users.findOne({ email });
 
-        if (user.usedStripeSessions && user.usedStripeSessions.includes(sessionId)) {
-            console.warn(`⚠️ Tentative de double utilisation de la session Stripe : ${sessionId}`);
-            return res.status(400).json({ success: false, message: "Cette session a déjà été utilisée." });
-        }
-
-        
         if (!user) {
-            return res.status(404).json({ success: false, message: "Utilisateur introuvable en base de données." });
+            return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
         }
 
-        await users.updateOne(
-            { email },
-            {
-              $inc: { creditsPurchased: tokensPurchased },
-              $push: { usedStripeSessions: sessionId }
+        if (user.usedStripeSessions?.includes(sessionId)) {
+            console.warn(`⚠️ Session déjà utilisée : ${sessionId}`);
+            return res.status(400).json({ success: false, message: "Session déjà utilisée." });
+        }
+
+        // 🔍 Vérifie si l'utilisateur est premium avant de modifier stripeCustomerId
+        const subscriptionInfo = await getUserSubscription(email);
+        const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
+
+        const updateFields = {
+            $inc: { creditsPurchased: tokensPurchased },
+            $push: { usedStripeSessions: sessionId }
+        };
+
+        const existingId = user.stripeCustomerId;
+
+        if (stripeCustomerId && (!existingId || (!isPremium && existingId !== stripeCustomerId))) {
+            if (!updateFields.$set) updateFields.$set = {};
+            updateFields.$set.stripeCustomerId = stripeCustomerId;
+
+            if (existingId && existingId !== stripeCustomerId) {
+                console.warn(`⚠️ Conflit ID Stripe : base=${existingId} | Stripe=${stripeCustomerId}`);
+                console.log(`🔁 Remplacement autorisé (non premium) pour ${email}`);
+            } else {
+                console.log(`🔗 Enregistrement stripeCustomerId pour ${email} : ${stripeCustomerId}`);
             }
-          );
+        }
 
-          
+        await users.updateOne({ email }, updateFields);
+
         console.log(`✅ ${tokensPurchased} jetons ajoutés avec succès pour ${email}`);
-
         res.json({ success: true, tokens: tokensPurchased });
 
     } catch (error) {
@@ -2587,6 +2639,9 @@ app.post('/api/confirm-payment', async (req, res) => {
         res.status(500).json({ success: false, message: "Erreur interne du serveur." });
     }
 });
+
+
+
 
 
 // 🔄 Réinitialisation du compteur d'images chaque 1er du mois à minuit
@@ -2747,19 +2802,29 @@ app.post('/api/unlock-private-content', async (req, res) => {
     try {
         const db = client.db('MyAICrush');
         const users = db.collection('users');
-
-        // Récupérer l'utilisateur
         const user = await users.findOne({ email });
+
         if (!user) {
             return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
         }
 
+        // 🔐 Vérifier s'il est premium via route centrale
+        const premiumRes = await fetch(`${process.env.BASE_URL}/api/is-premium`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        const premiumData = await premiumRes.json();
+        const isPremium = premiumData.isPremium === true;
+
+        if (!isPremium) {
+            return res.status(403).json({ success: false, message: "Accès réservé aux membres premium." });
+        }
+
         const jetons = user.creditsPurchased || 0;
-
-       if (jetons < price) {
-    return res.status(403).json({ success: false, message: "Pas assez de jetons", showJetonsPopup: true });
-}
-
+        if (jetons < price) {
+            return res.status(403).json({ success: false, message: "Pas assez de jetons", showJetonsPopup: true });
+        }
 
         // ✅ Déduire les jetons et marquer le contenu comme débloqué
         const unlocked = user.unlockedContents || [];
@@ -2776,13 +2841,14 @@ app.post('/api/unlock-private-content', async (req, res) => {
         );
 
         console.log(`✅ Contenu ${folder} débloqué pour ${email} (${price} jetons déduits).`);
-
         res.json({ success: true, newTokens: jetons - price });
+
     } catch (error) {
         console.error("❌ Erreur /api/unlock-private-content :", error);
         res.status(500).json({ success: false, message: "Erreur interne du serveur." });
     }
 });
+
 
 
 
@@ -2816,8 +2882,14 @@ app.get('/api/list-pack-files', async (req, res) => {
                 return res.status(403).json({ files: [], photosCount: 0, videosCount: 0 });
             }
 
-            const subscriptionInfo = await getUserSubscription(email);
-            const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
+            // 🔐 Vérifier statut premium via API
+            const premiumRes = await fetch(`${process.env.BASE_URL}/api/is-premium`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            const premiumData = await premiumRes.json();
+            const isPremium = premiumData.isPremium === true;
 
             if (!isPremium) {
                 console.warn(`🚫 Accès refusé (non-premium) pour ${email}`);
@@ -2862,6 +2934,8 @@ app.get('/api/list-pack-files', async (req, res) => {
         res.status(500).json({ files: [], photosCount: 0, videosCount: 0 });
     }
 });
+
+
 
   
 // ✅ Route pour enregistrer le customerId après un paiement
