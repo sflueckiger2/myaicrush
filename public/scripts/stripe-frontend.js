@@ -221,75 +221,71 @@ async function startCheckout(priceId, email, planType) {
     }
 }
 
-// Fonction pour annuler un abonnement Stripe
-async function cancelSubscription() {
-    try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || !user.email) {
-            alert('No user information found. Please log in first.');
-            return;
-        }
 
-        const response = await fetch(`${BASE_URL}/api/cancel-subscription`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email }),
-        });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to cancel subscription');
-        }
 
-        const data = await response.json();
-        alert('Ton abonnement est annulé.');
-        localStorage.setItem('user', JSON.stringify({ ...user, isPremium: false }));
-
-        const unsubscribeContainer = document.querySelector('#unsubscribe-container');
-        if (unsubscribeContainer) {
-            unsubscribeContainer.classList.add('hidden');
-        }
-    } catch (error) {
-        console.error('❌ Erreur:', error);
-        alert('An error occurred while cancelling the subscription. Please try again.');
-    }
-}
-
-// Fonction pour récupérer et afficher l'abonnement actuel
+// ✅ Fonction avec affichage dynamique du montant, intervalle et date de fin si abo annulé
 async function displaySubscriptionInfo() {
-    try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || !user.email) {
-            console.log('Utilisateur non connecté.');
-            return;
-        }
-
-        const response = await fetch(`${BASE_URL}/api/get-user-subscription`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to fetch subscription info');
-        }
-
-        const data = await response.json();
-        const subscriptionContainer = document.querySelector('.profile-section.subscription');
-
-        if (data.status === 'inactive') {
-            subscriptionContainer.innerHTML = '<p>Aucun abonnement actif.</p>';
-        } else {
-            subscriptionContainer.innerHTML = `
-                <p>Abonnement actuel : ${data.subscription.amount} €/${data.subscription.interval}</p>
-                ${data.status === 'cancelled' ? '<p>Ton abonnement sera annulé à la fin de la période de facturation.</p>' : ''}
-            `;
-        }
-    } catch (error) {
-        console.error('❌ Erreur:', error);
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user.email) {
+      console.log('Utilisateur non connecté.');
+      return;
     }
+
+    const response = await fetch(`${BASE_URL}/api/is-premium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Impossible de récupérer les infos premium');
+    }
+
+    const data = await response.json();
+    const subscriptionContainer = document.querySelector('.profile-section.subscription');
+
+    if (data.isPremium && data.subscription) {
+      const status = data.status;
+      const endDate = data.subscription.current_period_end
+        ? new Date(data.subscription.current_period_end * 1000).toLocaleDateString('fr-FR')
+        : null;
+
+      let html = '';
+
+      if (status === 'cancelled' || status === 'canceled') {
+        html += `<p>Abonnement annulé. Valable jusqu’au ${endDate}.</p>`;
+      } else {
+        let intervalLabel = '';
+        if (data.subscription.interval_count === 3 && data.subscription.interval === "month") {
+          intervalLabel = "trimestre";
+        } else if (data.subscription.interval === "month") {
+          intervalLabel = "mois";
+        } else if (data.subscription.interval === "year") {
+          intervalLabel = "an";
+        } else if (data.subscription.interval === "week") {
+          intervalLabel = "semaine";
+        } else if (data.subscription.interval === "day") {
+          intervalLabel = "jour";
+        } else {
+          intervalLabel = data.subscription.interval;
+        }
+
+        html += `<p>Abonnement actuel : ${data.subscription.amount} € / ${intervalLabel}</p>`;
+      }
+
+      subscriptionContainer.innerHTML = html;
+    } else {
+      subscriptionContainer.innerHTML = '<p>Aucun abonnement actif.</p>';
+    }
+
+  } catch (error) {
+    console.error('❌ Erreur:', error);
+  }
 }
+
 
 // Vérifier si on est sur la page profile.html et exécuter les fonctionnalités liées à l'abonnement
 document.addEventListener('DOMContentLoaded', () => {
@@ -301,16 +297,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const cancelSubscriptionButton = document.getElementById('cancel-subscription-button');
         if (cancelSubscriptionButton) {
             cancelSubscriptionButton.addEventListener('click', async () => {
-                const confirmCancel = confirm('Attention, si tu annules ton abonnement, tu perds tes avantages premium (photos intimes illimitées, vidéos illimitées, messages illimités). Es-tu sûr de vouloir annuler ton abonnement et de dire adieu à tes I.A sexy ?');
-                if (confirmCancel) {
-                    await cancelSubscription(); // Exécute l'annulation
-                }
-            });
+  const confirmCancel = confirm("Attention, si tu annules ton abonnement, tu perds tous les avantages premium de MyAiCrush");
+  if (confirmCancel) {
+    await cancelSubscriptionWithLoader();
+  }
+});
+
         } else {
             console.warn("⚠️ Bouton d'annulation d'abonnement non trouvé !");
         }
     }
 });
+
+
+async function cancelSubscriptionWithLoader() {
+  const loader = document.getElementById('cancel-loader-overlay');
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  if (!user || !user.email) {
+    alert("Tu dois être connecté pour annuler ton abonnement.");
+    return;
+  }
+
+  loader.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/cancel-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      alert("Ton abonnement a bien été annulé. Il restera actif jusqu’à la fin de la période en cours.");
+      location.reload();
+    } else {
+      alert(data.message || "Une erreur est survenue lors de l’annulation.");
+    }
+  } catch (error) {
+    console.error("❌ Erreur annulation :", error);
+    alert("Erreur réseau lors de l’annulation.");
+  } finally {
+    loader.classList.add('hidden');
+  }
+}
 
 
 

@@ -793,7 +793,8 @@ app.post('/api/get-user-subscription', async (req, res) => {
   }
 });
 
-//ROUTE POUR VERIFIER SI PREMIUM
+
+// ROUTE POUR VERIFIER SI PREMIUM
 
 app.post('/api/is-premium', async (req, res) => {
   console.log('📡 Requête reçue pour vérifier le statut premium');
@@ -804,7 +805,6 @@ app.post('/api/is-premium', async (req, res) => {
   }
 
   try {
-    // 🔍 Recherche tous les clients Stripe ayant cet email
     const customers = await stripe.customers.search({
       query: `email:"${email}"`
     });
@@ -816,7 +816,8 @@ app.post('/api/is-premium', async (req, res) => {
 
     console.log(`👥 ${customers.data.length} clients Stripe trouvés pour ${email}`);
 
-    // ✅ Parcours tous les clients et cherche un abonnement actif ou annulé
+    let latestSub = null;
+
     for (const customer of customers.data) {
       const subscriptions = await stripe.subscriptions.list({
         customer: customer.id,
@@ -824,14 +825,42 @@ app.post('/api/is-premium', async (req, res) => {
         limit: 10
       });
 
-      const hasPremium = subscriptions.data.some(sub =>
-        sub.status === 'active' || sub.status === 'cancelled'
-      );
-
-      if (hasPremium) {
-        console.log(`✅ Abonnement premium trouvé sur le profil ${customer.id}`);
-        return res.json({ isPremium: true });
+      for (const sub of subscriptions.data) {
+        if (['active', 'cancelled'].includes(sub.status)) {
+          if (!latestSub || sub.created > latestSub.created) {
+            latestSub = sub;
+          }
+        }
       }
+    }
+
+    if (latestSub) {
+      const price = latestSub.items.data[0]?.price;
+      const amount = price?.unit_amount || 0;
+      const interval = price?.recurring?.interval || 'mois';
+      const interval_count = price?.recurring?.interval_count || 1;
+
+      console.log(`✅ Abonnement premium trouvé : ${latestSub.id} | Status: ${latestSub.status} | Amount: ${amount / 100} € / ${interval_count} ${interval}(s)`);
+
+      return res.json({
+        isPremium: true,
+        status: latestSub.status,
+        subscription: {
+          amount: amount / 100,
+          interval,
+          interval_count
+        },
+        subscriptions: [
+          {
+            subscriptionId: latestSub.id,
+            status: latestSub.status,
+            created: latestSub.created,
+            amount: amount / 100,
+            interval,
+            interval_count
+          }
+        ]
+      });
     }
 
     console.log(`❌ Aucun abonnement premium trouvé pour ${email}`);
@@ -844,24 +873,79 @@ app.post('/api/is-premium', async (req, res) => {
 });
 
 
+
 // ROUTE POUR ANNULER ABO STRIPE
 
-// Route pour annuler un abonnement Stripe
 app.post('/api/cancel-subscription', async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+    console.log('🚫 Email manquant dans la requête');
+    return res.status(400).json({ message: 'Email requis' });
   }
 
   try {
-      const result = await cancelSubscription(email);
-      res.status(200).json(result); // Retourne la réponse directement
+    console.log(`📡 Annulation d’abonnement demandée pour : ${email}`);
+
+    // 🔍 Recherche tous les clients Stripe avec cet email
+    const customers = await stripe.customers.search({
+      query: `email:"${email}"`
+    });
+
+    if (!customers || customers.data.length === 0) {
+      console.log(`❌ Aucun client Stripe trouvé pour ${email}`);
+      return res.status(404).json({ message: 'Aucun client Stripe trouvé pour cet email.' });
+    }
+
+    console.log(`👥 ${customers.data.length} clients Stripe trouvés pour ${email}`);
+
+    let latestSub = null;
+
+    for (const customer of customers.data) {
+      console.log(`🔎 Recherche d’abonnements pour le client Stripe : ${customer.id}`);
+
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: 'all',
+        limit: 10
+      });
+
+      console.log(`📦 ${subscriptions.data.length} abonnements trouvés pour ${customer.id}`);
+
+      for (const sub of subscriptions.data) {
+        console.log(`➡️  Abonnement : ${sub.id} | Status: ${sub.status} | Créé le: ${new Date(sub.created * 1000).toISOString()}`);
+
+        if (['active', 'trialing', 'past_due', 'unpaid'].includes(sub.status)) {
+          if (!latestSub || sub.created > latestSub.created) {
+            latestSub = sub;
+            console.log(`✅ Candidat sélectionné pour annulation : ${sub.id}`);
+          }
+        }
+      }
+    }
+
+    if (latestSub) {
+      console.log(`🚨 Annulation de l’abonnement le plus récent : ${latestSub.id} | Status: ${latestSub.status}`);
+      
+      const updated = await stripe.subscriptions.update(latestSub.id, {
+        cancel_at_period_end: true
+      });
+
+      console.log(`🔔 Résultat de l’annulation : cancel_at_period_end = ${updated.cancel_at_period_end}`);
+
+      return res.status(200).json({ success: true });
+    }
+
+    console.log(`❌ Aucun abonnement actif/trialing/past_due/unpaid trouvé pour ${email}`);
+    return res.status(404).json({ message: 'Aucun abonnement actif à annuler.' });
+
   } catch (error) {
-      console.error('Erreur lors de l\'annulation de l\'abonnement :', error.message);
-      res.status(500).json({ message: error.message });
+    console.error('❌ Erreur lors de l’annulation de l’abonnement :', error.message);
+    res.status(500).json({ message: 'Erreur serveur lors de l’annulation de l’abonnement.' });
   }
 });
+
+
 
 
 // Charger les personnages depuis le fichier JSON
