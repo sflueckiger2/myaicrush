@@ -255,9 +255,14 @@ async function displaySubscriptionInfo() {
 
       let html = '';
 
-      if (status === 'cancelled' || status === 'canceled') {
-        html += `<p>Abonnement annulé. Valable jusqu’au ${endDate}.</p>`;
-      } else {
+      if (
+  status === 'cancelled' ||
+  status === 'canceled' ||
+  (status === 'active' && data.subscription.cancel_at_period_end)
+) {
+  html += `<p>Abonnement annulé. Valable jusqu’au ${endDate}.</p>`;
+}
+ else {
         let intervalLabel = '';
         if (data.subscription.interval_count === 3 && data.subscription.interval === "month") {
           intervalLabel = "trimestre";

@@ -826,7 +826,7 @@ app.post('/api/is-premium', async (req, res) => {
       });
 
       for (const sub of subscriptions.data) {
-        if (['active', 'cancelled'].includes(sub.status)) {
+        if (['active', 'canceled'].includes(sub.status)) {
           if (!latestSub || sub.created > latestSub.created) {
             latestSub = sub;
           }
@@ -848,7 +848,10 @@ app.post('/api/is-premium', async (req, res) => {
         subscription: {
           amount: amount / 100,
           interval,
-          interval_count
+          interval_count,
+          current_period_end: latestSub.current_period_end,
+          cancel_at_period_end: latestSub.cancel_at_period_end //
+
         },
         subscriptions: [
           {
@@ -857,7 +860,10 @@ app.post('/api/is-premium', async (req, res) => {
             created: latestSub.created,
             amount: amount / 100,
             interval,
-            interval_count
+            interval_count,
+            current_period_end: latestSub.current_period_end,
+            cancel_at_period_end: latestSub.cancel_at_period_end 
+
           }
         ]
       });
@@ -2519,7 +2525,6 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 // GESTION DES JETONS
 
 
-
 app.post('/api/buy-tokens', async (req, res) => {
   console.log('📡 Requête reçue pour l\'achat de jetons:', req.body);
 
@@ -2556,7 +2561,6 @@ app.post('/api/buy-tokens', async (req, res) => {
                    tokensAmount === "700" ? 199 :
                    tokensAmount === "1000" ? 249 : 0;
 
-    // ✅ Vérifie s'il y a déjà un stripeCustomerId existant
     const database = client.db('MyAICrush');
     const users = database.collection('users');
     const user = await users.findOne({ email });
@@ -2566,11 +2570,11 @@ app.post('/api/buy-tokens', async (req, res) => {
       console.log(`🔁 Réutilisation du Stripe customer existant : ${user.stripeCustomerId}`);
       customerOptions.customer = user.stripeCustomerId;
     } else {
-      console.log(`🆕 Pas de customer ID : on utilise customer_email = ${email}`);
+      console.log(`🆕 Pas de customer ID : on force la création pour ${email}`);
+      customerOptions.customer_creation = 'always';
       customerOptions.customer_email = email;
     }
 
-    // ✅ Création de la session Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
