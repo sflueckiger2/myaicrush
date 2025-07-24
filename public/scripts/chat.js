@@ -179,6 +179,7 @@ if (nymphoToggle) {
       localStorage.setItem("nymphoMode", "false");
     }
   });
+  
 } else {
   console.warn("⚠️ Toggle 'nymphoModeToggle' non trouvé.");
 }

@@ -47,6 +47,8 @@ async function loadUnlockedContents() {
 }
 
 // ✅ Fonction pour débloquer un contenu privé
+
+// ✅ Fonction pour débloquer un contenu privé
 async function handlePrivateUnlock(price, folder) {
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -56,24 +58,21 @@ async function handlePrivateUnlock(price, folder) {
     return false;
   }
 
+  const priceInt = parseInt(price);
+
   try {
-        const response = await fetch('/api/unlock-private-content', {
+    // ⚡️ Étape 1 : check rapide des jetons
+    const tokensRes = await fetch('/api/get-user-tokens', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email, price: parseInt(price), folder })
+      body: JSON.stringify({ email: user.email })
     });
 
-    let data;
-    try {
-      data = await response.json();
-    } catch (err) {
-      console.error("❌ Erreur parsing JSON :", err);
-      alert("Erreur de communication avec le serveur.");
-      return false;
-    }
+    const tokensData = await tokensRes.json();
+    const currentTokens = tokensData.tokens ?? 0;
 
-    // 💥 On gère la réponse même si status != 200
-    if (response.status === 403 && data?.showJetonsPopup) {
+    if (currentTokens < priceInt) {
+      // 😱 Pas assez de jetons → check direct 1C
       const eligibleRes = await fetch('/api/check-one-click-eligibility', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,42 +89,52 @@ async function handlePrivateUnlock(price, folder) {
       return false;
     }
 
+    // ✅ Suffisamment de jetons → on continue avec l’API principale
+    document.getElementById("loader-overlay")?.classList.remove("hidden"); // ⏳ Affiche le loader
+
+    const response = await fetch('/api/unlock-private-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, price: priceInt, folder })
+    });
+
+    const data = await response.json();
 
     if (data.success) {
       console.log(`✅ Contenu débloqué : ${folder}, nouveaux jetons : ${data.newTokens}`);
+      document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque le loader
       return true;
-    } else {
-      if (data.message) {
-  console.warn(data.message);
-}
-
-if (data?.showJetonsPopup) {
-  // ✅ Check si éligible au 1C
-  const eligibleRes = await fetch('/api/check-one-click-eligibility', {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: user.email })
-  });
-
-  const eligibleData = await eligibleRes.json();
-  if (eligibleData.eligible) {
-    openJetonsPopup();
-  } else {
-    window.location.href = "/jetons.html";
-  }
-
-  return false;
-}
-
-      return false;
     }
+
+    // 🔁 Fallback si malgré tout on est en erreur
+    if (data?.showJetonsPopup) {
+      const eligibleRes = await fetch('/api/check-one-click-eligibility', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email })
+      });
+
+      const eligibleData = await eligibleRes.json();
+      document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque le loader
+
+      if (eligibleData.eligible) {
+        openJetonsPopup();
+      } else {
+        window.location.href = "/jetons.html";
+      }
+    }
+
+    document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque au cas où
+    return false;
 
   } catch (error) {
     console.error('❌ Erreur lors du déblocage :', error);
+    document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque le loader
     alert("Impossible de débloquer ce contenu.");
     return false;
   }
 }
+
 
 // ✅ Crée les nouvelles cartes style Candy
 function createPrivateContentCards(character, unlockedContents) {
