@@ -131,25 +131,87 @@ media.style.objectFit = 'cover';
        // ✅ Insérer la première bannière après la 2e IA
 if (chatOptions.children.length === 2) {
     const banner1 = document.createElement("div");
-    banner1.className = "horizontal-banner";
-    banner1.innerHTML = `
-        <a href="${isPremium ? 'jetons.html' : 'premium.html'}" target="_blank">
-            <img src="images/banners/${isPremium ? 'banner1-premium' : 'banner1'}.webp" alt="Bannière 1" class="banner-image">
-        </a>
-    `;
-    chatOptions.appendChild(banner1);
+banner1.className = "horizontal-banner";
+banner1.innerHTML = `
+  <a href="#" class="banner-link">
+    <img src="images/banners/${isPremium ? 'banner1-premium' : 'banner1'}.webp" alt="Bannière 1" class="banner-image">
+  </a>
+`;
+chatOptions.appendChild(banner1);
+
+banner1.querySelector('.banner-link').addEventListener("click", async (e) => {
+  e.preventDefault();
+  if (!isPremium) {
+    window.location.href = "premium.html";
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user?.email) return;
+
+  try {
+    const res = await fetch("/api/check-one-click-eligibility", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    });
+
+    const data = await res.json();
+
+    if (data.eligible) {
+      openJetonsPopup();
+    } else {
+      window.location.href = "jetons.html";
+    }
+  } catch (err) {
+    console.error("❌ Erreur bannière 1 :", err);
+    window.location.href = "jetons.html";
+  }
+});
+
 }
 
 // ✅ Insérer la deuxième bannière après la 6e IA
 if (chatOptions.children.length === 7) {
     const banner2 = document.createElement("div");
-    banner2.className = "horizontal-banner";
-    banner2.innerHTML = `
-        <a href="${isPremium ? 'jetons.html' : 'premium.html'}" target="_blank">
-            <img src="images/banners/${isPremium ? 'banner2-premium' : 'banner2'}.webp" alt="Bannière 2" class="banner-image">
-        </a>
-    `;
-    chatOptions.appendChild(banner2);
+banner2.className = "horizontal-banner";
+banner2.innerHTML = `
+  <a href="#" class="banner-link">
+    <img src="images/banners/${isPremium ? 'banner2-premium' : 'banner2'}.webp" alt="Bannière 2" class="banner-image">
+  </a>
+`;
+chatOptions.appendChild(banner2);
+
+banner2.querySelector('.banner-link').addEventListener("click", async (e) => {
+  e.preventDefault();
+  if (!isPremium) {
+    window.location.href = "premium.html";
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user?.email) return;
+
+  try {
+    const res = await fetch("/api/check-one-click-eligibility", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    });
+
+    const data = await res.json();
+
+    if (data.eligible) {
+      openJetonsPopup();
+    } else {
+      window.location.href = "jetons.html";
+    }
+  } catch (err) {
+    console.error("❌ Erreur bannière 2 :", err);
+    window.location.href = "jetons.html";
+  }
+});
+
 }
 
 
