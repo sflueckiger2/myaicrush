@@ -299,19 +299,49 @@
         const { isPremium } = await res.json();
 
         const banner = document.createElement("a");
-        banner.className = "dynamic-banner";
-        banner.href = isPremium ? "jetons.html" : "premium.html";
-        banner.innerHTML = `
-          ${isPremium
-            ? `<i class="fas fa-coins plan-icon"></i>
-              <span class="plan-text">Recharger ses jetons</span>
-              <span class="plan-discount">➡️ Jetons</span>`
-            : `<span class="plan-icon">💎</span>
-              <span class="plan-text">Premium</span>
-              <span class="plan-discount">50% de réduction</span>`}
-        `;
+banner.className = "dynamic-banner";
+banner.href = "#"; // Interception du clic
+banner.innerHTML = `
+  ${isPremium
+    ? `<i class="fas fa-coins plan-icon"></i>
+        <span class="plan-text">Recharger ses jetons</span>
+        <span class="plan-discount">➡️ Jetons</span>`
+    : `<span class="plan-icon">💎</span>
+        <span class="plan-text">Premium</span>
+        <span class="plan-discount">50% de réduction</span>`}
+`;
+container.appendChild(banner);
 
-        container.appendChild(banner);
+// ✅ Ajoute le listener
+banner.addEventListener("click", async (e) => {
+  e.preventDefault();
+
+  if (!user?.email) return;
+
+  if (isPremium) {
+    try {
+      const res = await fetch("/api/check-one-click-eligibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      const data = await res.json();
+
+      if (data.eligible) {
+        openJetonsPopup(); // ✅ Affiche la popup 1C
+      } else {
+        window.location.href = "/jetons.html"; // ❌ Redirige si non éligible
+      }
+    } catch (err) {
+      console.error("❌ Erreur 1C dynamic-banner :", err);
+      window.location.href = "/jetons.html";
+    }
+  } else {
+    window.location.href = "/premium.html";
+  }
+});
+
 
         // ✅ Observer si le chat est actif pour masquer/afficher la bannière
         const observer = new MutationObserver(() => {

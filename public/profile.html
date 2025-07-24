@@ -162,7 +162,7 @@
 <div class="profile-section" id="tokens-section">
   <h2>Jetons MyAiCrush</h2>
   <p id="user-tokens">Chargement des jetons...</p>
-  <a href="jetons.html" class="profile-button">
+  <a href="jetons.html" class="profile-button" id="recharge-tokens-btn">
     <i class="fas fa-coins"></i> Recharger ses jetons
   </a>
 </div>
@@ -204,9 +204,43 @@
   <p class="loader-text">Annulation en cours…</p>
 </div>
 
+<script type="module">
+  document.addEventListener("DOMContentLoaded", async () => {
+    const btn = document.getElementById("recharge-tokens-btn");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!btn || !user?.email) return;
+
+    btn.removeAttribute("href"); // 🔥 Bloque la redirection native
+
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      try {
+        const res = await fetch("/api/check-one-click-eligibility", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+
+        const data = await res.json();
+
+        if (data.eligible) {
+          openJetonsPopup(); // ✅ Affiche la popup
+        } else {
+          window.location.href = "/jetons.html"; // ❌ Redirige si non éligible
+        }
+      } catch (err) {
+        console.error("❌ Erreur vérification 1C (HTML) :", err);
+        window.location.href = "/jetons.html";
+      }
+    });
+  });
+</script>
 
   <script type="module" src="/scripts/menu-loader.js"></script>
   <script type="module" src="./scripts/profile.js"></script>
   <script type="module" src="./scripts/stripe-frontend.js"></script>
+  <script type="module" src="/scripts/popup-loader.js"></script>
 </body>
 </html>

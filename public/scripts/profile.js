@@ -161,6 +161,8 @@ displayUserTokens();
 // Appelle la fonction après chargement du profil
 checkPremiumStatus();
 
+
+
     } else {
       if (profileInfo) profileInfo.classList.add('hidden');
       if (loginForm) loginForm.classList.remove('hidden');
