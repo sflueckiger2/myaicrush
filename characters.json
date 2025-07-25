@@ -76,7 +76,7 @@
       "3": "images/chloe/chloe"
     },
     "voice": {
-      "id": "z0gdR3nhVl1Ig2kiEigL",
+      "id": "SV45Oxy7wx09dotPbEsL",
       "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
@@ -488,6 +488,7 @@
     "height": "172 cm",
     "hasVideos": true,
     "hasNymphoMode": true,
+      "hasAudioCall": true,
     "measurements": "Douce, chaleureuse, cheveux roux",
     "ethnicity": "Léa et toi venez de vous marier. Vous êtes sur le point de passer votre nuit de noce ensemble...",
     "interests": ["Poésie", "Romance", "Religion"],
@@ -506,12 +507,18 @@
       "nympho": "images/lea/lea4"
     },
     "voice": {
-      "id": "okqo9UOPxhHFfqftqPXL",
+      "id": "z0gdR3nhVl1Ig2kiEigL",
       "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
     },
+
+     "agent": {
+      "id": "db9d0d00-1503-4e7e-a1f6-b77d15f9d7b8",
+      "language": "fr"
+    },
+
     "privateContents": [
     
  {
@@ -530,6 +537,7 @@
     "backgroundPhoto": "images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
     "height": "182 cm",
      "hasNymphoMode": true,
+       "hasAudioCall": true,
    "measurements": "Des courbes ensorcelantes, des courbes qui défient les lois naturelles. Chaque détail d’elle semble conçu pour le désir.",
   "ethnicity": "Elvara est une elfe d’un autre monde, fière et indomptable. Elle méprise habituellement les humains… mais chez toi, elle a ressenti une vibration différente. Une énergie qu’elle ne peut ignorer.",
   "interests": ["Séduction raffinée", "Jeux mentaux et charnels", "Moments volés dans l’ombre"],
@@ -556,7 +564,7 @@
     },
 
     "agent": {
-      "id": "Kskz5DXqAAbn09Rj_burk",
+      "id": "fdba2e3d-c47e-4260-bb95-9aa2dbe534dc",
       "language": "fr"
     }
   },
