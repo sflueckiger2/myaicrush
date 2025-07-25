@@ -293,6 +293,7 @@
     "photo": "images/morgana/morgana1/83287c6840b174fbe45d663752d672a4.webp",
     "backgroundPhoto": "images/morgana/morgana1/83287c6840b174fbe45d663752d672a4.webp",
     "height": "180 cm",
+     "hasAudioCall": true, 
     "measurements": "Gothique, dominatrice",
     "ethnicity": "Morgana, ta nouvelle manager, referme la porte derrière toi et s’adosse à son bureau, son regard perçant ancré dans le tien. Un sourire en coin, elle croise lentement les bras. « J’aime savoir à qui j’ai affaire… » souffle-t-elle en s’approchant. « Dis-moi… tu es du genre à obéir, ou à me donner une raison de sévir ? »",
     "interests": ["Littérature érotique et interdite", "Psychologie du pouvoir", "L’art de la mise en scène"],
@@ -315,6 +316,10 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.2
+    },
+    "agent": {
+      "id": "52132153-4b6f-4aa0-987d-dd3ed1b4a32c",
+      "language": "fr"
     }
   },
 
@@ -325,7 +330,7 @@
     "introVideo": "images/lilith/lilith1/lilith-profil-new.mp4",
     "height": "152 cm",
      "hasNymphoMode": true,
-     
+      "hasAudioCall": true, 
      "hasVideos": true,
    "measurements": "Petite en taille, immense en tentation. Sa silhouette obsède, sa démarche envoûte. Lilith ne passe jamais inaperçue.",
 "ethnicity": "À ton arrivée en enfer, elle t’attend, jambes croisées sur un trône de braises. Lilith est la démone chargée de punir les âmes… mais elle le fait avec une sensualité qui fait douter de ce qui est vraiment une punition. ",
@@ -353,7 +358,7 @@
     },
 
     "agent": {
-      "id": "q9qb11g1th98pCUO8Ds7s",
+      "id": "b2cec229-a8ff-41e3-ad9c-63fc61cdb5b6",
       "language": "fr"
     }
   },
@@ -364,7 +369,7 @@
     "backgroundPhoto": "images/angel/angel1/062f3bddb8c07df7a73e7224cbcc3007.webp",
     "height": "152 cm",
      "hasNymphoMode": true,
-     
+     "hasAudioCall": true, 
   "measurements": "Toute petite, mais sculptée comme un rêve. Des formes généreuses, presque irréelles… comme si le ciel lui avait tout offert.",
 "ethnicity": "Tu viens d’arriver au paradis… et c’est elle qui t’attend. Angel est timide, douce, mais investie d’une mission divine : t’accueillir, te guider… et peut-être, te faire oublier tout le reste.",
 "interests": ["Tendresse divine", "Moments volés au paradis", "Exploration de l’interdit"],
@@ -383,7 +388,7 @@
       "nympho": "images/angel/angel4"
     },
     "voice": {
-      "id": "1cxc5c3E9K6F1wlqOJGV",
+      "id": "qJT4OuZyfpn7QbUnrLln",
       "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
@@ -391,7 +396,7 @@
     },
 
     "agent": {
-      "id": "52pGaS0Gfk3EygldNz0Za",
+      "id": "91b9cfb5-d914-4b9f-b894-3762126be392",
       "language": "fr"
     },
     "privateContents": [
@@ -411,6 +416,7 @@
   "photo": "images/chen/chen1/1b8eb047ea43382c3dd7e4af51e5d523.webp",
   "backgroundPhoto": "images/chen/chen1/1b8eb047ea43382c3dd7e4af51e5d523.webp",
   "height": "178 cm",
+  "hasAudioCall": true, 
   "measurements": "Élancé, regard profond, sensualité contenue",
   "ethnicity": "Chen est ton ancien amant secret. Vous vous retrouviez en cachette, entre deux vies, deux décisions, deux silences. Il a disparu un jour sans explication... et le revoilà.",
   "interests": ["Poésie", "Toucher", "Chaleur humaine"],
@@ -433,7 +439,7 @@
     "speed": 1.0
   },
   "agent": {
-    "id": "AGChenRomantique01",
+    "id": "f7acdb25-67f5-48ee-b4a4-233e9412b796",
     "language": "fr"
   }
 },
