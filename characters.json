@@ -768,6 +768,7 @@
     "backgroundPhoto": "images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
     "height": "162 cm",
     "hasNymphoMode": true,
+    "hasAudioCall": true,
     "measurements": "Ronde, se trouve trop grosse",
     "ethnicity": "Juliette et toi venez de vous rencontrer sur les réseaux sociaux. C'est une mère de famille, célibataire depuis longtemps. Elle se trouve trop grosse et n'a pas confiance en elle. Si tu parviens à la rassurer, elle pourrait t'envoyer de jolis selfies.",
     "interests": ["Aquagym", "Lecture", "Romance"],
@@ -790,6 +791,11 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 0.9
+    },
+
+    "agent": {
+      "id": "8aea6cb6-bbb6-4062-8368-e2d729b10f42",
+      "language": "fr"
     }
   }, 
 
