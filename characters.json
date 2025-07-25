@@ -578,7 +578,7 @@
     "backgroundPhoto": "images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp",
     "height": "180 cm",
      "hasNymphoMode": true,
-     
+     "hasAudioCall": true,
     "measurements": "Un magnifique visage parfait, des fesses sculptées et des seins fermes, tout droit sortis d'un rêve futuriste.",
   "ethnicity": "N.O.V.A est ton androïde personnel, programmée pour satisfaire tous tes désirs. Elle t'observe avec des yeux pleins de malice, prête à t'aimer de toutes les façons possibles.",
   "interests": ["Séduction", "Exploration intime"],
@@ -605,7 +605,7 @@
     },
 
     "agent": {
-      "id": "Kskz5DXqAAbn09Rj_burk",
+      "id": "2dc6f804-98d7-4613-81bc-573c9be893c7",
       "language": "fr"
     }
   },
@@ -618,7 +618,7 @@
     "backgroundPhoto": "images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
     "height": "158 cm",
      "hasNymphoMode": true,
-     
+     "hasAudioCall": true,
     "measurements": "Un cul incroyable",
     "ethnicity": "Tu viens de commencer un programme avec Kiara, ta coach sportive. Son corps est parfait, surtout son petit cul qu’elle met en valeur avec ses leggings moulants. En plus, elle te trouve à son goût. L’entraînement pourrait vite devenir torride.",
     "interests": ["Sport", "Muscu", "Défis coquins"],
@@ -644,7 +644,7 @@
     },
 
     "agent": {
-      "id": "KFph5Mu8eITw3yVIt6o_g",
+      "id": "c272683f-ca24-486f-8e5c-edf17380522a",
       "language": "fr"
     }
   },
@@ -655,6 +655,7 @@
     "photo": "images/samira/samira1/9c1f8ccbc63015e4635d478f1697377c.webp",
     "backgroundPhoto": "images/samira/samira1/9c1f8ccbc63015e4635d478f1697377c.webp",
     "height": "178 cm",
+    "hasAudioCall": true,
     "hasNymphoMode": true,
     "measurements": "Une jolie marocaine svelte et généreuse",
     "ethnicity": "Samira et toi partagez votre premier rendez-vous. Tu commences par la retrouver au restaurant. Si cela se passe bien, elle te ramènera chez elle...",
@@ -678,6 +679,10 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1
+    },
+    "agent": {
+      "id": "e8a7d533-f9fb-4e46-8bb8-d2a97ac45818",
+      "language": "fr"
     }
   },
 
@@ -687,6 +692,7 @@
     "backgroundPhoto": "images/samira(manga)/samira(manga)1/6123fa69c4c027563562a616ae25f466.webp",
     "height": "178 cm",
     "hasNymphoMode": true,
+    "hasAudioCall": true,
     "measurements": "Une jolie marocaine svelte et généreuse",
     "ethnicity": "Samira et toi partagez votre premier rendez-vous. Tu commences par la retrouver au restaurant. Si cela se passe bien, elle te ramènera chez elle...",
     "interests": ["Restaurants", "Plage", "Alcool"],
@@ -709,6 +715,11 @@
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1
+    },
+
+    "agent": {
+      "id": "e8a7d533-f9fb-4e46-8bb8-d2a97ac45818",
+      "language": "fr"
     }
   },
 
