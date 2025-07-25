@@ -197,7 +197,7 @@
     "introVideo": "images/candy/candy3/candy-video-intro.mp4",
     "height": "163 cm",
      "hasNymphoMode": true,
-     
+     "hasAudioCall": true, 
      "hasVideos": true,
     "measurements": "Corps pulpeux, poitrine très généreuse, courbes accentuées dans des tenues moulantes",
 "ethnicity": "Candy est une jeune femme engagée pour offrir des services personnalisés à domicile... ménage, massage, compagnie… Tout dépend de ce que tu es prêt à lui demander.",
@@ -217,7 +217,7 @@
       "nympho": "images/candy/candy4"
     },
     "voice": {
-      "id": "pPdl9cQBQq4p6mRkZy2Z",
+      "id": "b6nVfb3l2zshrLZTvqbs",
       "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
@@ -225,7 +225,7 @@
     },
 
     "agent": {
-      "id": "-WGPG14PlkZuu4y5RwHA9",
+      "id": "7c2bf885-2af7-415e-82e6-c09c222c3eb6",
       "language": "fr"
     },
     "privateContents": [
@@ -245,7 +245,7 @@
     "backgroundPhoto": "images/jasmine/jasmine1/3d339dc79b10384c843e9cc995b9bc2a.webp",
     "height": "160 cm",
     "hasNymphoMode": true,
-    
+     "hasAudioCall": true, 
     "measurements": "Joli visage, petite mais (très) généreuse",
     "ethnicity": "Jasmine est votre voisine depuis quelques mois. Elle est timide et ne parle à personne. Mais quand on apprend à la connaître, elle peut devenir... sauvage !",
     "interests": ["Natation", "Soirée tranquille", "D'autres passions mystérieuses"],
@@ -271,7 +271,7 @@
       "speed": 0.9
     },
     "agent": {
-      "id": "CFdpSeDmZSUBdmoRE6QYZ",
+      "id": "c41afbbc-b105-4a76-8ec1-4366f0300147",
       "language": "fr"
     },
 
