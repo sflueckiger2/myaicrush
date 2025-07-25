@@ -1196,107 +1196,85 @@ async function speakMessage(text) {
 
 // ✅ Fonction pour gérer le clic sur l'icône téléphone (Appel Audio)
 async function handleAudioCallClick() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const activeCharacter = localStorage.getItem('activeCharacter');
-  
-    if (!user || !user.email || !activeCharacter) {
-      alert("Tu dois être connecté pour utiliser cette fonctionnalité.");
-      window.location.href = 'profile.html';
-      return;
-    }
-  
-    // 🔍 Trouver le personnage actif
-    const character = characters.find(c => c.name === activeCharacter);
-    if (!character) {
-      alert("❌ Personnage introuvable.");
-      return;
-    }
-  
-    if (!character.agent?.id) {
-      alert("❌ Aucun agent vocal défini pour ce personnage.");
-      return;
-    }
-  
-    // 🔒 Vérifie si l'utilisateur est premium
-    try {
-      const checkPremium = await fetch(`${BASE_URL}/api/is-premium`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email }),
-      });
-  
-      const { isPremium } = await checkPremium.json();
-  
-      if (!isPremium) {
-        alert("Les appels sont réservés aux membres Premium 😈");
-        window.location.href = "premium.html";
-        return;
-      }
-    } catch (err) {
-      console.error('❌ Erreur lors de la vérification du statut premium :', err);
-      alert('Erreur serveur lors de la vérification du compte.');
-      return;
-    }
-  
-    // ✅ Si l’utilisateur est premium, on continue
-    const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 20 jetons pour 10 minutes. On commence ?`);
-    if (!confirmCall) return;
-  
-    try {
-      const response = await fetch(`${BASE_URL}/api/start-call`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email })
-      });
-  
-      const data = await response.json();
-  
-      if (!data.success) {
-        alert(data.message);
-        if (data.redirect) window.location.href = data.redirect;
-        return;
-      }
-  
-      alert(`✅ C'est validé ! Clique sur le micro en bas de ton écran  pour démarrer ton appel avec ${character.name} ❤️ (il peut mettre 10 secondes à apparaître)`);
-  
-      const widget = document.getElementById("audio-widget");
-  
-      if (!widget || !(widget instanceof HTMLElement)) {
-        console.error("❌ Le container pour PlayAI est invalide :", widget);
-        alert("Erreur technique : le conteneur audio est introuvable.");
-        return;
-      }
-  
-      widget.innerHTML = ""; // Vide le contenu précédent
-      widget.style.display = "block";
-  
-      // 🔁 Fermer l'ancien widget si actif
-      if (window.playAIWidgetInstance?.close) {
-        try {
-          window.playAIWidgetInstance.close();
-        } catch (e) {
-          console.warn("⚠️ Erreur lors de la fermeture précédente :", e);
-        }
-      }
-  
-      // ✅ Lancer l'agent Play.ai
-      console.log("🎯 Lancement agent vocal :", character.agent.id);
-      window.playAIWidgetInstance = PlayAI.open(character.agent.id, {
-        darkMode: true
-      });
-      
-  
-      // ⏱️ Fermeture auto après 10 minutes
-      setTimeout(() => {
-        widget.style.display = "none";
-        alert(`⏱️ L'appel avec ${character.name} a été automatiquement terminé.`);
-      }, 10 * 60 * 1000);
-  
-    } catch (err) {
-      console.error('❌ Erreur pendant l’appel audio :', err);
-      alert('Erreur serveur lors du démarrage de l’appel.');
-    }
+  const user = JSON.parse(localStorage.getItem('user'));
+  const activeCharacter = localStorage.getItem('activeCharacter');
+
+  if (!user || !user.email || !activeCharacter) {
+    alert("Tu dois être connecté pour utiliser cette fonctionnalité.");
+    window.location.href = 'profile.html';
+    return;
   }
+
+  const character = characters.find(c => c.name === activeCharacter);
+  if (!character) {
+    alert("❌ Personnage introuvable.");
+    return;
+  }
+
+  if (!character.agent?.id) {
+    alert("❌ Aucun agent vocal défini pour ce personnage.");
+    return;
+  }
+
+  try {
+    const checkPremium = await fetch(`${BASE_URL}/api/is-premium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    });
+
+    const { isPremium } = await checkPremium.json();
+
+    if (!isPremium) {
+      alert("Les appels sont réservés aux membres Premium 😈");
+      window.location.href = "premium.html";
+      return;
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors de la vérification du statut premium :', err);
+    alert('Erreur serveur lors de la vérification du compte.');
+    return;
+  }
+
+  const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 20 jetons pour 10 minutes. On commence ?`);
+  if (!confirmCall) return;
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/start-call`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      alert(data.message);
+      if (data.redirect) window.location.href = data.redirect;
+      return;
+    }
+
+    alert(`✅ C'est validé ! Ton appel avec ${character.name} démarre.`);
+
+    // ✅ Activer dynamiquement l'agent Vapi
+    if (!window.vapi) {
+      console.error("❌ Vapi non encore chargé !");
+      alert("Erreur technique : le widget Vapi n'est pas prêt.");
+      return;
+    }
+window.vapi.style.display = "block"; // Affiche le widget
+
+    window.vapi.setAssistant({ assistantId: character.agent.id });
+    window.vapi.open();
+
+   
+
+  } catch (err) {
+    console.error('❌ Erreur pendant l’appel audio Vapi :', err);
+    alert('Erreur serveur lors du démarrage de l’appel.');
+  }
+}
+
   
   
   // ✅ Ajouter l'écouteur sur l’icône téléphone
@@ -1309,43 +1287,7 @@ async function handleAudioCallClick() {
     }
   });
   
-  // ✅ Masquer le widget ElevenLabs par défaut sauf si on est dans le chat
-document.addEventListener("DOMContentLoaded", () => {
-    const widget = document.getElementById("audio-widget");
-  
-    if (!widget) return;
-  
-    const isOnChatPage = document.getElementById("chat-box")?.style.display === "flex";
-  
-    if (!isOnChatPage) {
-      widget.style.display = "none"; // 👈 masque sur la homepage
-    }
-  });
   
   
-  function hideAudioWidgetIfNotInChat() {
-    const widget = document.getElementById("audio-widget");
-    const chatBox = document.getElementById("chat-box");
   
-    if (!widget || !chatBox) return;
-  
-    const isChatVisible = chatBox.style.display === "flex";
-  
-    if (!isChatVisible) {
-      widget.style.display = "none";
-      widget.removeAttribute("open");
-    }
-  }
-  
-  // 🔁 Surveille tous les clics pour détecter si on sort du chat
-  document.addEventListener("click", () => {
-    setTimeout(hideAudioWidgetIfNotInChat, 100); // petit délai pour laisser le temps à l’UI de changer
-  });
-  
-  // 🔁 Surveille aussi les changements d’affichage du chat (au cas où)
-  const observer = new MutationObserver(hideAudioWidgetIfNotInChat);
-  const chatBox = document.getElementById("chat-box");
-  if (chatBox) {
-    observer.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
-  }
   
