@@ -6,7 +6,7 @@
   "backgroundPhoto": "images/astrid/astrid3/664aeff75d3aab0bd4e4adfbd863eef0.webp",
   "introVideo": "images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4",
   "height": "178 cm",
-  
+  "hasAudioCall": true, 
   "hasVideos": true,
   "hasNymphoMode": true,
   "measurements": "Corps naturel, sauvage et courbes sculptées",
@@ -26,14 +26,14 @@
     "nympho": "images/astrid/astrid4"
   },
   "voice": {
-    "id": "tMyQcCxfGDdIt7wJ2RQw",
+    "id": "8N2ng9i2uiUWqstgmWlH",
     "model_id": "eleven_turbo_v2.5",
     "stability": 0.3,
     "similarity_boost": 0.9,
     "speed": 1.0
   },
   "agent": {
-    "id": "9EuUbclIGDQ_VWZAityQG",
+    "id": "f46e316c-41aa-4fc2-8ee3-2bdd7c2d1112",
     "language": "fr"
   },
 
@@ -57,7 +57,7 @@
     "height": "170 cm",
     "hasVideos": true,
     "hasNymphoMode": true,
-    
+      "hasAudioCall": true, 
     "measurements": "Mince avec une silhouette captivante",
     "ethnicity": "Chloé est ton ex, vous avez rompu il y a longtemps, mais elle est toujours folle de toi. Elle est hyper jalouse de ta nouvelle copine et est prête à tout pour te reconquérir.",
     "interests": ["Sport", "Lecture", "Séduction"],
@@ -76,14 +76,14 @@
       "3": "images/chloe/chloe"
     },
     "voice": {
-      "id": "Yx2a8qp2EqI9c5i8MzBo",
+      "id": "z0gdR3nhVl1Ig2kiEigL",
       "model_id": "eleven_turbo_v2.5",
       "stability": 0.3,
       "similarity_boost": 0.9,
       "speed": 1.1
     },
     "agent": {
-      "id": "MHw71EGumJY1Sat7r2L8W",
+      "id": "4fa6f8b8-2742-484f-8733-156be596ab25",
       "language": "fr"
     },
     "privateContents": [
@@ -157,7 +157,7 @@
   "introVideo": "images/kala/kala1/ae96309d918e329c56b524db8fa02e61.mp4",
   "height": "149 cm",
   "new": true,
-  
+    "hasAudioCall": true, 
   "hasVideos": true,
   "hasNymphoMode": true,
    "measurements": "Corps athlétique, sauvage et fessier hypnotisant",
@@ -184,7 +184,7 @@
     "speed": 1.0
   },
   "agent": {
-    "id": "ImvvgDR7QfVy-2Bp87RZe",
+    "id": "4c13f5bc-fc82-404f-b8f4-0c6207fc3874",
     "language": "fr"
   }
 

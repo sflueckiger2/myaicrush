@@ -209,33 +209,9 @@
 
   
 
-<!-- Widget VAPI caché au départ -->
 
-  <vapi-widget
-  public-key="ee13ad83-743b-46cf-866c-4b0fe9b30f32"
-  assistant-id="eb9bfab9-8fdd-48f6-83b4-db5e5b42dbc9"
-style="display: none;"  
-  mode="voice"
-  theme="dark"
-  base-bg-color="#000000"
-  accent-color="#14B8A6"
-  cta-button-color="#000000"
-  cta-button-text-color="#ffffff"
-  border-radius="large"
-  size="full"
-  position="bottom-right"
-  title="Commencer l'appel"
-  start-button-text="Commencer l'appel"
-  end-button-text="Terminer l'appel"
-  chat-first-message="Hey, How can I help you today?"
-  chat-placeholder="Type your message..."
-  voice-show-transcript="true"
-  consent-required="true"
-  consent-title="Terms and conditions"
-  consent-content="By clicking "Agree," and each time I interact with this AI agent, I consent to the recording, storage, and sharing of my communications with third-party service providers, and as otherwise described in our Terms of Service."
-  consent-storage-key="vapi_widget_consent"
-></vapi-widget>
-<script src="https://unpkg.com/@vapi-ai/client-sdk-react/dist/embed/widget.umd.js" async type="text/javascript"></script>
+
+
 
   <script>
     (function() {
@@ -250,12 +226,7 @@ style="display: none;"
     })();
   </script>
 
-<script>
-  window.addEventListener("vapi-ready", () => {
-    console.log("✅ Vapi prêt à l'emploi !");
-    window.vapi = document.querySelector("vapi-widget");
-  });
-</script>
+
 
 
 
@@ -492,6 +463,146 @@ banner.addEventListener("click", async (e) => {
 
 
 <script type="module" src="/scripts/popup-loader.js"></script>
+
+
+<!-- Widget VAPI caché au départ -->
+
+<script type="module">
+  import { characters } from './scripts/data.js';
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const audioCallBtn = document.getElementById("audio-call-btn");
+    let widgetInjected = false;
+
+    audioCallBtn.addEventListener("click", async () => {
+      const characterName = document.getElementById("chat-name")?.textContent?.trim();
+      const character = characters.find(c => c.name === characterName);
+      if (!character || !character.agent?.id) return alert("Erreur : personnage introuvable.");
+      const assistantId = character.agent.id;
+
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
+      if (!email) return alert("Veuillez vous connecter.");
+
+      // Étape 1 : vérifier si l'utilisateur est premium
+      try {
+        const resPremium = await fetch("/api/is-premium", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const { isPremium } = await resPremium.json();
+        if (!isPremium) {
+          alert("🔒 Les appels audio sont réservés aux abonnés Premium.");
+          return window.location.href = "/premium.html";
+        }
+      } catch (err) {
+        console.error("❌ Erreur vérif premium :", err);
+        return;
+      }
+
+      // Étape 2 : avertir l'utilisateur du coût
+      if (!confirm("Un appel audio coûte 20 jetons pour 10 minutes. Souhaites-tu continuer ?")) return;
+
+      // Étape 3 : tenter de démarrer l’appel (vérifie jetons + débite)
+      try {
+        const resCall = await fetch("/api/start-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const result = await resCall.json();
+
+        if (!result.success) {
+          console.warn("❌ Appel refusé :", result.message);
+
+          if (result.redirect) {
+            // Vérifie l’éligibilité au 1C avant de rediriger
+            const res1C = await fetch("/api/check-one-click-eligibility", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email })
+            });
+            const { eligible } = await res1C.json();
+
+            if (eligible && typeof openJetonsPopup === "function") {
+              return openJetonsPopup();
+            } else {
+              return window.location.href = result.redirect;
+            }
+          }
+
+          alert(result.message || "Erreur lors du démarrage de l'appel.");
+          return;
+        }
+
+        console.log("✅ Appel démarré :", result.message);
+      } catch (err) {
+        console.error("❌ Erreur backend /start-call :", err);
+        return alert("Erreur serveur lors du démarrage de l'appel.");
+      }
+
+      // Étape 4 : injection du widget
+      if (widgetInjected) return;
+
+      const widgetHTML = `
+        <vapi-widget
+          id="vapi-widget"
+          public-key="ee13ad83-743b-46cf-866c-4b0fe9b30f32"
+          assistant-id="${assistantId}"
+          mode="voice"
+          theme="dark"
+          base-bg-color="#dd4d9d"
+          accent-color="#FFFFFF"
+          cta-button-color="#dd4d9d"
+          cta-button-text-color="#ffffff"
+          border-radius="large"
+          size="tiny"
+          position="bottom-left"
+          title="Commencer l'appel"
+          start-button-text="Commencer l'appel"
+          end-button-text="Terminer l'appel"
+          chat-first-message="Hey, how can I help you today?"
+          chat-placeholder="Type your message..."
+          voice-show-transcript="true"
+          consent-required="true"
+          consent-title="Terms and conditions"
+          consent-content="By clicking 'Agree'... etc."
+          consent-storage-key="vapi_widget_consent"
+        ></vapi-widget>
+      `;
+
+      alert("🎧 Ton appel audio va commencer...\nUne petite bulle rose va apparaître en bas de ton écran.");
+
+      document.body.insertAdjacentHTML("beforeend", widgetHTML);
+
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/@vapi-ai/client-sdk-react/dist/embed/widget.umd.js";
+      script.async = true;
+      script.type = "text/javascript";
+      script.onload = () => {
+        console.log("✅ Widget Vapi chargé.");
+      };
+      document.body.appendChild(script);
+
+      widgetInjected = true;
+
+      // ⏳ Auto-suppression du widget après 10 minutes (600 000 ms) — pour test : 10 sec
+setTimeout(() => {
+  const widget = document.getElementById("vapi-widget");
+  if (widget) {
+    widget.remove();
+    widgetInjected = false;
+    console.log("⏱️ Widget supprimé après 10 secondes.");
+  }
+}, 600000); // ← ← ← change à 600000 pour 10 min
+
+    });
+  });
+</script>
+
+
 
 
 

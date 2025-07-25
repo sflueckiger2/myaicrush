@@ -4,6 +4,12 @@ import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 import { openProfileModal } from './profile.js';
 
 
+window.addEventListener("vapi-ready", () => {
+  console.log("✅ Vapi prêt !");
+  window.vapi = document.querySelector("vapi-widget");
+});
+
+
 async function checkOneClickEligibility(email) {
   try {
     const res = await fetch("/api/check-one-click-eligibility", {
@@ -1194,100 +1200,5 @@ async function speakMessage(text) {
 }
 
 
-// ✅ Fonction pour gérer le clic sur l'icône téléphone (Appel Audio)
-async function handleAudioCallClick() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const activeCharacter = localStorage.getItem('activeCharacter');
 
-  if (!user || !user.email || !activeCharacter) {
-    alert("Tu dois être connecté pour utiliser cette fonctionnalité.");
-    window.location.href = 'profile.html';
-    return;
-  }
-
-  const character = characters.find(c => c.name === activeCharacter);
-  if (!character) {
-    alert("❌ Personnage introuvable.");
-    return;
-  }
-
-  if (!character.agent?.id) {
-    alert("❌ Aucun agent vocal défini pour ce personnage.");
-    return;
-  }
-
-  try {
-    const checkPremium = await fetch(`${BASE_URL}/api/is-premium`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email }),
-    });
-
-    const { isPremium } = await checkPremium.json();
-
-    if (!isPremium) {
-      alert("Les appels sont réservés aux membres Premium 😈");
-      window.location.href = "premium.html";
-      return;
-    }
-  } catch (err) {
-    console.error('❌ Erreur lors de la vérification du statut premium :', err);
-    alert('Erreur serveur lors de la vérification du compte.');
-    return;
-  }
-
-  const confirmCall = confirm(`📞 Un appel avec ${character.name} coûte 20 jetons pour 10 minutes. On commence ?`);
-  if (!confirmCall) return;
-
-  try {
-    const response = await fetch(`${BASE_URL}/api/start-call`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email })
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      alert(data.message);
-      if (data.redirect) window.location.href = data.redirect;
-      return;
-    }
-
-    alert(`✅ C'est validé ! Ton appel avec ${character.name} démarre.`);
-
-    // ✅ Activer dynamiquement l'agent Vapi
-    if (!window.vapi) {
-      console.error("❌ Vapi non encore chargé !");
-      alert("Erreur technique : le widget Vapi n'est pas prêt.");
-      return;
-    }
-window.vapi.style.display = "block"; // Affiche le widget
-
-    window.vapi.setAssistant({ assistantId: character.agent.id });
-    window.vapi.open();
-
-   
-
-  } catch (err) {
-    console.error('❌ Erreur pendant l’appel audio Vapi :', err);
-    alert('Erreur serveur lors du démarrage de l’appel.');
-  }
-}
-
-  
-  
-  // ✅ Ajouter l'écouteur sur l’icône téléphone
-  document.addEventListener("DOMContentLoaded", function () {
-    const phoneIcon = document.getElementById("audio-call-btn");
-    if (phoneIcon) {
-      phoneIcon.addEventListener("click", handleAudioCallClick);
-    } else {
-      console.warn("❌ Bouton appel audio non trouvé.");
-    }
-  });
-  
-  
-  
-  
-  
+// APELL AUDIO 
