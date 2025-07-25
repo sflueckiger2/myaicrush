@@ -273,6 +273,7 @@ video.chat-profile-pic {
   position: fixed;
   bottom: 0;
   width: 100%;
+  max-width:700px;
   background-color: rgba(46, 46, 68, 0.4);
   padding: 10px;
   display: flex;
