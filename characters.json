@@ -76,9 +76,9 @@
       "3": "images/chloe/chloe"
     },
     "voice": {
-      "id": "SV45Oxy7wx09dotPbEsL",
+      "id": "FvmvwvObRqIHojkEGh5N",
       "model_id": "eleven_turbo_v2.5",
-      "stability": 0.3,
+      "stability": 0.5,
       "similarity_boost": 0.9,
       "speed": 1.1
     },
