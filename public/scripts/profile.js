@@ -162,12 +162,14 @@ displayUserTokens();
 checkPremiumStatus();
 
 
+} else {
+  if (profileInfo) profileInfo.classList.add('hidden');
 
-    } else {
-      if (profileInfo) profileInfo.classList.add('hidden');
-      if (loginForm) loginForm.classList.remove('hidden');
-      if (signupContainer) signupContainer.classList.remove('hidden');
-    }
+  // Par défaut : afficher inscription, cacher connexion
+  if (signinContainer) signinContainer.classList.add('hidden');
+  if (signupContainer) signupContainer.classList.remove('hidden');
+}
+
 
 
 
@@ -224,21 +226,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const signupContainer = document.getElementById('signup-container');
 
   if (showSigninLink && signinContainer && signupContainer) {
-    showSigninLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Switching to Sign In form');
-      signupContainer.style.display = 'none';  // On cache l'inscription
-      signinContainer.style.display = 'block'; // On montre la connexion
-    });
-  }
+   showSigninLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  console.log('Switching to Sign In form');
+  signupContainer.classList.add('hidden');     // cache inscription
+  signinContainer.classList.remove('hidden');  // montre connexion
+});
 
-  if (showSignupLink && signinContainer && signupContainer) {
-    showSignupLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Switching to Sign Up form');
-      signinContainer.style.display = 'none';  // On cache la connexion
-      signupContainer.style.display = 'block'; // On montre l'inscription
-    });
+showSignupLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  console.log('Switching to Sign Up form');
+  signinContainer.classList.add('hidden');     // cache connexion
+  signupContainer.classList.remove('hidden');  // montre inscription
+});
+
   }
 });
 
