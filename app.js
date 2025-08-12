@@ -72,81 +72,7 @@ const { createTokenCheckoutSession, handleStripeWebhook } = require('./public/sc
 const userLastImageDescriptions = new Map(); // Stocke la dernière description d’image pour chaque email
 
 
-// ROUTE Webhook Stripe pour envoyer les données "Purchase" à Facebook
 
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  console.log("📡 Webhook Stripe reçu !");
-
-  const sig = req.headers['stripe-signature'];
-  if (!sig) {
-      console.error("❌ Erreur : Signature Stripe manquante !");
-      return res.status(400).send("Webhook Error: Signature missing");
-  }
-
-  let event;
-  try {
-      // ✅ Vérification de la signature Stripe (body doit être RAW)
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-      console.log("✅ Webhook Stripe validé :", JSON.stringify(event, null, 2));
-  } catch (err) {
-      console.error("❌ Erreur lors de la validation du webhook :", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // 📌 Vérifier que l'événement est bien un paiement réussi
-  if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      const email = session.customer_email;
-      const amount = session.amount_total / 100; // Convertir en euros
-      const currency = session.currency.toUpperCase();
-
-      console.log(`💰 Paiement réussi pour ${email} - Montant : ${amount} ${currency}`);
-
-      // 🔥 Hachage de l'email pour Facebook
-      const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
-
-      // ✅ Vérifier si `metadata` existe pour éviter les erreurs
-      const metadata = session.metadata || {};
-      const fbp = metadata.fbp || null;
-      const fbc = metadata.fbc || null; // ✅ Ajout de fbc
-      const purchaseEventID = metadata.fbqPurchaseEventID || `purchase_${Date.now()}`;
-
-      // Désactivation temporaire de l'API de conversion pour "Purchase"
-      /*
-      const payload = {
-          data: [
-              {
-                  event_name: "Purchase",
-                  event_time: Math.floor(Date.now() / 1000),
-                  event_id: purchaseEventID,
-                  user_data: {
-                      em: hashedEmail,
-                      fbp: fbp,
-                      fbc: fbc // ✅ Ajout de fbc pour optimiser l’attribution
-                  },
-                  custom_data: {
-                      value: amount,
-                      currency: currency
-                  },
-                  action_source: "website"
-              }
-          ],
-          access_token: process.env.FACEBOOK_ACCESS_TOKEN
-      };
-
-      console.log("📡 Envoi de l’événement 'Purchase' à Facebook :", JSON.stringify(payload, null, 2));
-
-      try {
-          const fbResponse = await axios.post(FB_API_URL, payload);
-          console.log("✅ Événement 'Purchase' envoyé à Facebook avec succès !", fbResponse.data);
-      } catch (error) {
-          console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
-      }
-      */
-  }
-
-  res.json({ received: true });
-});
 
 
 
@@ -1036,7 +962,6 @@ app.get('/auth/google/callback', async (req, res) => {
 
 
 
-console.log("Clé API OpenAI :", process.env.OPENAI_API_KEY);
 
 
 
@@ -2301,7 +2226,9 @@ app.post('/api/signup', async (req, res) => {
         await addUserToBrevo(email);
 
         // 🔥 Hachage de l'email pour Facebook (SHA-256)
-        const hashedEmail = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+      const normalizedEmail = (typeof email === 'string') ? email.trim().toLowerCase() : '';
+const hashedEmail = crypto.createHash("sha256").update(normalizedEmail).digest("hex");
+
 
         // 🔥 Envoi de l’événement "CompleteRegistration" à Facebook
         const payload = {
