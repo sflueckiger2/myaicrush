@@ -1862,9 +1862,10 @@ form label {
 
 @media (min-width: 1000px) {
   .testimonial-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
+
 
 .testimonial-card {
   background-color: rgba(57, 57, 86, 0.85);
@@ -2430,7 +2431,12 @@ video {
     box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
     position: relative;
     animation: popup-fade 0.3s ease;
-    }
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* smooth scroll iOS */
+}
+
+    
 
     @keyframes popup-fade {
       from { transform: scale(0.9); opacity: 0; }
@@ -2530,3 +2536,4 @@ vapi-widget {
   height: auto !important;
   pointer-events: auto !important;
 }
+
