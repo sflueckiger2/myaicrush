@@ -1862,7 +1862,7 @@ form label {
 
 @media (min-width: 1000px) {
   .testimonial-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
   }
 }
 
@@ -2421,20 +2421,22 @@ video {
       z-index: 9999;
     }
 
-    .popup-content, .confirm-content {
-    background: #1e1e1e;
-    border-radius: 20px;
-    padding: 30px 2px;
-    text-align: center;
-    max-width: 450px;
-    width: 95%;
-    box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
-    position: relative;
-    animation: popup-fade 0.3s ease;
+ .popup-content, .confirm-content {
+  background: #1e1e1e;
+  border-radius: 20px;
+  padding: 30px 2px;
+  text-align: center;
+  max-width: 450px;
+  width: 95%;
+  box-shadow: 0 0 30px rgba(255, 75, 155, 0.4);
+  position: relative;
+  animation: popup-fade 0.3s ease;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden; /* ✅ empêche le scroll horizontal */
   -webkit-overflow-scrolling: touch; /* smooth scroll iOS */
 }
+
 
     
 
