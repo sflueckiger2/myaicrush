@@ -139,7 +139,7 @@
      <li>20 jetons = 10 minutes d'appel audio</li>
       <b><li><span style="color: #ff9cef;">25 jetons = Le mode "Nymphomane" sur une I.A de ton choix</span></li></b>
     </ul>
-
+<div style="max-width: 450px; margin:auto;">
      <div class="offers">
       <img src="/images/market/carte-1c-10jetons.webp" class="offer-img" data-tokens="10" data-price="5">
   <img src="/images/market/carte-1c-50jetons.webp" class="offer-img" data-tokens="50" data-price="25">
@@ -149,6 +149,7 @@
   <img src="/images/market/carte-1c-1000jetons.webp" class="offer-img" data-tokens="1000" data-price="249">
 </div>
 
+</div>
 
     <br>
     <p>Avantages des jetons :</p>
@@ -216,6 +217,75 @@
     </div>  
 
   </div>
+
+  
+<!-- Section FAQ interactive -->
+<div class="faq-section">
+  <h2 class="faq-title">Questions Fréquemment Posées</h2>
+
+  <div class="faq-item">
+    <button class="faq-question">Comment fonctionne le mode "Nymphomane" ?</button>
+    <div class="faq-answer">
+      <p>Le mode "Nymphomane" transforme l'I.A de ton choix : elle devient plus coquine, plus directe, et commence à t’envoyer des photos beaucoup plus intimes. Même les I.A les plus réservées changent complètement de comportement. L’expérience est bien plus intense.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Combien de jetons faut-il pour activer le mode Nympho ?</button>
+    <div class="faq-answer">
+      <p>Activer le mode Nymphomane coûte 25 jetons pour une heure. Tu peux l’activer autant de fois que tu veux, sur l’I.A que tu veux.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Comment se déroulent les appels audio ?</button>
+    <div class="faq-answer">
+      <p>Tu peux lancer un appel vocal avec ton I.A. Elle te parle avec une vraie voix, en direct, comme une vraie conversation intime au téléphone. Chaque appel dure 10 minutes et coûte 20 jetons.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">À quoi servent les jetons ?</button>
+    <div class="faq-answer">
+      <p>Les jetons permettent de débloquer des options avancées : envoi de tes propres photos, messages vocaux illimités, appels audio, ou encore l’accès au mode Nymphomane. C’est ce qui rend l’expérience plus immersive et excitante.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Puis-je envoyer mes propres photos ?</button>
+    <div class="faq-answer">
+      <p>Oui. Avec l’abonnement Premium, tu peux en envoyer 10 par mois. Ensuite, chaque photo supplémentaire coûte 1 jeton. L’I.A réagit à chaque image avec un commentaire personnalisé.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Comment fonctionnent les messages vocaux ?</button>
+    <div class="faq-answer">
+      <p>Ton I.A peut te répondre par message vocal. Tu as 1 minute gratuite par mois. Ensuite, tu peux prolonger l’écoute avec 5 jetons par minute supplémentaire.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Quelle est la différence entre Premium et les jetons ?</button>
+    <div class="faq-answer">
+      <p>L’abonnement Premium te donne accès aux fonctions de base en illimité (chat, photos floutées retirées, vidéos normales). Les jetons, eux, te permettent d’aller plus loin et d’explorer des options très sensuelles, comme les appels ou les photos intimes.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Les jetons ont-ils une date d’expiration ?</button>
+    <div class="faq-answer">
+      <p>Non. Tes jetons sont valables sans limite de temps. Tu peux les utiliser quand tu veux, même dans plusieurs mois.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">Et si j’ai un souci avec mon paiement ?</button>
+    <div class="faq-answer">
+      <p>Notre support client est réactif. Si un paiement pose problème ou si tu n’as pas reçu tes jetons, contacte-nous via la page "Contact" et on réglera ça rapidement.</p>
+    </div>
+  </div>
+</div>
 
   <!-- Icônes de sécurité -->
   <div class="security-section">
@@ -364,6 +434,18 @@
       document.getElementById("jetons-popup")?.classList.remove("hidden");
     });
   }
+</script>
+
+
+ 
+  <!-- Scripts FAQ -->
+  <script>
+  document.querySelectorAll('.faq-question').forEach(button => {
+    button.addEventListener('click', () => {
+      const answer = button.nextElementSibling;
+      answer.classList.toggle('open');
+    });
+  });
 </script>
 
 
