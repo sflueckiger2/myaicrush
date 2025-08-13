@@ -831,6 +831,8 @@ text-align: left;
 /* Section des avantages */
 .premium-benefits {
   margin-top: 40px;
+      margin-right: 20px;
+    margin-left: 20px;
 }
 
 .benefit-list {
@@ -839,6 +841,8 @@ text-align: left;
   margin: 0;
   text-align: left;
   display: inline-block;
+  margin-left:20px;
+  margin-right:20px;
 }
 
 .benefit-list li {
@@ -926,6 +930,7 @@ text-align: left;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.3s;
+      max-width: 200px;
 }
 
 .checkout-button:hover {

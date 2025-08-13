@@ -9,7 +9,7 @@
                 "duration": "an",
                 "description": "",
                 "button_text": "Choisir le plan annuel",
-                "stripe_id_live": "price_1R28ADAOSHX0SgbTfwDtAQRQ",
+                "stripe_id_live": "price_1R2    8ADAOSHX0SgbTfwDtAQRQ",
                 "stripe_id_test": "price_1QPRXpAOSHX0SgbT8GfUUtvL",
                 "promo": "-50% de réduction !",
                 "image": "/images/market/plan-annuel-cheap.webp"
