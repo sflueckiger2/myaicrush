@@ -23,12 +23,10 @@
 </div>
 
    <div class="offers">
+      <img src="/images/market/carte-1c-10jetons.webp" class="offer-img" data-tokens="10" data-price="5">
   <img src="/images/market/carte-1c-50jetons.webp" class="offer-img" data-tokens="50" data-price="25">
   <img src="/images/market/carte-1c-100jetons.webp" class="offer-img" data-tokens="100" data-price="39">
   <img src="/images/market/carte-1c-300jetons.webp" class="offer-img" data-tokens="300" data-price="99">
-
-  <!-- ✅ Nouvelles offres -->
-  <img src="/images/market/carte-1c-10jetons.webp" class="offer-img" data-tokens="10" data-price="5">
   <img src="/images/market/carte-1c-700jetons.webp" class="offer-img" data-tokens="700" data-price="199">
   <img src="/images/market/carte-1c-1000jetons.webp" class="offer-img" data-tokens="1000" data-price="249">
 </div>
@@ -143,103 +141,109 @@
   <p class="loader-text">Paiement en cours…</p>
 </div>
 
-
-
 <!-- ✅ JavaScript -->
 <script>
-    let selectedOffer = null;
+  let selectedOffer = null;
 
-    function openJetonsPopup() {
-      document.getElementById("jetons-popup")?.classList.remove("hidden");
-    }
-
-    function closeJetonsPopup() {
-      document.getElementById("jetons-popup")?.classList.add("hidden");
-    }
-
-    function closeConfirmPopup() {
-      document.getElementById("confirm-popup")?.classList.add("hidden");
-    }
-
-    function selectOffer(tokens, price) {
-      selectedOffer = { tokens, price };
-      document.getElementById("confirm-amount").textContent = tokens;
-      document.getElementById("confirm-price").textContent = price;
-      document.getElementById("confirm-popup").classList.remove("hidden");
-    }
-
-    async function sendJetonsPayment() {
-  if (!selectedOffer) return;
-
-  const userData = JSON.parse(localStorage.getItem('user') || '{}');
-  const email = userData.email;
-
-  if (!email) {
-    alert("Email non trouvé. Veuillez vous reconnecter.");
-    return;
+  function openJetonsPopup() {
+    document.getElementById("jetons-popup")?.classList.remove("hidden");
   }
 
-  const loader = document.getElementById("loader-overlay");
-  loader.classList.remove("hidden"); // 👈 Affiche le loader
+  function closeJetonsPopup() {
+    document.getElementById("jetons-popup")?.classList.add("hidden");
+  }
 
-  try {
-    const res = await fetch('/api/one-click-payment', {
-      method: 'POST',
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        tokensAmount: selectedOffer.tokens
-      })
-    });
+  function closeConfirmPopup() {
+    document.getElementById("confirm-popup")?.classList.add("hidden");
+  }
 
-    const data = await res.json();
+  function selectOffer(tokens, price) {
+    selectedOffer = { tokens, price };
+    document.getElementById("confirm-amount").textContent = tokens;
+    document.getElementById("confirm-price").textContent = price;
+    document.getElementById("confirm-popup").classList.remove("hidden");
+  }
 
-    loader.classList.add("hidden"); // 👈 Cache le loader
+  async function sendJetonsPayment() {
+    if (!selectedOffer) return;
 
-    if (data.success) {
-      closeConfirmPopup();
-      closeJetonsPopup();
-      alert("✅ Jetons achetés avec succès !");
-      closeConfirmPopup();
-closeJetonsPopup();
-    } else {
-      alert("❌ Paiement échoué : " + data.message);
-      if (data.message.includes("jetons.html")) {
-        window.location.href = "/jetons.html";
-      }
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const email = userData.email;
+
+    if (!email) {
+      alert("Email non trouvé. Veuillez vous reconnecter.");
+      return;
     }
 
-  } catch (err) {
-    loader.classList.add("hidden"); // 👈 Cache le loader même en cas d’erreur
-    console.error("❌ Erreur lors du paiement 1C :", err);
-    alert("Erreur serveur. Veuillez réessayer.");
-  }
-}
+    const loader = document.getElementById("loader-overlay");
+    loader.classList.remove("hidden"); // 👈 Affiche le loader
 
+    // (Optionnel) Empêche les doubles clics
+    const confirmBtn = document.getElementById("confirm-buy-btn");
+    confirmBtn?.setAttribute("disabled", "true");
 
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".offer-img").forEach(img => {
-        img.addEventListener("click", () => {
-          const tokens = img.dataset.tokens;
-          const price = img.dataset.price;
-          selectOffer(tokens, price);
-        });
+    try {
+      const res = await fetch('/api/one-click-payment', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          tokensAmount: selectedOffer.tokens
+        })
       });
 
-      // ✅ On ne cache QUE la confirmation, pas la popup principale
-      closeConfirmPopup();
+      // Essaye de parser le JSON même si status non-2xx
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+
+      loader.classList.add("hidden"); // 👈 Cache le loader
+      confirmBtn?.removeAttribute("disabled");
+
+      if (res.ok && data.success) {
+        closeConfirmPopup();
+        closeJetonsPopup();
+        alert("✅ Jetons achetés avec succès !");
+        return;
+      }
+
+      // ❌ Erreur retournée par l'API
+      alert("❌ Paiement échoué : " + (data.message || "Erreur inconnue"));
+      if (data.redirect) {
+        window.location.href = data.redirect; // 👉 priorise l'URL renvoyée par le backend
+      } else {
+        window.location.href = "/jetons.html"; // 👉 fallback
+      }
+
+    } catch (err) {
+      loader.classList.add("hidden"); // 👈 Cache le loader même en cas d’erreur
+      confirmBtn?.removeAttribute("disabled");
+      console.error("❌ Erreur lors du paiement 1C :", err);
+      alert("Erreur serveur. Redirection vers la page jetons.");
+      window.location.href = "/jetons.html"; // 👉 fallback ultime
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".offer-img").forEach(img => {
+      img.addEventListener("click", () => {
+        const tokens = img.dataset.tokens;
+        const price = img.dataset.price;
+        selectOffer(tokens, price);
+      });
     });
 
+    // ✅ On ne cache QUE la confirmation, pas la popup principale
+    closeConfirmPopup();
+  });
 
-    // 👇 Rendez les fonctions accessibles globalement
-window.openJetonsPopup = openJetonsPopup;
-window.closeJetonsPopup = closeJetonsPopup;
-window.closeConfirmPopup = closeConfirmPopup;
-window.selectOffer = selectOffer;
-window.sendJetonsPayment = sendJetonsPayment;
+  // 👇 Rendez les fonctions accessibles globalement
+  window.openJetonsPopup = openJetonsPopup;
+  window.closeJetonsPopup = closeJetonsPopup;
+  window.closeConfirmPopup = closeConfirmPopup;
+  window.selectOffer = selectOffer;
+  window.sendJetonsPayment = sendJetonsPayment;
+</script>
 
-  </script>
 
 
 <script>

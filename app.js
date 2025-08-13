@@ -3013,9 +3013,12 @@ app.post('/api/one-click-payment', async (req, res) => {
 
     // 💰 Montants à ajuster selon tes tarifs
     const amountMap = {
-      "50": 2500,
+      "10": 500,
+        "50": 2500,
       "100": 3900,
-      "300": 9900
+      "300": 9900,
+      "700": 19900,
+      "1000": 24900
     };
 
     const amount = amountMap[tokensAmount];
@@ -3068,18 +3071,18 @@ res.json({ success: true, paymentIntentId: paymentIntent.id });
 
 
   } catch (error) {
-    console.error("❌ Erreur paiement 1C :", error.message);
+  console.error("❌ Erreur paiement 1C :", error.message);
 
-    // Gestion des erreurs Stripe "authentification requise"
-    if (error.code === 'authentication_required') {
-      return res.status(402).json({ 
-        success: false, 
-        message: "Authentification requise. Paiement impossible en 1C. Rediriger vers jetons.html." 
-      });
-    }
+  // On renvoie toujours le message + l'URL vers laquelle rediriger
+  return res.status(500).json({
+    success: false,
+    message: error.code === 'authentication_required'
+      ? "Authentification requise. Paiement impossible en 1C."
+      : "Erreur lors du paiement 1C.",
+    redirect: "/jetons.html"
+  });
+}
 
-    res.status(500).json({ success: false, message: "Erreur lors du paiement 1C." });
-  }
 });
 
 
