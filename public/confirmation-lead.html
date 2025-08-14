@@ -261,6 +261,62 @@
   });
 </script>
   
+<!-- Script de génération dynamique des prix -->
+  <script>
+    async function loadPricingPlans() {
+      const pricingSection = document.getElementById('pricing-container');
+      if (!pricingSection) return;
+
+      try {
+        const response = await fetch('/pricing-config.json');
+        const pricingData = await response.json();
+        const mode = window.STRIPE_MODE || "live";
+
+        const plans = [pricingData.default_price, ...(pricingData.active_tests?.[0]?.variants || [])];
+
+        plans.forEach((plan, index) => {
+          const card = document.createElement('div');
+          card.className = 'pricing-card';
+          if (index === 1) card.classList.add('popular');
+
+          if (plan.promo) {
+            const promoBanner = document.createElement('div');
+            promoBanner.className = 'discount-banner';
+            promoBanner.textContent = plan.promo;
+            card.appendChild(promoBanner);
+          }
+
+          const title = document.createElement('h2');
+          title.textContent = `Abonnement ${plan.name}`;
+          card.appendChild(title);
+
+          const price = document.createElement('p');
+          price.className = 'price';
+          price.textContent = `${plan.price}€/${plan.duration}`;
+          card.appendChild(price);
+
+          const desc = document.createElement('p');
+          desc.textContent = plan.description;
+          card.appendChild(desc);
+
+          const button = document.createElement('button');
+          button.className = 'checkout-button';
+          button.textContent = plan.button_text;
+
+          const priceId = mode === "live" ? plan.stripe_id_live : plan.stripe_id_test;
+          button.addEventListener('click', () => handleCheckout(priceId, plan.name.toLowerCase()));
+          card.appendChild(button);
+
+          pricingSection.appendChild(card);
+        });
+      } catch (error) {
+        console.error("❌ Erreur chargement pricing-config.json :", error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPricingPlans);
+  </script>
+
   <!-- Inclure les fichiers JavaScript -->
   <script type="module" src="/scripts/menu-loader.js"></script>
    <script type="module" src="./scripts/stripe-frontend.js"></script>
