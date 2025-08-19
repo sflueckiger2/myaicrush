@@ -591,26 +591,64 @@ if (sendBtn) {
 
 
 
-// fonction resize clavier
+// --- Gestion robuste du clavier (Instagram/Safari WebView) ---
 
-function adjustChatHeight() {
-    const chatBox = document.getElementById('chat-box');
-  
-    if (!chatBox) return;
-  
-    // Calculer la hauteur visible du viewport
-    const viewportHeight = window.innerHeight;
-  
-    // Appliquer la hauteur dynamique
-    chatBox.style.height = `${viewportHeight}px`;
+// 1) Fallback pour vieux webviews : met à jour --vh
+function setVHVar() {
+  const h = window.innerHeight || document.documentElement.clientHeight;
+  document.documentElement.style.setProperty('--vh', `${h * 0.01}px`);
+}
+setVHVar();
+window.addEventListener('resize', setVHVar);
+
+// 2) Compense le clavier via visualViewport
+const vv = window.visualViewport;
+
+function applyKeyboardInsets() {
+  const chat = document.getElementById('chat-box');
+  const input = document.getElementById('input-area');
+  const msgs  = document.getElementById('messages');
+  if (!chat || !input) return;
+
+  // hauteur estimée du clavier (iOS/IG)
+  const keyboard = vv ? (window.innerHeight - vv.height - vv.offsetTop) : 0;
+
+  // Remonte l’input au-dessus du clavier
+  input.style.transform = keyboard > 0 ? `translateY(-${keyboard}px)` : '';
+
+  // Ajoute un padding en bas pour garder le dernier message visible
+  chat.style.paddingBottom = (keyboard > 0 ? keyboard : 0) + 'px';
+
+  // Garde le bas visible
+  if (msgs) {
+    msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'instant' });
   }
-  
-  // Appeler la fonction au chargement initial
-  adjustChatHeight();
-  
-  // Réagir aux changements de taille de la fenêtre (clavier qui s'affiche)
-  window.addEventListener('resize', adjustChatHeight);
-  
+}
+
+// Écoute les changements de viewport visuel (clavier qui s'ouvre/ferme)
+if (vv) {
+  vv.addEventListener('resize', applyKeyboardInsets);
+  vv.addEventListener('scroll', applyKeyboardInsets);
+}
+
+// Réapplique au changement d’orientation
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => { setVHVar(); applyKeyboardInsets(); }, 120);
+});
+
+// Quand le champ texte prend le focus, assure qu’il est visible
+window.addEventListener('focusin', (e) => {
+  if (e.target && e.target.id === 'user-input') {
+    setTimeout(() => {
+      applyKeyboardInsets();
+      e.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      const msgs = document.getElementById('messages');
+      if (msgs) msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'smooth' });
+    }, 50);
+  }
+});
+
+window.addEventListener('focusout', applyKeyboardInsets);
 
  
   export function startChat(characterName) {
