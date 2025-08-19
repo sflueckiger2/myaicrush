@@ -1,9 +1,14 @@
-:root { --vh: 1vh; }   /* fallback pour vieux webviews */
+:root {
+  --vh: 1vh;        /* fallback */
+  --kb: 0px;        /* hauteur clavier dynamique */
+  --input-h: 64px;  /* hauteur de #input-area, mise à jour en JS */
+}
 
 html, body {
   height: 100%;
   overscroll-behavior: contain;
 }
+
 * 
 
 {
@@ -140,18 +145,19 @@ p {
 
 /* Zone de chat plein écran et responsive au clavier */
 #chat-box {
-  position: fixed;          /* occupe tout l’écran quand ouvert */
-  inset: 0;                 /* top/right/bottom/left: 0 */
-  display: none;            /* tu passes à flex quand le chat s’ouvre */
+  position: fixed;
+  inset: 0;
+  display: none;
   flex-direction: column;
-  min-height: 100dvh;       /* nouvelle unité, OK IG/Safari récents */
-  height: calc(var(--vh, 1vh) * 100); /* fallback */
-  overflow: hidden;         /* évite double scroll (messages scrollent à l’intérieur) */
+  min-height: 100dvh;
+  height: calc(var(--vh, 1vh) * 100);
+  overflow: hidden; /* OK */
   background: transparent;
   border-radius: 10px;
-  box-shadow: 0 0 20px rgba(221, 77, 157, 0.08);
+  box-shadow: 0 0 20px rgba(221,77,157,.08);
   z-index: 1;
 }
+
 
 
 
@@ -230,13 +236,16 @@ video.chat-profile-pic {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;                      /* prend tout l’espace restant */
-  overflow-y: auto;             /* scroll interne */
+  flex: 1;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 10px 10px 14px;      /* petit padding bas, le JS en ajoutera si clavier */
-  margin-bottom: 0;             /* on enlève le “trou” sous l’input */
-  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.02);
+  padding: 10px 10px 14px;
+  margin-bottom: 0;
+  /* 👇 réserve la place pour la barre + clavier */
+  padding-bottom: calc(var(--input-h) + var(--kb) + env(safe-area-inset-bottom));
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.02);
 }
+
 
 
 #messages {
@@ -282,22 +291,22 @@ video.chat-profile-pic {
 
 /* Barre d’entrée, collée en bas du chat mais *dans* le flux */
 #input-area {
-  position: sticky;               /* clé : pas “fixed” */
-  bottom: 0;
+  position: fixed;
   left: 0;
   right: 0;
-  width: auto;                    /* plus de width:100% “global” */
-  max-width: none;                /* enlève la limite 700px */
+  bottom: var(--kb, 0px);            /* 👈 monte au-dessus du clavier */
+  width: 100%;
   background-color: rgba(46, 46, 68, 0.85);
   backdrop-filter: blur(8px);
   padding: 10px;
   display: flex;
   gap: 10px;
   align-items: center;
-  z-index: 2;
+  z-index: 1000;
   border-top: 1px solid rgba(255,255,255,0.08);
-  padding-bottom: max(10px, env(safe-area-inset-bottom)); /* notch + IG */
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
+
 
 
 #user-input {

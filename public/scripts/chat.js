@@ -590,10 +590,9 @@ if (sendBtn) {
 }
 
 
+// --- Gestion clavier robuste via variables CSS (fonctionne IG, iOS, Android) ---
 
-// --- Gestion robuste du clavier (Instagram/Safari WebView) ---
-
-// 1) Fallback pour vieux webviews : met à jour --vh
+// 1) Fallback --vh pour vieux webviews
 function setVHVar() {
   const h = window.innerHeight || document.documentElement.clientHeight;
   document.documentElement.style.setProperty('--vh', `${h * 0.01}px`);
@@ -601,42 +600,48 @@ function setVHVar() {
 setVHVar();
 window.addEventListener('resize', setVHVar);
 
-// 2) Compense le clavier via visualViewport
+// 2) Met à jour la hauteur de la barre d’input (--input-h)
+function updateInputHeightVar() {
+  const input = document.getElementById('input-area');
+  if (!input) return;
+  const h = input.offsetHeight || 64;
+  document.documentElement.style.setProperty('--input-h', `${h}px`);
+}
+window.addEventListener('load', updateInputHeightVar);
+window.addEventListener('resize', updateInputHeightVar);
+
+// 3) Calcule et applique la hauteur du clavier (--kb) avec visualViewport si dispo
 const vv = window.visualViewport;
 
 function applyKeyboardInsets() {
-  const chat = document.getElementById('chat-box');
-  const input = document.getElementById('input-area');
   const msgs  = document.getElementById('messages');
-  if (!chat || !input) return;
+  const input = document.getElementById('input-area');
+  if (!input) return;
 
-  // hauteur estimée du clavier (iOS/IG)
-  const keyboard = vv ? (window.innerHeight - vv.height - vv.offsetTop) : 0;
+  // hauteur estimée du clavier
+  let kb = 0;
+  if (vv) {
+    kb = window.innerHeight - vv.height - vv.offsetTop;
+    if (kb < 0) kb = 0;
+    // ignore les micro variations (scroll/zoom)
+    if (kb < 30) kb = 0;
+  }
+  // Expose au CSS
+  document.documentElement.style.setProperty('--kb', `${kb}px`);
 
-  // Remonte l’input au-dessus du clavier
-  input.style.transform = keyboard > 0 ? `translateY(-${keyboard}px)` : '';
-
-  // Ajoute un padding en bas pour garder le dernier message visible
-  chat.style.paddingBottom = (keyboard > 0 ? keyboard : 0) + 'px';
-
-  // Garde le bas visible
+  // s'assure que le bas reste visible
   if (msgs) {
     msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'instant' });
   }
 }
 
-// Écoute les changements de viewport visuel (clavier qui s'ouvre/ferme)
 if (vv) {
   vv.addEventListener('resize', applyKeyboardInsets);
   vv.addEventListener('scroll', applyKeyboardInsets);
 }
-
-// Réapplique au changement d’orientation
 window.addEventListener('orientationchange', () => {
-  setTimeout(() => { setVHVar(); applyKeyboardInsets(); }, 120);
+  setTimeout(() => { setVHVar(); updateInputHeightVar(); applyKeyboardInsets(); }, 120);
 });
-
-// Quand le champ texte prend le focus, assure qu’il est visible
 window.addEventListener('focusin', (e) => {
   if (e.target && e.target.id === 'user-input') {
     setTimeout(() => {
@@ -647,8 +652,11 @@ window.addEventListener('focusin', (e) => {
     }, 50);
   }
 });
-
 window.addEventListener('focusout', applyKeyboardInsets);
+
+
+
+
 
  
   export function startChat(characterName) {
