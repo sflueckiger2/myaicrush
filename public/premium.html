@@ -70,11 +70,43 @@
   </video>
 </center>
 
-    <!-- Section des plans dynamiques -->
-    <div id="pricing-container" class="pricing-section">
+   <div id="pricing-container" class="pricing-section">
 
-      <!-- Les offres s’afficheront ici dynamiquement -->
-    </div>
+  <!-- Annuel -->
+  <div class="pricing-card popular">
+    <div class="discount-banner">-50% de réduction !</div>
+    <h2>Abonnement Annuel</h2>
+    <p class="price">59€ / an</p>
+    <p></p>
+    <img src="/images/market/plan-annuel-cheap.webp" alt="Plan annuel" class="plan-image" loading="lazy" />
+    <button
+      class="checkout-button"
+      data-plan-name="annuel"
+      data-price-id-live="price_1R28ADAOSHX0SgbTfwDtAQRQ"
+      data-price-id-test="price_1QPRXpAOSHX0SgbT8GfUUtvL"
+    >
+      Choisir le plan annuel
+    </button>
+  </div>
+
+  <!-- Trimestriel -->
+  <div class="pricing-card">
+    <h2>Abonnement Trimestriel</h2>
+    <p class="price">29,90€ / 3 mois</p>
+    <p></p>
+    <img src="/images/market/plan-trimestriel-cheap.webp" alt="Plan trimestriel" class="plan-image" loading="lazy" />
+    <button
+      class="checkout-button"
+      data-plan-name="trimestriel"
+      data-price-id-live="price_1R4nYHAOSHX0SgbTHziE7pLF"
+      data-price-id-test="price_1R4nYyAOSHX0SgbTWhuc9dy7"
+    >
+      Choisir le plan trimestriel
+    </button>
+  </div>
+
+</div>
+
 
     <!-- Section des avantages -->
     <div class="premium-benefits">
@@ -231,61 +263,38 @@
   });
 </script>
 
+<script>
+  // Utilise ton flag existant si tu en as un
+  const IS_LIVE = (window.STRIPE_MODE || "live") === "live";
 
-  <!-- Script de génération dynamique des prix -->
-  <script>
-    async function loadPricingPlans() {
-      const pricingSection = document.getElementById('pricing-container');
-      if (!pricingSection) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.checkout-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const planName = btn.dataset.planName;
+        const priceId = IS_LIVE ? btn.dataset.priceIdLive : btn.dataset.priceIdTest;
 
-      try {
-        const response = await fetch('/pricing-config.json');
-        const pricingData = await response.json();
-        const mode = window.STRIPE_MODE || "live";
+        if (!priceId) {
+          console.error('Price ID manquant pour', planName, '(mode:', IS_LIVE ? 'live' : 'test', ')');
+          return;
+        }
 
-        const plans = [pricingData.default_price, ...(pricingData.active_tests?.[0]?.variants || [])];
+        if (typeof handleCheckout === 'function') {
+          handleCheckout(priceId, planName);
+        } else {
+          fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ priceId, planName })
+          })
+          .then(r => r.json())
+          .then(d => { if (d.url) location.href = d.url; })
+          .catch(err => console.error('Checkout error:', err));
+        }
+      });
+    });
+  });
+</script>
 
-        plans.forEach((plan, index) => {
-          const card = document.createElement('div');
-          card.className = 'pricing-card';
-          if (index === 1) card.classList.add('popular');
-
-          if (plan.promo) {
-            const promoBanner = document.createElement('div');
-            promoBanner.className = 'discount-banner';
-            promoBanner.textContent = plan.promo;
-            card.appendChild(promoBanner);
-          }
-
-          const title = document.createElement('h2');
-          title.textContent = `Abonnement ${plan.name}`;
-          card.appendChild(title);
-
-          const price = document.createElement('p');
-          price.className = 'price';
-          price.textContent = `${plan.price}€/${plan.duration}`;
-          card.appendChild(price);
-
-          const desc = document.createElement('p');
-          desc.textContent = plan.description;
-          card.appendChild(desc);
-
-          const button = document.createElement('button');
-          button.className = 'checkout-button';
-          button.textContent = plan.button_text;
-
-          const priceId = mode === "live" ? plan.stripe_id_live : plan.stripe_id_test;
-          button.addEventListener('click', () => handleCheckout(priceId, plan.name.toLowerCase()));
-          card.appendChild(button);
-
-          pricingSection.appendChild(card);
-        });
-      } catch (error) {
-        console.error("❌ Erreur chargement pricing-config.json :", error);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', loadPricingPlans);
-  </script>
+  
 </body>
 </html>
