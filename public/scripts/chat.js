@@ -656,6 +656,67 @@ window.addEventListener('focusout', applyKeyboardInsets);
 
 
 
+// --- Fallback spécial Instagram Android (quand visualViewport est nul/ignoré) ---
+(function instagramAndroidFallback(){
+  const isIG = /Instagram/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (!isIG || !isAndroid) return;
+
+  let baseline = window.innerHeight;   // hauteur écran “sans clavier”
+  let usingFallback = false;
+
+  function setKBFromResize() {
+    // diff entre la hauteur de base et la hauteur actuelle
+    let kb = baseline - window.innerHeight;
+    if (kb < 0) kb = 0;
+    // filtre les petites variations dues aux barres système
+    if (kb < 60) kb = 0;
+
+    document.documentElement.style.setProperty('--kb', kb + 'px');
+
+    const msgs = document.getElementById('messages');
+    if (msgs) msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'instant' });
+  }
+
+  // Quand l’input focus et que visualViewport ne remonte rien, on active le fallback
+  window.addEventListener('focusin', (e) => {
+    if (e.target && e.target.id === 'user-input') {
+      // si visualViewport ne donne pas de clavier, bascule en fallback
+      const vv = window.visualViewport;
+      let vvKb = 0;
+      if (vv) {
+        vvKb = window.innerHeight - vv.height - vv.offsetTop;
+      }
+      if (vvKb < 30) {
+        usingFallback = true;
+        baseline = Math.max(baseline, window.innerHeight); // rafraîchit une base saine
+        setTimeout(setKBFromResize, 50);
+      }
+    }
+  });
+
+  window.addEventListener('focusout', () => {
+    if (!usingFallback) return;
+    // clavier fermé → remet à zéro
+    document.documentElement.style.setProperty('--kb', '0px');
+  });
+
+  // Sur IG Android, le clavier déclenche un resize → on en profite
+  window.addEventListener('resize', () => {
+    if (!usingFallback) return;
+    setKBFromResize();
+  });
+
+  // Rotation, navigation UI qui change la hauteur : on recalcule la baseline
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      baseline = window.innerHeight;
+      setKBFromResize();
+    }, 150);
+  });
+})();
+
+
 
 
  
