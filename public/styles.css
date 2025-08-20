@@ -2609,3 +2609,83 @@ vapi-widget {
   border-color: rgba(221,77,157,.55);
   box-shadow: 0 14px 38px rgba(0,0,0,.45), 0 0 0 2px rgba(221,77,157,.15) inset;
 }
+
+/* ===== Premium Hero Video ===== */
+:root{
+  --pink:#dd4d9d;
+  --violet:#8a2be2;
+  --card:#171823;     /* fond des cartes de ta page */
+}
+
+.hero-media{
+  position:relative;
+  margin:18px auto 28px;
+  width:100%;
+  max-width:680px;   /* ✅ largeur max pour desktop */
+  aspect-ratio:16/9;
+  border-radius:22px;
+  isolation:isolate;
+}
+
+
+.hero-media::before{
+  content:"";
+  position:absolute; inset:-6px;
+  border-radius:26px;
+  background: radial-gradient(120% 100% at 10% 0%, color-mix(in oklab, var(--pink), transparent 30%) 0%, transparent 60%),
+              radial-gradient(120% 100% at 100% 90%, color-mix(in oklab, var(--violet), transparent 35%) 0%, transparent 65%);
+  filter: blur(28px) opacity(.7);
+  z-index:-1;
+}
+
+/* anneau dégradé fin autour de la vidéo */
+.hero-media::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:22px;
+  padding:1px;                 /* épaisseur de l’anneau */
+  background:linear-gradient(135deg, var(--pink), var(--violet));
+  -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;     /* annule le centre: anneau seulement */
+  opacity:.75;
+}
+
+/* la vidéo elle-même */
+.hero-video{
+  width:100%; height:100%;
+  display:block;
+  object-fit:cover;            /* couvre proprement */
+  border-radius:20px;
+  background:#000;             /* évite flash blanc */
+  box-shadow:
+    0 12px 40px rgba(0,0,0,.55),
+    0 1px 0 rgba(255,255,255,.06) inset;
+  border:1px solid rgba(255,255,255,.07);
+}
+
+/* vignette douce pour fondre dans le décor */
+.hero-media .vignette{
+  position:absolute; inset:0;
+  pointer-events:none;
+  border-radius:20px;
+  box-shadow: inset 0 0 90px rgba(0,0,0,.55),
+              inset 0 -60px 120px rgba(0,0,0,.35);
+}
+
+/* légère animation au survol (desktop) */
+@media (hover:hover){
+  .hero-media:hover{
+    transform: translateY(-2px);
+    transition:.25s ease;
+  }
+}
+
+/* petits écrans: bord plus doux */
+@media (max-width:420px){
+  .hero-media{ border-radius:18px; }
+  .hero-media::after{ border-radius:18px; }
+  .hero-video, .hero-media .vignette{ border-radius:16px; }
+}
