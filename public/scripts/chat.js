@@ -656,65 +656,66 @@ window.addEventListener('focusout', applyKeyboardInsets);
 
 
 
-// --- Fallback spécial Instagram Android (quand visualViewport est nul/ignoré) ---
-(function instagramAndroidFallback(){
+// --- Fallback "forcé" Instagram Android (clavier overlay non mesurable) ---
+(function instagramAndroidHardFallback(){
   const isIG = /Instagram/i.test(navigator.userAgent);
   const isAndroid = /Android/i.test(navigator.userAgent);
   if (!isIG || !isAndroid) return;
 
-  let baseline = window.innerHeight;   // hauteur écran “sans clavier”
-  let usingFallback = false;
+  const vv = window.visualViewport;
 
-  function setKBFromResize() {
-    // diff entre la hauteur de base et la hauteur actuelle
-    let kb = baseline - window.innerHeight;
-    if (kb < 0) kb = 0;
-    // filtre les petites variations dues aux barres système
-    if (kb < 60) kb = 0;
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
-    document.documentElement.style.setProperty('--kb', kb + 'px');
+  // Donne une estimation réaliste de la hauteur clavier en px CSS
+  function guessKeyboardPx() {
+    // 40-45% de la hauteur visible, bornée
+    const h = window.innerHeight || document.documentElement.clientHeight || 700;
+    return Math.round(clamp(h * 0.44, 220, 380));
+  }
 
+  function setKB(px){
+    document.documentElement.style.setProperty('--kb', (px|0) + 'px');
     const msgs = document.getElementById('messages');
     if (msgs) msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'instant' });
   }
 
-  // Quand l’input focus et que visualViewport ne remonte rien, on active le fallback
+  // Quand l’input prend le focus : si on ne détecte pas de clavier via VV, on force une valeur
   window.addEventListener('focusin', (e) => {
     if (e.target && e.target.id === 'user-input') {
-      // si visualViewport ne donne pas de clavier, bascule en fallback
-      const vv = window.visualViewport;
-      let vvKb = 0;
+      let kb = 0;
       if (vv) {
-        vvKb = window.innerHeight - vv.height - vv.offsetTop;
+        kb = window.innerHeight - vv.height - vv.offsetTop;
       }
-      if (vvKb < 30) {
-        usingFallback = true;
-        baseline = Math.max(baseline, window.innerHeight); // rafraîchit une base saine
-        setTimeout(setKBFromResize, 50);
+      if (kb < 30) {
+        // Pas de mesure fiable -> valeur forcée
+        setKB(guessKeyboardPx());
+      } else {
+        setKB(kb);
       }
     }
   });
 
-  window.addEventListener('focusout', () => {
-    if (!usingFallback) return;
-    // clavier fermé → remet à zéro
-    document.documentElement.style.setProperty('--kb', '0px');
-  });
+  // Quand on tape ou qu’un resize survient, si VV finit par bouger on reprend la vraie valeur
+  function maybeRefine() {
+    if (!vv) return;
+    const kb = window.innerHeight - vv.height - vv.offsetTop;
+    if (kb >= 30) setKB(kb);
+  }
+  if (vv) {
+    vv.addEventListener('resize', maybeRefine);
+    vv.addEventListener('scroll', maybeRefine);
+  }
+  window.addEventListener('resize', maybeRefine);
 
-  // Sur IG Android, le clavier déclenche un resize → on en profite
-  window.addEventListener('resize', () => {
-    if (!usingFallback) return;
-    setKBFromResize();
-  });
+  // Fermeture du clavier
+  window.addEventListener('focusout', () => setKB(0));
 
-  // Rotation, navigation UI qui change la hauteur : on recalcule la baseline
+  // Rotation : on recalculera une nouvelle estimation
   window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-      baseline = window.innerHeight;
-      setKBFromResize();
-    }, 150);
+    setTimeout(() => { setKB(0); setKB(guessKeyboardPx()); }, 150);
   });
 })();
+
 
 
 

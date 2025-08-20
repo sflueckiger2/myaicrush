@@ -2047,6 +2047,14 @@ form label {
   display: block;
 }
 
+/* ✅ Version desktop */
+@media (min-width: 768px) {
+  .chat-video {
+    max-width: 350px !important;
+  } 
+}
+
+
 
 .loader-text {
   opacity: 0;
