@@ -28,7 +28,7 @@ async function checkOneClickEligibility(email) {
 
 
 let firstPhotoSent = false;
-const DAILY_MESSAGE_LIMIT = 8;
+const DAILY_MESSAGE_LIMIT = 12;
 
 // ✅ Récupère la date d’aujourd’hui
 const today = new Date().toISOString().split('T')[0];

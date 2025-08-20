@@ -2621,7 +2621,7 @@ vapi-widget {
   position:relative;
   margin:18px auto 28px;
   width:100%;
-  max-width:680px;   /* ✅ largeur max pour desktop */
+    max-width:480px;    /* ✅ largeur max pour desktop */
   aspect-ratio:16/9;
   border-radius:22px;
   isolation:isolate;
