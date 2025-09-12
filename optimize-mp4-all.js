@@ -81,31 +81,34 @@ console.log(`📂 Exploration du dossier : ${targetDir}`);
 
       // Args ffmpeg robustes + audio optionnelle
       const args = [
-        '-hide_banner', '-loglevel', 'error', '-nostdin',
-        '-y',
-        '-fflags', '+genpts',
-        // '-vsync', '2', // décommente si besoin d’un CFR forcé
-        '-i', tempInput,
+  '-hide_banner', '-loglevel', 'error', '-nostdin',
+  '-y',
+  '-fflags', '+genpts',
+  // '-vsync', '2', // décommente si besoin d’un CFR forcé
+  '-i', tempInput,
 
-        // ✅ Map explicite : vidéo obligatoire, audio optionnelle
-        '-map', '0:v:0',
-        '-map', '0:a:0?',
+  // ✅ Map explicite : vidéo obligatoire, audio optionnelle
+  '-map', '0:v:0',
+  '-map', '0:a:0?',
 
-        // Vidéo
-        '-c:v', 'libx264',
-        '-preset', 'slow',
-        '-crf', '26',
-        '-vf', "scale=w=720:h=-2:flags=lanczos:force_original_aspect_ratio=decrease",
-        '-pix_fmt', 'yuv420p',
-        '-movflags', '+faststart',
+  // Vidéo
+  '-c:v', 'libx264',
+  '-preset', 'slow',
+  '-crf', '26',
 
-        // Audio (sera ignoré s’il n’y a pas d’audio mappée)
-        '-c:a', 'aac',
-        '-b:a', '96k',
+  // 🔧 Redimensionne (max 720 de large) puis force dimensions paires
+  '-vf', "scale=w=720:h=-2:flags=lanczos:force_original_aspect_ratio=decrease,setsar=1,scale=trunc(iw/2)*2:trunc(ih/2)*2",
 
-        // Sortie
-        outputFile,
-      ];
+  '-pix_fmt', 'yuv420p',
+  '-movflags', '+faststart',
+
+  // Audio (ignorée s’il n’y a pas de piste)
+  '-c:a', 'aac',
+  '-b:a', '96k',
+
+  // Sortie
+  outputFile,
+];
 
       await execFileAsync(ffmpegPath, args);
 
