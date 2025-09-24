@@ -1,4 +1,4 @@
-// optimize-mp4-all.js (durci & audio optionnelle).
+// optimize-mp4-all.js (profil selon le nom du dossier ; audio off + 500px si dossier contient un chiffre, sinon audio on + 1080px)
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
@@ -16,6 +16,14 @@ const targetDir = path.resolve(__dirname, 'public/images');
 const backupDir = path.resolve(__dirname, 'public/backup');
 
 console.log(`📂 Exploration du dossier : ${targetDir}`);
+
+const hasDigitInAnyFolder = (absFilePath) => {
+  const rel = path.relative(targetDir, absFilePath);
+  const dir = path.dirname(rel); // ex: "alex1/sub"
+  if (!dir || dir === '.' ) return false;
+  const parts = dir.split(path.sep).filter(Boolean);
+  return parts.some(p => /\d/.test(p));
+};
 
 (async () => {
   if (!fs.existsSync(ffmpegPath)) {
@@ -75,40 +83,48 @@ console.log(`📂 Exploration du dossier : ${targetDir}`);
       return;
     }
 
+    // Choix du profil selon le dossier
+    const isDigitFolder = hasDigitInAnyFolder(file);
+    const maxWidth = isDigitFolder ? 500 : 1080;
+    const removeAudio = isDigitFolder; // audio off si dossier avec chiffre
+
     try {
       // Libère le nom cible
       await renameAsync(file, tempInput);
 
-      // Args ffmpeg robustes + audio optionnelle
+      // Args ffmpeg (identiques) avec variations de width/audio selon le profil
       const args = [
-  '-hide_banner', '-loglevel', 'error', '-nostdin',
-  '-y',
-  '-fflags', '+genpts',
-  // '-vsync', '2', // décommente si besoin d’un CFR forcé
-  '-i', tempInput,
+        '-hide_banner', '-loglevel', 'error', '-nostdin',
+        '-y',
+        '-fflags', '+genpts',
+        // '-vsync', '2', // décommente si besoin d’un CFR forcé
+        '-i', tempInput,
 
-  // ✅ Map explicite : vidéo obligatoire, audio optionnelle
-  '-map', '0:v:0',
-  '-map', '0:a:0?',
+        // Mapping vidéo obligatoire
+        '-map', '0:v:0',
 
-  // Vidéo
-  '-c:v', 'libx264',
-  '-preset', 'slow',
-  '-crf', '26',
+        // Vidéo
+        '-c:v', 'libx264',
+        '-preset', 'slower',
+        '-crf', '27',
 
-  // 🔧 Redimensionne (max 720 de large) puis force dimensions paires
-  '-vf', "scale=w=720:h=-2:flags=lanczos:force_original_aspect_ratio=decrease,setsar=1,scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        // 🔧 Redimensionne (max X de large) puis force dimensions paires
+        '-vf', `scale=w=${maxWidth}:h=-2:flags=lanczos:force_original_aspect_ratio=decrease,setsar=1,scale=trunc(iw/2)*2:trunc(ih/2)*2`,
 
-  '-pix_fmt', 'yuv420p',
-  '-movflags', '+faststart',
+        '-pix_fmt', 'yuv420p',
+        '-movflags', '+faststart',
+      ];
 
-  // Audio (ignorée s’il n’y a pas de piste)
-  '-c:a', 'aac',
-  '-b:a', '96k',
+      if (removeAudio) {
+        // 🚫 Audio supprimée pour dossiers avec chiffre
+        args.push('-an');
+      } else {
+        // 🔊 On laisse le son (copie si présent)
+        args.push('-map', '0:a:0?', '-c:a', 'copy');
+      }
 
-  // Sortie
-  outputFile,
-];
+      // Sortie
+      args.push(outputFile);
 
       await execFileAsync(ffmpegPath, args);
 
@@ -119,7 +135,7 @@ console.log(`📂 Exploration du dossier : ${targetDir}`);
       }
 
       await moveToBackup(tempInput, file);
-      console.log(`✅ Vidéo optimisée : ${outputFile}`);
+      console.log(`✅ Vidéo optimisée (${isDigitFolder ? 'folder=✓digit → audio off, 500px' : 'folder=no-digit → audio on, 1080px'}) : ${outputFile} — ${(outStat.size/1024).toFixed(0)} Ko`);
     } catch (err) {
       console.error(`❌ Erreur sur ${file} : ${err.message || err}`);
 
@@ -142,5 +158,5 @@ console.log(`📂 Exploration du dossier : ${targetDir}`);
     await processVideo(f);
   }
 
-  console.log('🎉 Optimisation MP4 terminée (robuste + audio optionnelle).');
+  console.log('🎉 Optimisation MP4 terminée (règles par dossier).');
 })();
