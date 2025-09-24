@@ -1,4 +1,4 @@
-// optimize-mp4-all.js (durci & audio optionnelle)
+// optimize-mp4-all.js (durci & audio optionnelle).
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
