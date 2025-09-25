@@ -1049,8 +1049,8 @@ console.log(`🔄 Niveau utilisateur réinitialisé à 1.0 pour ${email}`);
     const history = userConversationHistory.get(email);
     history.push({ role, content });
   
-    if (history.length > 15) {
-      history.shift(); // ✅ Garde seulement les 15 derniers messages
+    if (history.length > 30) {
+      history.shift(); // ✅ Garde seulement les 30 derniers messages
     }
   
     userConversationHistory.set(email, history);
