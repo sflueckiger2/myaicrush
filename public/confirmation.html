@@ -8,6 +8,48 @@
   <title>Confirmation d'achat</title>
   <link rel="stylesheet" href="styles.css">
 
+<!-- TikTok Pixel base (si non inclus via layout commun) -->
+<script>
+!function (w,d,t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+  ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
+  ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat([].slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+  ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
+  ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";
+    n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src=r+"?sdkid="+e+"&lib="+t;
+    e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+  ttq.load('D3F46ERC77UCTDLGVG9G');  // <-- ton Pixel ID
+  ttq.page();
+}(window,document,'ttq');
+</script>
+
+<!-- Event Purchase TikTok avec les mêmes paramètres que FB/GA -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var params    = new URLSearchParams(location.search);
+  var amount    = parseFloat(params.get('amount') || '30');   // même logique que FB
+  var plan      = (params.get('plan') || 'quarterly').toLowerCase();
+  var sessionId = params.get('session_id') || '';             // utile comme order_id
+  var sku       = plan === 'annual' ? 'premium_annual' : 'premium_quarterly';
+
+  if (window.ttq && !Number.isNaN(amount)) {
+    ttq.track('CompletePayment', {
+      value: amount,
+      currency: 'EUR',
+      contents: [{ id: sku, quantity: 1 }],
+      content_type: 'product',
+      order_id: sessionId  // facultatif mais pratique pour la dédup & debug
+    });
+    console.log('🎯 TikTok CompletePayment envoyé', { amount, plan, sessionId });
+  } else {
+    console.warn('⚠️ TikTok ttq non dispo ou amount invalide');
+  }
+});
+</script>
+
+
+
+
 <!-- Google Analytics (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
 <script>
