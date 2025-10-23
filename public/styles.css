@@ -1515,12 +1515,7 @@ input:checked + .slider:before {
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
-/* 🟢 Bordure lumineuse verte pour "🎥 Vidéos disponibles" */
-.chat-card.hasVideos {
-  border: 3px solid #28a745;
-  box-shadow: 0px 0px 15px rgba(40, 167, 69, 0.8);
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
+
 
 /* ✅ Effet lumineux renforcé au survol */
 .chat-card.new:hover {
@@ -1680,12 +1675,7 @@ input:checked + .slider:before {
 }
 
 
-/* 🟣 Bordure lumineuse violette pour "🥵 Mode Nympho disponible" */
-.chat-card.nympho {
-  border: 3px solid #8a2be2;
-  box-shadow: 0px 0px 15px rgba(138, 43, 226, 0.8);
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
+
 
 /* Effet lumineux renforcé au survol */
 .chat-card.nympho:hover {
@@ -1699,12 +1689,7 @@ input:checked + .slider:before {
   background-color: #007bff; /* Bleu lumineux */
 }
 
-/* 🔵 Bordure lumineuse bleue pour "🔊 Appel audio disponible" */
-.chat-card.callAudio {
-  border: 3px solid #007bff;
-  box-shadow: 0px 0px 15px rgba(0, 123, 255, 0.8);
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
+
 
 /* Effet lumineux renforcé au survol */
 .chat-card.callAudio:hover {

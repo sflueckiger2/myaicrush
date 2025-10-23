@@ -943,7 +943,7 @@ app.get('/auth/google/callback', async (req, res) => {
       console.log('Utilisateur Google authentifié :', userEmail);
 
       // Déterminer l'URL de redirection
-      const redirectUrl = isNewUser ? `${BASE_URL}/confirmation-lead.html` : `${BASE_URL}/index.html`;
+      const redirectUrl = isNewUser ? `${BASE_URL}/index.html` : `${BASE_URL}/index.html`;
 
       // Réponse HTML avec un script pour stocker l'utilisateur dans localStorage et rediriger
       res.send(`

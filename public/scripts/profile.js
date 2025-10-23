@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // 🚀 Vérifier si c'est un nouvel utilisateur
           if (data.isNewUser) {
-            window.location.href = 'confirmation-lead.html'; // Page de confirmation
+            window.location.href = 'index.html'; // Page de confirmation
           } else {
             window.location.href = 'index.html'; // Page d'accueil normale
           }
