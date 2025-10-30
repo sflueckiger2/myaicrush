@@ -1106,7 +1106,7 @@ if (isNymphoMode) {
     if (userLevel < 1.3) {
         levelFolder = `${sanitizedCharacterName}1`; // Little Crush
     } else if (userLevel < 1.5) {
-        levelFolder = `${sanitizedCharacterName}2`; // Big Crush
+        levelFolder = `${sanitizedCharacterName}3`; // Big Crush
     } else {
         levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
     }
