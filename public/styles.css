@@ -2682,3 +2682,32 @@ vapi-widget {
   .hero-media::after{ border-radius:18px; }
   .hero-video, .hero-media .vignette{ border-radius:16px; }
 }
+
+
+
+
+
+
+/* Le cadenas est poussé complètement à droite */
+.chat-lock-link {
+  margin-left: auto;
+  margin-right: 12px; /* espace à droite */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(221, 77, 157, 0.15); /* halo rose léger */
+  padding: 4px;
+}
+
+.chat-lock-link:hover {
+  background: rgba(221, 77, 157, 0.25);
+}
+
+.chat-lock-icon {
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
+}

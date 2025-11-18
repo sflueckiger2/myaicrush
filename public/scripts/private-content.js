@@ -47,8 +47,6 @@ async function loadUnlockedContents() {
 }
 
 // ✅ Fonction pour débloquer un contenu privé
-
-// ✅ Fonction pour débloquer un contenu privé
 async function handlePrivateUnlock(price, folder) {
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -58,7 +56,29 @@ async function handlePrivateUnlock(price, folder) {
     return false;
   }
 
-  const priceInt = parseInt(price);
+  // ✅ 1) Vérifier que l'utilisateur est PREMIUM
+  try {
+    const premiumRes = await fetch('/api/is-premium', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email })
+    });
+
+    const { isPremium } = await premiumRes.json();
+
+    if (!isPremium) {
+      alert('Les contenus privés sont réservés à nos abonnés Premium.');
+      window.location.href = '/premium.html';
+      return false;
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors de la vérification Premium :', err);
+    alert("Impossible de vérifier votre statut Premium. Veuillez réessayer.");
+    return false;
+  }
+
+  // 🪙 2) À partir d’ici : on sait qu’il est Premium → logique jetons comme avant
+  const priceInt = parseInt(price, 10);
 
   try {
     // ⚡️ Étape 1 : check rapide des jetons
@@ -102,7 +122,7 @@ async function handlePrivateUnlock(price, folder) {
 
     if (data.success) {
       console.log(`✅ Contenu débloqué : ${folder}, nouveaux jetons : ${data.newTokens}`);
-      document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque le loader
+      document.getElementById("loader-overlay")?.classList.add("hidden");
       return true;
     }
 
@@ -115,7 +135,7 @@ async function handlePrivateUnlock(price, folder) {
       });
 
       const eligibleData = await eligibleRes.json();
-      document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque le loader
+      document.getElementById("loader-overlay")?.classList.add("hidden");
 
       if (eligibleData.eligible) {
         openJetonsPopup();
@@ -124,16 +144,17 @@ async function handlePrivateUnlock(price, folder) {
       }
     }
 
-    document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque au cas où
+    document.getElementById("loader-overlay")?.classList.add("hidden");
     return false;
 
   } catch (error) {
     console.error('❌ Erreur lors du déblocage :', error);
-    document.getElementById("loader-overlay")?.classList.add("hidden"); // ✅ Masque le loader
+    document.getElementById("loader-overlay")?.classList.add("hidden");
     alert("Impossible de débloquer ce contenu.");
     return false;
   }
 }
+
 
 
 // ✅ Crée les nouvelles cartes style Candy

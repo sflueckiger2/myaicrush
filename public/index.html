@@ -78,27 +78,34 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 
         <!-- Zone de chat -->
         <div id="chat-box" style="display: none;">
-          <div id="chat-header">
-            <button id="back-btn">
-              <i class="fa fa-arrow-left"></i>
-            </button>
+         
+<div id="chat-header">
+  <button id="back-btn">
+    <i class="fa fa-arrow-left"></i>
+  </button>
 
-            <!-- ✅ Affichage d'une image temporaire pendant le chargement -->
-            <img id="chat-profile-pic" 
-                src="images/loading-placeholder.webp" 
-                data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
-                alt="Profil sélectionné" 
-                class="chat-profile-pic lazyload">
-                
-              
-                <button id="audio-call-btn" class="audio-call-btn">
-                  <i class="fa fa-phone"></i>
-                </button>
-                
-                <span id="chat-name">Nom de l'IA</span>
-                
+  <!-- Photo de profil -->
+  <img id="chat-profile-pic" 
+       src="images/loading-placeholder.webp" 
+       data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
+       alt="Profil sélectionné" 
+       class="chat-profile-pic lazyload">
 
-          </div>
+  <!-- Bouton appel audio -->
+  <button id="audio-call-btn" class="audio-call-btn">
+    <i class="fa fa-phone"></i>
+  </button>
+
+  <!-- Nom de l'IA (reste à gauche, proche du téléphone) -->
+  <span id="chat-name">Nom de l'IA</span>
+
+  <!-- Cadenas tout à droite -->
+  <a href="contenu-prive.html" class="chat-lock-link" title="Contenus privés">
+    <img src="images/market/cadenas-coeur.webp" alt="Contenu privé" class="chat-lock-icon">
+  </a>
+</div>
+
+
           <!-- ✅ Toggle Mode Images/GIFs -->
     <div id="mode-toggle-container">
       <span>📸 Images</span>
