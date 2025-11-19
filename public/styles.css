@@ -2711,3 +2711,63 @@ vapi-widget {
   height: 35px;
   object-fit: contain;
 }
+
+/* ===== Loader branding MyAiCrush ===== */
+
+.loader-brand {
+  margin-top: 16px;
+  text-align: center;
+  animation: loaderFadeUp 0.8s ease-out 0.3s both;
+}
+
+.loader-logo {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  /* Dégradé dans les tons MyAiCrush */
+  background: linear-gradient(120deg, #ff77c8, #dd4d9d, #ffb4e0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(221, 77, 157, 0.45);
+  animation: loaderGlow 1.8s ease-in-out infinite alternate;
+
+}
+
+.loader-subtitle {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f5dff0;
+  opacity: 0.9;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Petite anim de slide + fade pour le bloc marque */
+@keyframes loaderFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Optionnel : un léger glow pulsé sur le logo pour matcher le cœur animé */
+@keyframes loaderGlow {
+  0% {
+    text-shadow: 0 0 8px rgba(221, 77, 157, 0.35);
+  }
+  50% {
+    text-shadow: 0 0 16px rgba(221, 77, 157, 0.7);
+  }
+  100% {
+    text-shadow: 0 0 8px rgba(221, 77, 157, 0.35);
+  }
+}
+
