@@ -570,15 +570,20 @@ app.post('/api/generate-reset-token', async (req, res) => {
 
         const user = await users.findOne({ email });
 
+        // ❗ Pour ne pas dévoiler si un compte existe ou pas,
+        // on renvoie le même message, mais on n'envoie l'email
+        // QUE si l'utilisateur existe vraiment.
         if (!user) {
-            return res.status(404).json({ message: "Utilisateur non trouvé." });
+            console.log("⚠️ Demande de reset pour un email inconnu :", email);
+            return res.json({
+                message: "Si un compte existe avec cette adresse e-mail, un lien de réinitialisation t’a été envoyé par email. Il peut parfois mettre quelques minutes à arriver."
+            });
         }
 
-        // Générer un token aléatoire
+        // 🎲 Générer le token + expiration
         const token = crypto.randomBytes(20).toString('hex');
-        const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heure
+        const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
-        // Enregistrer dans MongoDB
         await users.updateOne(
             { email },
             {
@@ -589,14 +594,55 @@ app.post('/api/generate-reset-token', async (req, res) => {
             }
         );
 
-        // 💡 Afficher le lien dans la console
-        console.log(`🔗 Lien de reset : ${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(email)}&token=${token}`);
+        const resetUrl = `${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(email)}&token=${token}`;
 
-        res.json({ message: "Token généré.", token });
+        console.log(`🔗 Lien de reset généré : ${resetUrl}`);
+        console.log("BREVO_API_KEY chargée ?", !!process.env.BREVO_API_KEY);
+
+        // 📧 Envoi email via BREVO
+        const brevoPayload = {
+            sender: {
+                email: process.env.RESET_FROM_EMAIL || "contact@myaicrush.ai",
+                name: process.env.RESET_FROM_NAME || "MyAiCrush"
+            },
+            to: [{ email }],
+            subject: "Réinitialisation de ton mot de passe MyAiCrush 💗",
+            htmlContent: `
+                <p>Bonjour,</p>
+                <p>Tu as demandé à réinitialiser ton mot de passe sur <strong>MyAiCrush</strong>.</p>
+                <p>Clique sur ce lien pour choisir un nouveau mot de passe (valable 24h) :</p>
+                <p><a href="${resetUrl}">${resetUrl}</a></p>
+                <p>Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.</p>
+            `
+        };
+
+        console.log("📤 Envoi à Brevo avec ce payload :", brevoPayload);
+
+        const brevoResponse = await axios.post(
+            "https://api.brevo.com/v3/smtp/email",
+            brevoPayload,
+            {
+                headers: {
+                    "api-key": process.env.BREVO_API_KEY,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        console.log("✅ Réponse Brevo :", brevoResponse.data);
+
+        return res.json({
+            message: "Si un compte existe avec cette adresse e-mail, un lien de réinitialisation t’a été envoyé par email. Il peut parfois mettre quelques minutes à arriver."
+        });
 
     } catch (err) {
-        console.error("❌ Erreur génération token :", err);
-        res.status(500).json({ message: "Erreur serveur." });
+        console.error("❌ Erreur génération token / envoi Brevo :", err.response?.data || err.message);
+
+        // TEMPORAIREMENT : on renvoie l'erreur pour debug
+        return res.status(500).json({
+            message: "Erreur lors de l'envoi de l'email de réinitialisation.",
+            brevoError: err.response?.data || null
+        });
     }
 });
 
