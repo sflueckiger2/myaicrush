@@ -241,17 +241,15 @@ video.chat-profile-pic {
   -webkit-overflow-scrolling: touch;
   padding: 10px 10px 14px;
   margin-bottom: 0;
-  /* 👇 réserve la place pour la barre + clavier */
-  padding-bottom: calc(var(--input-h) + var(--kb) + env(safe-area-inset-bottom));
+  /* 👇 réserve la place pour la barre + clavier + quick replies */
+  padding-bottom: calc(var(--input-h) + var(--kb) + env(safe-area-inset-bottom) + 60px);
   box-shadow: inset 0 0 8px rgba(255,255,255,0.02);
 }
 
 
 
-#messages {
-  position: relative;
-  z-index: 1;
-}
+
+
 
 .user-message, .bot-message {
   max-width: 70%;
@@ -2771,3 +2769,29 @@ vapi-widget {
   }
 }
 
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px; /* <-- 4px -> 12px */
+}
+
+
+.quick-reply-btn {
+  flex: 0 0 auto;       /* évite que les boutons se compressent bizarrement */
+  background: #1f2933;
+  border: 1px solid #dd4d9d;
+  color: #fff;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 100%;      /* sécurité au cas où le texte est long */
+  white-space: normal;  /* permet de passer à la ligne si besoin */
+  margin-bottom: 50px;
+  margin-left: 10px;
+}
+
+.quick-reply-btn:hover {
+  background: #dd4d9d;
+}

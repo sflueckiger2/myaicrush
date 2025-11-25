@@ -226,6 +226,8 @@ function trackCharacterSelection(characterName) {
 
 export function addUserMessage(userMessage, messagesContainer, scrollToBottomCallback) {
     if (userMessage.trim() !== '') {
+
+        // Affichage du message utilisateur
         const messageElement = document.createElement('div');
         messageElement.textContent = userMessage;
         messageElement.classList.add('user-message');
@@ -241,15 +243,15 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             return;
         }
 
-        // ✅ Afficher l'indicateur de saisie immédiatement
+        // Afficher l'indicateur de saisie
         showTypingIndicator(messagesContainer);
 
-        console.log("📨 Envoi du message avec :", { 
-            message: userMessage, 
-            email: user?.email 
+        console.log("📨 Envoi du message avec :", {
+            message: userMessage,
+            email: user?.email
         });
-        
-        // Vérifier si l'utilisateur est premium
+
+        // Vérifier statut premium
         fetch(`${BASE_URL}/api/is-premium`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -260,72 +262,88 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             return response.json();
         })
         .then(({ isPremium }) => {
+
+            // Limite messages non-premium
             if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
                 addBotMessage(
-                    `Tu as dépassé ta limite de messages gratuits. <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">Deviens un membre Premium</a> pour débloquer les messages illimités.`,
+                    `Tu as dépassé ta limite de messages gratuits. 
+                     <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
+                     Deviens Premium</a> pour débloquer les messages illimités.`,
                     messagesContainer
                 );
-                hideTypingIndicator(); // ✅ Masquer immédiatement si on ne peut pas envoyer
+                hideTypingIndicator();
                 return;
             }
 
-            // Appel principal au serveur
+            // Appel principal au backend IA
             fetch(`${BASE_URL}/message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    message: userMessage, 
-                    email: user?.email, 
-                    mode: localStorage.getItem("chatMode") || "image" ,
+                body: JSON.stringify({
+                    message: userMessage,
+                    email: user?.email,
+                    mode: localStorage.getItem("chatMode") || "image",
                     nymphoMode: localStorage.getItem("nymphoMode") === "true"
-
                 }),
             })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 console.log("🔍 Réponse reçue du serveur :", data);
 
-                // ✅ Masquer l'indicateur SEULEMENT maintenant
                 hideTypingIndicator();
 
+                // Mise à jour de niveau (popup)
                 if (data.levelUpdateMessage && data.levelUpdateType) {
                     showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
                 }
 
+                // Message texte ou image
                 if (data.imageUrl) {
-    addBotImageMessage(
-        data.reply,
-        data.imageUrl,
-        isPremium,
-        messagesContainer,
-        data.isBlurred,
-        data.mediaType // ✅ on transmet le type ici
-    );
-}
-
-                else {
+                    addBotImageMessage(
+                        data.reply,
+                        data.imageUrl,
+                        isPremium,
+                        messagesContainer,
+                        data.isBlurred,
+                        data.mediaType
+                    );
+                } else {
                     addBotMessage(data.reply, messagesContainer);
                 }
 
-               if (!isPremium) {
-    dailyMessageCount++;
-    localStorage.setItem("dailyMessageCount", dailyMessageCount);
-}
+                // 🔥🔥🔥 GESTION DES RÉPONSES SUGGÉRÉES (QUICK REPLIES)
+                console.log("👉 Réponses suggérées (quickReplies) :", data.quickReplies);
 
+                if (typeof renderQuickReplies === 'function' && typeof hideQuickReplies === 'function') {
+                    if (Array.isArray(data.quickReplies) && data.quickReplies.length > 0) {
+                        renderQuickReplies(data.quickReplies);
+                    } else {
+                        hideQuickReplies();
+                    }
+                }
+                // 🔥🔥🔥 FIN QUICK REPLIES
+
+
+                // Incrémentation messages non premium
+                if (!isPremium) {
+                    dailyMessageCount++;
+                    localStorage.setItem("dailyMessageCount", dailyMessageCount);
+                }
 
                 if (typeof scrollToBottomCallback === 'function') {
                     scrollToBottomCallback(messagesContainer);
                 }
             })
             .catch(error => {
-                console.error('Erreur lors de l\'envoi du message:', error);
-                hideTypingIndicator(); // ✅ Masquer en cas d'erreur
+                console.error("❌ Erreur lors de l'envoi du message:", error);
+                hideTypingIndicator();
                 addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
             });
+
         })
         .catch(error => {
-            console.error('Erreur lors de la vérification du statut premium:', error);
-            hideTypingIndicator(); // ✅ Masquer en cas d'erreur
+            console.error('❌ Erreur lors de la vérification premium :', error);
+            hideTypingIndicator();
             addBotMessage('Erreur lors de la vérification du statut premium. Merci de réessayer.', messagesContainer);
         });
     }
@@ -835,6 +853,28 @@ if (callButton) {
     }
 
 
+        // 🆕 Quick reply de départ basée sur le personnage
+    const userForQR = JSON.parse(localStorage.getItem("user"));
+    if (userForQR && userForQR.email) {
+      fetch(`${BASE_URL}/quick-replies-initial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userForQR.email,
+          characterName: characterName
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log("👉 Quick reply initiale reçue :", data.quickReplies);
+          if (Array.isArray(data.quickReplies) && data.quickReplies.length > 0) {
+            renderQuickReplies(data.quickReplies); // utilise déjà tes boutons
+          }
+        })
+        .catch(err => console.error("❌ Erreur quick-replies-initial :", err));
+    }
+
+
                 // ✅ Gestion de l'affichage du chat
                 document.querySelector('.chat-options').style.display = 'none';
                 document.getElementById('chat-box').style.display = 'flex';
@@ -1309,3 +1349,40 @@ async function speakMessage(text) {
 
 
 
+function renderQuickReplies(suggestions = []) {
+  const container = document.getElementById("quick-replies");
+  const messagesContainer = document.getElementById("messages");
+
+  if (!container || !messagesContainer) return;
+
+  // Rien à afficher → on cache
+  if (!Array.isArray(suggestions) || suggestions.length === 0) {
+    hideQuickReplies();
+    return;
+  }
+
+  container.innerHTML = "";
+
+  suggestions.forEach((text) => {
+    const btn = document.createElement("button");
+    btn.className = "quick-reply-btn";
+    btn.textContent = text;
+
+    btn.addEventListener("click", () => {
+      // Comme si l'utilisateur écrivait lui-même
+      addUserMessage(text, messagesContainer, scrollToBottom);
+      hideQuickReplies();
+    });
+
+    container.appendChild(btn);
+  });
+
+  container.classList.remove("hidden");
+}
+
+function hideQuickReplies() {
+  const container = document.getElementById("quick-replies");
+  if (!container) return;
+  container.classList.add("hidden");
+  container.innerHTML = "";
+}

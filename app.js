@@ -1563,6 +1563,108 @@ app.post('/api/check-nympho-status', async (req, res) => {
 });
 
   
+// 🔥 Génération dynamique de réponses suggérées via Fireworks
+async function generateDynamicQuickReplies({ lastUserMessage, botReply, userCharacter, isNymphoMode }) {
+  try {
+    const systemPrompt = `
+Tu es une IA (masculine) expert en séduction qui aide un utilisateur à savoir quoi répondre ensuite dans un chat intime.
+
+Contexte :
+- Message de l'utilisateur : "${lastUserMessage}"
+- Réponse actuelle de l'IA (${userCharacter.name}) : "${botReply}"
+
+Consignes :
+- Propose une réponse possible que l'utilisateur pourrait envoyer ensuite.
+- Ton : flirt, taquin, sexy, vulgaire
+- Style : naturel, francophone, comme un vrai humain qui drague par message.
+- Maximum 18 mots par réponse.
+- Uniquement en français.
+- Pas de numérotation, pas d'explication autour.
+- Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
+`;
+
+    const fwRes = await axios.post(
+      'https://api.fireworks.ai/inference/v1/chat/completions',
+      {
+        model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
+        messages: [
+          { role: "system", content: systemPrompt }
+        ],
+        max_tokens: 200,
+        temperature: isNymphoMode ? 1.1 : 0.9,
+        top_p: 1.0
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+      }
+    );
+
+    let raw = (fwRes.data.choices?.[0]?.message?.content || "").trim();
+    console.log("🧠 QuickReplies brut Fireworks :", raw);
+
+    // 🔍 Essai de parse du JSON
+    let suggestions = [];
+    try {
+      suggestions = JSON.parse(raw);
+    } catch (e) {
+      console.warn("⚠️ Impossible de parser le JSON des quickReplies :", e);
+      return [];
+    }
+
+    if (!Array.isArray(suggestions)) return [];
+
+    // Nettoyage & limitation
+    return suggestions
+      .filter(s => typeof s === "string" && s.trim().length > 0)
+      .map(s => s.trim())
+      .slice(0, 1);
+
+  } catch (err) {
+    console.error("❌ Erreur generateDynamicQuickReplies :", err);
+    return []; // Pas bloquant
+  }
+}
+
+
+// 🆕 Quick replies pour le tout début de la conversation
+app.post('/quick-replies-initial', async (req, res) => {
+  try {
+    const { email, characterName } = req.body;
+
+    if (!email || !characterName) {
+      return res.status(400).json({ quickReplies: [] });
+    }
+
+    // On récupère le personnage à partir du JSON
+    const userCharacter = characters.find(c => c.name === characterName);
+    if (!userCharacter) {
+      console.warn("⚠️ Personnage introuvable pour quick-replies initiales :", characterName);
+      return res.json({ quickReplies: [] });
+    }
+
+    // On utilise la mise en situation (ethnicity) comme "réponse de l'IA"
+    const botReplyContext =
+      userCharacter.ethnicity ||
+      userCharacter.description ||
+      "";
+
+    const quickReplies = await generateDynamicQuickReplies({
+      lastUserMessage: "Début de conversation, l'utilisateur n'a encore rien envoyé.",
+      botReply: botReplyContext,
+      userCharacter,
+      isNymphoMode: false
+    });
+
+    return res.json({ quickReplies: quickReplies || [] });
+  } catch (err) {
+    console.error("❌ Erreur /quick-replies-initial :", err);
+    return res.status(500).json({ quickReplies: [] });
+  }
+});
+
 
 
 // Endpoint principal pour gérer les messages
@@ -2053,6 +2155,7 @@ function ajusterReponse(reponse) {
 
 
 
+
 // 🔥 Modifier la réponse de l'IA avant de l'envoyer à l'utilisateur
 let botReply = response.data.choices[0].message.content.trim();
 const ajustement = ajusterReponse(botReply);
@@ -2060,8 +2163,16 @@ botReply = ajustement.reponse;
 const forcePhoto = ajustement.forcePhoto;
 
 
+
 console.log("💬 Réponse finale envoyée :", botReply);
 
+// 🧠 Génération dynamique des réponses suggérées
+const quickReplies = await generateDynamicQuickReplies({
+  lastUserMessage: message,
+  botReply,
+  userCharacter,
+  isNymphoMode
+});
 
       
 
@@ -2120,12 +2231,19 @@ botReply = botReply.replace(/\[VIDEO.*?\]/gi, "").trim();
 
 
         // Préparer la réponse JSON
-        let responseData = { reply: botReply };
+       let responseData = { reply: botReply, quickReplies };
+
 
         if (levelUpdate) {
             responseData.levelUpdateMessage = levelUpdate.message;
             responseData.levelUpdateType = levelUpdate.type;
         }
+
+        // 🔁 Ajouter les réponses suggérées si dispo
+if (quickReplies && quickReplies.length > 0) {
+  responseData.quickReplies = quickReplies;
+}
+
 
         // Ajouter une image sécurisée si une photo doit être envoyée
         if (sendPhoto) {
