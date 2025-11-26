@@ -408,18 +408,19 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
     // ✅ Ajouter le texte + le bouton au message
     messageElement.appendChild(messageContent);
 
-    const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add('voice-button-container'); // On ajoute une classe pour mieux le styler
-    buttonContainer.appendChild(voiceButton);
+const buttonContainer = document.createElement('div');
+buttonContainer.classList.add('voice-button-container');
+buttonContainer.appendChild(voiceButton);
 
-    messagesContainer.appendChild(messageElement);
-    
-    // 🔥 Ne pas ajouter le bouton voix si c'est un message d'avertissement
-    if (!isWarning) {
-        messagesContainer.appendChild(buttonContainer);
-    }
+// 🔥 Le bouton au-dessus du message IA
+if (!isWarning) {
+    messagesContainer.appendChild(buttonContainer);
+}
 
-    scrollToBottom(messagesContainer);
+messagesContainer.appendChild(messageElement);
+
+scrollToBottom(messagesContainer);
+
 }
 
 
@@ -467,14 +468,16 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     }
 
     // ✅ Ajouter le texte + le bouton dans le message
-    messageElement.appendChild(messageContent);
+messageElement.appendChild(messageContent);
 
 const buttonContainer = document.createElement('div');
-buttonContainer.classList.add('voice-button-container'); // On ajoute une classe pour mieux le styler
+buttonContainer.classList.add('voice-button-container');
 buttonContainer.appendChild(voiceButton);
 
+// 🔥 Le bouton au-dessus du message IA
+messagesContainer.appendChild(buttonContainer);
 messagesContainer.appendChild(messageElement);
-messagesContainer.appendChild(buttonContainer); // 🔥 On place le bouton en dessous
+
 
 
     // ✅ Ajouter l'image en dessous du texte
@@ -582,7 +585,7 @@ if (isVideo) {
 
     }
 
-    messagesContainer.appendChild(messageElement);
+    
     scrollToBottom(messagesContainer);
 }
 
