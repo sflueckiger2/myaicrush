@@ -2769,28 +2769,44 @@ vapi-widget {
   }
 }
 
+/* Bandeau de réponses suggérées, toujours au-dessus de la barre d'input */
 .quick-replies {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--kb, 0px) + var(--input-h, 64px)); /* toujours au-dessus du input-area */
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;          /* tout sur une seule ligne */
+  overflow-x: auto;           /* scroll horizontal si ça déborde */
   gap: 6px;
-  margin: 8px 0 12px; /* <-- 4px -> 12px */
+  padding: 6px 10px 8px;
+
+  z-index: 1001;              /* au-dessus des messages, juste sous la barre */
+  scrollbar-width: none;      /* Firefox : cache la barre de scroll */
+}
+
+.quick-replies::-webkit-scrollbar {
+  display: none;              /* Chrome/Safari : cache la barre de scroll */
 }
 
 
+
 .quick-reply-btn {
-  flex: 0 0 auto;       /* évite que les boutons se compressent bizarrement */
+  flex: 0 0 auto;            /* taille selon le contenu */
   background: #1f2933;
   border: 1px solid #dd4d9d;
   color: #fff;
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 5px 12px;
   font-size: 12px;
   cursor: pointer;
-  max-width: 100%;      /* sécurité au cas où le texte est long */
-  white-space: normal;  /* permet de passer à la ligne si besoin */
-  margin-bottom: 50px;
-  margin-left: 10px;
+  max-width: 80vw;           /* ne dépasse jamais la largeur de l’écran */
+  white-space: normal;       /* autorise le retour à la ligne */
+  word-break: break-word;    /* coupe les mots très longs si besoin */
+  text-align: left;          /* plus naturel en multi-ligne */
 }
+
+
 
 .quick-reply-btn:hover {
   background: #dd4d9d;
