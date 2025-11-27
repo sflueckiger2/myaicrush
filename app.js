@@ -1577,7 +1577,7 @@ Consignes :
 - Propose une réponse possible que l'utilisateur pourrait envoyer ensuite.
 - Ton : flirt, taquin, sexy, vulgaire
 - Style : naturel, comme un vrai humain qui drague par message.
-- Maximum 18 mots par réponse.
+- Maximum 15 mots par réponse.
 - Pas de numérotation, pas d'explication autour.
 - Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
 `;
@@ -1601,31 +1601,46 @@ Consignes :
       }
     );
 
-    let raw = (fwRes.data.choices?.[0]?.message?.content || "").trim();
+    let rawContent = fwRes.data.choices?.[0]?.message?.content;
+
+    // 🔄 Fireworks peut renvoyer un tableau de segments → on compacte
+    if (Array.isArray(rawContent)) {
+      rawContent = rawContent.map(p => p.text || p.content || "").join(" ");
+    }
+
+    let raw = String(rawContent || "").trim();
     console.log("🧠 QuickReplies brut Fireworks :", raw);
 
-    // 🔍 Essai de parse du JSON
+    // 🔧 On enlève les ```json ``` éventuels
+    raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+    // 🔎 On isole la première liste JSON du texte (tout ce qui est entre [ ... ])
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (match) {
+      raw = match[0];
+    }
+
     let suggestions = [];
     try {
       suggestions = JSON.parse(raw);
     } catch (e) {
-      console.warn("⚠️ Impossible de parser le JSON des quickReplies :", e);
+      console.warn("⚠️ Impossible de parser le JSON des quickReplies après nettoyage :", e, "raw=", raw);
       return [];
     }
 
     if (!Array.isArray(suggestions)) return [];
 
-    // Nettoyage & limitation
     return suggestions
       .filter(s => typeof s === "string" && s.trim().length > 0)
       .map(s => s.trim())
-      .slice(0, 1);
+      .slice(0, 3); // 👈 prends-en 3 si tu veux plus d’options
 
   } catch (err) {
     console.error("❌ Erreur generateDynamicQuickReplies :", err);
-    return []; // Pas bloquant
+    return [];
   }
 }
+
 
 
 // 🆕 Quick replies pour le tout début de la conversation
@@ -1634,17 +1649,29 @@ app.post('/quick-replies-initial', async (req, res) => {
     const { email, characterName } = req.body;
 
     if (!email || !characterName) {
-      return res.status(400).json({ quickReplies: [] });
+      return res.status(400).json({
+        quickReplies: [
+          "Tu pensais à quoi en venant me parler ? 😏",
+          "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+          "Je t’écoute… tu veux quoi de moi ?"
+        ]
+      });
     }
 
     // On récupère le personnage à partir du JSON
     const userCharacter = characters.find(c => c.name === characterName);
     if (!userCharacter) {
       console.warn("⚠️ Personnage introuvable pour quick-replies initiales :", characterName);
-      return res.json({ quickReplies: [] });
+      return res.json({
+        quickReplies: [
+          "Tu pensais à quoi en venant me parler ? 😏",
+          "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+          "Je t’écoute… tu veux quoi de moi ?"
+        ]
+      });
     }
 
-    // On utilise la mise en situation (ethnicity) comme "réponse de l'IA"
+    // Mise en situation (ethnicity) utilisée comme contexte
     const botReplyContext =
       userCharacter.ethnicity ||
       userCharacter.description ||
@@ -1657,12 +1684,33 @@ app.post('/quick-replies-initial', async (req, res) => {
       isNymphoMode: false
     });
 
-    return res.json({ quickReplies: quickReplies || [] });
+    // 🔥 Fallback automatique si vide ou bug Fireworks
+    const fallbackReplies = [
+      "Tu pensais à quoi en venant me parler ? 😏",
+      "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+      "Je t’écoute… tu veux quoi de moi ?"
+    ];
+
+    return res.json({
+      quickReplies:
+        Array.isArray(quickReplies) && quickReplies.length > 0
+          ? quickReplies
+          : fallbackReplies
+    });
+
   } catch (err) {
     console.error("❌ Erreur /quick-replies-initial :", err);
-    return res.status(500).json({ quickReplies: [] });
+
+    return res.status(500).json({
+      quickReplies: [
+        "Tu pensais à quoi en venant me parler ? 😏",
+        "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+        "Je t’écoute… tu veux quoi de moi ?"
+      ]
+    });
   }
 });
+
 
 
 
@@ -1788,7 +1836,7 @@ if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
 
 Tu es une IA intime et joueuse.  
 
-**Réponds en 40 mots MAXIMUM.**  
+**Réponds en 30 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 
 Si tu envoies une photo, **ajoute exactement le tag "[PHOTO]" sur une nouvelle ligne à la fin du message**, sans modifier ni ajouter d'éléments.  
@@ -1805,7 +1853,7 @@ ${userCharacter.prompt.fullPromptNympho}
     // ✅ Mode normal : on garde la construction classique
     systemPrompt = `
 Tu es une IA intime et joueuse.  
-**Réponds en 40 mots MAXIMUM.**  
+**Réponds en 30 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 Si tu envoies une photo, **ajoute exactement le tag "[PHOTO]" sur une nouvelle ligne à la fin du message**, sans modifier ni ajouter d'éléments.  
 Si on te demande de jouer un rôle d’élève, de personne plus jeune ou de situation qui évoque une classe scolaire, tu refuses poliment.
