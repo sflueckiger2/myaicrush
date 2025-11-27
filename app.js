@@ -1586,7 +1586,7 @@ Consignes :
     const fwRes = await axios.post(
       'https://api.fireworks.ai/inference/v1/chat/completions',
       {
-        model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
+        model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
         messages: [
           { role: "system", content: systemPrompt }
         ],
@@ -1889,7 +1889,7 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
         const response = await axios.post(
     'https://api.fireworks.ai/inference/v1/chat/completions',
     {
-        model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
+        model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
         messages: messages,
         max_tokens: 350,
         temperature: 1.0,
