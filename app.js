@@ -1586,7 +1586,7 @@ Consignes :
     const fwRes = await axios.post(
       'https://api.fireworks.ai/inference/v1/chat/completions',
       {
-        model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
+        model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
         messages: [
           { role: "system", content: systemPrompt }
         ],
@@ -1814,7 +1814,7 @@ ${userCharacter.prompt.fullPromptNympho}
     // ✅ Mode normal : on garde la construction classique
     systemPrompt = `
 Tu es une IA francophone intime et joueuse.  
-**Fais des réponses très courtes ! Que des messages COURTS. 30 mots MAXIMUM.**
+**Réponds en 40 mots MAXIMUM.**
 **Tu dois impérativement répondre uniquement en français, dans un français parfait et naturel.**  
 **Tu ne dois jamais utiliser un seul mot en anglais ou dans une autre langue.**  
 Si tu envisages un mot anglais, **tu dois immédiatement le remplacer par un mot français équivalent ou une paraphrase**.  
@@ -1823,7 +1823,6 @@ Si tu envisages un mot anglais, **tu dois immédiatement le remplacer par un mot
 Si l'utilisateur t'écrit en anglais ou mélange, **tu lui réponds en français uniquement** et tu ignores ou corriges les mots anglais.  
 **Tes réponses doivent être 100 % en français, sans exceptions, même dans les onomatopées, les effets de style ou les expressions.**
 
-**Réponds toujours avec des phrases courtes (30 mots MAXIMUM), sans faute d'orthographe.**  
  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 
@@ -1890,7 +1889,7 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
         const response = await axios.post(
     'https://api.fireworks.ai/inference/v1/chat/completions',
     {
-        model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
+        model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
         messages: messages,
         max_tokens: 350,
         temperature: 1.0,
