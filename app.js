@@ -1563,7 +1563,7 @@ app.post('/api/check-nympho-status', async (req, res) => {
 });
 
   
-// 🔥 Génération dynamique de réponses suggérées via Fireworks
+// 🔥 Génération dynamique de réponses suggérées via Fireworks (robuste + fallback)
 async function generateDynamicQuickReplies({ lastUserMessage, botReply, userCharacter, isNymphoMode }) {
   try {
     const systemPrompt = `
@@ -1601,45 +1601,62 @@ Consignes :
       }
     );
 
-    let rawContent = fwRes.data.choices?.[0]?.message?.content;
-
-    // 🔄 Fireworks peut renvoyer un tableau de segments → on compacte
-    if (Array.isArray(rawContent)) {
-      rawContent = rawContent.map(p => p.text || p.content || "").join(" ");
-    }
-
-    let raw = String(rawContent || "").trim();
+    let raw = (fwRes.data.choices?.[0]?.message?.content || "").trim();
     console.log("🧠 QuickReplies brut Fireworks :", raw);
 
-    // 🔧 On enlève les ```json ``` éventuels
-    raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-
-    // 🔎 On isole la première liste JSON du texte (tout ce qui est entre [ ... ])
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (match) {
-      raw = match[0];
-    }
+    // 🔹 On enlève les éventuels ```json ... ```
+    raw = raw
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
     let suggestions = [];
+
+    // 🧪 1er essai : vrai JSON.parse (cas propre)
     try {
-      suggestions = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        suggestions = parsed;
+      }
     } catch (e) {
-      console.warn("⚠️ Impossible de parser le JSON des quickReplies après nettoyage :", e, "raw=", raw);
-      return [];
+      console.warn("⚠️ JSON.parse des quickReplies a échoué, tentative fallback regex…");
+
+      // 🧪 2ème essai : on récupère tous les textes entre guillemets
+      const matches = [...raw.matchAll(/"([^"]+)"/g)];
+      suggestions = matches.map(m => m[1].trim());
     }
 
-    if (!Array.isArray(suggestions)) return [];
-
-    return suggestions
+    // Nettoyage final
+    suggestions = suggestions
       .filter(s => typeof s === "string" && s.trim().length > 0)
       .map(s => s.trim())
-      .slice(0, 3); // 👈 prends-en 3 si tu veux plus d’options
+      .slice(0, 3); // max 3 quick replies
+
+    // 🎁 Fallback si Fireworks a vraiment tout foiré
+    if (!suggestions || suggestions.length === 0) {
+      const fallbackReplies = [
+        "Tu pensais à quoi en venant me parler ? 😏",
+        "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+        "Je t’écoute… tu veux quoi de moi ?"
+      ];
+      console.log("🔁 Fallback quickReplies utilisé (Fireworks vide ou invalide)");
+      return fallbackReplies;
+    }
+
+    return suggestions;
 
   } catch (err) {
     console.error("❌ Erreur generateDynamicQuickReplies :", err);
-    return [];
+
+    // 🧯 Fallback en cas d’erreur réseau/API
+    return [
+      "Tu pensais à quoi en venant me parler ? 😏",
+      "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+      "Je t’écoute… tu veux quoi de moi ?"
+    ];
   }
 }
+
 
 
 
