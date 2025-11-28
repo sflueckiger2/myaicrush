@@ -1785,7 +1785,8 @@ app.post('/message', async (req, res) => {
     console.log("📥 Requête reçue - Body :", req.body);
 
     try {
-        let { message, email, mode, nymphoMode } = req.body;
+       let { message, email, mode, nymphoMode, history } = req.body;
+
       
 
 
@@ -1943,13 +1944,31 @@ Si on te demande de jouer un rôle d’élève, de personne plus jeune ou de sit
 console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
 
             
-
         // Construire le contexte du chat pour OpenAI
-     const conversationHistory = userConversationHistory.get(email) || [];
-const messages = [
-  { role: "system", content: systemPrompt },
-  ...conversationHistory
-];
+        // 👉 On privilégie l'historique "light" envoyé par le frontend (30 derniers messages)
+        const messages = [
+            { role: "system", content: systemPrompt },
+        ];
+
+        if (Array.isArray(history) && history.length) {
+            // On ne prend que les 30 derniers au cas où
+            history.slice(-30).forEach(entry => {
+                if (!entry || typeof entry.content !== "string") return;
+
+                const role = entry.role === "assistant" ? "assistant" : "user";
+
+                messages.push({
+                    role,
+                    content: entry.content
+                });
+            });
+        } else {
+            // Fallback : ancien système basé sur userConversationHistory en mémoire
+            const conversationHistory = userConversationHistory.get(email) || [];
+            messages.push(...conversationHistory);
+        }
+
+        
 
 if (lastImageDescription) {
   messages.push({

@@ -26,6 +26,49 @@ async function checkOneClickEligibility(email) {
 }
 
 
+// ==== Historique léger (30 derniers messages) ====
+
+const MAX_HISTORY_MESSAGES = 30;
+
+// Une seule conversation "globale" (tu pourras affiner par personnage plus tard si tu veux)
+const HISTORY_KEY = 'myaicrush_light_history';
+
+function loadConversationHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Erreur loadConversationHistory:', e);
+    return [];
+  }
+}
+
+let conversationHistory = loadConversationHistory();
+
+function saveConversationHistory() {
+  try {
+    // On ne garde que les 30 derniers
+    if (conversationHistory.length > MAX_HISTORY_MESSAGES) {
+      conversationHistory = conversationHistory.slice(
+        conversationHistory.length - MAX_HISTORY_MESSAGES
+      );
+    }
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(conversationHistory));
+  } catch (e) {
+    console.error('Erreur saveConversationHistory:', e);
+  }
+}
+
+function clearConversationHistory() {
+  conversationHistory = [];
+  localStorage.removeItem(HISTORY_KEY);
+}
+
+
+
+
 
 let firstPhotoSent = false;
 const DAILY_MESSAGE_LIMIT = 12;
@@ -237,6 +280,16 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             scrollToBottomCallback(messagesContainer);
         }
 
+                    // 🧠 Sauvegarde du message utilisateur dans l'historique léger
+        conversationHistory.push({
+            role: "user",
+            type: "text",
+            content: userMessage
+        });
+        saveConversationHistory();
+
+
+
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.email) {
             console.error('Utilisateur non connecté ou email manquant');
@@ -280,12 +333,14 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
 fetch(`${BASE_URL}/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+        body: JSON.stringify({
         message: userMessage,
         email: user?.email,
         mode: localStorage.getItem("chatMode") || "image",
-        nymphoMode: localStorage.getItem("nymphoMode") === "true"
+        nymphoMode: localStorage.getItem("nymphoMode") === "true",
+        history: conversationHistory   // 🧠 On envoie les 30 derniers messages
     }),
+
 })
 .then(async (res) => {
     if (!res.ok) {
@@ -324,6 +379,18 @@ fetch(`${BASE_URL}/message`, {
     } else {
         addBotMessage(data.reply, messagesContainer);
     }
+
+    // 🧠 Sauvegarde de la réponse IA (texte) dans l'historique léger
+    if (data.reply) {
+        conversationHistory.push({
+            role: "assistant",
+            type: "text",
+            content: data.reply
+        });
+        saveConversationHistory();
+    }
+
+
 
     // 🔥 On ne s'occupe plus des quickReplies ici (elles arrivent dans un second temps)
 
@@ -584,47 +651,61 @@ if (isVideo) {
         imageContainer.appendChild(mediaElement);
         imageContainer.appendChild(unlockButton);
         messageElement.appendChild(imageContainer);
-    } else {
+        } else {
         console.log("🌟 Image claire affichée, pas de bouton.");
         if (isVideo) {
-    const rawVideoHTML = `
-        <video 
-            src="${imageUrl.startsWith('http') ? imageUrl : `/get-image/${imageUrl.split('/').pop()}`}" 
-            autoplay 
-            loop 
-            muted 
-            playsinline 
-            class="chat-video" 
-            style="max-width: 100%; height: auto; display: block;">
-        </video>
-    `;
+            const rawVideoHTML = `
+                <video 
+                    src="${imageUrl.startsWith('http') ? imageUrl : `/get-image/${imageUrl.split('/').pop()}`}" 
+                    autoplay 
+                    loop 
+                    muted 
+                    playsinline 
+                    class="chat-video" 
+                    style="max-width: 100%; height: auto; display: block;">
+                </video>
+            `;
 
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = rawVideoHTML.trim();
-    const injectedVideo = wrapper.firstChild;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = rawVideoHTML.trim();
+            const injectedVideo = wrapper.firstChild;
 
-    setTimeout(() => {
-        const playPromise = injectedVideo.play?.();
-        if (playPromise && typeof playPromise.then === 'function') {
-            playPromise.then(() => {
-                console.log("🎬 Lecture forcée réussie (injected)");
-            }).catch(err => {
-                console.warn("⛔ Lecture bloquée même injectée :", err);
+            setTimeout(() => {
+                const playPromise = injectedVideo.play?.();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise.then(() => {
+                        console.log("🎬 Lecture forcée réussie (injected)");
+                    }).catch(err => {
+                        console.warn("⛔ Lecture bloquée même injectée :", err);
+                    });
+                }
+            }, 100);
+
+            messageElement.appendChild(injectedVideo);
+
+            // 🧠 Sauvegarde du média IA (vidéo) dans l'historique léger
+            conversationHistory.push({
+                role: "assistant",
+                type: "video",
+                imageUrl: injectedVideo.src
+            });
+        } else {
+            messageElement.appendChild(mediaElement);
+
+            // 🧠 Sauvegarde du média IA (image) dans l'historique léger
+            conversationHistory.push({
+                role: "assistant",
+                type: "image",
+                imageUrl: mediaElement.src
             });
         }
-    }, 100);
 
-    messageElement.appendChild(injectedVideo);
-} else {
-    messageElement.appendChild(mediaElement);
-}
-
-
+        saveConversationHistory();
     }
 
-    
     scrollToBottom(messagesContainer);
 }
+
 
 
 
@@ -788,6 +869,15 @@ window.addEventListener('focusout', applyKeyboardInsets);
         return;
     }
 
+    // 🧠 Si on change de personnage, on efface l'historique local
+    const previousCharacter = localStorage.getItem("activeCharacter");
+    if (previousCharacter && previousCharacter !== characterName) {
+        console.log(`🔄 Changement de personnage : ${previousCharacter} → ${characterName}, on reset l'historique local`);
+        clearConversationHistory(); // remet conversationHistory = [] + supprime du localStorage
+    }
+
+
+
     console.log(`🎭 Changement de personnage en cours : ${characterName}`);
 
     // ✅ Stocker le personnage côté serveur pour l'utiliser dans le TTS
@@ -813,13 +903,15 @@ window.addEventListener('focusout', applyKeyboardInsets);
         console.log(`📌 Personnage actif sauvegardé : ${characterName}`);
 
         trackCharacterSelection(characterName);
+const messagesContainer = document.getElementById('messages');
+if (messagesContainer) {
+    messagesContainer.innerHTML = ''; // Réinitialiser les messages au début
 
-        const messagesContainer = document.getElementById('messages');
-        if (messagesContainer) {
-            messagesContainer.innerHTML = ''; // Réinitialiser les messages au début
+    // 🔍 Trouver le personnage dans le JSON
+    const character = characters.find(c => c.name === characterName);
 
-            // 🔍 Trouver le personnage dans le JSON
-            const character = characters.find(c => c.name === characterName);
+
+
 // 🔄 Mise à jour dynamique de l'agent-id du widget ElevenLabs
 const widget = document.querySelector('elevenlabs-convai');
 if (widget) {
@@ -894,6 +986,64 @@ if (callButton) {
             true
         );
     }
+
+       // 🧠 Rejouer l'historique sous la vidéo + le texte d'intro
+    if (conversationHistory && conversationHistory.length > 0) {
+        conversationHistory.forEach((msg) => {
+            const messageElement = document.createElement('div');
+
+            if (msg.role === "user") {
+                messageElement.classList.add('user-message');
+            } else {
+                messageElement.classList.add('bot-message');
+            }
+
+            // Texte simple
+            if (!msg.type || msg.type === "text") {
+                messageElement.textContent = msg.content || "";
+                messagesContainer.appendChild(messageElement);
+                return;
+            }
+
+            // Image / vidéo
+            if ((msg.type === "image" || msg.type === "video") && msg.imageUrl) {
+                let mediaEl;
+
+                if (msg.type === "video") {
+                    mediaEl = document.createElement('video');
+                    mediaEl.src = msg.imageUrl;
+                    mediaEl.autoplay = true;
+                    mediaEl.loop = true;
+                    mediaEl.muted = true;
+                    mediaEl.playsInline = true;
+                    mediaEl.classList.add('chat-video');
+                    mediaEl.style.maxWidth = '100%';
+                    mediaEl.style.height = 'auto';
+                    mediaEl.style.display = 'block';
+                } else {
+                    mediaEl = document.createElement('img');
+                    mediaEl.src = msg.imageUrl;
+                    mediaEl.alt = "Image du chat";
+                    mediaEl.classList.add('chat-image');
+                    mediaEl.style.maxWidth = '100%';
+                    mediaEl.style.height = 'auto';
+                    mediaEl.style.display = 'block';
+                }
+
+                messageElement.appendChild(mediaEl);
+                messagesContainer.appendChild(messageElement);
+                return;
+            }
+
+            // Fallback : si on ne reconnaît pas le type, on n'affiche rien de spécial
+            messagesContainer.appendChild(messageElement);
+        });
+
+        scrollToBottom(messagesContainer);
+    }
+
+
+
 
 
         // 🆕 Quick reply de départ basée sur le personnage
@@ -1217,6 +1367,15 @@ if (imageInput) {
 
                 messagesContainer.appendChild(imageMessageElement);
                 scrollToBottom(messagesContainer);
+
+                               // 🧠 Sauvegarde de l'image envoyée par l'utilisateur dans l'historique léger
+                conversationHistory.push({
+                    role: "user",
+                    type: "image",
+                    imageUrl: imageElement.src
+                });
+                saveConversationHistory();
+ 
 
                 imageInput.value = "";
 
