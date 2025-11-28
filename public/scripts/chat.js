@@ -635,17 +635,20 @@ if (isVideo) {
 
 // Exemple d'utilisation : Ajouter après l'envoi d'un message utilisateur
 const sendBtn = document.getElementById('send-btn');
-if (sendBtn) {
-    sendBtn.addEventListener('click', () => {
-        const userMessage = userInput.value.trim();
-        if (userMessage !== '') {
-            addUserMessage();
-            simulateTypingDelay(); // Simule la saisie pendant 2 secondes
-        }
-    });
-} else {
-    console.warn("send-btn n'est pas présent sur cette page.");
+const userInput = document.getElementById('user-input');
+
+if (sendBtn && userInput) {
+  const messagesContainer = document.getElementById('messages');
+
+  sendBtn.addEventListener('click', () => {
+    const userMessage = userInput.value.trim();
+    if (!userMessage) return;
+
+    addUserMessage(userMessage, messagesContainer, scrollToBottom);
+    userInput.value = '';
+  });
 }
+
 
 
 // --- Gestion clavier robuste via variables CSS (fonctionne IG, iOS, Android) ---
@@ -952,11 +955,10 @@ if (character.photo.endsWith('.mp4')) {
 
 newMedia.classList.add('chat-profile-pic');
 newMedia.style.cursor = 'pointer';
-const callButton = document.getElementById("audio-call-btn");
 if (callButton) {
   profileContainer.insertBefore(newMedia, callButton);
 } else {
-  profileContainer.appendChild(newMedia); // fallback
+  profileContainer.appendChild(newMedia);
 }
 ;
 
@@ -1058,15 +1060,6 @@ function hideTypingIndicator() {
     typingIndicator.classList.add('hidden'); // Masque l'indicateur
 }
 
-
-function simulateTypingIndicator(messagesContainer) {
-    // Générer un délai aléatoire entre 2 et 4 secondes
-    const delay = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000;
-
-    showTypingIndicator(messagesContainer); // Affiche l'indicateur
-
-    
-}
 
 
 export function resetChatState() {

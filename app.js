@@ -1589,7 +1589,7 @@ Consignes :
         messages: [
           { role: "system", content: systemPrompt }
         ],
-        max_tokens: 100,
+        max_tokens: 80,
         temperature: isNymphoMode ? 1.1 : 0.9,
         top_p: 1.0
       },
@@ -1945,30 +1945,27 @@ console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
             
 
         // Construire le contexte du chat pour OpenAI
-        const conversationHistory = userConversationHistory.get(email) || [];
-        const messages = [
-            { role: "system", content: systemPrompt },
-            ...conversationHistory
-        ];
+     const conversationHistory = userConversationHistory.get(email) || [];
+const messages = [
+  { role: "system", content: systemPrompt },
+  ...conversationHistory
+];
 
-        // ✅ Ajoute la description de la dernière image envoyée si elle existe
-        if (lastImageDescription) {
-            messages.push({
-                role: "user",
-                content: `L'utilisateur a récemment envoyé une image. Voici la description : "${lastImageDescription}". Réagis en tenant compte de cette image.`
-            });
+if (lastImageDescription) {
+  messages.push({
+    role: "user",
+    content: `L'utilisateur a récemment envoyé une image. Voici la description : "${lastImageDescription}". Réagis en tenant compte de cette image.`
+  });
 
-          // Garder la description en mémoire tant que l'utilisateur ne change pas de sujet
-const conversationHistory = userConversationHistory.get(email) || [];
-
-if (conversationHistory.length >= 5) { // Supprime après 5 échanges
+  // Garder la description en mémoire tant que l'utilisateur ne change pas de sujet
+  if (conversationHistory.length >= 5) {
     userLastImageDescriptions.delete(email);
     console.log("🛑 Suppression de la description d'image après plusieurs messages.");
-} else {
+  } else {
     console.log("🖼️ La description de l'image est toujours en mémoire.");
+  }
 }
 
-        }
 
         // Ajoute le message de l'utilisateur
         messages.push({ role: "user", content: message });
@@ -1984,7 +1981,7 @@ if (conversationHistory.length >= 5) { // Supprime après 5 échanges
     {
         model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
         messages: messages,
-        max_tokens: 350,
+        max_tokens: 200,
         temperature: 1.0,
         top_p: 1.0,
         frequency_penalty: 0.3,
