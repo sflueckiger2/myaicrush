@@ -275,70 +275,107 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                 return;
             }
 
-            // Appel principal au backend IA
-            fetch(`${BASE_URL}/message`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: userMessage,
-                    email: user?.email,
-                    mode: localStorage.getItem("chatMode") || "image",
-                    nymphoMode: localStorage.getItem("nymphoMode") === "true"
-                }),
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("🔍 Réponse reçue du serveur :", data);
 
-                hideTypingIndicator();
+// Appel principal au backend IA
+fetch(`${BASE_URL}/message`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        message: userMessage,
+        email: user?.email,
+        mode: localStorage.getItem("chatMode") || "image",
+        nymphoMode: localStorage.getItem("nymphoMode") === "true"
+    }),
+})
+.then(async (res) => {
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("❌ Réponse non OK du serveur /message :", res.status, txt);
+        hideTypingIndicator();
+        addBotMessage(
+          "Petit bug serveur, réessaie dans quelques secondes 😅",
+          messagesContainer
+        );
+        throw new Error(`HTTP ${res.status}`);
+    }
 
-                // Mise à jour de niveau (popup)
-                if (data.levelUpdateMessage && data.levelUpdateType) {
-                    showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
-                }
+    return res.json();
+})
+.then(data => {
+    console.log("🔍 Réponse reçue du serveur :", data);
 
-                // Message texte ou image
-                if (data.imageUrl) {
-                    addBotImageMessage(
-                        data.reply,
-                        data.imageUrl,
-                        isPremium,
-                        messagesContainer,
-                        data.isBlurred,
-                        data.mediaType
-                    );
+    hideTypingIndicator();
+
+    // Mise à jour de niveau (popup)
+    if (data.levelUpdateMessage && data.levelUpdateType) {
+        showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+    }
+
+    // Message texte ou image
+    if (data.imageUrl) {
+        addBotImageMessage(
+            data.reply,
+            data.imageUrl,
+            isPremium,
+            messagesContainer,
+            data.isBlurred,
+            data.mediaType
+        );
+    } else {
+        addBotMessage(data.reply, messagesContainer);
+    }
+
+    // 🔥 On ne s'occupe plus des quickReplies ici (elles arrivent dans un second temps)
+
+    // Incrémentation messages non premium
+    if (!isPremium) {
+        dailyMessageCount++;
+        localStorage.setItem("dailyMessageCount", dailyMessageCount);
+    }
+
+    if (typeof scrollToBottomCallback === 'function') {
+        scrollToBottomCallback(messagesContainer);
+    }
+
+    // 🆕 2ème étape : demander les quick replies en BACKGROUND
+    const activeCharacter = localStorage.getItem("activeCharacter");
+    if (activeCharacter) {
+        fetch(`${BASE_URL}/quick-replies`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: user.email,
+                characterName: activeCharacter,
+                lastUserMessage: userMessage,
+                botReply: data.reply,
+                nymphoMode: localStorage.getItem("nymphoMode") === "true"
+            }),
+        })
+        .then(r => r.json())
+        .then(qrData => {
+            console.log("👉 Réponses suggérées (quickReplies) :", qrData.quickReplies);
+            if (typeof renderQuickReplies === 'function' && typeof hideQuickReplies === 'function') {
+                if (Array.isArray(qrData.quickReplies) && qrData.quickReplies.length > 0) {
+                    renderQuickReplies(qrData.quickReplies);
                 } else {
-                    addBotMessage(data.reply, messagesContainer);
+                    hideQuickReplies();
                 }
+            }
+        })
+        .catch(err => {
+            console.error("❌ Erreur quick-replies :", err);
+            if (typeof hideQuickReplies === 'function') hideQuickReplies();
+        });
+    }
 
-                // 🔥🔥🔥 GESTION DES RÉPONSES SUGGÉRÉES (QUICK REPLIES)
-                console.log("👉 Réponses suggérées (quickReplies) :", data.quickReplies);
-
-                if (typeof renderQuickReplies === 'function' && typeof hideQuickReplies === 'function') {
-                    if (Array.isArray(data.quickReplies) && data.quickReplies.length > 0) {
-                        renderQuickReplies(data.quickReplies);
-                    } else {
-                        hideQuickReplies();
-                    }
-                }
-                // 🔥🔥🔥 FIN QUICK REPLIES
+})
+.catch(error => {
+    console.error("❌ Erreur lors de l'envoi du message:", error);
+    hideTypingIndicator();
+    addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
+});
 
 
-                // Incrémentation messages non premium
-                if (!isPremium) {
-                    dailyMessageCount++;
-                    localStorage.setItem("dailyMessageCount", dailyMessageCount);
-                }
-
-                if (typeof scrollToBottomCallback === 'function') {
-                    scrollToBottomCallback(messagesContainer);
-                }
-            })
-            .catch(error => {
-                console.error("❌ Erreur lors de l'envoi du message:", error);
-                hideTypingIndicator();
-                addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
-            });
 
         })
         .catch(error => {

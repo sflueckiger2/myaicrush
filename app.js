@@ -1589,7 +1589,7 @@ Consignes :
         messages: [
           { role: "system", content: systemPrompt }
         ],
-        max_tokens: 200,
+        max_tokens: 100,
         temperature: isNymphoMode ? 1.1 : 0.9,
         top_p: 1.0
       },
@@ -1727,6 +1727,55 @@ app.post('/quick-replies-initial', async (req, res) => {
     });
   }
 });
+
+// 🆕 Quick replies dynamiques après chaque message (route séparée)
+app.post('/quick-replies', async (req, res) => {
+  try {
+    const { email, characterName, lastUserMessage, botReply, nymphoMode } = req.body;
+
+    if (!email || !characterName || !lastUserMessage || !botReply) {
+      return res.status(400).json({ quickReplies: [] });
+    }
+
+    const userCharacter = characters.find(c => c.name === characterName);
+    if (!userCharacter) {
+      console.warn("⚠️ Personnage introuvable pour /quick-replies :", characterName);
+      return res.json({ quickReplies: [] });
+    }
+
+    const quickReplies = await generateDynamicQuickReplies({
+      lastUserMessage,
+      botReply,
+      userCharacter,
+      isNymphoMode: nymphoMode === true
+    });
+
+    const fallbackReplies = [
+      "Tu pensais à quoi en venant me parler ? 😏",
+      "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+      "Je t’écoute… tu veux quoi de moi ?"
+    ];
+
+    return res.json({
+      quickReplies:
+        Array.isArray(quickReplies) && quickReplies.length > 0
+          ? quickReplies
+          : fallbackReplies
+    });
+
+  } catch (err) {
+    console.error("❌ Erreur /quick-replies :", err);
+    return res.status(500).json({
+      quickReplies: [
+        "Tu pensais à quoi en venant me parler ? 😏",
+        "Tu veux qu’on commence tranquille ou direct plus chaud ?",
+        "Je t’écoute… tu veux quoi de moi ?"
+      ]
+    });
+  }
+});
+
+
 
 
 
@@ -2209,13 +2258,6 @@ const forcePhoto = ajustement.forcePhoto;
 
 console.log("💬 Réponse finale envoyée :", botReply);
 
-// 🧠 Génération dynamique des réponses suggérées
-const quickReplies = await generateDynamicQuickReplies({
-  lastUserMessage: message,
-  botReply,
-  userCharacter,
-  isNymphoMode
-});
 
       
 
@@ -2273,8 +2315,9 @@ const quickReplies = await generateDynamicQuickReplies({
 botReply = botReply.replace(/\[VIDEO.*?\]/gi, "").trim();
 
 
-        // Préparer la réponse JSON
-       let responseData = { reply: botReply, quickReplies };
+       // Préparer la réponse JSON (sans quickReplies, on les sort dans une route séparée)
+let responseData = { reply: botReply };
+
 
 
         if (levelUpdate) {
@@ -2282,10 +2325,7 @@ botReply = botReply.replace(/\[VIDEO.*?\]/gi, "").trim();
             responseData.levelUpdateType = levelUpdate.type;
         }
 
-        // 🔁 Ajouter les réponses suggérées si dispo
-if (quickReplies && quickReplies.length > 0) {
-  responseData.quickReplies = quickReplies;
-}
+    
 
 
         // Ajouter une image sécurisée si une photo doit être envoyée
