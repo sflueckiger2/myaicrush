@@ -2995,10 +2995,7 @@ vapi-widget {
 .story-nav-left { left: 0; }
 .story-nav-right { right: 0; }
 
-.story-nav-left:hover,
-.story-nav-right:hover {
-  background: rgba(255,255,255,0.03);
-}
+
 
 /* Barre de réponse en bas */
 .story-reply-bar {
