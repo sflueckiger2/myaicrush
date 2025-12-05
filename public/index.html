@@ -694,36 +694,13 @@ setTimeout(() => {
   import { startChat } from './scripts/chat.js';
 
   const STORY_DURATION = 5000; // 5 sec
+  const STORY_CACHE_KEY = 'myaicrush_stories_v1';
+  const STORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
   let storyGroups = [];        // [{ characterName, avatar, media }]
   let currentGroupIndex = 0;
   let currentStoryIndex = 0;
   let autoTimer = null;
-
-  // 🔐 Cache des sets de stories par jour
-  const STORY_SETS_KEY = "myaicrush_story_sets_v1";
-
-  function getTodayKey() {
-    return new Date().toISOString().split("T")[0]; // "2025-12-05"
-  }
-
-  function loadStorySets() {
-    try {
-      const raw = localStorage.getItem(STORY_SETS_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) {
-      console.error("❌ Erreur parse STORY_SETS :", e);
-      return null;
-    }
-  }
-
-  function saveStorySets(obj) {
-    try {
-      localStorage.setItem(STORY_SETS_KEY, JSON.stringify(obj));
-    } catch (e) {
-      console.error("❌ Erreur save STORY_SETS :", e);
-    }
-  }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -741,8 +718,55 @@ setTimeout(() => {
     if (!base) return null;
     const parts = base.split('/');
     if (parts.length < 3) return null;
-    const girl = parts[1]; // aiko
+    const girl = parts[1]; // ex : aiko
     return `images/${girl}/${girl}1`;
+  }
+
+  // --------- FILTRE FORMAT STORY (vertical) ---------
+  function isStoryRatio(width, height) {
+  if (!width || !height) return false;
+  const ratio = height / width;
+
+  // ✅ Très vertical uniquement (type stories) :
+  // - ratio >= 1.5  ≈ entre 3:2 et 9:16
+  // - hauteur suffisante pour éviter les petites images genre 512x650
+  return ratio >= 1.5 && height >= 900;
+}
+
+
+  function checkImageStoryFormat(url) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve(isStoryRatio(img.naturalWidth, img.naturalHeight));
+      };
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+  }
+
+  function checkVideoStoryFormat(url) {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        resolve(isStoryRatio(video.videoWidth, video.videoHeight));
+      };
+      video.onerror = () => resolve(false);
+      video.src = url;
+    });
+  }
+
+  async function isStoryMedia(url) {
+    if (/\.(mp4|webm|mov)$/i.test(url)) {
+      return await checkVideoStoryFormat(url);
+    }
+    return await checkImageStoryFormat(url);
+  }
+
+  async function filterStoryMediaList(list = []) {
+    const checks = await Promise.all(list.map((url) => isStoryMedia(url)));
+    return list.filter((url, idx) => checks[idx]);
   }
 
   // ---------- PROGRESS BAR ----------
@@ -774,9 +798,7 @@ setTimeout(() => {
 
     const currentInner = segments[currentStoryIndex];
     if (currentInner) {
-      // reset puis animation
       currentInner.style.width = '0%';
-      // force reflow
       void currentInner.offsetWidth;
       currentInner.style.transition = `width ${STORY_DURATION}ms linear`;
       currentInner.style.width = '100%';
@@ -801,7 +823,6 @@ setTimeout(() => {
     avatar.src = group.avatar || '';
     username.textContent = group.characterName || '';
 
-    // reset médias
     img.classList.add('hidden');
     vid.classList.add('hidden');
     vid.pause();
@@ -838,12 +859,10 @@ setTimeout(() => {
       currentStoryIndex++;
       showStory();
     } else if (currentGroupIndex < storyGroups.length - 1) {
-      // passe à l'IA suivante
       currentGroupIndex++;
       currentStoryIndex = 0;
       showStory();
     } else {
-      // fin de toutes les stories
       closeViewer();
     }
   }
@@ -863,19 +882,16 @@ setTimeout(() => {
     }
   }
 
-  // ---------- OUVERTURE ----------
   function openStoryGroup(groupIndex, storyIndex = 0) {
     currentGroupIndex = groupIndex;
     currentStoryIndex = storyIndex;
     showStory();
   }
 
-  // ---------- RÉPONSE → OUVRIR LE CHAT ----------
+  // ---------- OUVERTURE DU CHAT ----------
   function openChatForCharacter(characterName, initialMessage) {
-    // ✅ On utilise directement ta fonction de chat
     startChat(characterName);
 
-    // ⏳ On laisse le temps au chat de se construire puis on pré-remplit
     setTimeout(() => {
       if (initialMessage) {
         const input = document.getElementById('user-input');
@@ -884,105 +900,120 @@ setTimeout(() => {
           input.focus();
         }
       }
-    }, 300); // 300ms suffit normalement, tu peux ajuster si besoin
+    }, 300);
   }
 
-  // ---------- LOAD STORIES ----------
+  // ---------- RENDU DES VIGNETTES ----------
+  function renderStoryThumbnails(container) {
+    container.innerHTML = '';
+    storyGroups.forEach((group, groupIndex) => {
+      const thumbUrl = group.media[0];
+      const item = document.createElement('div');
+      item.className = 'story-item';
+
+      let thumbNode;
+      if (/\.(mp4|webm|mov)$/i.test(thumbUrl)) {
+        thumbNode = document.createElement('video');
+        thumbNode.src = thumbUrl;
+        thumbNode.autoplay = true;
+        thumbNode.loop = true;
+        thumbNode.muted = true;
+        thumbNode.playsInline = true;
+      } else {
+        thumbNode = document.createElement('img');
+        thumbNode.src = thumbUrl;
+      }
+      thumbNode.className = 'story-thumb';
+
+      const label = document.createElement('div');
+      label.className = 'story-name';
+      label.textContent = group.characterName;
+
+      item.appendChild(thumbNode);
+      item.appendChild(label);
+
+      item.addEventListener('click', () => {
+        openStoryGroup(groupIndex, 0);
+      });
+
+      container.appendChild(item);
+    });
+  }
+
+  // ---------- LOAD STORIES (avec cache 24h + filtre format) ----------
   async function loadStories() {
     await waitForCharacters();
 
     const container = document.getElementById('stories');
     if (!container) return;
 
-    const maxStories = 30;
+    // 1) Tentative de récupération du cache
+    const cachedRaw = localStorage.getItem(STORY_CACHE_KEY);
+    if (cachedRaw) {
+      try {
+        const cached = JSON.parse(cachedRaw);
+        if (cached.timestamp && Date.now() - cached.timestamp < STORY_CACHE_TTL_MS && Array.isArray(cached.groups)) {
+          storyGroups = cached.groups;
+          renderStoryThumbnails(container);
+          return;
+        }
+      } catch (e) {
+        console.warn('⚠️ Cache stories invalide, on le recrée.');
+      }
+    }
+
+    // 2) Pas de cache valide → on reconstruit
     storyGroups = [];
 
-    const todayKey = getTodayKey();
+    // si tu veux toutes les IA : const maxStories = characters.length;
+    const maxStories = characters.length;
+    const subset = characters.slice(0, maxStories);
 
-    // 🔐 Charger le cache existant
-    let stored = loadStorySets();
-    if (!stored || stored.date !== todayKey) {
-      // Nouveau jour → on repart de zéro
-      stored = { date: todayKey, characters: {} };
-    }
-    if (!stored.characters) stored.characters = {};
-
-    const MAX_MEDIA_PER_CHAR = 3; // nb max de stories par IA
-
-    characters.slice(0, maxStories).forEach(async (char) => {
+    for (const char of subset) {
       const folder = getCharacterStoryFolder(char);
-      if (!folder) return;
+      if (!folder) continue;
 
       try {
         const res = await fetch(
           `/api/story-media?folder=${encodeURIComponent(folder)}`
         );
         const data = await res.json();
-        if (!data.media || !data.media.length) return;
+        if (!data.media || !data.media.length) continue;
 
-        // ✅ Avatar IMAGE (jamais une vidéo)
+        // 🔥 On ne garde que les médias au vrai format "story" (vertical)
+        const filteredMedia = await filterStoryMediaList(data.media);
+        if (!filteredMedia.length) continue;
+
+        // ✅ Avatar image only
         let avatarUrl = char.photo;
         if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
-          avatarUrl = char.backgroundPhoto || (data.media[0] || '');
+          avatarUrl = char.backgroundPhoto || filteredMedia[0];
         }
 
-        // 🔐 Vérifier si on a déjà un set pour ce perso aujourd'hui
-        let chosenMedia = stored.characters[char.name];
-
-        if (!Array.isArray(chosenMedia) || chosenMedia.length === 0) {
-          // 👉 Première fois aujourd'hui : on choisit un petit set aléatoire
-          const shuffled = [...data.media].sort(() => Math.random() - 0.5);
-          chosenMedia = shuffled.slice(
-            0,
-            Math.min(MAX_MEDIA_PER_CHAR, shuffled.length)
-          );
-
-          stored.characters[char.name] = chosenMedia;
-          saveStorySets(stored); // on sauvegarde au fur et à mesure
-        }
-
-        const groupIndex = storyGroups.length;
         storyGroups.push({
           characterName: char.name,
           avatar: avatarUrl,
-          media: chosenMedia,
+          media: filteredMedia,
         });
-
-        // ✅ Vignette = première story choisie
-        const thumbUrl = chosenMedia[0];
-        const item = document.createElement('div');
-        item.className = 'story-item';
-
-        let thumbNode;
-        if (/\.(mp4|webm|mov)$/i.test(thumbUrl)) {
-          thumbNode = document.createElement('video');
-          thumbNode.src = thumbUrl;
-          thumbNode.autoplay = true;
-          thumbNode.loop = true;
-          thumbNode.muted = true;
-          thumbNode.playsInline = true;
-        } else {
-          thumbNode = document.createElement('img');
-          thumbNode.src = thumbUrl;
-        }
-        thumbNode.className = 'story-thumb';
-
-        const label = document.createElement('div');
-        label.className = 'story-name';
-        label.textContent = char.name;
-
-        item.appendChild(thumbNode);
-        item.appendChild(label);
-
-        item.addEventListener('click', () => {
-          openStoryGroup(groupIndex, 0);
-        });
-
-        container.appendChild(item);
       } catch (err) {
         console.error('❌ Erreur story pour', char.name, err);
       }
-    });
+    }
+
+    // Sauvegarde cache 24h
+    try {
+      localStorage.setItem(
+        STORY_CACHE_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          groups: storyGroups,
+        })
+      );
+    } catch (e) {
+      console.warn('⚠️ Impossible de cacher les stories :', e);
+    }
+
+    renderStoryThumbnails(container);
   }
 
   // ---------- LISTENERS ----------
