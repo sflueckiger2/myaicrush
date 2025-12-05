@@ -28,7 +28,7 @@ body {
   justify-content: flex-start;
   min-height: 100vh;
   margin: 0;
-  padding-top: 60px; /* espace pour laisser la place à la bannière */
+  padding-top: 30px; /* espace pour laisser la place à la bannière */
 }
 
 /* Centrer le header en haut de la page */
@@ -2377,7 +2377,7 @@ video {
 .private-slider-section {
   display: flex;
   justify-content: center;
-  margin: 20px auto; /* ✅ Marge autour */
+  margin-top: 20px; /* ✅ Marge autour */
   width: 100%;
 }
 
@@ -2819,6 +2819,7 @@ vapi-widget {
   overflow-x: auto;
   gap: 12px;
   margin-bottom: 10px;
+  padding-top: 0px;
 
   /* 👉 masque la barre de scroll mais garde le scroll au doigt */
   scrollbar-width: none;          /* Firefox */
