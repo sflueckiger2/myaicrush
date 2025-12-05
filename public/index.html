@@ -727,11 +727,14 @@ setTimeout(() => {
   if (!width || !height) return false;
   const ratio = height / width;
 
-  // ✅ Très vertical uniquement (type stories) :
-  // - ratio >= 1.5  ≈ entre 3:2 et 9:16
-  // - hauteur suffisante pour éviter les petites images genre 512x650
-  return ratio >= 1.5 && height >= 900;
+  // ✅ Format "vraie story" :
+  // - très vertical : ratio >= 1.5
+  // - suffisamment grand : hauteur >= 800 px
+  //   => 500x886 ✅
+  //   => 512x650 ❌
+  return ratio >= 1.5 && height >= 800;
 }
+
 
 
   function checkImageStoryFormat(url) {
