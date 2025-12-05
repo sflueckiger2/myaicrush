@@ -1075,6 +1075,13 @@ if (callButton) {
                 document.querySelector('.header').classList.add('hidden');
                 document.querySelector('.container').classList.add('fullscreen');
 
+                // 🔒 Cacher la barre de stories quand le chat est ouvert
+const storiesWrapper = document.querySelector('.stories-wrapper');
+if (storiesWrapper) {
+  storiesWrapper.style.display = 'none';
+}
+
+
                 // ✅ Mise à jour du nom et de la photo de profil
                 document.getElementById('chat-name').textContent = character.name;
 

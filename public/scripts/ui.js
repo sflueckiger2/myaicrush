@@ -228,6 +228,13 @@ export function setupBackButton() {
         document.querySelector('.container').classList.remove('fullscreen');
         document.querySelector('.menu').classList.remove('hidden');
 
+                // 🔁 Ré-afficher la barre de stories quand on revient à la liste des IA
+        const storiesWrapper = document.querySelector('.stories-wrapper');
+        if (storiesWrapper) {
+          storiesWrapper.style.display = ''; // remet le display défini dans le CSS
+        }
+
+
         // Fermer le widget audio si actif
         const widget = document.querySelector('elevenlabs-convai');
         if (widget) widget.removeAttribute("open");

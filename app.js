@@ -10,6 +10,8 @@ const axios = require('axios');
 const dns = require('dns');
 const path = require('path');
 const fs = require('fs');
+const fsp = fs.promises;
+
 const app = express(); // Initialiser l'instance d'Express
 
 const EVENLABS_API_KEY = process.env.EVENLABS_API_KEY;
@@ -3400,6 +3402,75 @@ app.post("/api/check-one-click-eligibility", async (req, res) => {
 
 
 
+// 🔥 API Stories : retourne 1–2 fichiers médias aléatoires d'un dossier
+app.get('/api/story-media', async (req, res) => {
+  try {
+    const folder = req.query.folder; // ex: "images/aiko"
+    if (!folder || !folder.startsWith('images/')) {
+      return res.status(400).json({ error: 'Paramètre "folder" invalide.' });
+    }
+
+    // Dossier sur le disque : /public/images/...
+    const baseDir = path.join(__dirname, 'public', folder);
+
+    // 🔐 Sécurité basique : le chemin doit rester dans /public
+    const publicRoot = path.join(__dirname, 'public');
+    if (!baseDir.startsWith(publicRoot)) {
+      return res.status(400).json({ error: 'Chemin interdit.' });
+    }
+
+    // Parcours récursif des fichiers
+    async function getMediaFiles(dir, prefix) {
+      let results = [];
+      const entries = await fsp.readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const relPath = path.join(prefix, entry.name).replace(/\\/g, '/');
+
+        if (entry.isDirectory()) {
+          const sub = await getMediaFiles(fullPath, relPath);
+          results = results.concat(sub);
+        } else {
+          // Garde uniquement images/vidéos
+          if (/\.(jpe?g|png|webp|gif|mp4|webm|mov)$/i.test(entry.name)) {
+            results.push(relPath); // ex: "images/aiko/aiko3/photo.webp"
+          }
+        }
+      }
+      return results;
+    }
+
+    const allMedia = await getMediaFiles(baseDir, folder);
+
+    if (!allMedia.length) {
+      return res.json({ media: [] });
+    }
+
+    // 🎲 Tire 1 ou 2 médias au hasard
+    const nbStories = Math.random() < 0.5 ? 1 : 2;
+    const max = Math.min(nbStories, allMedia.length);
+
+    const chosen = [];
+    const used = new Set();
+    while (chosen.length < max) {
+      const idx = Math.floor(Math.random() * allMedia.length);
+      if (!used.has(idx)) {
+        used.add(idx);
+        chosen.push('/' + allMedia[idx]); // renvoie un chemin web : "/images/..."
+      }
+    }
+
+    res.json({ media: chosen });
+  } catch (err) {
+    console.error('❌ Erreur /api/story-media :', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+
+
+
 
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {
@@ -3409,3 +3480,6 @@ connectToDb().then(() => {
 }).catch((err) => {
   console.error('Erreur de connexion à la base de données :', err);
 });
+
+
+

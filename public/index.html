@@ -75,9 +75,16 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
   
 
 
-
       <!-- Conteneur principal pour les options de chat et le chat -->
       <div class="container">
+
+
+       <!-- Barre de stories -->
+<div class="stories-wrapper">
+  <div id="stories"></div>
+</div>
+ 
+
         <!-- Options de chat -->
         <div class="chat-options" id="chat-options"></div>
 
@@ -194,6 +201,41 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       </footer>
       
     
+   <!-- STORY VIEWER façon Instagram -->
+<div id="story-viewer" class="story-viewer hidden">
+  <div class="story-viewer-content">
+    
+    <!-- Header avatar + nom + close -->
+    <div class="story-header">
+      <div class="story-header-left">
+        <img id="story-avatar" class="story-avatar" src="" alt="Profil">
+        <span id="story-username" class="story-username"></span>
+      </div>
+      <button id="story-close-btn" class="story-close-btn">&times;</button>
+    </div>
+
+    <!-- Barre de progression -->
+    <div id="story-progress" class="story-progress"></div>
+
+    <!-- Média -->
+    <img id="story-media-img" class="story-media hidden">
+   <video id="story-media-video"
+       class="story-media story-media-video"
+       autoplay loop muted playsinline></video>
+
+
+    <!-- Zones cliquables gauche/droite -->
+    <div id="story-prev" class="story-nav-left"></div>
+    <div id="story-next" class="story-nav-right"></div>
+
+    <!-- Réponse à la story -->
+    <div class="story-reply-bar">
+      <input id="story-reply-input" type="text" placeholder="Répondre à l'IA..." />
+      <button id="story-reply-send">Envoyer</button>
+    </div>
+  </div>
+</div>
+
 
 
 
@@ -645,6 +687,355 @@ setTimeout(() => {
   });
 </script>
 
+
+<!-- STORIES -->
+<script type="module">
+  import { characters } from './scripts/data.js';
+  import { startChat } from './scripts/chat.js';
+
+  const STORY_DURATION = 5000; // 5 sec
+  let storyGroups = [];        // [{ characterName, avatar, media }]
+  let currentGroupIndex = 0;
+  let currentStoryIndex = 0;
+  let autoTimer = null;
+
+  // 🔐 Cache des sets de stories par jour
+  const STORY_SETS_KEY = "myaicrush_story_sets_v1";
+
+  function getTodayKey() {
+    return new Date().toISOString().split("T")[0]; // "2025-12-05"
+  }
+
+  function loadStorySets() {
+    try {
+      const raw = localStorage.getItem(STORY_SETS_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error("❌ Erreur parse STORY_SETS :", e);
+      return null;
+    }
+  }
+
+  function saveStorySets(obj) {
+    try {
+      localStorage.setItem(STORY_SETS_KEY, JSON.stringify(obj));
+    } catch (e) {
+      console.error("❌ Erreur save STORY_SETS :", e);
+    }
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function waitForCharacters() {
+    const start = Date.now();
+    while (characters.length === 0 && Date.now() - start < 5000) {
+      await sleep(50);
+    }
+    return characters;
+  }
+
+  // 🔥 Force le dossier1 : images/aiko/aiko1
+  function getCharacterStoryFolder(character) {
+    const base = character.photo;
+    if (!base) return null;
+    const parts = base.split('/');
+    if (parts.length < 3) return null;
+    const girl = parts[1]; // aiko
+    return `images/${girl}/${girl}1`;
+  }
+
+  // ---------- PROGRESS BAR ----------
+  function renderProgressBar(total) {
+    const container = document.getElementById('story-progress');
+    container.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'story-progress-segment';
+      const inner = document.createElement('div');
+      inner.className = 'story-progress-inner';
+      seg.appendChild(inner);
+      container.appendChild(seg);
+    }
+  }
+
+  function updateProgressBar() {
+    const segments = Array.from(
+      document.querySelectorAll('.story-progress-segment .story-progress-inner')
+    );
+    segments.forEach((inner, idx) => {
+      inner.style.transition = 'none';
+      if (idx < currentStoryIndex) {
+        inner.style.width = '100%';
+      } else if (idx > currentStoryIndex) {
+        inner.style.width = '0%';
+      }
+    });
+
+    const currentInner = segments[currentStoryIndex];
+    if (currentInner) {
+      // reset puis animation
+      currentInner.style.width = '0%';
+      // force reflow
+      void currentInner.offsetWidth;
+      currentInner.style.transition = `width ${STORY_DURATION}ms linear`;
+      currentInner.style.width = '100%';
+    }
+  }
+
+  // ---------- VIEWER ----------
+  function showStory() {
+    clearTimeout(autoTimer);
+
+    const group = storyGroups[currentGroupIndex];
+    if (!group) return;
+
+    const url = group.media[currentStoryIndex];
+    const viewer = document.getElementById('story-viewer');
+    const img = document.getElementById('story-media-img');
+    const vid = document.getElementById('story-media-video');
+    const avatar = document.getElementById('story-avatar');
+    const username = document.getElementById('story-username');
+    const replyInput = document.getElementById('story-reply-input');
+
+    avatar.src = group.avatar || '';
+    username.textContent = group.characterName || '';
+
+    // reset médias
+    img.classList.add('hidden');
+    vid.classList.add('hidden');
+    vid.pause();
+
+    if (/\.(mp4|webm|mov)$/i.test(url)) {
+      vid.src = url;
+      vid.classList.remove('hidden');
+      vid.play().catch(() => {});
+    } else {
+      img.src = url;
+      img.classList.remove('hidden');
+    }
+
+    replyInput.placeholder = `Répondre à ${group.characterName}...`;
+
+    viewer.classList.remove('hidden');
+
+    renderProgressBar(group.media.length);
+    updateProgressBar();
+
+    autoTimer = setTimeout(nextStory, STORY_DURATION);
+  }
+
+  function closeViewer() {
+    clearTimeout(autoTimer);
+    document.getElementById('story-viewer').classList.add('hidden');
+  }
+
+  function nextStory() {
+    const group = storyGroups[currentGroupIndex];
+    if (!group) return;
+
+    if (currentStoryIndex < group.media.length - 1) {
+      currentStoryIndex++;
+      showStory();
+    } else if (currentGroupIndex < storyGroups.length - 1) {
+      // passe à l'IA suivante
+      currentGroupIndex++;
+      currentStoryIndex = 0;
+      showStory();
+    } else {
+      // fin de toutes les stories
+      closeViewer();
+    }
+  }
+
+  function prevStory() {
+    const group = storyGroups[currentGroupIndex];
+    if (!group) return;
+
+    if (currentStoryIndex > 0) {
+      currentStoryIndex--;
+      showStory();
+    } else if (currentGroupIndex > 0) {
+      currentGroupIndex--;
+      const prevGroup = storyGroups[currentGroupIndex];
+      currentStoryIndex = prevGroup.media.length - 1;
+      showStory();
+    }
+  }
+
+  // ---------- OUVERTURE ----------
+  function openStoryGroup(groupIndex, storyIndex = 0) {
+    currentGroupIndex = groupIndex;
+    currentStoryIndex = storyIndex;
+    showStory();
+  }
+
+  // ---------- RÉPONSE → OUVRIR LE CHAT ----------
+  function openChatForCharacter(characterName, initialMessage) {
+    // ✅ On utilise directement ta fonction de chat
+    startChat(characterName);
+
+    // ⏳ On laisse le temps au chat de se construire puis on pré-remplit
+    setTimeout(() => {
+      if (initialMessage) {
+        const input = document.getElementById('user-input');
+        if (input) {
+          input.value = initialMessage;
+          input.focus();
+        }
+      }
+    }, 300); // 300ms suffit normalement, tu peux ajuster si besoin
+  }
+
+  // ---------- LOAD STORIES ----------
+  async function loadStories() {
+    await waitForCharacters();
+
+    const container = document.getElementById('stories');
+    if (!container) return;
+
+    const maxStories = 10;
+    storyGroups = [];
+
+    const todayKey = getTodayKey();
+
+    // 🔐 Charger le cache existant
+    let stored = loadStorySets();
+    if (!stored || stored.date !== todayKey) {
+      // Nouveau jour → on repart de zéro
+      stored = { date: todayKey, characters: {} };
+    }
+    if (!stored.characters) stored.characters = {};
+
+    const MAX_MEDIA_PER_CHAR = 3; // nb max de stories par IA
+
+    characters.slice(0, maxStories).forEach(async (char) => {
+      const folder = getCharacterStoryFolder(char);
+      if (!folder) return;
+
+      try {
+        const res = await fetch(
+          `/api/story-media?folder=${encodeURIComponent(folder)}`
+        );
+        const data = await res.json();
+        if (!data.media || !data.media.length) return;
+
+        // ✅ Avatar IMAGE (jamais une vidéo)
+        let avatarUrl = char.photo;
+        if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
+          avatarUrl = char.backgroundPhoto || (data.media[0] || '');
+        }
+
+        // 🔐 Vérifier si on a déjà un set pour ce perso aujourd'hui
+        let chosenMedia = stored.characters[char.name];
+
+        if (!Array.isArray(chosenMedia) || chosenMedia.length === 0) {
+          // 👉 Première fois aujourd'hui : on choisit un petit set aléatoire
+          const shuffled = [...data.media].sort(() => Math.random() - 0.5);
+          chosenMedia = shuffled.slice(
+            0,
+            Math.min(MAX_MEDIA_PER_CHAR, shuffled.length)
+          );
+
+          stored.characters[char.name] = chosenMedia;
+          saveStorySets(stored); // on sauvegarde au fur et à mesure
+        }
+
+        const groupIndex = storyGroups.length;
+        storyGroups.push({
+          characterName: char.name,
+          avatar: avatarUrl,
+          media: chosenMedia,
+        });
+
+        // ✅ Vignette = première story choisie
+        const thumbUrl = chosenMedia[0];
+        const item = document.createElement('div');
+        item.className = 'story-item';
+
+        let thumbNode;
+        if (/\.(mp4|webm|mov)$/i.test(thumbUrl)) {
+          thumbNode = document.createElement('video');
+          thumbNode.src = thumbUrl;
+          thumbNode.autoplay = true;
+          thumbNode.loop = true;
+          thumbNode.muted = true;
+          thumbNode.playsInline = true;
+        } else {
+          thumbNode = document.createElement('img');
+          thumbNode.src = thumbUrl;
+        }
+        thumbNode.className = 'story-thumb';
+
+        const label = document.createElement('div');
+        label.className = 'story-name';
+        label.textContent = char.name;
+
+        item.appendChild(thumbNode);
+        item.appendChild(label);
+
+        item.addEventListener('click', () => {
+          openStoryGroup(groupIndex, 0);
+        });
+
+        container.appendChild(item);
+      } catch (err) {
+        console.error('❌ Erreur story pour', char.name, err);
+      }
+    });
+  }
+
+  // ---------- LISTENERS ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    loadStories();
+
+    document
+      .getElementById('story-close-btn')
+      .addEventListener('click', closeViewer);
+
+    document
+      .getElementById('story-prev')
+      .addEventListener('click', (e) => {
+        e.stopPropagation();
+        prevStory();
+      });
+
+    document
+      .getElementById('story-next')
+      .addEventListener('click', (e) => {
+        e.stopPropagation();
+        nextStory();
+      });
+
+    // clic fond noir = fermer
+    document
+      .getElementById('story-viewer')
+      .addEventListener('click', (e) => {
+        if (e.target.id === 'story-viewer') closeViewer();
+      });
+
+    // Envoi réponse
+    const replyInput = document.getElementById('story-reply-input');
+    const replyBtn = document.getElementById('story-reply-send');
+
+    function sendReply() {
+      const msg = replyInput.value.trim();
+      const group = storyGroups[currentGroupIndex];
+      if (!group || !msg) return;
+      closeViewer();
+      openChatForCharacter(group.characterName, msg);
+      replyInput.value = '';
+    }
+
+    replyBtn.addEventListener('click', sendReply);
+    replyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendReply();
+      }
+    });
+  });
+</script>
 
 
 
