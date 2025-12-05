@@ -3003,30 +3003,37 @@ vapi-widget {
 /* Barre de réponse en bas */
 .story-reply-bar {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 6px;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-}
 
+  /* 🆕 fond “pill” propre */
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 999px;
+}
 
 #story-reply-input {
   flex: 1;
   padding: 8px 10px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(0,0,0,0.6);
+  border-radius: 999px;
+
+  /* 🆕 on enlève le contour noir */
+  border: none;
+  outline: none;
+  background: transparent;
+
   color: #fff;
   font-size: 14px;
 }
 
 #story-reply-input::placeholder {
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.7);
 }
+
 
 #story-reply-send {
   padding: 6px 12px;
