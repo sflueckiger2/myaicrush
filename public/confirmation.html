@@ -122,6 +122,10 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 
+<meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
+
+
+
 
   
 </head>
@@ -585,6 +589,32 @@ document.addEventListener('DOMContentLoaded', function () {
   <img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=856337547086311&ev=Purchase&noscript=1"/>
 </noscript>
+
+
+<script>
+(function() {
+  // Nombre aléatoire / timestamp pour éviter le cache
+  const randomNumber = Date.now();
+
+  // Si tu as un session_id Stripe dans l'URL : ?session_id=xxx
+  const urlParams = new URLSearchParams(window.location.search);
+  const transactionId = urlParams.get("session_id") || randomNumber;
+
+  // Description de la transaction (lecture côté TrafficJunky)
+  const description = encodeURIComponent("MyAiCrush+Premium");
+
+  // Création du pixel TJ
+  const img = document.createElement("img");
+  img.id = "1000552661_cpa_testing";
+  img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${randomNumber}&cti=${transactionId}&ctv=40.00&ctd=${description}`;
+  img.width = 1;
+  img.height = 1;
+  img.border = 0;
+  img.style.display = "none";
+
+  document.body.appendChild(img);
+})();
+</script>
 
 
 
