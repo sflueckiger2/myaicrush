@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 
-<meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
 
+<meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
 
 
 
@@ -616,6 +616,30 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
+
+<script>
+  // Génère un numéro aléatoire pour éviter le cache
+  const randomNumber = Date.now();
+
+  // Génère un ID unique pour la transaction
+  const transactionId = 'txn_' + Math.random().toString(36).substr(2, 9);
+
+  // Description : tu peux modifier si tu veux détailler le plan acheté
+  const transactionDescription = 'myaicrush_subscription';
+
+  // Construction de l’URL TrafficJunky
+  const tjPixelUrl = `https://ads.trafficjunky.net/ct?a=1000552711&member_id=1007700561&cb=${randomNumber}&cti=${transactionId}&ctv=50.00&ctd=${transactionDescription}`;
+
+  // Création du pixel invisible
+  const img = document.createElement('img');
+  img.src = tjPixelUrl;
+  img.width = 1;
+  img.height = 1;
+  img.style.display = 'none';
+
+  // Ajout à la page pour déclencher la conversion
+  document.body.appendChild(img);
+</script>
 
 
 
