@@ -2056,23 +2056,34 @@ console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
             { role: "system", content: systemPrompt },
         ];
 
-        if (Array.isArray(history) && history.length) {
-            // On ne prend que les 30 derniers au cas où
-            history.slice(-30).forEach(entry => {
-                if (!entry || typeof entry.content !== "string") return;
+        const MAX_HISTORY_MESSAGES = 15;      // ✅ gros gain vitesse (teste 8 à 14)
+const MAX_MSG_CHARS = 240;            // ✅ évite les pavés dans l’historique
 
-                const role = entry.role === "assistant" ? "assistant" : "user";
+if (Array.isArray(history) && history.length) {
+  history
+    .slice(-MAX_HISTORY_MESSAGES)
+    .forEach(entry => {
+      if (!entry || typeof entry.content !== "string") return;
+      const role = entry.role === "assistant" ? "assistant" : "user";
 
-                messages.push({
-                    role,
-                    content: entry.content
-                });
-            });
-        } else {
-            // Fallback : ancien système basé sur userConversationHistory en mémoire
-            const conversationHistory = userConversationHistory.get(email) || [];
-            messages.push(...conversationHistory);
-        }
+      // ✅ crop contenu (réduit tokens)
+      const content = entry.content.replace(/\s+/g, " ").trim().slice(0, MAX_MSG_CHARS);
+      if (!content) return;
+
+      messages.push({ role, content });
+    });
+} else {
+  const conversationHistory = userConversationHistory.get(email) || [];
+  conversationHistory
+    .slice(-MAX_HISTORY_MESSAGES)
+    .forEach(m => {
+      if (!m || typeof m.content !== "string") return;
+      const content = m.content.replace(/\s+/g, " ").trim().slice(0, MAX_MSG_CHARS);
+      if (!content) return;
+      messages.push({ role: m.role, content });
+    });
+}
+
 
         
 
