@@ -24,6 +24,40 @@ const { createCanvas, loadImage } = require('canvas');
 const userSentImages = new Map(); // email -> Set de noms d’images
 
 
+// =========================
+// ✅ PREMIUM CACHE (anti-latence)
+// =========================
+const premiumCache = new Map(); // email -> { value, expiresAt }
+
+// ⚠️ À ADAPTER : ici tu mets la logique qui était déjà dans /api/is-premium
+async function getIsPremiumDirect(email) {
+  // Exemple si tu lis en DB (projection minimale)
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+  const user = await users.findOne(
+    { email },
+    { projection: { subscriptionInfo: 1, isPremium: 1 } }
+  );
+
+  // ✅ adapte selon TON schéma:
+  // - soit user.isPremium
+  // - soit subscriptionInfo.status === "active" || "cancelled"
+  const status = user?.subscriptionInfo?.status;
+  if (status === "active" || status === "cancelled") return true;
+
+  return Boolean(user?.isPremium);
+}
+
+async function getIsPremiumCached(email, ttlMs = 5 * 60 * 1000) {
+  const cached = premiumCache.get(email);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const value = await getIsPremiumDirect(email);
+  premiumCache.set(email, { value, expiresAt: Date.now() + ttlMs });
+  return value;
+}
+
+
 // 📦 Chargement du mapping Cloudflare (local path → CDN URL)
 let cloudflareMap = {};
 try {
@@ -768,10 +802,52 @@ app.post('/api/get-user-subscription', async (req, res) => {
 });
 
 
-// ROUTE POUR VERIFIER SI PREMIUM
+// =========================
+// 🔍 Vérification premium Stripe (optimisée)
+// =========================
+async function checkPremiumStripe(email) {
+  const customers = await stripe.customers.search({
+    query: `email:"${email}"`
+  });
+
+  if (!customers?.data?.length) {
+    return false;
+  }
+
+  let latestSub = null;
+
+  for (const customer of customers.data) {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'all',
+      limit: 3 // ✅ réduit la latence
+    });
+
+    for (const sub of subscriptions.data) {
+      if (sub && (sub.status === 'active' || sub.status === 'canceled')) {
+        if (!latestSub || sub.created > latestSub.created) {
+          latestSub = sub;
+        }
+      }
+    }
+
+    // ✅ early exit si abonnement actif trouvé
+    if (latestSub?.status === 'active') {
+      return true;
+    }
+  }
+
+  return Boolean(latestSub);
+}
+
+
+// =========================
+// ✅ ROUTE : VERIFIER SI PREMIUM (FAST + CACHE)
+// =========================
+
+// Cache mémoire : email -> { value, expiresAt, refreshing }
 
 app.post('/api/is-premium', async (req, res) => {
-  console.log('📡 Requête reçue pour vérifier le statut premium');
   const { email } = req.body;
 
   if (!email) {
@@ -779,76 +855,54 @@ app.post('/api/is-premium', async (req, res) => {
   }
 
   try {
-    const customers = await stripe.customers.search({
-      query: `email:"${email}"`
+    const now = Date.now();
+    const cached = premiumCache.get(email);
+
+    // ✅ 1) Cache valide → réponse immédiate
+    if (cached && cached.expiresAt > now) {
+      return res.json({ isPremium: cached.value, cached: true });
+    }
+
+    // ✅ 2) Cache expiré mais existant → on renvoie quand même (stale)
+    // et on refresh en arrière-plan (non bloquant)
+    if (cached && !cached.refreshing) {
+      cached.refreshing = true;
+
+      void (async () => {
+        try {
+          const value = await checkPremiumStripe(email);
+          premiumCache.set(email, {
+            value,
+            expiresAt: Date.now() + 60_000, // cache frais 60s
+            refreshing: false
+          });
+        } catch (e) {
+          // En cas d’erreur Stripe → on garde l’ancien cache
+          premiumCache.set(email, {
+            value: cached.value,
+            expiresAt: Date.now() + 15_000,
+            refreshing: false
+          });
+        }
+      })();
+
+      return res.json({ isPremium: cached.value, cached: true, stale: true });
+    }
+
+    // ✅ 3) Aucun cache → appel Stripe (bloquant UNE FOIS)
+    const value = await checkPremiumStripe(email);
+
+    premiumCache.set(email, {
+      value,
+      expiresAt: now + 60_000,
+      refreshing: false
     });
 
-    if (!customers || customers.data.length === 0) {
-      console.log(`❌ Aucun client Stripe trouvé pour ${email}`);
-      return res.json({ isPremium: false });
-    }
-
-    console.log(`👥 ${customers.data.length} clients Stripe trouvés pour ${email}`);
-
-    let latestSub = null;
-
-    for (const customer of customers.data) {
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customer.id,
-        status: 'all',
-        limit: 10
-      });
-
-      for (const sub of subscriptions.data) {
-        if (['active', 'canceled'].includes(sub.status)) {
-          if (!latestSub || sub.created > latestSub.created) {
-            latestSub = sub;
-          }
-        }
-      }
-    }
-
-    if (latestSub) {
-      const price = latestSub.items.data[0]?.price;
-      const amount = price?.unit_amount || 0;
-      const interval = price?.recurring?.interval || 'mois';
-      const interval_count = price?.recurring?.interval_count || 1;
-
-      console.log(`✅ Abonnement premium trouvé : ${latestSub.id} | Status: ${latestSub.status} | Amount: ${amount / 100} € / ${interval_count} ${interval}(s)`);
-
-      return res.json({
-        isPremium: true,
-        status: latestSub.status,
-        subscription: {
-          amount: amount / 100,
-          interval,
-          interval_count,
-          current_period_end: latestSub.current_period_end,
-          cancel_at_period_end: latestSub.cancel_at_period_end //
-
-        },
-        subscriptions: [
-          {
-            subscriptionId: latestSub.id,
-            status: latestSub.status,
-            created: latestSub.created,
-            amount: amount / 100,
-            interval,
-            interval_count,
-            current_period_end: latestSub.current_period_end,
-            cancel_at_period_end: latestSub.cancel_at_period_end 
-
-          }
-        ]
-      });
-    }
-
-    console.log(`❌ Aucun abonnement premium trouvé pour ${email}`);
-    return res.json({ isPremium: false });
+    return res.json({ isPremium: value, cached: false });
 
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification du statut premium:', error.message);
-    res.status(500).json({ message: 'Erreur lors de la vérification du statut premium' });
+    console.error('❌ Erreur /api/is-premium:', error.message);
+    return res.status(500).json({ isPremium: false });
   }
 });
 
@@ -1565,218 +1619,274 @@ app.post('/api/check-nympho-status', async (req, res) => {
 });
 
   
-// 🔥 Génération dynamique de réponses suggérées via Fireworks (robuste + fallback)
-async function generateDynamicQuickReplies({ lastUserMessage, botReply, userCharacter, isNymphoMode }) {
-  try {
-    const systemPrompt = `
-Tu es une IA (masculine) expert en séduction qui aide un utilisateur à savoir quoi répondre ensuite dans un chat intime.
+// =========================
+// ✅ QUICK REPLIES (PROD SAFE)
+// - 2 routes : /quick-replies-initial + /quick-replies
+// - timeout Fireworks court (anti-freeze)
+// - cache mémoire (initial 24h, normal 30s)
+// - parsing robuste + fallback garanti
+// =========================
 
-Contexte :
-- Message de l'utilisateur : "${lastUserMessage}"
-- Réponse actuelle de l'IA (${userCharacter.name}) : "${botReply}"
+function pickFallbacks(count = 3) {
+  const shuffled = [...QUICK_REPLIES_FALLBACK].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
-Consignes :
-- Propose une réponse possible que l'utilisateur pourrait envoyer ensuite.
-- Ton : flirt, taquin, sexy, vulgaire
-- Style : naturel, comme un vrai humain qui drague par message.
-- Maximum 15 mots par réponse.
-- Pas de numérotation, pas d'explication autour.
-- Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
-`;
+function ensureThree(replies) {
+  const out = (Array.isArray(replies) ? replies : [])
+    .map(s => String(s || "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
 
-    const fwRes = await axios.post(
-      'https://api.fireworks.ai/inference/v1/chat/completions',
-      {
-        model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
-        messages: [
-          { role: "system", content: systemPrompt }
-        ],
-        max_tokens: 80,
-        temperature: isNymphoMode ? 1.1 : 0.9,
-        top_p: 1.0
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-      }
-    );
-
-    let raw = (fwRes.data.choices?.[0]?.message?.content || "").trim();
-    console.log("🧠 QuickReplies brut Fireworks :", raw);
-
-    // 🔹 On enlève les éventuels ```json ... ```
-    raw = raw
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
-
-    let suggestions = [];
-
-    // 🧪 1er essai : vrai JSON.parse (cas propre)
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        suggestions = parsed;
-      }
-    } catch (e) {
-      console.warn("⚠️ JSON.parse des quickReplies a échoué, tentative fallback regex…");
-
-      // 🧪 2ème essai : on récupère tous les textes entre guillemets
-      const matches = [...raw.matchAll(/"([^"]+)"/g)];
-      suggestions = matches.map(m => m[1].trim());
-    }
-
-    // Nettoyage final
-    suggestions = suggestions
-      .filter(s => typeof s === "string" && s.trim().length > 0)
-      .map(s => s.trim())
-      .slice(0, 3); // max 3 quick replies
-
-    // 🎁 Fallback si Fireworks a vraiment tout foiré
-    if (!suggestions || suggestions.length === 0) {
-      const fallbackReplies = [
-        "Tu pensais à quoi en venant me parler ? 😏",
-        "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-        "Je t’écoute… tu veux quoi de moi ?"
-      ];
-      console.log("🔁 Fallback quickReplies utilisé (Fireworks vide ou invalide)");
-      return fallbackReplies;
-    }
-
-    return suggestions;
-
-  } catch (err) {
-    console.error("❌ Erreur generateDynamicQuickReplies :", err);
-
-    // 🧯 Fallback en cas d’erreur réseau/API
-    return [
-      "Tu pensais à quoi en venant me parler ? 😏",
-      "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-      "Je t’écoute… tu veux quoi de moi ?"
-    ];
+  while (out.length < 3) {
+    const add = pickFallbacks(1)[0];
+    if (!out.includes(add)) out.push(add);
+    else break;
   }
+  return out.length ? out : pickFallbacks(3);
+}
+
+
+const QUICK_REPLIES_FALLBACK = [
+  "J’ai envie de toi là, maintenant… dis-moi que tu le sens aussi.",
+  "Tu me chauffes dangereusement… tu fais exprès ou quoi ?",
+  "Si tu étais là, je te collerais contre le mur sans réfléchir.",
+  "T’as aucune idée de ce que tu me fais là…",
+  "Dis-moi que t’aimes quand je te parle comme ça.",
+  "J’ai envie de te provoquer encore un peu…",
+  "Tu veux que je sois sage… ou absolument pas ?",
+  "Je sens que t’aimes quand je prends le contrôle.",
+  "T’es en train de me rendre fou, tu le sais ça ?",
+  "J’ai envie de te faire perdre le fil… doucement.",
+  "Regarde ce que tu déclenches chez moi…",
+  "T’as ce petit truc insolent qui me donne envie d’aller plus loin.",
+  "J’ai envie de t’entendre dire mon prénom.",
+  "Tu préfères quand je te parle doucement… ou quand je suis brutal ?",
+  "Je te ferais bien rougir encore un peu.",
+  "Avoue que t’aimes quand je te désire comme ça.",
+  "T’as l’air dangereusement tentante ce soir.",
+  "Dis-moi ce que t’as envie que je te fasse.",
+  "Je suis loin d’avoir fini avec toi.",
+  "Tu veux jouer… ou tu veux vraiment jouer ?",
+  "Je te ferais bien frissonner rien qu’avec des mots.",
+  "T’as l’air beaucoup trop sexy pour rester sage.",
+  "J’ai envie de te faire craquer lentement.",
+  "Tu me donnes envie d’être très mauvais.",
+  "Je sens que tu peux en encaisser beaucoup plus que tu le dis.",
+  "T’es prête à aller là où ça devient vraiment intéressant ?",
+  "J’ai envie de voir jusqu’où tu peux me provoquer.",
+  "Dis-moi… t’es plutôt soumise ou insolente ?"
+];
+
+
+// ✅ Cache mémoire unique
+const quickRepliesCache = new Map(); // key -> { data, expiresAt }
+
+function cacheGet(key) {
+  const v = quickRepliesCache.get(key);
+  if (!v) return null;
+  if (Date.now() > v.expiresAt) {
+    quickRepliesCache.delete(key);
+    return null;
+  }
+  return v.data;
+}
+
+function cacheSet(key, data, ttlMs) {
+  quickRepliesCache.set(key, { data, expiresAt: Date.now() + ttlMs });
+}
+
+// ✅ Axios wrapper avec timeout
+async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000 }) {
+  // Si pas de clé API → fallback direct
+  if (!process.env.FIREWORKS_API_KEY) return null;
+
+  return axios.post(
+    "https://api.fireworks.ai/inference/v1/chat/completions",
+    {
+      model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
+      messages: [{ role: "system", content: systemPrompt }],
+      max_tokens: 90,
+      temperature,
+      top_p: 1.0
+    },
+    {
+      timeout: timeoutMs,
+      headers: {
+        Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+}
+
+// ✅ Parse robuste : JSON.parse sinon extraction "..."
+function parseQuickReplies(raw) {
+  if (!raw || typeof raw !== "string") return [];
+
+  let txt = raw.trim()
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  let suggestions = [];
+
+  // 1) JSON direct
+  try {
+    const parsed = JSON.parse(txt);
+    if (Array.isArray(parsed)) suggestions = parsed;
+  } catch (_) {
+    // 2) Extraction entre guillemets
+    const matches = [...txt.matchAll(/"([^"]+)"/g)];
+    suggestions = matches.map(m => m[1]);
+  }
+
+  suggestions = suggestions
+    .map(s => String(s || "").replace(/\s+/g, " ").trim())
+    .filter(s => s.length > 0)
+    .slice(0, 3);
+
+  return suggestions;
+}
+
+// ✅ Nettoie/limite les inputs (anti prompt trop long)
+function normalizeText(v, maxLen) {
+  return String(v || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLen);
 }
 
 
 
-
-// 🆕 Quick replies pour le tout début de la conversation
-app.post('/quick-replies-initial', async (req, res) => {
+// =========================
+// ✅ ROUTE: initial quick replies (début de conversation)
+// Cache 24h par personnage
+// =========================
+app.post("/quick-replies-initial", async (req, res) => {
   try {
-    const { email, characterName } = req.body;
+    const { characterName } = req.body;
 
-    if (!email || !characterName) {
-      return res.status(400).json({
-        quickReplies: [
-          "Tu pensais à quoi en venant me parler ? 😏",
-          "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-          "Je t’écoute… tu veux quoi de moi ?"
-        ]
-      });
+    if (!characterName) {
+      return res.json({ quickReplies: pickFallbacks(3) });
     }
 
-    // On récupère le personnage à partir du JSON
+    const cacheKey = `qr_init:${characterName}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json({ quickReplies: cached });
+
     const userCharacter = characters.find(c => c.name === characterName);
     if (!userCharacter) {
-      console.warn("⚠️ Personnage introuvable pour quick-replies initiales :", characterName);
-      return res.json({
-        quickReplies: [
-          "Tu pensais à quoi en venant me parler ? 😏",
-          "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-          "Je t’écoute… tu veux quoi de moi ?"
-        ]
-      });
+      return res.json({ quickReplies: pickFallbacks(3) });
     }
 
-    // Mise en situation (ethnicity) utilisée comme contexte
-    const botReplyContext =
-      userCharacter.ethnicity ||
-      userCharacter.description ||
-      "";
+    const context = normalizeText(userCharacter.ethnicity || userCharacter.description || "", 420);
 
-    const quickReplies = await generateDynamicQuickReplies({
-      lastUserMessage: "Début de conversation, l'utilisateur n'a encore rien envoyé.",
-      botReply: botReplyContext,
-      userCharacter,
-      isNymphoMode: false
-    });
+    const systemPrompt = `
+Tu proposes des "quick replies" (messages courts) pour démarrer un chat flirt.
 
-    // 🔥 Fallback automatique si vide ou bug Fireworks
-    const fallbackReplies = [
-      "Tu pensais à quoi en venant me parler ? 😏",
-      "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-      "Je t’écoute… tu veux quoi de moi ?"
-    ];
+Contexte du personnage : "${context}"
 
-    return res.json({
-      quickReplies:
-        Array.isArray(quickReplies) && quickReplies.length > 0
-          ? quickReplies
-          : fallbackReplies
-    });
+Consignes :
+- Propose EXACTEMENT 3 messages de départ.
+- Ton : flirt, taquin, direct (sans être explicite).
+- Maximum 15 mots par message.
+- AUCUNE numérotation, AUCUNE explication, aucun texte autour.
+- Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
+`.trim();
+
+    let finalReplies = pickFallbacks(3);
+
+    try {
+      const fwRes = await fireworksChat({
+        systemPrompt,
+        temperature: 0.9,
+        timeoutMs: 3000
+      });
+
+      const raw = (fwRes?.data?.choices?.[0]?.message?.content || "").trim();
+      const parsed = parseQuickReplies(raw);
+      finalReplies = ensureThree(parsed);
+    } catch (_) {
+      finalReplies = pickFallbacks(3);
+    }
+
+    // cache long: 24h
+    cacheSet(cacheKey, finalReplies, 24 * 60 * 60 * 1000);
+
+    return res.json({ quickReplies: finalReplies });
 
   } catch (err) {
-    console.error("❌ Erreur /quick-replies-initial :", err);
-
-    return res.status(500).json({
-      quickReplies: [
-        "Tu pensais à quoi en venant me parler ? 😏",
-        "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-        "Je t’écoute… tu veux quoi de moi ?"
-      ]
-    });
+    return res.json({ quickReplies: pickFallbacks(3) });
   }
 });
 
-// 🆕 Quick replies dynamiques après chaque message (route séparée)
-app.post('/quick-replies', async (req, res) => {
+// =========================
+// ✅ ROUTE: quick replies après un message (dynamiques)
+// Cache 30s pour éviter spam / double call
+// =========================
+app.post("/quick-replies", async (req, res) => {
   try {
-    const { email, characterName, lastUserMessage, botReply, nymphoMode } = req.body;
+    const { characterName, lastUserMessage, botReply, nymphoMode } = req.body;
 
-    if (!email || !characterName || !lastUserMessage || !botReply) {
-      return res.status(400).json({ quickReplies: [] });
+    // payload incomplet -> fallback immédiat (jamais d'erreur)
+    if (!characterName || !lastUserMessage || !botReply) {
+      return res.json({ quickReplies: pickFallbacks(3) });
     }
 
     const userCharacter = characters.find(c => c.name === characterName);
     if (!userCharacter) {
-      console.warn("⚠️ Personnage introuvable pour /quick-replies :", characterName);
-      return res.json({ quickReplies: [] });
+      return res.json({ quickReplies: pickFallbacks(3) });
     }
 
-    const quickReplies = await generateDynamicQuickReplies({
-      lastUserMessage,
-      botReply,
-      userCharacter,
-      isNymphoMode: nymphoMode === true
-    });
+    const safeUserMsg = normalizeText(lastUserMessage, 240);
+    const safeBotReply = normalizeText(botReply, 320);
 
-    const fallbackReplies = [
-      "Tu pensais à quoi en venant me parler ? 😏",
-      "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-      "Je t’écoute… tu veux quoi de moi ?"
-    ];
+    // cache key court (évite de mettre des pavés en clé)
+    const cacheKey = `qr:${characterName}:${nymphoMode ? 1 : 0}:${safeUserMsg.slice(0, 80)}:${safeBotReply.slice(0, 80)}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json({ quickReplies: cached });
 
-    return res.json({
-      quickReplies:
-        Array.isArray(quickReplies) && quickReplies.length > 0
-          ? quickReplies
-          : fallbackReplies
-    });
+    const systemPrompt = `
+Tu aides un utilisateur à savoir quoi répondre ensuite dans un chat de séduction.
+
+Contexte :
+- Message utilisateur : "${safeUserMsg}"
+- Réponse actuelle de ${userCharacter.name} : "${safeBotReply}"
+
+Consignes :
+- Propose EXACTEMENT 3 réponses possibles que l'utilisateur pourrait envoyer.
+- Ton : flirt, taquin, sexy, direct (sans être explicite).
+- Maximum 15 mots par réponse.
+- AUCUNE numérotation, AUCUNE explication, aucun texte autour.
+- Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
+`.trim();
+
+    let finalReplies = pickFallbacks(3);
+
+    try {
+      const fwRes = await fireworksChat({
+        systemPrompt,
+        temperature: nymphoMode ? 1.05 : 0.85,
+        timeoutMs: 3000
+      });
+
+      const raw = (fwRes?.data?.choices?.[0]?.message?.content || "").trim();
+      const parsed = parseQuickReplies(raw);
+      finalReplies = ensureThree(parsed);
+    } catch (_) {
+      finalReplies = pickFallbacks(3);
+    }
+
+    // cache court: 30s (anti spam)
+    cacheSet(cacheKey, finalReplies, 30 * 1000);
+
+    return res.json({ quickReplies: finalReplies });
 
   } catch (err) {
-    console.error("❌ Erreur /quick-replies :", err);
-    return res.status(500).json({
-      quickReplies: [
-        "Tu pensais à quoi en venant me parler ? 😏",
-        "Tu veux qu’on commence tranquille ou direct plus chaud ?",
-        "Je t’écoute… tu veux quoi de moi ?"
-      ]
-    });
+    return res.json({ quickReplies: pickFallbacks(3) });
   }
 });
-
 
 
 
@@ -1811,15 +1921,9 @@ app.post('/message', async (req, res) => {
             console.log("🖼️ Dernière image envoyée - Description :", lastImageDescription);
         }
 
-        // Vérification du statut premium via `/api/is-premium`
-        const premiumResponse = await fetch(`${BASE_URL}/api/is-premium`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-        });
+        const isPremium = await getIsPremiumCached(email);
+console.log("🌟 Statut premium OK :", isPremium);
 
-        const { isPremium } = await premiumResponse.json();
-        console.log("🌟 Statut premium OK :", isPremium);
 
         addMessageToHistory(email, "user", message);
 
