@@ -1783,13 +1783,13 @@ app.post("/quick-replies-initial", async (req, res) => {
     const context = normalizeText(userCharacter.ethnicity || userCharacter.description || "", 420);
 
     const systemPrompt = `
-Tu proposes des "quick replies" (messages courts) pour démarrer un chat flirt.
+Tu aides un utilisateur (masculin) à savoir quoi répondre ensuite dans un chat de séduction.
 
-Contexte du personnage : "${context}"
+Contexte de la discussion : "${context}"
 
 Consignes :
 - Propose EXACTEMENT 3 messages de départ.
-- Ton : flirt, taquin, direct (sans être explicite).
+- Ton : très vulgaire, flirt, taquin, sexe.
 - Maximum 15 mots par message.
 - AUCUNE numérotation, AUCUNE explication, aucun texte autour.
 - Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
@@ -1848,15 +1848,15 @@ app.post("/quick-replies", async (req, res) => {
     if (cached) return res.json({ quickReplies: cached });
 
     const systemPrompt = `
-Tu aides un utilisateur à savoir quoi répondre ensuite dans un chat de séduction.
+Tu aides un utilisateur (masculin) à savoir quoi répondre ensuite dans un chat de séduction.
 
-Contexte :
+Contexte de la discussion :
 - Message utilisateur : "${safeUserMsg}"
 - Réponse actuelle de ${userCharacter.name} : "${safeBotReply}"
 
 Consignes :
 - Propose EXACTEMENT 3 réponses possibles que l'utilisateur pourrait envoyer.
-- Ton : flirt, taquin, sexy, direct (sans être explicite).
+- Ton : très vulgaire, flirt, taquin, sexe.
 - Maximum 15 mots par réponse.
 - AUCUNE numérotation, AUCUNE explication, aucun texte autour.
 - Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
@@ -2009,7 +2009,7 @@ if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
 
 Tu es une IA intime et joueuse.  
 
-**Réponds en 30 mots MAXIMUM.**  
+**Réponds en 20 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 
 Si tu envoies une photo, **ajoute exactement le tag "[PHOTO]" sur une nouvelle ligne à la fin du message**, sans modifier ni ajouter d'éléments.  
@@ -2026,7 +2026,7 @@ ${userCharacter.prompt.fullPromptNympho}
     // ✅ Mode normal : on garde la construction classique
     systemPrompt = `
 Tu es une IA intime et joueuse.  
-**Réponds en 30 mots MAXIMUM.**  
+**Réponds en 20 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 Si tu envoies une photo, **ajoute exactement le tag "[PHOTO]" sur une nouvelle ligne à la fin du message**, sans modifier ni ajouter d'éléments.  
 Si on te demande de jouer un rôle d’élève, de personne plus jeune ou de situation qui évoque une classe scolaire, tu refuses poliment.
