@@ -228,68 +228,72 @@ async function startCheckout(priceId, email, planType) {
 async function displaySubscriptionInfo() {
   try {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || !user.email) {
-      console.log('Utilisateur non connecté.');
+    if (!user || !user.email) return;
+
+    const response = await fetch('/api/get-user-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email })
+    });
+
+    if (!response.ok) throw new Error("Impossible de récupérer l'abonnement");
+
+    const data = await response.json();
+    const container = document.querySelector('.profile-section.subscription');
+
+    if (!container) return;
+
+    if (!data || !data.status) {
+      container.innerHTML = '<p>Aucun abonnement actif.</p>';
       return;
     }
 
-    const response = await fetch(`${BASE_URL}/api/is-premium`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email }),
-    });
+    const endDate = data.current_period_end
+      ? new Date(data.current_period_end * 1000).toLocaleDateString('fr-FR')
+      : null;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Impossible de récupérer les infos premium');
+    // Abonnement annulé mais encore actif
+    if (
+      data.status === 'canceled' ||
+      (data.status === 'active' && data.cancel_at_period_end)
+    ) {
+      container.innerHTML = `
+        <p>Abonnement annulé.</p>
+        <p>Valable jusqu’au ${endDate}</p>
+      `;
+      return;
     }
 
-    const data = await response.json();
-    const subscriptionContainer = document.querySelector('.profile-section.subscription');
+    // Abonnement actif normal
+    let intervalLabel = '';
 
-    if (data.isPremium && data.subscription) {
-      const status = data.status;
-      const endDate = data.subscription.current_period_end
-        ? new Date(data.subscription.current_period_end * 1000).toLocaleDateString('fr-FR')
-        : null;
-
-      let html = '';
-
-      if (
-  status === 'cancelled' ||
-  status === 'canceled' ||
-  (status === 'active' && data.subscription.cancel_at_period_end)
-) {
-  html += `<p>Abonnement annulé. Valable jusqu’au ${endDate}.</p>`;
+if (data.interval === 'month' && data.interval_count === 3) {
+  intervalLabel = 'trimestre';
+} else if (data.interval === 'month') {
+  intervalLabel = 'mois';
+} else if (data.interval === 'year') {
+  intervalLabel = 'an';
+} else if (data.interval === 'week') {
+  intervalLabel = 'semaine';
+} else if (data.interval === 'day') {
+  intervalLabel = 'jour';
+} else {
+  intervalLabel = data.interval;
 }
- else {
-        let intervalLabel = '';
-        if (data.subscription.interval_count === 3 && data.subscription.interval === "month") {
-          intervalLabel = "trimestre";
-        } else if (data.subscription.interval === "month") {
-          intervalLabel = "mois";
-        } else if (data.subscription.interval === "year") {
-          intervalLabel = "an";
-        } else if (data.subscription.interval === "week") {
-          intervalLabel = "semaine";
-        } else if (data.subscription.interval === "day") {
-          intervalLabel = "jour";
-        } else {
-          intervalLabel = data.subscription.interval;
-        }
 
-        html += `<p>Abonnement actuel : ${data.subscription.amount} € / ${intervalLabel}</p>`;
-      }
 
-      subscriptionContainer.innerHTML = html;
-    } else {
-      subscriptionContainer.innerHTML = '<p>Aucun abonnement actif.</p>';
-    }
+   container.innerHTML = `
+  <p>Abonnement actif</p>
+  <p>${data.amount} € / ${intervalLabel}</p>
+  ${endDate ? `<p>Prochain renouvellement : ${endDate}</p>` : ''}
+`;
 
-  } catch (error) {
-    console.error('❌ Erreur:', error);
+
+  } catch (err) {
+    console.error('❌ Erreur abonnement :', err);
   }
 }
+
 
 
 // Vérifier si on est sur la page profile.html et exécuter les fonctionnalités liées à l'abonnement

@@ -81,46 +81,50 @@ async function cancelSubscription(email) {
 
 // Fonction pour récupérer l'abonnement actuel de l'utilisateur
 async function getUserSubscription(email) {
-    try {
-        console.log('Recherche de l\'abonnement pour email :', email);
+  try {
+    console.log("Recherche de l'abonnement pour email :", email);
 
-        const customers = await stripe.customers.search({
-            query: `email:'${email}'`,
-        });
+    const customers = await stripe.customers.search({
+      query: `email:"${email}"`, // ✅ Stripe recommande les guillemets
+    });
 
-        if (customers.data.length === 0) {
-            console.error('Client non trouvé pour cet email');
-            return { status: 'inactive', subscription: null };
-        }
-
-        const customer = customers.data[0];
-
-        const subscriptions = await stripe.subscriptions.list({
-            customer: customer.id,
-        });
-
-        if (subscriptions.data.length === 0) {
-            console.log('Aucun abonnement trouvé pour cet utilisateur');
-            return { status: 'inactive', subscription: null };
-        }
-
-        const subscription = subscriptions.data[0];
-        const status = subscription.cancel_at_period_end ? 'cancelled' : subscription.status;
-
-        console.log('Abonnement trouvé avec succès pour email :', email);
-        return {
-            status,
-            subscription: {
-                id: subscription.id,
-                amount: subscription.items.data[0].price.unit_amount / 100,
-                interval: subscription.items.data[0].price.recurring.interval,
-            },
-        };
-    } catch (error) {
-        console.error('Erreur lors de la récupération de l\'abonnement :', error.message);
-        throw new Error(error.message);
+    if (!customers?.data?.length) {
+      return null;
     }
+
+    const customer = customers.data[0];
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: "all",
+      limit: 10,
+      expand: ["data.items.data.price"], // ✅ pour unit_amount + recurring
+    });
+
+    if (!subscriptions?.data?.length) {
+      return null;
+    }
+
+    // ✅ Prend le plus récent (important)
+    const subscription = subscriptions.data.sort((a, b) => b.created - a.created)[0];
+
+    const price = subscription.items?.data?.[0]?.price;
+
+    return {
+  status: subscription.status,
+  cancel_at_period_end: Boolean(subscription.cancel_at_period_end),
+  current_period_end: subscription.current_period_end || null,
+  amount: price?.unit_amount != null ? price.unit_amount / 100 : null,
+  interval: price?.recurring?.interval || null,
+  interval_count: price?.recurring?.interval_count || 1
+};
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'abonnement :", error.message);
+    throw new Error(error.message);
+  }
 }
+
 
 // Fonction pour créer une session de paiement pour l'achat de jetons
 async function createTokenCheckoutSession(tokensAmount, email) {
