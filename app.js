@@ -1704,7 +1704,7 @@ async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000
   return axios.post(
     "https://api.fireworks.ai/inference/v1/chat/completions",
     {
-      model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
+      model: "accounts/fireworks/models/qwen2p5-vl-32b-instruct",
       messages: [{ role: "system", content: systemPrompt }],
       max_tokens: 90,
       temperature,
@@ -2104,8 +2104,16 @@ if (lastImageDescription) {
 
 
         // Ajoute le message de l'utilisateur
-        messages.push({ role: "user", content: message });
+        const lastMsg = messages[messages.length - 1];
 
+if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
+  messages.push({
+    role: "user",
+    content: message
+  });
+} else {
+  console.log("🟡 Message déjà présent dans history → non réinjecté");
+}
         
 
         
@@ -2115,7 +2123,7 @@ if (lastImageDescription) {
         const response = await axios.post(
     'https://api.fireworks.ai/inference/v1/chat/completions',
     {
-        model: "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
+        model: "accounts/fireworks/models/qwen2p5-vl-32b-instruct",
         messages: messages,
         max_tokens: 200,
         temperature: 1.0,
