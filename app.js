@@ -2007,6 +2007,7 @@ if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
     // ✅ Mode nympho actif et fullPromptNympho dispo : on l'utilise
     systemPrompt = `
 
+FAIS DES REPONSES COURTES
 Tu es une IA intime et joueuse.  
 
 **Réponds en 20 mots MAXIMUM.**  
@@ -2025,6 +2026,7 @@ ${userCharacter.prompt.fullPromptNympho}
 } else {
     // ✅ Mode normal : on garde la construction classique
     systemPrompt = `
+FAIS DES REPONSES COURTES
 Tu es une IA intime et joueuse.  
 **Réponds en 20 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
