@@ -1276,28 +1276,29 @@ console.log(`📸 Média sélectionné pour ${email} : ${mediaPath}`);
       }
 
       // ✅ Par défaut, les abonnés premium voient les médias nets
-      let isBlurred = false; 
+     // 🔐 RÈGLE ABSOLUE : un premium ne voit JAMAIS de flou
+let isBlurred = false;
 
-      if (!isPremium) { // 🔥 Appliquer les règles de floutage SEULEMENT pour les non-premium
-          const userPhotoData = userPhotoStatus.get(email) || { photoSentAtLittleCrush: false };
+if (!isPremium) {
+  const userPhotoData = userPhotoStatus.get(email) || { photoSentAtLittleCrush: false };
 
-          if (userLevel > 1.6 || isNymphoMode) {
+  if (userLevel > 1.6 || isNymphoMode) {
+    isBlurred = true;
+  } else if (!firstFreeImageSent.has(email)) {
+    firstFreeImageSent.set(email, true);
+  } else {
+    isBlurred = true;
+  }
 
-              isBlurred = true; // Flouter pour les niveaux élevés
-          } else if (!firstFreeImageSent.has(email)) {
-              console.log(`🎁 Première image claire offerte à ${email}`);
-              firstFreeImageSent.set(email, true);
-          } else {
-              console.log(`🔒 Média flouté car ${email} a déjà reçu une image gratuite`);
-              isBlurred = true;
-          }
+  userPhotoStatus.set(email, {
+    ...userPhotoData,
+    photoSentAtLittleCrush: true
+  });
+} else {
+  // 🔥 Sécurité HARD : même si une logique future se trompe
+  isBlurred = false;
+}
 
-          // 🔥 Mise à jour de l'état d'envoi de la photo
-          userPhotoStatus.set(email, {
-              ...userPhotoData,
-              photoSentAtLittleCrush: true
-          });
-      }
 
       console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
       console.log(`📸 Média ${isBlurred ? "flouté" : "non flouté"} envoyé pour ${email}`);
@@ -1890,6 +1891,23 @@ Consignes :
 
 
 
+async function getIsPremiumStripeCached(email, ttlMs = 60_000) {
+  const cached = premiumCache.get(email);
+  const now = Date.now();
+
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  const value = await checkPremiumStripe(email);
+
+  premiumCache.set(email, {
+    value,
+    expiresAt: now + ttlMs
+  });
+
+  return value;
+}
 
 
 // Endpoint principal pour gérer les messages
@@ -1921,7 +1939,8 @@ app.post('/message', async (req, res) => {
             console.log("🖼️ Dernière image envoyée - Description :", lastImageDescription);
         }
 
-        const isPremium = await getIsPremiumCached(email);
+        const isPremium = await getIsPremiumStripeCached(email);
+
 console.log("🌟 Statut premium OK :", isPremium);
 
 
@@ -2007,10 +2026,10 @@ if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
     // ✅ Mode nympho actif et fullPromptNympho dispo : on l'utilise
     systemPrompt = `
 
-FAIS DES REPONSES COURTES
+
 Tu es une IA intime et joueuse.  
 
-**Réponds en 20 mots MAXIMUM.**  
+**Réponds en 30 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 
 Si tu envoies une photo, **ajoute exactement le tag "[PHOTO]" sur une nouvelle ligne à la fin du message**, sans modifier ni ajouter d'éléments.  
@@ -2026,9 +2045,9 @@ ${userCharacter.prompt.fullPromptNympho}
 } else {
     // ✅ Mode normal : on garde la construction classique
     systemPrompt = `
-FAIS DES REPONSES COURTES
+
 Tu es une IA intime et joueuse.  
-**Réponds en 20 mots MAXIMUM.**  
+**Réponds en 30 mots MAXIMUM.**  
 Sois concise, directe, coquine et joueuse selon ton profil.  
 Si tu envoies une photo, **ajoute exactement le tag "[PHOTO]" sur une nouvelle ligne à la fin du message**, sans modifier ni ajouter d'éléments.  
 Si on te demande de jouer un rôle d’élève, de personne plus jeune ou de situation qui évoque une classe scolaire, tu refuses poliment.
@@ -2481,7 +2500,10 @@ let responseData = { reply: botReply };
 
           if (imageResult && imageResult.token) {
     responseData.imageUrl = `/get-image/${imageResult.token}`;
-    responseData.isBlurred = imageResult.isBlurred;
+
+// 🔐 FAILSAFE ULTIME
+responseData.isBlurred = isPremium ? false : imageResult.isBlurred;
+
 
     // 🆕 On regarde l’extension du fichier original
     const ext = path.extname(imageResult.fileName || '').toLowerCase();
