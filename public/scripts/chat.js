@@ -1086,16 +1086,24 @@ if (storiesWrapper) {
                 document.getElementById('chat-name').textContent = character.name;
 
                 // 🔥 Gérer le mode nympho pour la photo
+// 🔥 Gérer le mode nympho pour la photo de profil
 const isNympho = localStorage.getItem("nymphoMode") === "true";
 if (isNympho && character.images?.nympho) {
-    // Remplace la photo par une image du dossier nympho (tu peux en choisir une aléatoire si tu veux)
-    character.photo = `${character.images.nympho}/preview.webp`;
-    console.log("🌶️ Mode nymphomane actif : image modifiée !");
+    // 👉 on prend la preview définie dans le JSON, sans forcer l'extension
+    character.photo = character.images.nymphoPreview || character.photo;
+    console.log("🌶️ Mode nymphomane actif : photo modifiée !");
 }
 
-const profileContainer = document.querySelector('.chat-profile-pic').parentNode;
+
 const oldMedia = document.querySelector('.chat-profile-pic');
+const profileContainer = oldMedia ? oldMedia.parentNode : document.querySelector('.profile-pic-container');
+
 if (oldMedia) oldMedia.remove();
+if (!profileContainer) {
+  console.warn("❌ Conteneur photo de profil introuvable");
+  return;
+}
+
 
 let newMedia;
 if (character.photo.endsWith('.mp4')) {
