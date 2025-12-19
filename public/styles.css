@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800&display=swap');
+
 :root {
   --vh: 1vh;        /* fallback */
   --kb: 0px;        /* hauteur clavier dynamique */
@@ -19,8 +21,8 @@ html, body {
 
 /* Style du corps de la page */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #1e1e2f;
+  font-family: 'Urbanist', sans-serif; /* Plus sexy et lisible en mode sombre [cite : 4.2] */
+  background-color: #0f0f1a; /* Un ton plus profond [cite : 1.2] */
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -29,6 +31,18 @@ body {
   min-height: 100vh;
   margin: 0;
   padding-top: 30px; /* espace pour laisser la place à la bannière */
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.05; /* Très léger */
+    pointer-events: none;
+    z-index: 9999;
 }
 
 /* Centrer le header en haut de la page */
@@ -98,18 +112,22 @@ p {
 
 .chat-card {
   position: relative;
-  background-color: #393956;
+background: rgba(57, 57, 86, 0.4); /* Plus transparent [cite : 3.3] */
   border-radius: 10px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   cursor: pointer;
   height: 100%;
-  transition: transform 0.2s;
+  backdrop-filter: blur(12px); /* Effet verre dépoli [cite : 3.6] */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Bordure fine pour la définition [cite : 3.1] */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .chat-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.4);
+    transform: translateY(-8px) scale(1.02); /* Soulèvement plus dynamique [cite : 4.1, 4.6] */
+    background: rgba(57, 57, 86, 0.6);
+    border-color: #dd4d9d; /* La bordure s'allume au survol */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(221, 77, 157, 0.3); /* Glow rose [cite : 4.6] */
 }
 
 .chat-card img {
@@ -493,16 +511,73 @@ video.chat-profile-pic {
 }
 
 /* Limite la hauteur pour éviter que le contenu dépasse l'écran */
+/* Conteneur de la fiche profil amélioré */
 .profile-content {
-  background-color: #2b2b3d;
-  padding: 20px;
-  border-radius: 8px;
+  background: linear-gradient(145deg, #2b2b3d, #1e1e2f);
+  padding: 0; /* On gère le padding à l'intérieur pour que l'image colle en haut */
+  border-radius: 20px; /* Plus arrondi pour un look moderne */
   text-align: center;
   color: #ffffff;
   max-width: 400px;
-  width: 90%;
-  max-height: 80vh; /* Hauteur max pour ne pas dépasser l’écran */
-  overflow-y: auto; /* Active le scroll vertical si le contenu est trop long */
+  width: 92%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  -ms-overflow-style: none;  /* IE et Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+/* Pour Chrome, Safari et Opera */
+.profile-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Style spécifique pour le contenu textuel sous l'image */
+.profile-details {
+  padding: 30px 25px; /* 30px en haut/bas, 25px sur les côtés */
+  text-align: left; /* Aligné à gauche pour une meilleure lecture des infos */
+}
+
+/* On s'assure que la vidéo/image occupe bien le haut sans bordures blanches */
+.profile-content video, 
+.profile-content img {
+  width: 100%;
+  border-radius: 20px 20px 0 0; /* Arrondis seulement en haut */
+  margin-bottom: 0;
+  display: block;
+  object-fit: cover;
+}
+
+/* Le nom en dégradé */
+#profile-name {
+  font-size: 2rem;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  font-weight: 800;
+  background: linear-gradient(to right, #dd4d9d, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+
+/* Style des paragraphes dans la modal */
+.profile-content p {
+  font-size: 0.95rem;
+  line-height: 1.8;   /* Augmente l'espace entre les lignes (interlignage) */
+  margin-bottom: 20px; /* Espace entre les blocs Taille / Profil / Situation */
+  color: #d1d1e0;
+}
+
+/* Mise en avant des labels (ex: Taille, Passions) */
+.profile-content p strong {
+  color: #dd4d9d; /* Rose pour les titres de section */
+  display: block; /* Met le titre au dessus de la valeur pour plus de clarté */
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+ margin-bottom: 5px; /* Espace entre "SITUATION :" et le texte descriptif */
 }
 
 /* Ajustements sur mobile pour maximiser l'affichage */
@@ -3061,3 +3136,4 @@ vapi-widget {
 #story-reply-send:focus {
   outline: none;
 }
+
