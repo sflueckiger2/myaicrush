@@ -28,7 +28,7 @@ async function checkOneClickEligibility(email) {
 
 // ==== Historique léger (30 derniers messages) ====
 
-const MAX_HISTORY_MESSAGES = 30;
+const MAX_HISTORY_MESSAGES = 5;
 
 // Une seule conversation "globale" (tu pourras affiner par personnage plus tard si tu veux)
 const HISTORY_KEY = 'myaicrush_light_history';
