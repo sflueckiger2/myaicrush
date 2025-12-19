@@ -2109,18 +2109,14 @@ if (Array.isArray(history) && history.length) {
         
 
 if (lastImageDescription) {
-  messages.push({
-    role: "user",
-    content: `L'utilisateur a récemment envoyé une image. Voici la description : "${lastImageDescription}". Réagis en tenant compte de cette image.`
-  });
+    messages.push({
+        role: "user",
+        content: `[CONTEXTE IMAGE] L'utilisateur vient d'envoyer une photo que tu as sous les yeux. Voici sa description : "${lastImageDescription}". Réagis à cette photo de manière naturelle dans ta réponse.`
+    });
 
-  // Garder la description en mémoire tant que l'utilisateur ne change pas de sujet
-  if (conversationHistory.length >= 5) {
-    userLastImageDescriptions.delete(email);
-    console.log("🛑 Suppression de la description d'image après plusieurs messages.");
-  } else {
-    console.log("🖼️ La description de l'image est toujours en mémoire.");
-  }
+    // 🔥 CORRECTIF : On supprime la description immédiatement après l'avoir injectée une fois
+    userLastImageDescriptions.delete(email); 
+    console.log(`✅ Description d'image consommée et supprimée pour ${email}`);
 }
 
 
