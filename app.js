@@ -23,13 +23,7 @@ const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
 const { createCanvas, loadImage } = require('canvas');
 const userSentImages = new Map(); // email -> Set de noms d’images
 
-app.use((req, res, next) => {
-  // Si on demande une image, on empêche le backend d'envoyer des cookies de session
-  if (req.url.includes('/get-image/')) {
-    res.removeHeader('Set-Cookie');
-  }
-  next();
-});
+
 
 
 // =========================
@@ -124,30 +118,28 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-app.use(express.static(path.join(__dirname, 'public'), {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('.json')) {
-        res.setHeader('Cache-Control', 'no-store');
-        res.setHeader('Pragma', 'no-cache'); // pour compatibilité IE
-        console.log(`🛑 Cache désactivé pour : ${filePath}`);
-      }
-    }
-  }));
 
-  app.use('/images', (req, res, next) => {
-  res.removeHeader('Set-Cookie'); // Empêche Render d'envoyer des cookies avec les images
-  next();
-});
 
 app.use('/images', express.static(path.join(__dirname, 'public/images'), {
-  setHeaders: (res, filePath) => {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   }
 }));
 
+
+// 2) Static global (pour le reste du site)
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    // uniquement pour les JSON : pas de cache
+    if (filePath.endsWith('.json')) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Pragma', 'no-cache');
+    }
+  }
+}));
   
-// Middleware pour servir les fichiers statiques, sauf pour les images
-app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
 
 
