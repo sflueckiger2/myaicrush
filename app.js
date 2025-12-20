@@ -23,6 +23,14 @@ const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
 const { createCanvas, loadImage } = require('canvas');
 const userSentImages = new Map(); // email -> Set de noms d’images
 
+app.use((req, res, next) => {
+  // Si on demande une image, on empêche le backend d'envoyer des cookies de session
+  if (req.url.includes('/get-image/')) {
+    res.removeHeader('Set-Cookie');
+  }
+  next();
+});
+
 
 // =========================
 // ✅ PREMIUM CACHE (anti-latence)
@@ -432,23 +440,27 @@ let firstFreeImageSent = new Map(); // Stocke les utilisateurs qui ont déjà re
 
 
 // Générer un token sécurisé pour accéder à l'image
+// Remplace ta fonction actuelle par celle-ci
 function generateImageToken(imagePath, isBlurred) {
-  const token = crypto.randomBytes(20).toString('hex');
+  // On crée un identifiant stable basé sur le chemin du fichier
+  // ex: "aiko1_photo1_blurred" ou "aiko1_photo1_clear"
+  const fileName = path.basename(imagePath);
+  const folderName = path.dirname(imagePath).split(path.sep).pop();
+  const stableId = `${folderName}_${fileName}_${isBlurred ? 'b' : 'c'}`;
 
+  // On garde le token en Map pour la compatibilité avec ton code actuel
+  // mais on utilise l'ID stable comme clé
   const cloudflareUrl = cloudflareMap[imagePath] || null;
 
-  imageTokens.set(token, {
+  imageTokens.set(stableId, {
     imagePath,
     isBlurred,
     cloudflareUrl
   });
 
-  // Supprimer après 10 min
-  setTimeout(() => imageTokens.delete(token), 10 * 60 * 1000);
-
-  return token;
+  // On ne supprime plus après 10 min, sinon le cache Cloudflare pointera vers du vide
+  return stableId;
 }
-
 
 
 
@@ -1401,8 +1413,9 @@ if (imagePath.endsWith('.webp')) {
 
 
 
-   res.setHeader('Content-Type', contentType);
-res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+  // NOUVELLES LIGNES :
+res.setHeader('Content-Type', contentType);
+res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
 
 
 if (imagePath.endsWith('.mp4')) {
