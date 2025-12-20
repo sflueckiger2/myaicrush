@@ -137,6 +137,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
 // Middleware pour servir les fichiers statiques, sauf pour les images
 app.use(express.static('public')); // Servir les fichiers du dossier "public"
 
+app.use('/images', (req, res, next) => {
+  res.removeHeader('Set-Cookie'); // Empêche Render d'envoyer des cookies avec les images
+  next();
+});
+
 app.use('/images', express.static(path.join(__dirname, 'public/images'), {
   setHeaders: (res, filePath) => {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
