@@ -25,6 +25,13 @@ const userSentImages = new Map(); // email -> Set de noms d’images
 
 
 
+app.use((req, res, next) => {
+  if (req.hostname === 'img.myaicrush.ai') {
+    res.removeHeader('Set-Cookie');
+  }
+  next();
+});
+
 
 // =========================
 // ✅ PREMIUM CACHE (anti-latence)
