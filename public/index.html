@@ -259,6 +259,9 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
           }
         });
       </script>
+
+
+
     <script>
       function getFacebookParams() {
           var urlParams = new URLSearchParams(window.location.search);
@@ -411,6 +414,9 @@ banner.addEventListener("click", async (e) => {
       });
 
       const data = await res.json();
+
+      const resolvedMedia = resolvedMedia.map(resolveStoryMedia);
+
 
       if (data.eligible) {
         openJetonsPopup(); // ✅ Affiche la popup 1C
@@ -692,6 +698,24 @@ setTimeout(() => {
 <script type="module">
   import { characters } from './scripts/data.js';
   import { startChat } from './scripts/chat.js';
+
+    // =========================
+  // CDN RESOLUTION (STORIES)
+  // =========================
+  const CDN_BASE =
+    location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      ? ''
+      : 'https://img.myaicrush.ai';
+
+  function resolveStoryMedia(url) {
+    if (!url) return url;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('images/')) {
+      return `${CDN_BASE}/${url}`;
+    }
+    return url;
+  }
+
 
   const STORY_DURATION = 5000; // 5 sec
   const STORY_CACHE_KEY = 'myaicrush_stories_v1';
@@ -981,17 +1005,19 @@ setTimeout(() => {
           `/api/story-media?folder=${encodeURIComponent(folder)}`
         );
         const data = await res.json();
-        if (!data.media || !data.media.length) continue;
+        if (!resolvedMedia || !resolvedMedia.length) continue;
 
         // 🔥 On ne garde que les médias au vrai format "story" (vertical)
-        const filteredMedia = await filterStoryMediaList(data.media);
+        const filteredMedia = await filterStoryMediaList(resolvedMedia);
         if (!filteredMedia.length) continue;
 
         // ✅ Avatar image only
-        let avatarUrl = char.photo;
-        if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
-          avatarUrl = char.backgroundPhoto || filteredMedia[0];
-        }
+        let avatarUrl = resolveStoryMedia(char.photo);
+
+if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
+  avatarUrl = resolveStoryMedia(char.backgroundPhoto) || filteredMedia[0];
+}
+
 
         storyGroups.push({
           characterName: char.name,
