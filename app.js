@@ -1169,7 +1169,7 @@ console.log(`🔄 Niveau utilisateur réinitialisé à 1.0 pour ${email}`);
     const history = userConversationHistory.get(email);
     history.push({ role, content });
   
-    if (history.length > 5) {
+    if (history.length > 15) {
       history.shift(); // ✅ Garde seulement les 5 derniers messages
     }
   
@@ -1809,7 +1809,8 @@ Contexte de la discussion : "${context}"
 
 Consignes :
 - Propose EXACTEMENT 3 messages de départ.
-- Ton : très vulgaire, flirt, taquin, sexe.
+- Ton : Coquin, séduction.
+- Tu es un homme.
 - Maximum 15 mots par message.
 - AUCUNE numérotation, AUCUNE explication, aucun texte autour.
 - Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
@@ -1876,7 +1877,8 @@ Contexte de la discussion :
 
 Consignes :
 - Propose EXACTEMENT 3 réponses possibles que l'utilisateur pourrait envoyer.
-- Ton : très vulgaire, flirt, taquin, sexe.
+- Ton : Coquin,séduction.
+- Tu es un homme.
 - Maximum 15 mots par réponse.
 - AUCUNE numérotation, AUCUNE explication, aucun texte autour.
 - Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
@@ -2096,7 +2098,7 @@ console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
             { role: "system", content: systemPrompt },
         ];
 
-        const MAX_HISTORY_MESSAGES = 5;      // ✅ gros gain vitesse (teste 8 à 14)
+        const MAX_HISTORY_MESSAGES = 15;      // ✅ gros gain vitesse (teste 8 à 14)
 const MAX_MSG_CHARS = 240;            // ✅ évite les pavés dans l’historique
 
 if (Array.isArray(history) && history.length) {
