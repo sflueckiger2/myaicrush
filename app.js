@@ -1169,7 +1169,7 @@ console.log(`🔄 Niveau utilisateur réinitialisé à 1.0 pour ${email}`);
     const history = userConversationHistory.get(email);
     history.push({ role, content });
   
-    if (history.length > 15) {
+    if (history.length > 10) {
       history.shift(); // ✅ Garde seulement les 5 derniers messages
     }
   
@@ -2098,7 +2098,7 @@ console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
             { role: "system", content: systemPrompt },
         ];
 
-        const MAX_HISTORY_MESSAGES = 15;      // ✅ gros gain vitesse (teste 8 à 14)
+        const MAX_HISTORY_MESSAGES = 10;      // ✅ gros gain vitesse (teste 8 à 14)
 const MAX_MSG_CHARS = 240;            // ✅ évite les pavés dans l’historique
 
 if (Array.isArray(history) && history.length) {
