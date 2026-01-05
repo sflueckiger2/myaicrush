@@ -1321,11 +1321,16 @@ if (!isPremium) {
       console.log(`📧 Vérification pour ${email} - Premium : ${isPremium} - Niveau utilisateur : ${userLevel}`);
       console.log(`📸 Média ${isBlurred ? "flouté" : "non flouté"} envoyé pour ${email}`);
 
-      return { 
-    token: generateImageToken(mediaPath, isBlurred), 
-    isBlurred: isBlurred,
-    fileName: randomMedia // ⬅️ Ajouté pour déduire le type de fichier
+    const token = generateImageToken(mediaPath, isBlurred);
+const cloudflareUrl = cloudflareMap[mediaPath] || null;
+
+return {
+  token,
+  isBlurred,
+  fileName: randomMedia,
+  cloudflareUrl
 };
+
 
 
   } catch (err) {
@@ -2516,7 +2521,14 @@ let responseData = { reply: botReply };
 
 
           if (imageResult && imageResult.token) {
-    responseData.imageUrl = `/get-image/${imageResult.token}`;
+   if (!imageResult.isBlurred && imageResult.cloudflareUrl) {
+  // 🚀 CDN DIRECT
+  responseData.imageUrl = imageResult.cloudflareUrl;
+} else {
+  // 🔒 flou ou fallback → backend
+  responseData.imageUrl = `/get-image/${imageResult.token}`;
+}
+
 
 // 🔐 FAILSAFE ULTIME
 responseData.isBlurred = isPremium ? false : imageResult.isBlurred;
