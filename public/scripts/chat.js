@@ -724,6 +724,10 @@ const userInput = document.getElementById('user-input');
 // ==============================
 
 function initVoiceToText() {
+  // ✅ Guard: empêche double init (très fréquent en prod)
+  if (window.__myaicrush_vtt_initialized) return;
+  window.__myaicrush_vtt_initialized = true;
+
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
   const messagesContainer = document.getElementById('messages');
@@ -733,10 +737,9 @@ function initVoiceToText() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     console.warn("🎤 SpeechRecognition non supporté sur ce navigateur.");
-    return; // on n'affiche même pas le micro
+    return;
   }
 
-  // Icônes SVG (pro)
   const MIC_SVG = `
     <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
       <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a1 1 0 1 0-2 0a3 3 0 0 1-6 0a1 1 0 1 0-2 0a5 5 0 0 0 4 4.9V18H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.1a5 5 0 0 0 4-4.9Z"/>
@@ -747,7 +750,7 @@ function initVoiceToText() {
       <path fill="currentColor" d="M8 8h8v8H8z"/>
     </svg>`;
 
-  // Crée un bouton micro si pas déjà présent
+  // Crée le bouton micro si pas déjà présent
   let micBtn = document.getElementById('mic-btn');
   if (!micBtn) {
     micBtn = document.createElement('button');
@@ -757,29 +760,51 @@ function initVoiceToText() {
     micBtn.setAttribute('aria-label', 'Voice message');
     micBtn.innerHTML = MIC_SVG;
 
-    // On l'insère juste avant le bouton "send"
     sendBtn.parentNode.insertBefore(micBtn, sendBtn);
   }
 
   let recognition = null;
   let isRecording = false;
-  let finalTranscript = "";
 
   function setMicUI(recording) {
     micBtn.classList.toggle('recording', recording);
     micBtn.innerHTML = recording ? STOP_SVG : MIC_SVG;
   }
 
+  function buildTranscriptFromResults(results) {
+    // ✅ Dédup robuste : certains moteurs répètent EXACTEMENT la même phrase finale
+    const finals = [];
+    const finalsSeen = new Set();
+    let interim = "";
+
+    for (let i = 0; i < results.length; i++) {
+      const txt = (results[i][0]?.transcript || "").trim();
+      if (!txt) continue;
+
+      if (results[i].isFinal) {
+        const key = txt.toLowerCase();
+        if (!finalsSeen.has(key)) {
+          finalsSeen.add(key);
+          finals.push(txt);
+        }
+      } else {
+        interim += txt + " ";
+      }
+    }
+
+    const finalText = finals.join(" ").trim();
+    const interimText = interim.trim();
+
+    return (finalText + " " + interimText).replace(/\s+/g, " ").trim();
+  }
+
   function startRecording() {
     if (isRecording) return;
 
-    finalTranscript = "";
     recognition = new SpeechRecognition();
-
-    // Réglages
-    recognition.lang = 'fr-FR';          // ou navigator.language si tu préfères
-    recognition.interimResults = true;   // texte qui se remplit en live
-    recognition.continuous = true;       // plus stable selon navigateurs
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = true;
+    recognition.continuous = false; // ✅ meilleur sur mobile pour éviter répétitions
 
     recognition.onstart = () => {
       isRecording = true;
@@ -799,20 +824,11 @@ function initVoiceToText() {
     };
 
     recognition.onresult = (event) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const txt = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalTranscript += txt;
-        else interim += txt;
-      }
-
-      // Remplit l'input en direct (final + interim)
-      const liveText = (finalTranscript + " " + interim).trim();
+      const liveText = buildTranscriptFromResults(event.results);
       userInput.value = liveText;
     };
 
     recognition.onend = () => {
-      // onend peut se déclencher tout seul → on repasse l'UI en idle
       isRecording = false;
       setMicUI(false);
     };
@@ -828,7 +844,6 @@ function initVoiceToText() {
     isRecording = false;
     setMicUI(false);
 
-    // Si stop volontaire (pas une erreur), on envoie si texte
     if (!force) {
       const text = (userInput.value || "").trim();
       if (text.length > 0) {
@@ -841,7 +856,6 @@ function initVoiceToText() {
   }
 
   micBtn.addEventListener('click', () => {
-    // Même logique que ton chat : user doit être loggé
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user || !user.email) {
       window.location.href = 'profile.html';
@@ -850,16 +864,20 @@ function initVoiceToText() {
 
     if (!isRecording) startRecording();
     else stopRecording(false);
-  });
+  }, { passive: true });
 
-  // Stop propre si l’onglet passe en arrière-plan
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && isRecording) stopRecording(true);
   });
 }
 
-// Lance l'init après chargement
-window.addEventListener('load', initVoiceToText);
+// ✅ Init dès que possible
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initVoiceToText);
+} else {
+  initVoiceToText();
+}
+
 
 
 
@@ -1738,4 +1756,46 @@ function hideQuickReplies() {
   if (!container) return;
   container.classList.add("hidden");
   container.innerHTML = "";
+}
+
+
+function initAutoGrowTextarea() {
+  const ta = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+  if (!ta || !sendBtn) return;
+
+  const MAX_ROWS = 6; // ajuste si tu veux
+  const lineHeight = 22; // doit matcher ton CSS (approx ok)
+
+  function autoGrow() {
+    ta.style.height = "auto";
+    const maxHeight = MAX_ROWS * lineHeight;
+    ta.style.height = Math.min(ta.scrollHeight, maxHeight) + "px";
+    ta.style.overflowY = ta.scrollHeight > maxHeight ? "auto" : "hidden";
+  }
+
+ta.addEventListener("input", () => {
+  autoGrow();
+  updateInputHeightVar();   // 🔥 met à jour --input-h en live
+});
+
+  window.addEventListener("resize", autoGrow);
+
+  // Enter = send, Shift+Enter = newline
+  ta.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  // Init
+  autoGrow();
+}
+
+// Init dès que possible
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initAutoGrowTextarea);
+} else {
+  initAutoGrowTextarea();
 }

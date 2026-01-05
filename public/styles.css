@@ -333,9 +333,20 @@ video.chat-profile-pic {
   color: #ffffff;
   box-shadow: 0 0 8px rgba(221, 77, 157, 0.15);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  font-size: 16px; /* ✅ anti zoom iOS */
+  font-size: 16px;
   -webkit-text-size-adjust: 100%;
+
+  resize: none;
+  overflow-y: hidden;
+  line-height: 22px;
+
+  /* 🔥 FIX IMPORTANT */
+  min-height: 44px;   /* ≈ 2 lignes visuelles, ajuste si tu veux */
+
+    font-family: inherit;
+
 }
+
 
 
 #user-input:focus {
@@ -2848,22 +2859,26 @@ vapi-widget {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--kb, 0px) + var(--input-h, 64px)); /* toujours au-dessus du input-area */
+
+  /* ✅ Toujours au-dessus du input-area + petit espace */
+  bottom: calc(var(--kb, 0px) + var(--input-h, 64px) + 8px);
+
   display: flex;
   flex-wrap: nowrap;          /* tout sur une seule ligne */
   overflow-x: auto;           /* scroll horizontal si ça déborde */
   gap: 6px;
   padding: 6px 10px 8px;
 
-  z-index: 1001;              /* au-dessus des messages, juste sous la barre */
+  z-index: 9999;              /* 🔥 au-dessus de tout (input compris) */
   scrollbar-width: none;      /* Firefox : cache la barre de scroll */
+
+  /* ✅ iPhone: évite que ça touche la barre du bas */
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
 .quick-replies::-webkit-scrollbar {
   display: none;              /* Chrome/Safari : cache la barre de scroll */
 }
-
-
 
 .quick-reply-btn {
   flex: 0 0 auto;            /* taille selon le contenu */
@@ -2880,11 +2895,10 @@ vapi-widget {
   text-align: left;          /* plus naturel en multi-ligne */
 }
 
-
-
 .quick-reply-btn:hover {
   background: #dd4d9d;
 }
+
 
 
 .stories-wrapper {
