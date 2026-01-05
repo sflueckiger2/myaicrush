@@ -718,6 +718,152 @@ if (isVideo) {
 const sendBtn = document.getElementById('send-btn');
 const userInput = document.getElementById('user-input');
 
+
+// ==============================
+// 🎤 VOICE-TO-TEXT (FULL LOW COST) — Web Speech API
+// ==============================
+
+function initVoiceToText() {
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const messagesContainer = document.getElementById('messages');
+
+  if (!userInput || !sendBtn || !messagesContainer) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.warn("🎤 SpeechRecognition non supporté sur ce navigateur.");
+    return; // on n'affiche même pas le micro
+  }
+
+  // Icônes SVG (pro)
+  const MIC_SVG = `
+    <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a1 1 0 1 0-2 0a3 3 0 0 1-6 0a1 1 0 1 0-2 0a5 5 0 0 0 4 4.9V18H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.1a5 5 0 0 0 4-4.9Z"/>
+    </svg>`;
+
+  const STOP_SVG = `
+    <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M8 8h8v8H8z"/>
+    </svg>`;
+
+  // Crée un bouton micro si pas déjà présent
+  let micBtn = document.getElementById('mic-btn');
+  if (!micBtn) {
+    micBtn = document.createElement('button');
+    micBtn.id = 'mic-btn';
+    micBtn.type = 'button';
+    micBtn.className = 'mic-btn';
+    micBtn.setAttribute('aria-label', 'Voice message');
+    micBtn.innerHTML = MIC_SVG;
+
+    // On l'insère juste avant le bouton "send"
+    sendBtn.parentNode.insertBefore(micBtn, sendBtn);
+  }
+
+  let recognition = null;
+  let isRecording = false;
+  let finalTranscript = "";
+
+  function setMicUI(recording) {
+    micBtn.classList.toggle('recording', recording);
+    micBtn.innerHTML = recording ? STOP_SVG : MIC_SVG;
+  }
+
+  function startRecording() {
+    if (isRecording) return;
+
+    finalTranscript = "";
+    recognition = new SpeechRecognition();
+
+    // Réglages
+    recognition.lang = 'fr-FR';          // ou navigator.language si tu préfères
+    recognition.interimResults = true;   // texte qui se remplit en live
+    recognition.continuous = true;       // plus stable selon navigateurs
+
+    recognition.onstart = () => {
+      isRecording = true;
+      setMicUI(true);
+    };
+
+    recognition.onerror = (e) => {
+      console.warn("🎤 SpeechRecognition error:", e);
+
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        alert("Autorise le micro dans ton navigateur pour envoyer un message vocal 🎤");
+      } else {
+        alert("Le message vocal ne fonctionne pas sur ce navigateur (ou permission refusée).");
+      }
+
+      stopRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const txt = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalTranscript += txt;
+        else interim += txt;
+      }
+
+      // Remplit l'input en direct (final + interim)
+      const liveText = (finalTranscript + " " + interim).trim();
+      userInput.value = liveText;
+    };
+
+    recognition.onend = () => {
+      // onend peut se déclencher tout seul → on repasse l'UI en idle
+      isRecording = false;
+      setMicUI(false);
+    };
+
+    recognition.start();
+  }
+
+  function stopRecording(force = false) {
+    if (!recognition) return;
+
+    try { recognition.stop(); } catch (e) {}
+
+    isRecording = false;
+    setMicUI(false);
+
+    // Si stop volontaire (pas une erreur), on envoie si texte
+    if (!force) {
+      const text = (userInput.value || "").trim();
+      if (text.length > 0) {
+        addUserMessage(text, messagesContainer, scrollToBottom);
+        userInput.value = '';
+      }
+    }
+
+    recognition = null;
+  }
+
+  micBtn.addEventListener('click', () => {
+    // Même logique que ton chat : user doit être loggé
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user.email) {
+      window.location.href = 'profile.html';
+      return;
+    }
+
+    if (!isRecording) startRecording();
+    else stopRecording(false);
+  });
+
+  // Stop propre si l’onglet passe en arrière-plan
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isRecording) stopRecording(true);
+  });
+}
+
+// Lance l'init après chargement
+window.addEventListener('load', initVoiceToText);
+
+
+
+
 if (sendBtn && userInput) {
   const messagesContainer = document.getElementById('messages');
 

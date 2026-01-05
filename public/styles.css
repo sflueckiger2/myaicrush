@@ -3137,3 +3137,38 @@ vapi-widget {
   outline: none;
 }
 
+/* ==============================
+   🎤 Voice-to-Text button
+   ============================== */
+
+.mic-btn{
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: none;
+  background: #2b2b2b;          /* look "pro" comme ton image */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 6px;
+  color: #fff;                   /* l’icône SVG prend currentColor */
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mic-btn:hover{
+  background: #333;
+}
+
+.mic-btn:active{
+  transform: scale(0.98);
+}
+
+.mic-btn.recording{
+  background: rgba(221, 77, 157, 0.35);  /* rose MyAiCrush quand ça enregistre */
+}
+
+.mic-icon{
+  display: block;
+}
