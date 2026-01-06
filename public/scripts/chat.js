@@ -886,12 +886,15 @@ if (sendBtn && userInput) {
   const messagesContainer = document.getElementById('messages');
 
   sendBtn.addEventListener('click', () => {
-    const userMessage = userInput.value.trim();
-    if (!userMessage) return;
+  const userMessage = userInput.value.trim();
+  if (!userMessage) return;
 
-    addUserMessage(userMessage, messagesContainer, scrollToBottom);
-    userInput.value = '';
-  });
+  addUserMessage(userMessage, messagesContainer, scrollToBottom);
+
+  userInput.value = '';
+  userInput.dispatchEvent(new Event("input")); // ✅ force autoGrow + updateInputHeightVar
+});
+
 }
 
 
