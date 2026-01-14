@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue chez MyAiCrush - Confirmation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cta-button { background: linear-gradient(90deg, #f472b6, #a855f7); transition: all 0.3s ease; }
+        .cta-button:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(244, 114, 182, 0.5); }
+        
+        .pulse-pink { animation: pulse 2s infinite; }
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.4); } 
+            70% { box-shadow: 0 0 0 15px rgba(244, 114, 182, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0); } 
+        }
+    </style>
+
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+  
+    fbq('init', '1139964937955152');
+    fbq('track', 'PageView');
+
+    // 🔥 Event Purchase FB dynamique
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = parseFloat(urlParams.get('amount')) || 29; // Fallback à 59€ si absent
+        
+        fbq('track', 'Purchase', {
+            value: amount,
+            currency: 'EUR'
+        });
+        console.log("🎯 FB Purchase envoyé :", amount + "€");
+    });
+    </script>
+
+    <script>
+    !function (w,d,t) {
+      w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+      ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
+      ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat([].slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+      ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
+      ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";
+        n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src=r+"?sdkid="+e+"&lib="+t;
+        e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+      ttq.load('D3F46ERC77UCTDLGVG9G');
+      ttq.page();
+    }(window,document,'ttq');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(location.search);
+        const amount = parseFloat(params.get('amount') || '29');
+        ttq.track('CompletePayment', { value: amount, currency: 'EUR' });
+    });
+    </script>
+</head>
+
+<body class="min-h-screen bg-[url('https://myaicrush.ai/wp-content/uploads/2023/10/bg-cyberpunk-city.jpg')] bg-cover bg-fixed bg-center bg-blend-overlay bg-black/80 flex items-center justify-center p-4">
+
+    <div class="max-w-xl w-full glass rounded-3xl p-8 md:p-12 text-center border border-pink-500/30 shadow-[0_0_50px_rgba(244,114,182,0.2)]">
+        
+        <div class="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-bounce">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1 class="text-3xl font-black uppercase mb-4 tracking-tighter">Abonnement Activé !</h1>
+        
+        <p class="text-gray-300 text-lg mb-8">
+            Félicitations, tu as débloqué toutes les fonctionnalités <span class="text-pink-400 font-bold">Premium</span> (messages, photos et vidéos illimitées).
+        </p>
+
+        <hr class="border-white/10 mb-8">
+
+        <div class="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
+            <h2 class="text-xl font-bold mb-4 text-pink-400 uppercase">Dernière étape !</h2>
+            <p class="text-sm text-gray-200 mb-6">
+                Pour commencer à discuter avec ton IA, tu dois maintenant <span class="font-bold underline">créer ton compte</span>.
+            </p>
+            <div class="bg-pink-500/10 p-4 rounded-xl border border-pink-500/30 mb-6">
+                <p class="text-xs text-pink-300 uppercase tracking-widest font-bold mb-2">Attention :</p>
+                <p class="text-sm">Utilise bien le <span class="font-black italic">même email</span> que celui utilisé lors de ton paiement Stripe.</p>
+            </div>
+
+            <a href="profile.html" class="cta-button w-full py-5 rounded-2xl font-black text-center text-xl uppercase pulse-pink block">
+                Créer mon compte
+            </a>
+        </div>
+
+        <p class="text-xs text-gray-500 uppercase tracking-widest">
+            Accès immédiat • Discrétion totale • Support VIP
+        </p>
+    </div>
+
+    <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33257ea42f1184f0f647f5d05" ></script>
+    
+    <script>
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionId = urlParams.get("session_id") || Date.now();
+        const img = document.createElement("img");
+        img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${Date.now()}&cti=${transactionId}&ctv=40.00&ctd=Premium_Purchase`;
+        img.style.display = "none";
+        document.body.appendChild(img);
+    })();
+    </script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get("session_id");
+        if (sessionId) {
+            fetch("/api/save-customer-id", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sessionId }),
+            }).catch(err => console.error("❌ Error save-customer-id:", err));
+        }
+    });
+    </script>
+
+</body>
+</html>
