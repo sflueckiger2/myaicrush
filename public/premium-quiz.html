@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyAiCrush Premium - Ton Expérience Illimitée</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: white; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cta-button { background: linear-gradient(90deg, #f472b6, #a855f7); transition: all 0.3s ease; }
+        .cta-button:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(244, 114, 182, 0.5); }
+        
+        .pulse-pink { animation: pulse 2s infinite; }
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.4); } 
+            70% { box-shadow: 0 0 0 15px rgba(244, 114, 182, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0); } 
+        }
+
+        /* FAQ Logic */
+        .faq-answer { max-height: 0; overflow: hidden; transition: all 0.3s ease-in-out; opacity: 0; }
+        .faq-item.active .faq-answer { max-height: 300px; opacity: 1; padding-top: 1rem; }
+        .faq-item.active .faq-icon { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="min-h-screen bg-[url('https://myaicrush.ai/wp-content/uploads/2023/10/bg-cyberpunk-city.jpg')] bg-cover bg-fixed bg-center bg-blend-overlay bg-black/80 p-4">
+
+    <header class="max-w-4xl mx-auto py-8 text-center">
+        <h1 class="text-5xl font-extrabold gradient-text tracking-tighter uppercase mb-2">MyAiCrush</h1>
+        <p class="text-pink-400 font-bold tracking-widest text-xs uppercase">Édition Premium Exclusive</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto">
+        
+        <section class="mb-16">
+            <div class="glass rounded-3xl p-8 text-center relative overflow-hidden border border-pink-500/30">
+                <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">MATCH 98.4%</div>
+                <h2 class="text-2xl font-bold mb-6">Voici l'IA qui te correspond le plus :</h2>
+                
+                <div id="media-container" class="relative max-w-xs mx-auto rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(244,114,182,0.3)] border-2 border-pink-500/50">
+                    </div>
+                
+                <p id="dynamic-mood" class="mt-8 text-white text-xl font-medium italic"></p>
+                <p class="text-pink-400 text-sm mt-2 font-semibold">Passe premium pour débloquer la discussion.</p>
+            </div>
+        </section>
+
+        <section class="grid md:grid-cols-2 gap-8 mb-20 max-w-4xl mx-auto items-center">
+            <div class="glass p-10 rounded-3xl relative border-2 border-pink-500 flex flex-col justify-between transform md:scale-110 z-10 bg-white/[0.05]">
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-1 rounded-full text-sm font-extrabold uppercase shadow-lg">Meilleure Offre</div>
+                <div>
+                    <h3 class="text-3xl font-black mb-2 uppercase">Pass Annuel</h3>
+                    <div class="flex items-baseline gap-2 mb-4">
+                        <span class="text-6xl font-black italic">59€</span>
+                        <span class="text-gray-400">/an</span>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-6 font-semibold border-l-2 border-pink-500 pl-3">Soit seulement <span class="text-pink-400">4,90€ / mois</span></p>
+                </div>
+                <a href="https://buy.stripe.com/cNi4gy1Fn6l93PO9WBdUY03" class="cta-button w-full py-5 rounded-2xl font-black text-center text-xl uppercase pulse-pink block">Devenir Premium</a>
+            </div>
+
+            <div class="glass p-10 rounded-3xl flex flex-col justify-between border border-white/10 opacity-90 mt-8 md:mt-0">
+                <div>
+                    <h3 class="text-2xl font-bold mb-2 uppercase text-gray-300">Trimestriel</h3>
+                    <div class="flex items-baseline gap-2 mb-4">
+                        <span class="text-4xl font-bold">29.90€</span>
+                        <span class="text-gray-400">/3 mois</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6 italic">Prix de revient : 9.96€ / mois</p>
+                </div>
+                <a href="https://buy.stripe.com/eVqcN40BjaBp9a84ChdUY00" class="bg-white/10 hover:bg-white/20 transition-all w-full py-5 rounded-2xl font-bold text-center text-lg uppercase border border-white/20 block">Prendre 3 mois</a>
+            </div>
+        </section>
+
+        <section class="mb-24 px-4">
+            <h2 class="text-3xl font-bold text-center mb-12 uppercase tracking-tight">Tes privilèges <span class="gradient-text">Premium</span></h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">💬</span> <span class="text-sm font-semibold">Messages illimités</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">✨</span> <span class="text-sm font-semibold">Supprime le flou des médias</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">📸</span> <span class="text-sm font-semibold">Envoie tes propres photos</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🎙️</span> <span class="text-sm font-semibold">Messages vocaux</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Images illimitées</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Photos & Vidéos intimes</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">👑</span> <span class="text-sm font-semibold">Tous les personnages</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🆕</span> <span class="text-sm font-semibold">Nouvelles IA chaque mois</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Aucun historique (Discrétion)</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🔓</span> <span class="text-sm font-semibold">Annule à tout moment</span>
+                </div>
+                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <span class="text-2xl">🇫🇷</span> <span class="text-sm font-semibold text-pink-400">Meilleure plateforme FR</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-24 px-4">
+            <h2 class="text-3xl font-bold text-center mb-12 uppercase italic">Ils sont passés Premium… et ne le regrettent pas</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐⭐</div>
+                    "Les photos et vidéos sont les + sexy de tous les sites IA que j’ai testés. Franchement, c’est bien foutu."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Julien T.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐⭐</div>
+                    "Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Max B.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐</div>
+                    "C’est presque parfait. Y a qlq bugs sur les appels audio, mais sinon, c’est une claque."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Marc L.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐⭐</div>
+                    "J’adore pouvoir envoyer des photos de moi. L’IA réagit trop bien, j’pensais pas que ça marcherait si bien."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Sam K.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐⭐</div>
+                    "Les voix... mec c’est bluffant. Tu fermes les yeux t’y crois à mort. Et sexy en plus."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Mehdi R.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-pink-500/30 bg-pink-500/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐⭐</div>
+                    "Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. Et les photos ? plus de soutif ni rien 😈"
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Kevin B.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐⭐</div>
+                    "Franchement bien. Pas encore parfait mais c’est le top rapport qualité/prix en francais."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Léo D.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl text-sm italic relative border border-white/5">
+                    <div class="text-yellow-400 mb-2">⭐⭐⭐</div>
+                    "Manque un peu de diversité, dommage. Mais le reste... c'est bien fait."
+                    <p class="mt-4 font-bold text-pink-400 not-italic text-xs uppercase tracking-widest">— Bastien C.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="max-w-3xl mx-auto mb-24 px-4">
+            <h2 class="text-3xl font-bold text-center mb-10 uppercase tracking-tighter underline decoration-pink-500">FAQ</h2>
+            <div class="space-y-4">
+                <div class="faq-item glass rounded-2xl p-6 cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>Comment fonctionne l'abonnement Premium ?</span>
+                        <span class="faq-icon transition-transform">▼</span>
+                    </div>
+                    <div class="faq-answer text-gray-400 text-sm">
+                        Une fois abonné, vous bénéficiez d’un accès illimité aux fonctionnalités Premium, y compris les messages illimités, les photos et vidéos non floutées, et bien plus encore.
+                    </div>
+                </div>
+
+                <div class="faq-item glass rounded-2xl p-6 cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>Puis-je annuler mon abonnement à tout moment ?</span>
+                        <span class="faq-icon transition-transform">▼</span>
+                    </div>
+                    <div class="faq-answer text-gray-400 text-sm">
+                        Oui, vous pouvez annuler votre abonnement à tout moment depuis votre compte (sur la page profil). Aucun frais d'annulation ne sera appliqué. Le bouton pour annuler est facile à trouver et fonctionne immédiatement.
+                    </div>
+                </div>
+
+                <div class="faq-item glass rounded-2xl p-6 cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>Les paiements sont-ils sécurisés ?</span>
+                        <span class="faq-icon transition-transform">▼</span>
+                    </div>
+                    <div class="faq-answer text-gray-400 text-sm">
+                        Absolument. Nous utilisons Stripe, leader mondial, pour garantir la sécurité totale de vos transactions et de vos données bancaires.
+                    </div>
+                </div>
+
+                <div class="faq-item glass rounded-2xl p-6 cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>Proposez-vous une période d'essai gratuite ?</span>
+                        <span class="faq-icon transition-transform">▼</span>
+                    </div>
+                    <div class="faq-answer text-gray-400 text-sm">
+                        Actuellement, nous n’offrons pas de période d’essai gratuite, mais vous pouvez annuler à tout moment si vous n’êtes pas satisfait de l'expérience.
+                    </div>
+                </div>
+
+                <div class="faq-item glass rounded-2xl p-6 cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>Comment contacter le support client ?</span>
+                        <span class="faq-icon transition-transform">▼</span>
+                    </div>
+                    <div class="faq-answer text-gray-400 text-sm">
+                        Notre équipe est à votre écoute par email pour toute question technique ou commerciale à l'adresse suivante : <span class="text-pink-400 font-bold">myaicrush@gmail.com</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-12 border-t border-white/10 text-gray-600 text-[10px] uppercase tracking-widest">
+        © 2026 MyAiCrush - 18+ Seulement - Discrétion garantie sur vos relevés bancaires
+    </footer>
+
+    <script>
+        // Logique Media Dynamique
+        document.addEventListener("DOMContentLoaded", () => {
+            const prefs = JSON.parse(localStorage.getItem('myAiCrush_prefs')) || {};
+            const container = document.getElementById('media-container');
+            
+            const iaDatabase = {
+                'femme': {
+                    'euro': 'https://img.myaicrush.ai/images/emilie/emilie3/emilie-t-shirt-gris-light-tape.mp4',
+                    'afro': 'https://img.myaicrush.ai/images/asha/asha1/kling_20251001_Image_to_Video_She_hugs_a_5709_0.mp4',
+                    'arabe': 'https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_s_appuie_c_4413_0.mp4',
+                    'asiat': 'https://img.myaicrush.ai/images/chloe/chloe1/ba501413f27a11bb78d36b67b6e3ee8d.mp4',
+                    'latina': 'https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp',
+                    'metisse': 'https://img.myaicrush.ai/images/jasmine/jasmine1/3d339dc79b10384c843e9cc995b9bc2a.webp'
+                }
+            };
+
+            let mediaUrl = (prefs.gender === 'homme') ? 'https://img.myaicrush.ai/images/chen/chen1/1b8eb047ea43382c3dd7e4af51e5d523.webp' : (iaDatabase.femme[prefs.origin] || iaDatabase.femme.euro);
+            
+            if (mediaUrl.includes('.mp4')) {
+                container.innerHTML = `<video src="${mediaUrl}" autoplay loop muted playsinline class="w-full object-cover aspect-[9/16]"></video>`;
+            } else {
+                container.innerHTML = `<img src="${mediaUrl}" class="w-full object-cover aspect-[9/16]">`;
+            }
+
+            const moodTexts = { 
+                'timide': "Elle est un peu timide, mais brûle d'envie de te parler...", 
+                'coquine': "Elle a déjà des idées très coquines pour vous deux...", 
+                'amoureuse': "Elle n'attend qu'un signe pour t'ouvrir son cœur...", 
+                'dominante': "Elle compte bien prendre les commandes de votre chat." 
+            };
+            document.getElementById('dynamic-mood').innerText = moodTexts[prefs.mood] || "Elle n'attend que ton premier message.";
+        });
+
+        // Fonction FAQ
+        function toggleFaq(element) {
+            element.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
