@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyAiCrush Premium - Ton Expérience Illimitée</title>
-    <!-- Google Analytics (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() {
@@ -34,6 +33,12 @@
         .faq-answer { max-height: 0; overflow: hidden; transition: all 0.3s ease-in-out; opacity: 0; }
         .faq-item.active .faq-answer { max-height: 300px; opacity: 1; padding-top: 1rem; }
         .faq-item.active .faq-icon { transform: rotate(180deg); }
+        
+        /* Transition Slider */
+        .fade-enter { opacity: 0; }
+        .fade-enter-active { opacity: 1; transition: opacity 500ms ease-in; }
+        .fade-exit { opacity: 1; }
+        .fade-exit-active { opacity: 0; transition: opacity 500ms ease-out; }
     </style>
 </head>
 <body class="min-h-screen bg-[url('https://myaicrush.ai/wp-content/uploads/2023/10/bg-cyberpunk-city.jpg')] bg-cover bg-fixed bg-center bg-blend-overlay bg-black/80 p-4">
@@ -58,7 +63,7 @@
             </div>
         </section>
 
-        <section class="grid md:grid-cols-2 gap-8 mb-20 max-w-4xl mx-auto items-center">
+        <section id="offres" class="grid md:grid-cols-2 gap-8 mb-20 max-w-4xl mx-auto items-center">
             <div class="glass p-10 rounded-3xl relative border-2 border-pink-500 flex flex-col justify-between transform md:scale-110 z-10 bg-white/[0.05]">
                 <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-1 rounded-full text-sm font-extrabold uppercase shadow-lg">Meilleure Offre</div>
                 <div>
@@ -87,41 +92,99 @@
 
         <section class="mb-24 px-4">
             <h2 class="text-3xl font-bold text-center mb-12 uppercase tracking-tight">Tes privilèges <span class="gradient-text">Premium</span></h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                
                 <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                     <span class="text-2xl">💬</span> <span class="text-sm font-semibold">Messages illimités</span>
                 </div>
-                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                    <span class="text-2xl">✨</span> <span class="text-sm font-semibold">Supprime le flou des médias</span>
+                
+                <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="revealVideo(this)">
+                    <div class="flex items-center gap-4">
+                        <span class="text-2xl">✨</span> <span class="text-sm font-semibold">Supprime le flou des médias</span>
+                    </div>
+                    <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
+                        <video src="https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md scale-110 transition-all duration-700 ease-in-out"></video>
+                        
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 hover:bg-black/30 transition-all z-10 overlay-content">
+                            <span class="text-3xl mb-2 drop-shadow-lg">🔒</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest bg-black/60 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm">👆 Clic pour enlever le flou</span>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                     <span class="text-2xl">📸</span> <span class="text-sm font-semibold">Envoie tes propres photos</span>
                 </div>
-                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                    <span class="text-2xl">🎙️</span> <span class="text-sm font-semibold">Messages vocaux</span>
+                
+                <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <span class="text-2xl">🎙️</span> <span class="text-sm font-semibold">Messages vocaux</span>
+                    </div>
+                    <div class="w-full mt-2">
+                        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mb-1">🎧 Écoute un extrait :</p>
+                         <audio controls class="w-full h-8 rounded opacity-90" style="filter: invert(1) hue-rotate(180deg);">
+                            <source src="/audio/voix-match-quiz.mp3" type="audio/mpeg">
+                            Ton navigateur ne supporte pas l'audio.
+                        </audio>
+                    </div>
                 </div>
+
                 <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                     <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Images illimitées</span>
                 </div>
-                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                    <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Photos & Vidéos intimes</span>
+                
+                <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openModal()">
+                    <div class="flex items-center gap-4">
+                        <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Photos & Vidéos intimes</span>
+                    </div>
+                    <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
+                        <video src="https://img.myaicrush.ai/images/emilie/emilie4/686459e1ce31b867817e6c399c3c8aa5.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md"></video>
+                        
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-all z-10">
+                            <span class="text-4xl mb-2 drop-shadow-lg filter drop-shadow-pink">🔒</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest bg-pink-600/80 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm text-white shadow-lg">Premium Requis</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                    <span class="text-2xl">👑</span> <span class="text-sm font-semibold">Tous les personnages</span>
+
+                <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
+                    <div class="flex items-center gap-4">
+                        <span class="text-2xl">👑</span> <span class="text-sm font-semibold">Tous les personnages</span>
+                    </div>
+                    <div id="character-slider" class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1 border border-white/10">
+                        <div id="slider-content" class="w-full h-full object-cover transition-opacity duration-500"></div>
+                        
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+                        <div class="absolute bottom-3 left-0 right-0 text-center pointer-events-none">
+                            <span id="slider-name" class="text-xs font-bold uppercase tracking-widest text-pink-300 drop-shadow-md">Découvre-les</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                     <span class="text-2xl">🆕</span> <span class="text-sm font-semibold">Nouvelles IA chaque mois</span>
                 </div>
                 <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                    <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Aucun historique (Discrétion)</span>
+                    <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Aucun historique</span>
                 </div>
                 <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                     <span class="text-2xl">🔓</span> <span class="text-sm font-semibold">Annule à tout moment</span>
                 </div>
-                <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                    <span class="text-2xl">🇫🇷</span> <span class="text-sm font-semibold text-pink-400">Meilleure plateforme FR</span>
+                
+                <div class="glass p-5 rounded-2xl flex flex-col items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🇫🇷</span> 
+                        <span class="text-sm font-semibold text-pink-400">Meilleure plateforme FR</span>
+                    </div>
+                    <div class="w-full mt-2 rounded-lg overflow-hidden">
+                        <video 
+                            src="https://img.myaicrush.ai/images/magalie/magali-premium-quiz-2.mp4" 
+                            controls 
+                            class="w-full object-cover aspect-[9/16] rounded-lg shadow-lg">
+                            Ton navigateur ne supporte pas la lecture de vidéos.
+                        </video>
+                    </div>
                 </div>
-            </div>
+                </div>
         </section>
 
         <section class="mb-24 px-4">
@@ -231,12 +294,101 @@
         © 2026 MyAiCrush - 18+ Seulement - Discrétion garantie sur vos relevés bancaires
     </footer>
 
+    <div id="premium-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="glass p-8 rounded-3xl max-w-sm text-center transform scale-95 transition-transform duration-300 border border-pink-500/50 box-shadow-xl relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
+            <div class="text-4xl mb-4">🚫🔞</div>
+            <h3 class="text-2xl font-bold mb-2 text-white">Contenu Réservé</h3>
+            <p class="text-gray-300 mb-6 text-sm">Débloquez l'accès Premium pour voir les contenus privés.</p>
+            <a href="#offres" onclick="closeModal()" class="cta-button py-3 px-6 rounded-xl font-bold uppercase text-sm block w-full shadow-lg text-white">
+                Devenir Premium
+            </a>
+        </div>
+    </div>
+
     <script>
-        // Logique Media Dynamique
+        // --- 1. CONFIGURATION SLIDER ---
+        const sliderMedia = [
+            "https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_d_boutonne_5722_0.mp4",
+            "https://img.myaicrush.ai/images/emilie/emilie3/emilie-shirt-assis.mp4",
+            "https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4",
+            "https://img.myaicrush.ai/images/alex/alex3/kling_20250915_Image_to_Video_se_penche__5870_0.mp4",
+            "https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4",
+            "https://img.myaicrush.ai/images/asha/asha1/kling_20251002_Image_to_Video_Elle_fait__6084_0.mp4",
+            "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4",
+            "https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4",
+            "https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4",
+            "https://img.myaicrush.ai/images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4",
+            "https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4",
+            "https://img.myaicrush.ai/images/kala/kala1/bf4d04b94ca42dbb83e4af34cde8a3fa.mp4",
+            "https://img.myaicrush.ai/images/candy/candy3/candy-pic-profil-new.mp4",
+            "https://img.myaicrush.ai/images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4",
+            "https://img.myaicrush.ai/images/lea/lea1/Lea-photo-profil-vdef.mp4",
+            "https://img.myaicrush.ai/images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
+            "https://img.myaicrush.ai/images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
+            "https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
+            "https://img.myaicrush.ai/images/magalie/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4",
+            "https://img.myaicrush.ai/images/kat/kat1/bac3a1e4ce4fa72577bee127e2d50912.webp",
+            "https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp",
+            "https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp",
+            "https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp",
+            "https://img.myaicrush.ai/images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp"
+        ];
+        
+        // --- 2. LOGIQUE SLIDER ---
+        function initSlider() {
+            const container = document.getElementById('slider-content');
+            let index = 0;
+            const duration = 2500; // Changement toutes les 2.5 secondes
+
+            function showSlide() {
+                // Transition douce (Fade out)
+                container.style.opacity = '0';
+                container.style.transition = 'opacity 0.3s ease-out';
+
+                setTimeout(() => {
+                    // Fin de la liste ? On affiche "Et plein d'autres..."
+                    if (index >= sliderMedia.length) {
+                        container.innerHTML = `
+                            <div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4">
+                                <span class="text-4xl mb-2 animate-bounce">💖</span>
+                                <span class="text-xl font-bold uppercase italic gradient-text">Et plein d'autres...</span>
+                                <span class="text-[10px] mt-2 text-gray-300">Rejoins l'aventure</span>
+                            </div>
+                        `;
+                        index = 0; // On repart au début
+                    } else {
+                        // Sinon on affiche le média (Vidéo ou Image)
+                        const url = sliderMedia[index];
+                        const isVideo = url.endsWith('.mp4');
+                        
+                        if (isVideo) {
+                            container.innerHTML = `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
+                        } else {
+                            container.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                        }
+                        index++;
+                    }
+                    
+                    // Transition douce (Fade in)
+                    container.style.opacity = '1';
+                }, 300); // On attend que l'opacité soit à 0 avant de changer
+            }
+
+            // Lancer le premier slide immédiatement
+            showSlide();
+            // Puis lancer la boucle
+            setInterval(showSlide, duration);
+        }
+
+        // --- 3. AUTRES SCRIPTS EXISTANTS ---
         document.addEventListener("DOMContentLoaded", () => {
+            // Init Slider
+            initSlider();
+
+            // Logique Media Dynamique (Match)
             const prefs = JSON.parse(localStorage.getItem('myAiCrush_prefs')) || {};
             const container = document.getElementById('media-container');
-            
             const iaDatabase = {
                 'femme': {
                     'euro': 'https://img.myaicrush.ai/images/emilie/emilie3/emilie-t-shirt-gris-light-tape.mp4',
@@ -247,15 +399,12 @@
                     'metisse': 'https://img.myaicrush.ai/images/jasmine/jasmine1/3d339dc79b10384c843e9cc995b9bc2a.webp'
                 }
             };
-
             let mediaUrl = (prefs.gender === 'homme') ? 'https://img.myaicrush.ai/images/chen/chen1/1b8eb047ea43382c3dd7e4af51e5d523.webp' : (iaDatabase.femme[prefs.origin] || iaDatabase.femme.euro);
-            
             if (mediaUrl.includes('.mp4')) {
                 container.innerHTML = `<video src="${mediaUrl}" autoplay loop muted playsinline class="w-full object-cover aspect-[9/16]"></video>`;
             } else {
                 container.innerHTML = `<img src="${mediaUrl}" class="w-full object-cover aspect-[9/16]">`;
             }
-
             const moodTexts = { 
                 'timide': "Elle est un peu timide, mais brûle d'envie de te parler...", 
                 'coquine': "Elle a déjà des idées très coquines pour vous deux...", 
@@ -265,10 +414,43 @@
             document.getElementById('dynamic-mood').innerText = moodTexts[prefs.mood] || "Elle n'attend que ton premier message.";
         });
 
+        // Fonction Reveal Video
+        function revealVideo(container) {
+            const video = container.querySelector('video');
+            const overlay = container.querySelector('.overlay-content');
+            video.classList.remove('blur-md', 'scale-110');
+            video.classList.add('scale-100');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+        }
+
         // Fonction FAQ
         function toggleFaq(element) {
             element.classList.toggle('active');
         }
+
+        // Logique Modale Premium
+        const modal = document.getElementById('premium-modal');
+        function openModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
     </script>
 </body>
 </html>
