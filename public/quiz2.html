@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyAiCrush - Trouve ton IA Idéale</title>
+    <!-- Google Analytics (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-FJ5S0H9B1R');
+  </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .media-btn {
+            position: relative;
+            width: 100%;
+            padding-bottom: 175%; 
+            border-radius: 0.75rem;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .media-btn:hover {
+            border-color: #f472b6;
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
+            transform: scale(1.02);
+        }
+
+        .media-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            z-index: 0;
+        }
+        
+        .media-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
+            z-index: 1;
+        }
+        
+        .media-label {
+            position: absolute;
+            bottom: 0.75rem;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .emoji-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+        }
+        .emoji-btn:hover {
+            background: rgba(244, 114, 182, 0.2);
+            border-color: #f472b6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 bg-[url('https://myaicrush.ai/wp-content/uploads/2023/10/bg-cyberpunk-city.jpg')] bg-cover bg-center bg-no-repeat bg-fixed bg-blend-overlay bg-black/70">
+
+    <div class="w-full max-w-md mb-6 mt-4">
+        <h1 class="text-3xl font-extrabold text-center mb-4 gradient-text tracking-widest uppercase drop-shadow-lg">MyAiCrush</h1>
+        <div class="w-full bg-gray-800/50 h-2 rounded-full overflow-hidden backdrop-blur-sm">
+            <div id="progress" class="bg-gradient-to-r from-pink-500 to-purple-600 h-full transition-all duration-500 ease-out" style="width: 14%"></div>
+        </div>
+    </div>
+
+    <div id="quiz-container" class="w-full max-w-lg glass p-6 md:p-8 rounded-3xl shadow-2xl mb-8 min-h-[450px] flex flex-col justify-center">
+        
+        <div class="step active" data-step="1">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Quel genre t'attire ?</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div onclick="saveChoice('gender', 'femme')" class="media-btn">
+                    <video src="https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Tire_la_la_67_0.mp4" autoplay loop muted playsinline class="media-content"></video>
+                    <div class="media-overlay"></div><span class="media-label">Femme</span>
+                </div>
+                <div onclick="saveChoice('gender', 'homme')" class="media-btn">
+                    <img src="https://img.myaicrush.ai/images/chen/chen1/1b8eb047ea43382c3dd7e4af51e5d523.webp" class="media-content">
+                    <div class="media-overlay"></div><span class="media-label">Homme</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="step" data-step="2">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Quel style visuel ?</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div onclick="saveChoice('style', 'realiste')" class="media-btn">
+                    <video src="https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Ramene_ses_5900_0.mp4" autoplay loop muted playsinline class="media-content"></video>
+                    <div class="media-overlay"></div><span class="media-label">Réaliste</span>
+                </div>
+                <div onclick="saveChoice('style', 'anime')" class="media-btn">
+                    <img src="https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp" class="media-content">
+                    <div class="media-overlay"></div><span class="media-label">Animé / Manga</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="step" data-step="3">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Son origine ?</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <div onclick="saveChoice('origin', 'euro')" class="media-btn"><video src="https://img.myaicrush.ai/images/emilie/emilie3/emilie-t-shirt-gris-light-tape.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label text-xs">Euro</span></div>
+                <div onclick="saveChoice('origin', 'afro')" class="media-btn"><video src="https://img.myaicrush.ai/images/asha/asha1/kling_20251001_Image_to_Video_She_hugs_a_5709_0.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label text-xs">Afro</span></div>
+                <div onclick="saveChoice('origin', 'arabe')" class="media-btn"><video src="https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_s_appuie_c_4413_0.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label text-xs">Arabe</span></div>
+                <div onclick="saveChoice('origin', 'asiat')" class="media-btn"><video src="https://img.myaicrush.ai/images/chloe/chloe1/ba501413f27a11bb78d36b67b6e3ee8d.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label text-xs">Asiat</span></div>
+                <div onclick="saveChoice('origin', 'latina')" class="media-btn"><img src="https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp" class="media-content"><div class="media-overlay"></div><span class="media-label text-xs">Latina</span></div>
+                <div onclick="saveChoice('origin', 'metisse')" class="media-btn"><img src="https://img.myaicrush.ai/images/jasmine/jasmine1/3d339dc79b10384c843e9cc995b9bc2a.webp" class="media-content"><div class="media-overlay"></div><span class="media-label text-xs">Métisse</span></div>
+            </div>
+        </div>
+
+        <div class="step" data-step="4">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Sa silhouette ?</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <div onclick="saveChoice('body', 'fine')" class="media-btn"><video src="https://img.myaicrush.ai/images/aiko/aiko3/kling_20251029_Image_to_Video_Prend_des__4660_0.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label">Fine</span></div>
+                <div onclick="saveChoice('body', 'normale')" class="media-btn"><video src="https://img.myaicrush.ai/images/naomi/naomi3/kling_20250912_Image_to_Video_She_moves__5185_0.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label">Normale</span></div>
+                <div onclick="saveChoice('body', 'pulpeuse')" class="media-btn"><img src="https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp" class="media-content"><div class="media-overlay"></div><span class="media-label">Pulpeuse</span></div>
+            </div>
+        </div>
+
+        <div class="step" data-step="5">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Taille de la poitrine ?</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div onclick="saveChoice('chest', 'petite')" class="media-btn"><video src="https://img.myaicrush.ai/images/aiko/aiko3/kling_20251029_Image_to_Video_Fais_rebon_5304_0.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label">Petite</span></div>
+                <div onclick="saveChoice('chest', 'moyenne')" class="media-btn"><video src="https://img.myaicrush.ai/images/astrid/astrid3/b8d25112ac87f984da4d357b595b7d98.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label">Moyenne</span></div>
+                <div onclick="saveChoice('chest', 'grosse')" class="media-btn"><video src="https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_Fais_rebon_5722_0.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label">Grosse</span></div>
+                <div onclick="saveChoice('chest', 'enorme')" class="media-btn"><video src="https://img.myaicrush.ai/images/lila/lila1/19d5ac2ace91d5279ea09428c6098484.mp4" autoplay loop muted playsinline class="media-content"></video><div class="media-overlay"></div><span class="media-label text-pink-400 font-black">ÉNORME</span></div>
+            </div>
+        </div>
+
+        <div class="step" data-step="6">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Taille des fesses ?</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div onclick="saveChoice('butt', 'normales')" class="media-btn">
+                    <img src="https://img.myaicrush.ai/images/amber/amber3/16f0430e1f2539e8098ea07132e8a327.webp" class="media-content">
+                    <div class="media-overlay"></div><span class="media-label">Normales</span>
+                </div>
+                <div onclick="saveChoice('butt', 'enormes')" class="media-btn">
+                    <video src="https://img.myaicrush.ai/images/aiko/aiko3/e8240457ae67a024fb8309ed90b3c4ea.mp4" autoplay loop muted playsinline class="media-content"></video>
+                    <div class="media-overlay"></div><span class="media-label text-pink-400 font-black">ÉNORMES</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="step" data-step="7">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">Son tempérament ?</h2>
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="finish('timide')" class="emoji-btn py-4 rounded-xl text-lg font-semibold">🥺 Timide</button>
+                <button onclick="finish('coquine')" class="emoji-btn py-4 rounded-xl text-lg font-semibold">😈 Coquine</button>
+                <button onclick="finish('amoureuse')" class="emoji-btn py-4 rounded-xl text-lg font-semibold">😍 Amoureuse</button>
+                <button onclick="finish('dominante')" class="emoji-btn py-4 rounded-xl text-lg font-semibold">⛓️ Dominante</button>
+            </div>
+        </div>
+
+        <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
+            <div class="relative w-20 h-20 mb-8">
+                <div class="absolute top-0 left-0 w-full h-full border-4 border-pink-500/20 rounded-full animate-ping"></div>
+                <div class="absolute top-0 left-0 w-full h-full border-t-4 border-pink-500 rounded-full animate-spin"></div>
+            </div>
+            <p class="text-xl font-bold gradient-text animate-pulse text-center leading-tight">Vos préférences sont en cours d'enregistrement...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 7;
+        const progressEl = document.getElementById('progress');
+        let userPrefs = {};
+
+        function saveChoice(key, value) {
+            userPrefs[key] = value;
+            nextStep();
+        }
+
+        function nextStep() {
+            const currentEl = document.querySelector(`[data-step="${currentStep}"]`);
+            if (!currentEl) return;
+
+            currentEl.style.opacity = '0';
+            currentEl.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                currentEl.classList.remove('active');
+                currentEl.style.display = 'none';
+
+                currentStep++;
+                const nextEl = document.querySelector(`[data-step="${currentStep}"]`);
+                if (nextEl) {
+                    nextEl.classList.add('active');
+                }
+                
+                // Mise à jour barre de progression
+                const percent = (currentStep / totalSteps) * 100;
+                progressEl.style.width = `${percent}%`;
+            }, 300);
+        }
+
+        function finish(mood) {
+            userPrefs.mood = mood;
+            localStorage.setItem('myAiCrush_prefs', JSON.stringify(userPrefs));
+            
+            const step7 = document.querySelector(`[data-step="7"]`);
+            if (step7) {
+                step7.classList.remove('active');
+                step7.style.display = 'none';
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loading').classList.add('flex');
+            progressEl.style.width = '100%';
+
+            setTimeout(() => {
+                window.location.href = "premium-quiz-2.html";
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
