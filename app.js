@@ -2576,57 +2576,45 @@ app.post('/resetUserLevel', (req, res) => {
 });
 
 
-// Fonction pour ajouter a BREVO
-async function addUserToBrevo(email) {
-  const API_KEY = process.env.BREVO_API_KEY;
-  const LIST_ID = process.env.BREVO_LIST_ID;
+// Fonction pour ajouter un contact dans Elastic Email
+async function addUserToElastic(email) {
+  const API_KEY = process.env.ELASTICEMAIL_API_KEY;
+  const LIST_NAME = process.env.ELASTICEMAIL_LIST_NAME; // nom exact de ta liste Elastic
+
+  if (!API_KEY || !LIST_NAME) {
+    console.error("❌ Elastic Email mal configuré (ELASTICEMAIL_API_KEY ou ELASTICEMAIL_LIST_NAME manquants)");
+    return;
+  }
 
   try {
-      const response = await axios.post(
-          "https://api.brevo.com/v3/contacts",
-          {
-              email: email,
-              listIds: [parseInt(LIST_ID)]
-          },
-          {
-              headers: {
-                  "api-key": API_KEY,
-                  "Content-Type": "application/json"
-              }
+    const response = await axios.post(
+      "https://api.elasticemail.com/v4/contacts",
+      [
+        {
+          Email: email,
+          Status: "Active",
+          Consent: {
+            ConsentTracking: "Allow"
           }
-      );
-      console.log("✅ Utilisateur ajouté à Brevo :", response.data);
+        }
+      ],
+      {
+        headers: {
+          "X-ElasticEmail-ApiKey": API_KEY,
+          "Content-Type": "application/json"
+        },
+        params: {
+          listnames: LIST_NAME
+        }
+      }
+    );
+
+    console.log("✅ Utilisateur ajouté à Elastic Email :", response.data);
   } catch (error) {
-      console.error("❌ Erreur lors de l'ajout à Brevo :", error.response?.data || error.message);
+    console.error("❌ Erreur lors de l'ajout à Elastic Email :", error.response?.data || error.message);
   }
 }
 
-
-// ROUTE PIXEL & API FACEBOOK inscription gratuite
-
-async function addUserToBrevo(email) {
-  const API_KEY = process.env.BREVO_API_KEY;
-  const LIST_ID = process.env.BREVO_LIST_ID;
-
-  try {
-      const response = await axios.post(
-          "https://api.brevo.com/v3/contacts",
-          {
-              email: email,
-              listIds: [parseInt(LIST_ID)]
-          },
-          {
-              headers: {
-                  "api-key": API_KEY,
-                  "Content-Type": "application/json"
-              }
-          }
-      );
-      console.log("✅ Utilisateur ajouté à Brevo :", response.data);
-  } catch (error) {
-      console.error("❌ Erreur lors de l'ajout à Brevo :", error.response?.data || error.message);
-  }
-}
 
 
 
@@ -2677,35 +2665,9 @@ app.post('/api/signup', async (req, res) => {
 
         console.log("✅ Inscription réussie pour :", email);
 
-        // ✅ Ajout à Brevo
-        await addUserToBrevo(email);
+        // ✅ Ajout à Elastic
+        await addUserToElastic(email);
 
-        // 🔥 Hachage de l'email pour Facebook (SHA-256)
-      const normalizedEmail = (typeof email === 'string') ? email.trim().toLowerCase() : '';
-const hashedEmail = crypto.createHash("sha256").update(normalizedEmail).digest("hex");
-
-
-        // 🔥 Envoi de l’événement "CompleteRegistration" à Facebook
-        const payload = {
-            data: [
-                {
-                    event_name: "CompleteRegistration",
-                    event_time: Math.floor(Date.now() / 1000),
-                    user_data: { em: hashedEmail },
-                    action_source: "website"
-                }
-            ],
-            access_token: FACEBOOK_ACCESS_TOKEN
-        };
-
-        console.log("📡 Envoi de l'événement CompleteRegistration à Facebook :", payload);
-
-        try {
-            const response = await axios.post(FB_API_URL, payload);
-            console.log("✅ Événement 'CompleteRegistration' envoyé à Facebook avec succès !", response.data);
-        } catch (error) {
-            console.error("❌ Erreur lors de l'envoi à Facebook :", error.response?.data || error.message);
-        }
 
         res.status(201).json({ message: 'User created successfully!', isNewUser: true });
 
