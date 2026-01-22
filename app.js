@@ -624,9 +624,7 @@ app.post('/api/generate-reset-token', async (req, res) => {
 
         const user = await users.findOne({ email });
 
-        // ❗ Pour ne pas dévoiler si un compte existe ou pas,
-        // on renvoie le même message, mais on n'envoie l'email
-        // QUE si l'utilisateur existe vraiment.
+        // On ne révèle pas si le compte existe ou non
         if (!user) {
             console.log("⚠️ Demande de reset pour un email inconnu :", email);
             return res.json({
@@ -651,51 +649,69 @@ app.post('/api/generate-reset-token', async (req, res) => {
         const resetUrl = `${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(email)}&token=${token}`;
 
         console.log(`🔗 Lien de reset généré : ${resetUrl}`);
-        console.log("BREVO_API_KEY chargée ?", !!process.env.BREVO_API_KEY);
+        console.log("ELASTICEMAIL_API_KEY chargée ?", !!process.env.ELASTICEMAIL_API_KEY);
 
-        // 📧 Envoi email via BREVO
-        const brevoPayload = {
-            sender: {
-                email: process.env.RESET_FROM_EMAIL || "contact@myaicrush.ai",
-                name: process.env.RESET_FROM_NAME || "MyAiCrush"
-            },
-            to: [{ email }],
-            subject: "Réinitialisation de ton mot de passe MyAiCrush 💗",
-            htmlContent: `
-                <p>Bonjour,</p>
-                <p>Tu as demandé à réinitialiser ton mot de passe sur <strong>MyAiCrush</strong>.</p>
-                <p>Clique sur ce lien pour choisir un nouveau mot de passe (valable 24h) :</p>
-                <p><a href="${resetUrl}">${resetUrl}</a></p>
-                <p>Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.</p>
-            `
-        };
+        // 📧 Envoi email via ELASTIC EMAIL (API v2)
+        const fromEmail = process.env.RESET_FROM_EMAIL || "contact@myaicrush.ai";
+        const fromName  = process.env.RESET_FROM_NAME || "MyAiCrush";
 
-        console.log("📤 Envoi à Brevo avec ce payload :", brevoPayload);
+        const subject = "Réinitialisation de ton mot de passe MyAiCrush 💗";
 
-        const brevoResponse = await axios.post(
-            "https://api.brevo.com/v3/smtp/email",
-            brevoPayload,
-            {
-                headers: {
-                    "api-key": process.env.BREVO_API_KEY,
-                    "Content-Type": "application/json"
-                }
-            }
+        const bodyHtml = `
+            <p>Bonjour,</p>
+            <p>Tu as demandé à réinitialiser ton mot de passe sur <strong>MyAiCrush</strong>.</p>
+            <p>Clique sur ce lien pour choisir un nouveau mot de passe (valable 24h) :</p>
+            <p><a href="${resetUrl}">${resetUrl}</a></p>
+            <p>Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.</p>
+        `;
+
+        const bodyText = `
+Bonjour,
+
+Tu as demandé à réinitialiser ton mot de passe sur MyAiCrush.
+
+Voici le lien (valable 24h) :
+${resetUrl}
+
+Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.
+        `.trim();
+
+        // Elastic Email attend du x-www-form-urlencoded
+        const params = new URLSearchParams();
+        params.append('apikey', process.env.ELASTICEMAIL_API_KEY);
+        params.append('from', fromEmail);
+        params.append('fromName', fromName);
+        params.append('to', email);
+        params.append('subject', subject);
+        params.append('bodyHtml', bodyHtml);
+        params.append('bodyText', bodyText);
+        params.append('isTransactional', 'true');
+
+        console.log("📤 Envoi à Elastic Email avec ces params (sans le bodyHtml complet) :", {
+            from: fromEmail,
+            fromName,
+            to: email,
+            subject,
+            isTransactional: 'true'
+        });
+
+        const elasticResponse = await axios.post(
+            'https://api.elasticemail.com/v2/email/send',
+            params
         );
 
-        console.log("✅ Réponse Brevo :", brevoResponse.data);
+        console.log("✅ Réponse Elastic Email :", elasticResponse.data);
 
         return res.json({
             message: "Si un compte existe avec cette adresse e-mail, un lien de réinitialisation t’a été envoyé par email. Il peut parfois mettre quelques minutes à arriver."
         });
 
     } catch (err) {
-        console.error("❌ Erreur génération token / envoi Brevo :", err.response?.data || err.message);
+        console.error("❌ Erreur génération token / envoi Elastic Email :", err.response?.data || err.message);
 
-        // TEMPORAIREMENT : on renvoie l'erreur pour debug
         return res.status(500).json({
             message: "Erreur lors de l'envoi de l'email de réinitialisation.",
-            brevoError: err.response?.data || null
+            elasticError: err.response?.data || null
         });
     }
 });
