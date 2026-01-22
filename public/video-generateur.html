@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyAICrush - Générateur Vidéo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff1744;
+            --primary-dark: #c4134a;
+            --secondary: #ff4081;
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-gold: #ffd700;
+            --shadow: 0 8px 32px rgba(255, 23, 68, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 23, 68, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255, 64, 129, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            opacity: 0.5;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 23, 68, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(255, 23, 68, 0.4);
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(255, 23, 68, 0.3);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 23, 68, 0.05);
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(255, 23, 68, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--secondary);
+            background: rgba(255, 64, 129, 0.2);
+            transform: scale(1.05);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .remove-image {
+            margin-top: 16px;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .remove-image:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .prompt-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 23, 68, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-primary);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 23, 68, 0.1);
+        }
+
+        .translation-preview {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid var(--accent-gold);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: var(--shadow);
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(255, 23, 68, 0.5);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .queue-section {
+            margin-top: 60px;
+        }
+
+        .queue-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 32px;
+        }
+
+        .video-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 23, 68, 0.2);
+            box-shadow: var(--shadow);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .video-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .video-status {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-processing {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .video-time {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .video-preview {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .video-prompt {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--primary);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .download-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            opacity: 0.3;
+            margin-bottom: 20px;
+        }
+
+        .empty-text {
+            font-size: 1.5rem;
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    <div class="container">
+        <header>
+            <h1>Générateur Vidéo</h1>
+            <p class="subtitle">Créez des vidéos coquines à partir de vos images</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2 class="card-title">
+                    <span>📸</span> Votre Image
+                </h2>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">🖼️</div>
+                    <div class="upload-text">Cliquez ou glissez votre image</div>
+                    <div class="upload-subtext">JPG, PNG, WebP, GIF</div>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
+                <div class="preview-container" id="previewContainer" style="display: none;">
+                    <img class="preview-image" id="previewImage" src="" alt="Aperçu">
+                    <button class="remove-image" id="removeImage">Supprimer</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">
+                    <span>✨</span> Votre Prompt
+                </h2>
+                <div class="prompt-group">
+                    <label for="promptInput">Décrivez la vidéo souhaitée (en français)</label>
+                    <textarea 
+                        id="promptInput" 
+                        placeholder="Exemple : Une danse sensuelle au ralenti, éclairage tamisé, ambiance intime..."
+                    ></textarea>
+                    <div class="translation-preview" id="translationPreview" style="display: none;">
+                        <strong>🌐 Traduction EN :</strong> <span id="translatedText"></span>
+                    </div>
+                </div>
+                <button class="generate-btn" id="generateBtn" disabled>
+                    Générer la Vidéo
+                </button>
+            </div>
+        </div>
+
+        <div class="queue-section">
+            <h2 class="queue-title">File d'attente</h2>
+            <div class="video-grid" id="videoGrid">
+                <div class="empty-state">
+                    <div class="empty-icon">🎬</div>
+                    <div class="empty-text">Aucune vidéo en cours</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État de l'application
+        const state = {
+            uploadedImage: null,
+            uploadedImageData: null,
+            videos: []
+        };
+
+        // Éléments DOM
+        const uploadZone = document.getElementById('uploadZone');
+        const imageInput = document.getElementById('imageInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const removeImage = document.getElementById('removeImage');
+        const promptInput = document.getElementById('promptInput');
+        const translationPreview = document.getElementById('translationPreview');
+        const translatedText = document.getElementById('translatedText');
+        const generateBtn = document.getElementById('generateBtn');
+        const videoGrid = document.getElementById('videoGrid');
+
+        // Upload d'image
+        uploadZone.addEventListener('click', () => imageInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(file);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+            }
+        });
+
+        function handleImageUpload(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.uploadedImage = file;
+                state.uploadedImageData = e.target.result;
+                previewImage.src = e.target.result;
+                uploadZone.style.display = 'none';
+                previewContainer.style.display = 'block';
+                updateGenerateButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        removeImage.addEventListener('click', () => {
+            state.uploadedImage = null;
+            state.uploadedImageData = null;
+            previewImage.src = '';
+            uploadZone.style.display = 'block';
+            previewContainer.style.display = 'none';
+            imageInput.value = '';
+            updateGenerateButton();
+        });
+
+        // Traduction du prompt
+        let translationTimeout;
+        promptInput.addEventListener('input', () => {
+            clearTimeout(translationTimeout);
+            const text = promptInput.value.trim();
+            
+            if (text) {
+                translationTimeout = setTimeout(() => {
+                    translatePrompt(text);
+                }, 500);
+            } else {
+                translationPreview.style.display = 'none';
+            }
+            
+            updateGenerateButton();
+        });
+
+        async function translatePrompt(text) {
+            // Simulation de traduction (en production, utilisez une vraie API)
+            // Options : LibreTranslate, Google Translate API, DeepL API
+            try {
+                // Mock translation pour la démo
+                const mockTranslation = await mockTranslate(text);
+                translatedText.textContent = mockTranslation;
+                translationPreview.style.display = 'block';
+            } catch (error) {
+                console.error('Erreur de traduction:', error);
+            }
+        }
+
+        // Fonction mock de traduction (à remplacer par une vraie API)
+        async function mockTranslate(text) {
+            // Simule un délai réseau
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Traductions basiques pour la démo
+            const translations = {
+                'danse': 'dancing',
+                'sensuel': 'sensual',
+                'intime': 'intimate',
+                'éclairage': 'lighting',
+                'tamisé': 'dim',
+                'ralenti': 'slow motion',
+                'mouvement': 'movement',
+                'regard': 'gaze',
+                'caméra': 'camera'
+            };
+            
+            let translated = text.toLowerCase();
+            for (const [fr, en] of Object.entries(translations)) {
+                translated = translated.replace(new RegExp(fr, 'gi'), en);
+            }
+            
+            return translated;
+        }
+
+        // Bouton de génération
+        function updateGenerateButton() {
+            const hasImage = state.uploadedImage !== null;
+            const hasPrompt = promptInput.value.trim().length > 0;
+            generateBtn.disabled = !hasImage || !hasPrompt;
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            if (!state.uploadedImage || !promptInput.value.trim()) return;
+
+            const prompt = promptInput.value.trim();
+            const translatedPrompt = translatedText.textContent || prompt;
+            
+            // Créer une nouvelle vidéo
+            const videoId = Date.now();
+            const video = {
+                id: videoId,
+                prompt: prompt,
+                translatedPrompt: translatedPrompt,
+                status: 'processing',
+                progress: 0,
+                startTime: Date.now(),
+                imageData: state.uploadedImageData
+            };
+            
+            state.videos.unshift(video);
+            renderVideos();
+            
+            // Simuler le processus de génération
+            await processVideo(videoId);
+        });
+
+        async function processVideo(videoId) {
+            const video = state.videos.find(v => v.id === videoId);
+            if (!video) return;
+
+            // Simuler la progression (à remplacer par vraie API)
+            for (let i = 0; i <= 100; i += 5) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                video.progress = i;
+                updateVideoProgress(videoId);
+            }
+
+            // Simulation : génération terminée
+            video.status = 'completed';
+            video.videoUrl = generateMockVideo();
+            video.endTime = Date.now();
+            renderVideos();
+        }
+
+        function generateMockVideo() {
+            // En production, ceci serait l'URL retournée par votre API
+            // Pour la démo, on génère une vidéo de placeholder
+            return 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAACKBtZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0OCByMjY0MyA1YzY1NzA0IC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNSAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTYgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTEgb3Blbl9nb3A9MCB3ZWlnaHRwPTIga2V5aW50PTI1MCBrZXlpbnRfbWluPTI1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAA';
+        }
+
+        function renderVideos() {
+            if (state.videos.length === 0) {
+                videoGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎬</div>
+                        <div class="empty-text">Aucune vidéo en cours</div>
+                    </div>
+                `;
+                return;
+            }
+
+            videoGrid.innerHTML = state.videos.map(video => {
+                const elapsedTime = video.endTime 
+                    ? Math.round((video.endTime - video.startTime) / 1000) 
+                    : Math.round((Date.now() - video.startTime) / 1000);
+                
+                return `
+                    <div class="video-card" data-id="${video.id}">
+                        <div class="video-header">
+                            <div class="video-status status-${video.status}">
+                                ${video.status === 'processing' ? '⏳ En cours' : '✅ Terminé'}
+                            </div>
+                            <div class="video-time">${elapsedTime}s</div>
+                        </div>
+                        
+                        ${video.status === 'processing' ? `
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${video.progress}%"></div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="video-preview">
+                            ${video.status === 'processing' ? `
+                                <div class="loader"></div>
+                            ` : `
+                                <video controls>
+                                    <source src="${video.videoUrl}" type="video/mp4">
+                                </video>
+                            `}
+                        </div>
+                        
+                        <div class="video-prompt">
+                            "${video.prompt}"
+                        </div>
+                        
+                        ${video.status === 'completed' ? `
+                            <button class="download-btn" onclick="downloadVideo(${video.id})">
+                                💾 Télécharger
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateVideoProgress(videoId) {
+            const card = document.querySelector(`[data-id="${videoId}"]`);
+            if (!card) return;
+            
+            const video = state.videos.find(v => v.id === videoId);
+            if (!video) return;
+            
+            const progressFill = card.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = `${video.progress}%`;
+            }
+            
+            const timeElement = card.querySelector('.video-time');
+            if (timeElement) {
+                const elapsedTime = Math.round((Date.now() - video.startTime) / 1000);
+                timeElement.textContent = `${elapsedTime}s`;
+            }
+        }
+
+        function downloadVideo(videoId) {
+            const video = state.videos.find(v => v.id === videoId);
+            if (!video || !video.videoUrl) return;
+            
+            // En production, téléchargez la vraie vidéo
+            const a = document.createElement('a');
+            a.href = video.videoUrl;
+            a.download = `video_${videoId}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Configuration initiale
+        updateGenerateButton();
+    </script>
+</body>
+</html>

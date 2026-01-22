@@ -1063,23 +1063,24 @@ app.get('/auth/google/callback', async (req, res) => {
 
       if (!existingUser) {
         await usersCollection.insertOne({ 
-            email: userEmail, 
-            createdAt: new Date(), 
-            audioMinutesUsed: 0, 
-            creditsPurchased: 0  // ✅ Ajout du compteur de crédits
+          email: userEmail, 
+          createdAt: new Date(), 
+          audioMinutesUsed: 0, 
+          creditsPurchased: 0
         });
-    
+
         console.log(`✅ Nouvel utilisateur Google ajouté avec crédits : ${userEmail}`);
-    
-        // ✅ Ajout à Brevo pour les nouveaux utilisateurs
-        await addUserToBrevo(userEmail);
-    }
-    
+
+        // ✅ Ajout à Elastic Email pour les nouveaux utilisateurs
+        await addUserToElastic(userEmail);
+      }
 
       console.log('Utilisateur Google authentifié :', userEmail);
 
-      // Déterminer l'URL de redirection
-      const redirectUrl = isNewUser ? `${BASE_URL}/index.html` : `${BASE_URL}/index.html`;
+      // Tu peux garder une logique différente pour new/existing si tu veux, là c'est la même :
+      const redirectUrl = isNewUser 
+        ? `${BASE_URL}/index.html` 
+        : `${BASE_URL}/index.html`;
 
       // Réponse HTML avec un script pour stocker l'utilisateur dans localStorage et rediriger
       res.send(`
@@ -1093,7 +1094,6 @@ app.get('/auth/google/callback', async (req, res) => {
       res.status(500).send('Erreur d\'authentification');
   }
 });
-
 
 
 
