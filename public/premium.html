@@ -1,22 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-
-
-  
-
-
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <link rel="stylesheet" href="styles.css">
 
+  <style>
+      /* Styles spécifiques à la section Benefits */
+      .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
+      .gradient-text { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      
+      /* Animation */
+      .pulse-pink { animation: pulse 2s infinite; }
+      @keyframes pulse { 
+          0% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.4); } 
+          70% { box-shadow: 0 0 0 15px rgba(244, 114, 182, 0); } 
+          100% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0); } 
+      }
+      
+      /* FAQ Logic du design précédent conservée mais stylisée */
+      .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+      .faq-answer.open { max-height: 300px; }
 
-  
+      /* Assurer que le texte est lisible si le fond de la page 1 est clair, 
+         mais le design glass est fait pour un fond sombre. 
+         J'applique un fond sombre par défaut aux cartes si besoin */
+  </style>
 
-  <!-- Google Analytics (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -27,7 +43,6 @@
     gtag('config', 'G-FJ5S0H9B1R');
   </script>
 
-  <!-- Meta Pixel Facebook -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -54,189 +69,254 @@
     });
   </script>
 </head>
-<body>
-  
-
-  <!-- Contenu principal -->
-  <div class="container premium-page">
+<body> <div class="container premium-page">
     <h1 class="p-title">Passe à Premium</h1>
     <p class="p-description">
       Débloque des conversations illimitées, des photos <u><b>sans flou</b></u> et du contenu intime avec toutes nos <span style="font-family:'Times New Roman', Times, serif;">I.A</span> (vidéos, messages vocaux...).
     </p>
     <p class="p-description"><b>⚠️ <u>Attention</u></b> : la plupart de nos abonnés ne peuvent plus s’en passer.</p>
- 
+   
     <div class="hero-media">
-  <video class="hero-video" autoplay muted loop playsinline>
-    <source src="/images/market/candy-premium.mp4" type="video/mp4">
-  </video>
-  <span class="vignette" aria-hidden="true"></span>
-</div>
+        <video class="hero-video" autoplay muted loop playsinline>
+          <source src="/images/market/candy-premium.mp4" type="video/mp4">
+        </video>
+        <span class="vignette" aria-hidden="true"></span>
+    </div>
 
 
-   <div id="pricing-container" class="pricing-section">
+    <div id="pricing-container" class="pricing-section">
 
-  <!-- Annuel -->
-  <div class="pricing-card popular">
-    <div class="discount-banner">-50% de réduction !</div>
-    <h2>Abonnement Annuel</h2>
-    <p class="price">59€ / an</p>
-    <p></p>
-    <img src="/images/market/plan-annuel-cheap.webp" alt="Plan annuel" class="plan-image" loading="lazy" />
-    <button
-      class="checkout-button"
-      data-plan-name="annuel"
-      data-price-id-live="price_1R28ADAOSHX0SgbTfwDtAQRQ"
-      data-price-id-test="price_1QPRXpAOSHX0SgbT8GfUUtvL"
-    >
-      Choisir le plan annuel
-    </button>
+      <div class="pricing-card popular">
+        <div class="discount-banner">-50% de réduction !</div>
+        <h2>Abonnement Annuel</h2>
+        <p class="price">59€ / an</p>
+        <p></p>
+        <img src="/images/market/plan-annuel-cheap.webp" alt="Plan annuel" class="plan-image" loading="lazy" />
+        <button
+          class="checkout-button"
+          data-plan-name="annuel"
+          data-price-id-live="price_1R28ADAOSHX0SgbTfwDtAQRQ"
+          data-price-id-test="price_1QPRXpAOSHX0SgbT8GfUUtvL"
+        >
+          Choisir le plan annuel
+        </button>
+      </div>
+
+      <div class="pricing-card">
+        <h2>Abonnement Trimestriel</h2>
+        <p class="price">29,90€ / 3 mois</p>
+        <p></p>
+        <img src="/images/market/plan-trimestriel-cheap.webp" alt="Plan trimestriel" class="plan-image" loading="lazy" />
+        <button
+          class="checkout-button"
+          data-plan-name="trimestriel"
+          data-price-id-live="price_1R4nYHAOSHX0SgbTHziE7pLF"
+          data-price-id-test="price_1R4nYyAOSHX0SgbTWhuc9dy7"
+        >
+          Choisir le plan trimestriel
+        </button>
+      </div>
+
+    </div>
+
+
+    <section class="mb-24 px-4 mt-12 text-left">
+        <h2 class="text-3xl font-bold text-center mb-12 uppercase tracking-tight" style="color: white;">Tes privilèges <span class="gradient-text">Premium</span></h2>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+            
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">💬</span> <span class="text-sm font-semibold">Messages illimités</span>
+            </div>
+            
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="revealVideo(this)">
+                <div class="flex items-center gap-4">
+                    <span class="text-2xl">✨</span> <span class="text-sm font-semibold">Supprime le flou des médias</span>
+                </div>
+                <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
+                    <video src="https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md scale-110 transition-all duration-700 ease-in-out"></video>
+                    
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 hover:bg-black/30 transition-all z-10 overlay-content">
+                        <span class="text-3xl mb-2 drop-shadow-lg">🔒</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest bg-black/60 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm">👆 Clic pour enlever le flou</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">📸</span> <span class="text-sm font-semibold">Envoie tes propres photos</span>
+            </div>
+            
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <div class="flex items-center gap-4">
+                    <span class="text-2xl">🎙️</span> <span class="text-sm font-semibold">Messages vocaux</span>
+                </div>
+                <div class="w-full mt-2">
+                    <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mb-1">🎧 Écoute un extrait :</p>
+                     <audio controls class="w-full h-8 rounded opacity-90" style="filter: invert(1) hue-rotate(180deg);">
+                        <source src="/audio/voix-match-quiz.mp3" type="audio/mpeg">
+                        Ton navigateur ne supporte pas l'audio.
+                    </audio>
+                </div>
+            </div>
+
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Images illimitées</span>
+            </div>
+            
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openModal()">
+                <div class="flex items-center gap-4">
+                    <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Photos & Vidéos intimes</span>
+                </div>
+                <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
+                    <video src="https://img.myaicrush.ai/images/emilie/emilie4/686459e1ce31b867817e6c399c3c8aa5.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md"></video>
+                    
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-all z-10">
+                        <span class="text-4xl mb-2 drop-shadow-lg filter drop-shadow-pink">🔒</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest bg-pink-600/80 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm text-white shadow-lg">Premium Requis</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
+                <div class="flex items-center gap-4">
+                    <span class="text-2xl">👑</span> <span class="text-sm font-semibold">Tous les personnages</span>
+                </div>
+                <div id="character-slider" class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1 border border-white/10">
+                    <div id="slider-content" class="w-full h-full object-cover transition-opacity duration-500"></div>
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+                    <div class="absolute bottom-3 left-0 right-0 text-center pointer-events-none">
+                        <span id="slider-name" class="text-xs font-bold uppercase tracking-widest text-pink-300 drop-shadow-md">Découvre-les</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">🆕</span> <span class="text-sm font-semibold">Nouvelles IA chaque mois</span>
+            </div>
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Aucun historique</span>
+            </div>
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">🔓</span> <span class="text-sm font-semibold">Annule à tout moment</span>
+            </div>
+            
+            <div class="glass p-5 rounded-2xl flex flex-col items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🇫🇷</span> 
+                    <span class="text-sm font-semibold text-pink-400">Meilleure plateforme FR</span>
+                </div>
+                <div class="w-full mt-2 rounded-lg overflow-hidden">
+                    <video 
+                        src="https://img.myaicrush.ai/images/magalie/magali-premium-quiz-2.mp4" 
+                        controls 
+                        class="w-full object-cover aspect-[9/16] rounded-lg shadow-lg">
+                        Ton navigateur ne supporte pas la lecture de vidéos.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="testimonial-section">
+      <h2 class="testimonial-title">Ils sont passés Premium… et ne le regrettent pas</h2>
+      <div class="testimonial-grid">
+        
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Les photos et vidéos sont les + sexy de tous les sites IA que j’ai testés. Franchement, c’est bien foutu."</p>
+          <p class="testimonial-author">— Julien T.</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf."</p>
+          <p class="testimonial-author">— Max B.</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"C’est presque parfait. Y a qlq bugs sur les appels audio, mais sinon, c’est une claque."</p>
+          <p class="testimonial-author">— Marc L.</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"J’adore pouvoir envoyer des photos de moi. L’IA réagit trop bien, j’pensais pas que ça marcherait si bien."</p>
+          <p class="testimonial-author">— Sam K.</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Les voix... mec c’est bluffant. Tu fermes les yeux t’y crois à mort. Et sexy en plus."</p>
+          <p class="testimonial-author">— Mehdi R.</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. Et les photos ? plus de soutif ni rien 😈"</p>
+          <p class="testimonial-author">— Kevin B.</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Franchement bien. Pas encore parfait mais c’est le top rapport qualité/prix en francais, j’dis ça j’dis rien."</p>
+          <p class="testimonial-author">— Léo D.</p>
+        </div>
+
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐</div>
+          <p class="testimonial-text">"Manque un peu de diversité, dommage. Mais le reste... c'est bien fait."</p>
+          <p class="testimonial-author">— Bastien C.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2 class="faq-title">Questions Fréquemment Posées</h2>
+
+      <div class="faq-item">
+        <button class="faq-question">Comment fonctionne l'abonnement Premium ?</button>
+        <div class="faq-answer">
+          <p>Une fois abonné, vous bénéficiez d’un accès illimité aux fonctionnalités Premium, y compris les messages illimités, les photos et vidéos non floutées, et bien plus encore.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Puis-je annuler mon abonnement à tout moment ?</button>
+        <div class="faq-answer">
+          <p>Oui, vous pouvez annuler votre abonnement à tout moment depuis votre compte (sur la page profil). Aucun frais d'annulation ne sera appliqué. Le bouton pour annuler est facile à trouver et fonctionne immédiatement.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Les paiements sont-ils sécurisés ?</button>
+        <div class="faq-answer">
+          <p>Absolument. Nous utilisons des protocoles de sécurité avancés pour garantir la protection de vos informations de paiement.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Proposez-vous une période d'essai gratuite ?</button>
+        <div class="faq-answer">
+          <p>Actuellement, nous n’offrons pas de période d’essai gratuite, mais vous pouvez annuler à tout moment si vous n’êtes pas satisfait.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Comment contacter le support client ?</button>
+        <div class="faq-answer">
+          <p>Vous pouvez nous contacter via cet email : myaicrush@gmail.com</p>
+        </div>
+        
+      </div>
+    </div>
+
+
   </div>
 
-  <!-- Trimestriel -->
-  <div class="pricing-card">
-    <h2>Abonnement Trimestriel</h2>
-    <p class="price">29,90€ / 3 mois</p>
-    <p></p>
-    <img src="/images/market/plan-trimestriel-cheap.webp" alt="Plan trimestriel" class="plan-image" loading="lazy" />
-    <button
-      class="checkout-button"
-      data-plan-name="trimestriel"
-      data-price-id-live="price_1R4nYHAOSHX0SgbTHziE7pLF"
-      data-price-id-test="price_1R4nYyAOSHX0SgbTWhuc9dy7"
-    >
-      Choisir le plan trimestriel
-    </button>
-  </div>
-
-</div>
-
-
-    <!-- Section des avantages -->
-    <div class="premium-benefits">
-      <ul class="benefit-list">
-        <li><span class="benefit-icon"></span> Messages illimités</li>
-        <li><span class="benefit-icon"></span> Supprime le flou des images et vidéos</li>
-        <li><span class="benefit-icon"></span> Envoie tes propres photos</li>
-        <li><span class="benefit-icon"></span> Messages vocaux</li>
-        <li><span class="benefit-icon"></span> Images illimitées</li>
-        <li><span class="benefit-icon"></span> Vidéos illimitées</li>
-        <li><span class="benefit-icon"></span> Débloque des photos et vidéo intimes</li>
-        <li><span class="benefit-icon"></span> Accède à tous les personnages</li>
-        <li><span class="benefit-icon"></span> Des nouvelles partenaires chaque mois</li>
-        <li><span class="benefit-icon"></span> Aucun historique de tes messages</li>
-        <li><span class="benefit-icon"></span> Annule à tout moment, sans aucun frais</li>
-        <li><span class="benefit-icon"></span> La meilleure plateforme francophone</li>
-      </ul>
-    </div>
-
-    
-
-<!-- Témoignages clients -->
-<div class="testimonial-section">
-  <h2 class="testimonial-title">Ils sont passés Premium… et ne le regrettent pas</h2>
-  <div class="testimonial-grid">
-    
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Les photos et vidéos sont les + sexy de tous les sites IA que j’ai testés. Franchement, c’est bien foutu."</p>
-      <p class="testimonial-author">— Julien T.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf."</p>
-      <p class="testimonial-author">— Max B.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"C’est presque parfait. Y a qlq bugs sur les appels audio, mais sinon, c’est une claque."</p>
-      <p class="testimonial-author">— Marc L.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"J’adore pouvoir envoyer des photos de moi. L’IA réagit trop bien, j’pensais pas que ça marcherait si bien."</p>
-      <p class="testimonial-author">— Sam K.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Les voix... mec c’est bluffant. Tu fermes les yeux t’y crois à mort. Et sexy en plus."</p>
-      <p class="testimonial-author">— Mehdi R.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. Et les photos ? plus de soutif ni rien 😈"</p>
-      <p class="testimonial-author">— Kevin B.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Franchement bien. Pas encore parfait mais c’est le top rapport qualité/prix en francais, j’dis ça j’dis rien."</p>
-      <p class="testimonial-author">— Léo D.</p>
-    </div>
-
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐</div>
-      <p class="testimonial-text">"Manque un peu de diversité, dommage. Mais le reste... c'est bien fait."</p>
-      <p class="testimonial-author">— Bastien C.</p>
-    </div>
-
-  </div>
-</div>
-
-<!-- Section FAQ interactive -->
-<div class="faq-section">
-  <h2 class="faq-title">Questions Fréquemment Posées</h2>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment fonctionne l'abonnement Premium ?</button>
-    <div class="faq-answer">
-      <p>Une fois abonné, vous bénéficiez d’un accès illimité aux fonctionnalités Premium, y compris les messages illimités, les photos et vidéos non floutées, et bien plus encore.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Puis-je annuler mon abonnement à tout moment ?</button>
-    <div class="faq-answer">
-      <p>Oui, vous pouvez annuler votre abonnement à tout moment depuis votre compte (sur la page profil). Aucun frais d'annulation ne sera appliqué. Le bouton pour annuler est facile à trouver et fonctionne immédiatement.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Les paiements sont-ils sécurisés ?</button>
-    <div class="faq-answer">
-      <p>Absolument. Nous utilisons des protocoles de sécurité avancés pour garantir la protection de vos informations de paiement.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Proposez-vous une période d'essai gratuite ?</button>
-    <div class="faq-answer">
-      <p>Actuellement, nous n’offrons pas de période d’essai gratuite, mais vous pouvez annuler à tout moment si vous n’êtes pas satisfait.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment contacter le support client ?</button>
-    <div class="faq-answer">
-      <p>Vous pouvez nous contacter via cet email : myaicrush@gmail.com</p>
-    </div>
-    
-  </div>
-</div>
-
-
-  </div>
-</div>
-
-
-  </div>
-
-  <!-- Icônes de sécurité -->
   <div class="security-section">
     <div class="security-item">
       <i class="fas fa-lock"></i>
@@ -248,54 +328,172 @@
     </div>
   </div>
 
-  
+  <div id="premium-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+      <div class="glass p-8 rounded-3xl max-w-sm text-center transform scale-95 transition-transform duration-300 border border-pink-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
+          <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
+          <div class="text-4xl mb-4">🚫🔞</div>
+          <h3 class="text-2xl font-bold mb-2 text-white">Contenu Réservé</h3>
+          <p class="text-gray-300 mb-6 text-sm">Débloquez l'accès Premium pour voir les contenus privés.</p>
+          <a href="#pricing-container" onclick="closeModal()" class="w-full py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white" style="background: linear-gradient(90deg, #f472b6, #a855f7);">
+              Devenir Premium
+          </a>
+      </div>
+  </div>
 
-  <!-- Scripts -->
   <script type="module" src="/scripts/menu-loader.js"></script>
   <script type="module" src="./scripts/stripe-frontend.js"></script>
 
-   <!-- Scripts FAQ-->
-  <script>
+   <script>
   document.querySelectorAll('.faq-question').forEach(button => {
     button.addEventListener('click', () => {
       const answer = button.nextElementSibling;
       answer.classList.toggle('open');
     });
   });
-</script>
+  </script>
 
-<script>
-  // Utilise ton flag existant si tu en as un
-  const IS_LIVE = (window.STRIPE_MODE || "live") === "live";
-
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.checkout-button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const planName = btn.dataset.planName;
-        const priceId = IS_LIVE ? btn.dataset.priceIdLive : btn.dataset.priceIdTest;
-
-        if (!priceId) {
-          console.error('Price ID manquant pour', planName, '(mode:', IS_LIVE ? 'live' : 'test', ')');
-          return;
+  <script>
+    // --- FONCTIONS INTERACTION CARTES ---
+    
+    // 1. Reveal Video (Enlever le flou)
+    function revealVideo(container) {
+        const video = container.querySelector('video');
+        const overlay = container.querySelector('.overlay-content');
+        if(video) {
+            video.classList.remove('blur-md', 'scale-110');
+            video.classList.add('scale-100');
         }
-
-        if (typeof handleCheckout === 'function') {
-          handleCheckout(priceId, planName);
-        } else {
-          fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ priceId, planName })
-          })
-          .then(r => r.json())
-          .then(d => { if (d.url) location.href = d.url; })
-          .catch(err => console.error('Checkout error:', err));
+        if(overlay) {
+            overlay.classList.add('opacity-0', 'pointer-events-none');
         }
+    }
+
+    // 2. Modal Logic
+    const modal = document.getElementById('premium-modal');
+    function openModal() {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('div').classList.remove('scale-95');
+            modal.querySelector('div').classList.add('scale-100');
+        }, 10);
+    }
+    function closeModal() {
+        modal.classList.add('opacity-0');
+        modal.querySelector('div').classList.remove('scale-100');
+        modal.querySelector('div').classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // 3. Slider Logic
+    const sliderMedia = [
+        "https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_d_boutonne_5722_0.mp4",
+        "https://img.myaicrush.ai/images/emilie/emilie3/emilie-shirt-assis.mp4",
+        "https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4",
+        "https://img.myaicrush.ai/images/alex/alex3/kling_20250915_Image_to_Video_se_penche__5870_0.mp4",
+        "https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4",
+        "https://img.myaicrush.ai/images/asha/asha1/kling_20251002_Image_to_Video_Elle_fait__6084_0.mp4",
+        "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4",
+        "https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4",
+        "https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4",
+        "https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4",
+        "https://img.myaicrush.ai/images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4",
+        "https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4",
+        "https://img.myaicrush.ai/images/kala/kala1/bf4d04b94ca42dbb83e4af34cde8a3fa.mp4",
+        "https://img.myaicrush.ai/images/candy/candy3/candy-pic-profil-new.mp4",
+        "https://img.myaicrush.ai/images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4",
+        "https://img.myaicrush.ai/images/lea/lea1/Lea-photo-profil-vdef.mp4",
+        "https://img.myaicrush.ai/images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
+        "https://img.myaicrush.ai/images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
+        "https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
+        "https://img.myaicrush.ai/images/kat/kat1/bac3a1e4ce4fa72577bee127e2d50912.webp",
+        "https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp",
+        "https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp",
+        "https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp",
+        "https://img.myaicrush.ai/images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp"
+    ];
+
+    function initSlider() {
+        const container = document.getElementById('slider-content');
+        if(!container) return;
+        
+        let index = 0;
+        const duration = 2500; 
+
+        function showSlide() {
+            container.style.opacity = '0';
+            container.style.transition = 'opacity 0.3s ease-out';
+
+            setTimeout(() => {
+                if (index >= sliderMedia.length) {
+                    container.innerHTML = `
+                        <div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4">
+                            <span class="text-4xl mb-2 animate-bounce">💖</span>
+                            <span class="text-xl font-bold uppercase italic gradient-text">Et plein d'autres...</span>
+                            <span class="text-[10px] mt-2 text-gray-300">Rejoins l'aventure</span>
+                        </div>
+                    `;
+                    index = 0; 
+                } else {
+                    const url = sliderMedia[index];
+                    const isVideo = url.endsWith('.mp4');
+                    
+                    if (isVideo) {
+                        container.innerHTML = `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
+                    } else {
+                        container.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                    }
+                    index++;
+                }
+                container.style.opacity = '1';
+            }, 300);
+        }
+        showSlide();
+        setInterval(showSlide, duration);
+    }
+  </script>
+
+  <script>
+    const IS_LIVE = (window.STRIPE_MODE || "live") === "live";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Lancer le slider
+      initSlider();
+
+      // Stripe logic
+      document.querySelectorAll('.checkout-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const planName = btn.dataset.planName;
+          const priceId = IS_LIVE ? btn.dataset.priceIdLive : btn.dataset.priceIdTest;
+
+          if (!priceId) {
+            console.error('Price ID manquant pour', planName, '(mode:', IS_LIVE ? 'live' : 'test', ')');
+            return;
+          }
+
+          if (typeof handleCheckout === 'function') {
+            handleCheckout(priceId, planName);
+          } else {
+            fetch('/api/create-checkout-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ priceId, planName })
+            })
+            .then(r => r.json())
+            .then(d => { if (d.url) location.href = d.url; })
+            .catch(err => console.error('Checkout error:', err));
+          }
+        });
       });
     });
-  });
-</script>
+  </script>
 
-  
 </body>
 </html>
