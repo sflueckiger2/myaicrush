@@ -3473,90 +3473,92 @@ app.post('/api/one-click-payment', async (req, res) => {
   }
 
   try {
-    // 🔍 Récupérer le stripeCustomerId en base
-    const database = client.db("MyAICrush");
-    const users = database.collection("users");
+    const db = client.db("MyAICrush");
+    const users = db.collection("users");
     const user = await users.findOne({ email });
 
     if (!user || !user.stripeCustomerId) {
-      return res.status(400).json({ success: false, message: "Client non enregistré pour le paiement 1C." });
+      return res.status(400).json({ success: false, message: "Client non éligible au 1-click." });
     }
 
     const customerId = user.stripeCustomerId;
 
-    // 💰 Montants à ajuster selon tes tarifs
     const amountMap = {
       "10": 500,
-        "50": 2500,
+      "50": 2500,
       "100": 3900,
       "300": 9900,
       "700": 19900,
       "1000": 24900
     };
 
-    const amount = amountMap[tokensAmount];
+    const jetonsMap = {
+      "10": 10,
+      "50": 50,
+      "100": 100,
+      "300": 300,
+      "700": 700,
+      "1000": 1000
+    };
 
-    if (!amount) {
-      return res.status(400).json({ success: false, message: "Montant invalide" });
+    const amount = amountMap[tokensAmount];
+    const jetons = jetonsMap[tokensAmount];
+
+    if (!amount || !jetons) {
+      return res.status(400).json({ success: false, message: "Montant/jetons invalide." });
     }
 
-    // ✅ Récupérer la dernière carte sauvegardée pour ce client
+    // Récupérer la carte
     const paymentMethods = await stripe.paymentMethods.list({
       customer: customerId,
       type: 'card',
     });
 
-    if (!paymentMethods.data.length) {
+    if (!paymentMethods?.data?.length) {
       return res.status(400).json({ success: false, message: "Aucune carte enregistrée." });
     }
 
     const defaultCard = paymentMethods.data[0].id;
 
-    // ✅ Créer et confirmer le PaymentIntent avec la carte
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'eur',
       customer: customerId,
-      payment_method: defaultCard, // 💳 Carte enregistrée
+      payment_method: defaultCard,
       confirm: true,
       off_session: true,
-      description: `${tokensAmount} jetons (1C)`
+      description: `${jetons} jetons (1-click)`
     });
 
-   console.log(`💸 Paiement 1C réussi : ${paymentIntent.id}`);
+    console.log(`💸 Paiement 1-C réussi : ${paymentIntent.id}`);
 
-// 🛡 Vérifie si ce paymentIntent a déjà été utilisé
-if (user.usedStripeSessions?.includes(paymentIntent.id)) {
-  console.warn("⚠️ Paiement déjà enregistré, on ignore");
-  return res.status(400).json({ success: false, message: "Paiement déjà traité." });
-}
+    if (user.usedStripeSessions?.includes(paymentIntent.id)) {
+      console.warn("⚠️ Paiement déjà traité");
+      return res.status(400).json({ success: false, message: "Paiement déjà traité." });
+    }
 
-// ✅ Ajoute les jetons + enregistre l'ID Stripe utilisé
-await users.updateOne(
-  { email },
-  {
-    $inc: { creditsPurchased: parseInt(tokensAmount) },
-    $push: { usedStripeSessions: paymentIntent.id }
-  }
-);
+    // Ajout jetons + protection doublons
+    await users.updateOne(
+      { email },
+      {
+        $inc: { creditsPurchased: jetons },
+        $addToSet: { usedStripeSessions: paymentIntent.id }
+      }
+    );
 
-res.json({ success: true, paymentIntentId: paymentIntent.id });
-
+    res.json({ success: true, paymentIntentId: paymentIntent.id });
 
   } catch (error) {
-  console.error("❌ Erreur paiement 1C :", error.message);
+    console.error("❌ Erreur paiement 1-C :", error);
 
-  // On renvoie toujours le message + l'URL vers laquelle rediriger
-  return res.status(500).json({
-    success: false,
-    message: error.code === 'authentication_required'
-      ? "Authentification requise. Paiement impossible en 1C."
-      : "Erreur lors du paiement 1C.",
-    redirect: "/jetons.html"
-  });
-}
-
+    return res.status(500).json({
+      success: false,
+      message: "Erreur lors du paiement 1-click.",
+      redirect: "/jetons.html"
+    });
+  }
 });
+
 
 
 // ✅ Version complète : éligible si customerId Stripe + carte enregistrée
