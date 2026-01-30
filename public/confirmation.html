@@ -528,61 +528,45 @@ document.addEventListener('DOMContentLoaded', function () {
   
   
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get("session_id");
 
-    if (sessionId) {
-      console.log("📦 Session ID détecté :", sessionId);
-
-      fetch("/api/save-customer-id", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          console.log("✅ customerId enregistré");
-        } else {
-          console.warn("⚠️ save-customer-id a répondu sans success :", data);
-        }
-      })
-      .catch(err => console.error("❌ Erreur save-customer-id :", err));
-    } else {
-      console.warn("⚠️ Aucun session_id trouvé dans l'URL");
-    }
-  });
-</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get("session_id");
 
-    if (sessionId) {
-      console.log("📦 Session ID détecté :", sessionId);
+    if (!sessionId) {
+      console.warn("⚠️ Aucun session_id trouvé dans l'URL, impossible d'enregistrer le customerId.");
+      return;
+    }
 
-      fetch("/api/save-customer-id", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          console.log("✅ customerId enregistré");
+    console.log("📦 Session ID détecté pour sauvegarde Stripe :", sessionId);
+
+    fetch("/api/save-customer-id", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    })
+      .then(async (res) => {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (e) {
+          console.warn("⚠️ Réponse non-JSON de /api/save-customer-id :", e);
+        }
+
+        if (res.ok && data.success) {
+          console.log("✅ customerId Stripe enregistré avec succès pour cette session.");
         } else {
-          console.warn("⚠️ save-customer-id a répondu sans success :", data);
+          console.warn("⚠️ Échec enregistrement customerId :", data);
         }
       })
-      .catch(err => console.error("❌ Erreur save-customer-id :", err));
-    } else {
-      console.warn("⚠️ Aucun session_id trouvé dans l'URL");
-    }
+      .catch((err) => {
+        console.error("❌ Erreur réseau vers /api/save-customer-id :", err);
+      });
   });
 </script>
+
 
  
 <noscript>

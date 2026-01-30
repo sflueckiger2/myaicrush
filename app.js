@@ -2975,103 +2975,122 @@ app.post('/api/get-user-tokens', async (req, res) => {
   }
 });
 
-app.post('/api/confirm-payment', async (req, res) => {
-    console.log("📡 Vérification d'un paiement via session Stripe...");
 
-    const { sessionId } = req.body;
-    if (!sessionId) {
-        return res.status(400).json({ success: false, message: "Session ID manquant." });
+
+app.post('/api/confirm-payment', async (req, res) => {
+  console.log("📡 Vérification d'un paiement via session Stripe...");
+
+  const { sessionId } = req.body;
+  if (!sessionId) {
+    return res.status(400).json({ success: false, message: "Session ID manquant." });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["line_items.data.price", "customer"]
+    });
+
+    if (!session || session.payment_status !== "paid") {
+      return res.status(400).json({ success: false, message: "Paiement non validé." });
     }
+
+    const email = session.client_reference_id || session.customer_email;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email introuvable." });
+    }
+
+    let stripeCustomerId = null;
+    if (typeof session.customer === "string") {
+      stripeCustomerId = session.customer;
+    } else if (session.customer?.id) {
+      stripeCustomerId = session.customer.id;
+    }
+
+    console.log(`💰 Paiement validé pour ${email}`);
+    console.log("🔍 ID Stripe reçu :", stripeCustomerId);
+
+    const priceIdMapping = {
+      // LIVE
+      [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
+      [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
+      [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
+      [process.env.PRICE_ID_LIVE_300_TOKENS]: 300,
+      [process.env.PRICE_ID_LIVE_700_TOKENS]: 700,
+      [process.env.PRICE_ID_LIVE_1000_TOKENS]: 1000,
+      // TEST
+      [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
+      [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
+      [process.env.PRICE_ID_TEST_100_TOKENS]: 100,
+      [process.env.PRICE_ID_TEST_300_TOKENS]: 300,
+      [process.env.PRICE_ID_TEST_700_TOKENS]: 700,
+      [process.env.PRICE_ID_TEST_1000_TOKENS]: 1000,
+    };
+
+    const priceId = session.line_items?.data?.[0]?.price?.id;
+    const tokensPurchased = priceIdMapping[priceId] || 0;
+
+    if (!tokensPurchased) {
+      console.warn("⚠️ Aucun mapping trouvé pour priceId :", priceId);
+      return res.status(400).json({ success: false, message: "Jetons non détectés." });
+    }
+
+    const db = client.db('MyAICrush');
+    const users = db.collection('users');
+    const user = await users.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
+    }
+
+    if (Array.isArray(user.usedStripeSessions) && user.usedStripeSessions.includes(sessionId)) {
+      console.warn(`⚠️ Session déjà utilisée : ${sessionId}`);
+      return res.status(400).json({ success: false, message: "Session déjà utilisée." });
+    }
+
+    // 🔍 Vérifie si l'utilisateur est premium avant de modifier stripeCustomerId
+    let subscriptionInfo = null;
+    let isPremium = false;
 
     try {
-        const session = await stripe.checkout.sessions.retrieve(sessionId, {
-            expand: ["line_items", "customer"]
-        });
-
-        if (!session || session.payment_status !== "paid") {
-            return res.status(400).json({ success: false, message: "Paiement non validé." });
-        }
-
-        const email = session.client_reference_id || session.customer_email;
-        if (!email) {
-            return res.status(400).json({ success: false, message: "Email introuvable." });
-        }
-
-        let stripeCustomerId = null;
-        if (typeof session.customer === "string") {
-            stripeCustomerId = session.customer;
-        } else if (session.customer?.id) {
-            stripeCustomerId = session.customer.id;
-        }
-
-        console.log(`💰 Paiement validé pour ${email}`);
-        console.log("🔍 ID Stripe reçu :", stripeCustomerId);
-
-        const priceIdMapping = {
-            [process.env.PRICE_ID_LIVE_10_TOKENS]: 10,
-            [process.env.PRICE_ID_LIVE_50_TOKENS]: 50,
-            [process.env.PRICE_ID_LIVE_100_TOKENS]: 100,
-            [process.env.PRICE_ID_LIVE_300_TOKENS]: 300,
-            [process.env.PRICE_ID_TEST_10_TOKENS]: 10,
-            [process.env.PRICE_ID_TEST_50_TOKENS]: 50,
-            [process.env.PRICE_ID_TEST_100_TOKENS]: 100,
-            [process.env.PRICE_ID_TEST_300_TOKENS]: 300
-        };
-
-        const priceId = session.line_items.data[0]?.price?.id;
-        const tokensPurchased = priceIdMapping[priceId] || 0;
-
-        if (!tokensPurchased) {
-            return res.status(400).json({ success: false, message: "Jetons non détectés." });
-        }
-
-        const db = client.db('MyAICrush');
-        const users = db.collection('users');
-        const user = await users.findOne({ email });
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: "Utilisateur introuvable." });
-        }
-
-        if (user.usedStripeSessions?.includes(sessionId)) {
-            console.warn(`⚠️ Session déjà utilisée : ${sessionId}`);
-            return res.status(400).json({ success: false, message: "Session déjà utilisée." });
-        }
-
-        // 🔍 Vérifie si l'utilisateur est premium avant de modifier stripeCustomerId
-        const subscriptionInfo = await getUserSubscription(email);
-        const isPremium = subscriptionInfo.status === 'active' || subscriptionInfo.status === 'cancelled';
-
-        const updateFields = {
-            $inc: { creditsPurchased: tokensPurchased },
-            $push: { usedStripeSessions: sessionId }
-        };
-
-        const existingId = user.stripeCustomerId;
-
-        if (stripeCustomerId && (!existingId || (!isPremium && existingId !== stripeCustomerId))) {
-            if (!updateFields.$set) updateFields.$set = {};
-            updateFields.$set.stripeCustomerId = stripeCustomerId;
-
-            if (existingId && existingId !== stripeCustomerId) {
-                console.warn(`⚠️ Conflit ID Stripe : base=${existingId} | Stripe=${stripeCustomerId}`);
-                console.log(`🔁 Remplacement autorisé (non premium) pour ${email}`);
-            } else {
-                console.log(`🔗 Enregistrement stripeCustomerId pour ${email} : ${stripeCustomerId}`);
-            }
-        }
-
-        await users.updateOne({ email }, updateFields);
-
-        console.log(`✅ ${tokensPurchased} jetons ajoutés avec succès pour ${email}`);
-        res.json({ success: true, tokens: tokensPurchased });
-
-    } catch (error) {
-        console.error("❌ Erreur lors de la confirmation de paiement :", error);
-        res.status(500).json({ success: false, message: "Erreur interne du serveur." });
+      subscriptionInfo = await getUserSubscription(email);
+      if (subscriptionInfo) {
+        isPremium =
+          subscriptionInfo.status === 'active' ||
+          subscriptionInfo.status === 'cancelled';
+      }
+    } catch (err) {
+      console.error("⚠️ Erreur getUserSubscription, on continue sans premium :", err.message);
     }
-});
 
+    const updateFields = {
+      $inc: { creditsPurchased: tokensPurchased },
+      $addToSet: { usedStripeSessions: sessionId }
+    };
+
+    const existingId = user.stripeCustomerId;
+
+    if (stripeCustomerId && (!existingId || (!isPremium && existingId !== stripeCustomerId))) {
+      if (!updateFields.$set) updateFields.$set = {};
+      updateFields.$set.stripeCustomerId = stripeCustomerId;
+
+      if (existingId && existingId !== stripeCustomerId) {
+        console.warn(`⚠️ Conflit ID Stripe : base=${existingId} | Stripe=${stripeCustomerId}`);
+        console.log(`🔁 Remplacement autorisé (non premium) pour ${email}`);
+      } else {
+        console.log(`🔗 Enregistrement stripeCustomerId pour ${email} : ${stripeCustomerId}`);
+      }
+    }
+
+    await users.updateOne({ email }, updateFields);
+
+    console.log(`✅ ${tokensPurchased} jetons ajoutés avec succès pour ${email}`);
+    res.json({ success: true, tokens: tokensPurchased });
+
+  } catch (error) {
+    console.error("❌ Erreur lors de la confirmation de paiement :", error);
+    res.status(500).json({ success: false, message: "Erreur interne du serveur." });
+  }
+});
 
 
 
@@ -3375,36 +3394,73 @@ app.post("/api/save-customer-id", async (req, res) => {
   const { sessionId } = req.body;
 
   if (!sessionId) {
-    return res.status(400).json({ success: false, message: "sessionId manquant" });
+    return res.status(400).json({
+      success: false,
+      message: "sessionId manquant",
+    });
   }
 
   try {
+    // Récupération de la session Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    const email = session.customer_email;
+    // ✅ Stripe met souvent l'email dans customer_details.email maintenant
+    const email =
+      session.customer_details?.email ||
+      session.customer_email ||
+      null;
+
     const customerId = session.customer;
 
     if (!email || !customerId) {
-      return res.status(400).json({ success: false, message: "Données manquantes dans la session Stripe" });
+      console.error("❌ Données manquantes dans la session Stripe :", {
+        sessionId,
+        customer: session.customer,
+        customer_email: session.customer_email,
+        customer_details: session.customer_details,
+      });
+
+      return res.status(400).json({
+        success: false,
+        message: "Données manquantes dans la session Stripe",
+      });
     }
+
+    // Normalisation de l’email pour matcher la DB
+    const normalizedEmail = email.trim().toLowerCase();
 
     const database = client.db("MyAICrush");
     const users = database.collection("users");
 
     const result = await users.updateOne(
-      { email },
-      { $set: { stripeCustomerId: customerId } }
+      { email: normalizedEmail },
+      {
+        $set: {
+          stripeCustomerId: customerId,
+          updatedAt: new Date(),
+        },
+      }
     );
 
-    console.log(`✅ customerId (${customerId}) enregistré pour ${email}`);
-    res.json({ success: true });
+    if (result.matchedCount === 0) {
+      console.warn(
+        `⚠️ Aucun utilisateur trouvé avec l'email ${normalizedEmail} pour la session ${sessionId}`
+      );
+    }
 
+    console.log(
+      `✅ customerId (${customerId}) enregistré pour ${normalizedEmail} (session ${sessionId})`
+    );
+
+    res.json({ success: true });
   } catch (error) {
     console.error("❌ Erreur lors de la récupération de la session Stripe :", error);
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+    });
   }
 });
-
 
 
 // ✅ Route One-Click Payment pour acheter des jetons

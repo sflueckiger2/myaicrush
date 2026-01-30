@@ -8,33 +8,68 @@ console.log(`🎯 Mode Stripe dans stripe.js : ${process.env.STRIPE_MODE.toUpper
 console.log(`🔑 Clé API Stripe utilisée : ${stripeSecretKey.startsWith("sk_live") ? "LIVE" : "TEST"}`);
 
 
+
 // Fonction pour créer une session de paiement Stripe
-async function createCheckoutSession(priceId) {
-    console.log('createCheckoutSession appelé avec Price ID :', priceId);
+// ⚠️ 2e paramètre optionnel: customerEmail (si tu l'as côté backend)
+async function createCheckoutSession(priceId, customerEmail) {
+  console.log("createCheckoutSession appelé avec Price ID :", priceId);
 
-    try {
-        if (!process.env.STRIPE_SECRET_KEY) {
-            console.error('Erreur : Clé API Stripe non définie dans .env');
-            throw new Error('STRIPE_SECRET_KEY non définie');
-        }
-
-        const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; // Utilise l'URL dynamique
-
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'subscription',
-            line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${BASE_URL}/confirmation.html`,
-            cancel_url: `${BASE_URL}/premium.html`,
-        });
-
-        console.log('Session Checkout créée avec succès :', session.url);
-        return session;
-    } catch (error) {
-        console.error('Erreur dans createCheckoutSession :', error.message);
-        throw new Error(error.message);
+  try {
+    // ✅ On vérifie la vraie clé utilisée (stripeSecretKey), pas STRIPE_SECRET_KEY générique
+    if (!stripeSecretKey) {
+      console.error("Erreur : Clé API Stripe (stripeSecretKey) non définie");
+      throw new Error("Clé API Stripe non définie");
     }
+
+    const BASE_URL = process.env.BASE_URL || "http://localhost:3000"; // Utilise l'URL dynamique
+
+    // ✅ On prépare les params Stripe
+    const sessionParams = {
+      payment_method_types: ["card"],
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+
+      // ⚠️ SUPER IMPORTANT :
+      // On met {CHECKOUT_SESSION_ID} pour pouvoir le récupérer dans confirmation.html
+      success_url: `${BASE_URL}/confirmation.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${BASE_URL}/premium.html`,
+    };
+
+    // ✅ Si tu connais déjà l'email de l'utilisateur, on le passe à Stripe
+    if (customerEmail) {
+      const normalizedEmail = customerEmail.trim().toLowerCase();
+
+      sessionParams.customer_email = normalizedEmail;
+
+      // On met aussi dans les metadata (utile en debug / webhooks plus tard)
+      sessionParams.metadata = {
+        userEmail: normalizedEmail,
+      };
+
+      // Pour les abonnements, on peut aussi mettre dans subscription_data.metadata
+      sessionParams.subscription_data = {
+        metadata: {
+          userEmail: normalizedEmail,
+        },
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log("Session Checkout créée avec succès :", {
+      url: session.url,
+      id: session.id,
+      customer: session.customer,
+      customer_email: session.customer_email,
+    });
+
+    return session;
+  } catch (error) {
+    console.error("Erreur dans createCheckoutSession :", error);
+    throw new Error(error.message);
+  }
 }
+
 
 // Fonction pour annuler un abonnement Stripe
 async function cancelSubscription(email) {
@@ -141,7 +176,7 @@ async function createTokenCheckoutSession(tokensAmount, email) {
         // Sélectionner l'ID de prix en fonction du mode Stripe et du nombre de jetons
         const priceIdMapping = {
             "10": process.env.STRIPE_MODE === "live" ? process.env.PRICE_ID_LIVE_10_TOKENS : process.env.PRICE_ID_TEST_10_TOKENS,
-            "50": process.env.STRIPE_MODE === "live" ? process.env.PRICE_ID_LIVE_50_TOKONS : process.env.PRICE_ID_TEST_50_TOKENS,
+            "50": process.env.STRIPE_MODE === "live" ? process.env.PRICE_ID_LIVE_50_TOKENS : process.env.PRICE_ID_TEST_50_TOKENS,
             "100": process.env.STRIPE_MODE === "live" ? process.env.PRICE_ID_LIVE_100_TOKENS : process.env.PRICE_ID_TEST_100_TOKENS
         };
 

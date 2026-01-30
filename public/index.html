@@ -693,6 +693,357 @@ setTimeout(() => {
   });
 </script>
 
+<!-- STORIES -->
+<script type="module">
+  import { characters } from './scripts/data.js';
+  import { startChat } from './scripts/chat.js';
+
+  // =========================
+  // CDN RESOLUTION (STORIES)
+  // =========================
+  const CDN_BASE =
+    location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      ? ''
+      : 'https://img.myaicrush.ai';
+
+  function resolveStoryMedia(url) {
+    if (!url) return url;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('images/')) {
+      return `${CDN_BASE}/${url}`;
+    }
+    return url;
+  }
+
+  const STORY_DURATION = 5000; // 5 sec
+  const STORY_CACHE_KEY = 'myaicrush_stories_v1';
+  const STORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+  let storyGroups = [];        // [{ characterName, avatar, media }]
+  let currentGroupIndex = 0;
+  let currentStoryIndex = 0;
+  let autoTimer = null;
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function waitForCharacters() {
+    const start = Date.now();
+    while (characters.length === 0 && Date.now() - start < 5000) {
+      await sleep(50);
+    }
+    return characters;
+  }
+
+  // 🔥 Force le dossier1 : images/aiko/aiko1
+  function getCharacterStoryFolder(character) {
+    const base = character.photo;
+    if (!base) return null;
+
+    const parts = base.split('/');
+    if (parts.length < 3) return null;
+
+    const girl = parts[1]; // ex : "aiko" si photo = "images/aiko/aiko2/..."
+    return `images/${girl}/${girl}1`;
+  }
+
+  // ---------- PROGRESS BAR ----------
+  function renderProgressBar(total) {
+    const container = document.getElementById('story-progress');
+    container.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'story-progress-segment';
+      const inner = document.createElement('div');
+      inner.className = 'story-progress-inner';
+      seg.appendChild(inner);
+      container.appendChild(seg);
+    }
+  }
+
+  function updateProgressBar() {
+    const segments = Array.from(
+      document.querySelectorAll('.story-progress-segment .story-progress-inner')
+    );
+    segments.forEach((inner, idx) => {
+      inner.style.transition = 'none';
+      if (idx < currentStoryIndex) {
+        inner.style.width = '100%';
+      } else if (idx > currentStoryIndex) {
+        inner.style.width = '0%';
+      }
+    });
+
+    const currentInner = segments[currentStoryIndex];
+    if (currentInner) {
+      currentInner.style.width = '0%';
+      void currentInner.offsetWidth;
+      currentInner.style.transition = `width ${STORY_DURATION}ms linear`;
+      currentInner.style.width = '100%';
+    }
+  }
+
+  // ---------- VIEWER ----------
+  function showStory() {
+    clearTimeout(autoTimer);
+
+    const group = storyGroups[currentGroupIndex];
+    if (!group) return;
+
+    const url = group.media[currentStoryIndex];
+    const viewer = document.getElementById('story-viewer');
+    const img = document.getElementById('story-media-img');
+    const vid = document.getElementById('story-media-video');
+    const avatar = document.getElementById('story-avatar');
+    const username = document.getElementById('story-username');
+    const replyInput = document.getElementById('story-reply-input');
+
+    avatar.src = group.avatar || '';
+    username.textContent = group.characterName || '';
+
+    img.classList.add('hidden');
+    vid.classList.add('hidden');
+    vid.pause();
+
+    if (/\.(mp4|webm|mov)$/i.test(url)) {
+      vid.src = url;
+      vid.classList.remove('hidden');
+      vid.play().catch(() => {});
+    } else {
+      img.src = url;
+      img.classList.remove('hidden');
+    }
+
+    replyInput.placeholder = `Répondre à ${group.characterName}...`;
+
+    viewer.classList.remove('hidden');
+
+    renderProgressBar(group.media.length);
+    updateProgressBar();
+
+    autoTimer = setTimeout(nextStory, STORY_DURATION);
+  }
+
+  function closeViewer() {
+    clearTimeout(autoTimer);
+    document.getElementById('story-viewer').classList.add('hidden');
+  }
+
+  function nextStory() {
+    const group = storyGroups[currentGroupIndex];
+    if (!group) return;
+
+    if (currentStoryIndex < group.media.length - 1) {
+      currentStoryIndex++;
+      showStory();
+    } else if (currentGroupIndex < storyGroups.length - 1) {
+      currentGroupIndex++;
+      currentStoryIndex = 0;
+      showStory();
+    } else {
+      closeViewer();
+    }
+  }
+
+  function prevStory() {
+    const group = storyGroups[currentGroupIndex];
+    if (!group) return;
+
+    if (currentStoryIndex > 0) {
+      currentStoryIndex--;
+      showStory();
+    } else if (currentGroupIndex > 0) {
+      currentGroupIndex--;
+      const prevGroup = storyGroups[currentGroupIndex];
+      currentStoryIndex = prevGroup.media.length - 1;
+      showStory();
+    }
+  }
+
+  function openStoryGroup(groupIndex, storyIndex = 0) {
+    currentGroupIndex = groupIndex;
+    currentStoryIndex = storyIndex;
+    showStory();
+  }
+
+  // ---------- OUVERTURE DU CHAT ----------
+  function openChatForCharacter(characterName, initialMessage) {
+    startChat(characterName);
+
+    setTimeout(() => {
+      if (initialMessage) {
+        const input = document.getElementById('user-input');
+        if (input) {
+          input.value = initialMessage;
+          input.focus();
+        }
+      }
+    }, 300);
+  }
+
+  // ---------- RENDU DES VIGNETTES ----------
+  function renderStoryThumbnails(container) {
+    container.innerHTML = '';
+    storyGroups.forEach((group, groupIndex) => {
+      const thumbUrl = group.media[0];
+      const item = document.createElement('div');
+      item.className = 'story-item';
+
+      let thumbNode;
+      if (/\.(mp4|webm|mov)$/i.test(thumbUrl)) {
+        thumbNode = document.createElement('video');
+        thumbNode.src = thumbUrl;
+        thumbNode.autoplay = true;
+        thumbNode.loop = true;
+        thumbNode.muted = true;
+        thumbNode.playsInline = true;
+      } else {
+        thumbNode = document.createElement('img');
+        thumbNode.src = thumbUrl;
+      }
+      thumbNode.className = 'story-thumb';
+
+      const label = document.createElement('div');
+      label.className = 'story-name';
+      label.textContent = group.characterName;
+
+      item.appendChild(thumbNode);
+      item.appendChild(label);
+
+      item.addEventListener('click', () => {
+        openStoryGroup(groupIndex, 0);
+      });
+
+      container.appendChild(item);
+    });
+  }
+
+  // ---------- LOAD STORIES (avec cache 24h) ----------
+  async function loadStories() {
+    await waitForCharacters();
+
+    const container = document.getElementById('stories');
+    if (!container) return;
+
+    // 1) Tentative de récupération du cache
+    const cachedRaw = localStorage.getItem(STORY_CACHE_KEY);
+    if (cachedRaw) {
+      try {
+        const cached = JSON.parse(cachedRaw);
+        if (cached.timestamp && Date.now() - cached.timestamp < STORY_CACHE_TTL_MS && Array.isArray(cached.groups)) {
+          storyGroups = cached.groups;
+          renderStoryThumbnails(container);
+          console.log("📦 Stories chargées depuis le cache :", storyGroups);
+          return;
+        }
+      } catch (e) {
+        console.warn('⚠️ Cache stories invalide, on le recrée.');
+      }
+    }
+
+    // 2) Pas de cache valide → on reconstruit
+    storyGroups = [];
+
+    const subset = characters.slice(0, characters.length);
+
+    for (const char of subset) {
+      const folder = getCharacterStoryFolder(char);
+      if (!folder) continue;
+
+      try {
+        const res = await fetch(`/api/story-media?folder=${encodeURIComponent(folder)}`);
+        const data = await res.json();
+
+        let mediaList = Array.isArray(data.media) ? data.media : [];
+        if (!mediaList.length) continue;
+
+        // résout via CDN
+        mediaList = mediaList.map(resolveStoryMedia);
+
+        // ✅ avatar = toujours une image
+        let avatarUrl = resolveStoryMedia(char.photo);
+        if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
+          avatarUrl = resolveStoryMedia(char.backgroundPhoto) || mediaList[0];
+        }
+
+        storyGroups.push({
+          characterName: char.name,
+          avatar: avatarUrl,
+          media: mediaList,
+        });
+
+        console.log(`✅ Stories chargées pour ${char.name} :`, mediaList);
+      } catch (err) {
+        console.error('❌ Erreur story pour', char.name, err);
+      }
+    }
+
+    // Sauvegarde cache 24h
+    try {
+      localStorage.setItem(
+        STORY_CACHE_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          groups: storyGroups,
+        })
+      );
+    } catch (e) {
+      console.warn('⚠️ Impossible de cacher les stories :', e);
+    }
+
+    renderStoryThumbnails(container);
+  }
+
+  // ---------- LISTENERS ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    loadStories();
+
+    document
+      .getElementById('story-close-btn')
+      .addEventListener('click', closeViewer);
+
+    document
+      .getElementById('story-prev')
+      .addEventListener('click', (e) => {
+        e.stopPropagation();
+        prevStory();
+      });
+
+    document
+      .getElementById('story-next')
+      .addEventListener('click', (e) => {
+        e.stopPropagation();
+        nextStory();
+      });
+
+    // clic fond noir = fermer
+    document
+      .getElementById('story-viewer')
+      .addEventListener('click', (e) => {
+        if (e.target.id === 'story-viewer') closeViewer();
+      });
+
+    // Envoi réponse
+    const replyInput = document.getElementById('story-reply-input');
+    const replyBtn = document.getElementById('story-reply-send');
+
+    function sendReply() {
+      const msg = replyInput.value.trim();
+      const group = storyGroups[currentGroupIndex];
+      if (!group || !msg) return;
+      closeViewer();
+      openChatForCharacter(group.characterName, msg);
+      replyInput.value = '';
+    }
+
+    replyBtn.addEventListener('click', sendReply);
+    replyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendReply();
+      }
+    });
+  });
+</script>
 
 
 
