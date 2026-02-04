@@ -71,7 +71,7 @@ function clearConversationHistory() {
 
 
 let firstPhotoSent = false;
-const DAILY_MESSAGE_LIMIT = 6;
+const DAILY_MESSAGE_LIMIT = 150;
 
 // ✅ Récupère la date d’aujourd’hui
 const today = new Date().toISOString().split('T')[0];
