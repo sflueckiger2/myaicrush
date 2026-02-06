@@ -2094,8 +2094,6 @@ L'utilisateur est premium : ${isPremium}
 }
 
 
-
-
 console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
 
             
@@ -2195,7 +2193,7 @@ const reponsesPerso = [
 "Continue comme ça et j’te promets rien…",
 
 "📷🫦🔥",
-"😈👀💣"
+"😈💣"
 
 
 ];
