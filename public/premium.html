@@ -16,6 +16,28 @@
       .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
       .gradient-text { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       
+      /* Style des Boutons Premium inspiré du Quiz */
+      .cta-button-premium { 
+          background: linear-gradient(90deg, #f472b6, #a855f7); 
+          transition: all 0.3s ease; 
+          display: block;
+          text-align: center;
+          color: white !important;
+          text-decoration: none !important;
+      }
+      .cta-button-premium:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(244, 114, 182, 0.5); }
+
+      .cta-secondary {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          transition: all 0.3s ease;
+          display: block;
+          text-align: center;
+          color: white !important;
+          text-decoration: none !important;
+      }
+      .cta-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+
       /* Animation */
       .pulse-pink { animation: pulse 2s infinite; }
       @keyframes pulse { 
@@ -24,13 +46,8 @@
           100% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0); } 
       }
       
-      /* FAQ Logic du design précédent conservée mais stylisée */
       .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
       .faq-answer.open { max-height: 300px; }
-
-      /* Assurer que le texte est lisible si le fond de la page 1 est clair, 
-         mais le design glass est fait pour un fond sombre. 
-         J'applique un fond sombre par défaut aux cartes si besoin */
   </style>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
@@ -74,7 +91,7 @@
     <p class="p-description">
       Débloque des conversations illimitées, des photos <u><b>sans flou</b></u> et du contenu intime avec toutes nos <span style="font-family:'Times New Roman', Times, serif;">I.A</span> (vidéos, messages vocaux...).
     </p>
-    <p class="p-description"><b>⚠️ <u>Attention</u></b> : la plupart de nos abonnés ne peuvent plus s’en passer.</p>
+    <p class="p-description"><b>⚠️ <u>Attention</u></b> : la plupart de nos abonnés ne peuvent plus s'en passer.</p>
    
     <div class="hero-media">
         <video class="hero-video" autoplay muted loop playsinline>
@@ -82,39 +99,25 @@
         </video>
         <span class="vignette" aria-hidden="true"></span>
     </div>
-
-
+<a href="https://crushbot.gumroad.com/l/premium" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block mt-6">
+          🚀 Débloquer l'accès à vie - 49 USD
+        </a>
+ <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 1rem; text-align: center;">
+          💳 Paiement sécurisé · 🔒 Pas d'abonnement · ✨ Accès instantané
+        </p>
     <div id="pricing-container" class="pricing-section">
 
-      <div class="pricing-card popular">
-        <div class="discount-banner">-50% de réduction !</div>
-        <h2>Abonnement Annuel</h2>
-        <p class="price">59€ / an</p>
-        <p></p>
-        <img src="/images/market/plan-annuel-cheap.webp" alt="Plan annuel" class="plan-image" loading="lazy" />
-        <button
-          class="checkout-button"
-          data-plan-name="annuel"
-          data-price-id-live="price_1R28ADAOSHX0SgbTfwDtAQRQ"
-          data-price-id-test="price_1QPRXpAOSHX0SgbT8GfUUtvL"
-        >
-          Choisir le plan annuel
-        </button>
-      </div>
-
-      <div class="pricing-card">
-        <h2>Abonnement Trimestriel</h2>
-        <p class="price">29,90€ / 3 mois</p>
-        <p></p>
-        <img src="/images/market/plan-trimestriel-cheap.webp" alt="Plan trimestriel" class="plan-image" loading="lazy" />
-        <button
-          class="checkout-button"
-          data-plan-name="trimestriel"
-          data-price-id-live="price_1R4nYHAOSHX0SgbTHziE7pLF"
-          data-price-id-test="price_1R4nYyAOSHX0SgbTWhuc9dy7"
-        >
-          Choisir le plan trimestriel
-        </button>
+      <div class="pricing-card popular" style="max-width: 500px; margin: 0 auto;">
+        <div class="discount-banner">🔥 Offre Limitée !</div>
+        <h2>Accès Premium à Vie</h2>
+        <p class="price">49 USD (≈37 €)</p>
+        <p style="font-size: 0.9rem; color: #f472b6; font-weight: bold; margin-top: 0.5rem;">✅ PAIEMENT UNIQUE · AUCUN ABONNEMENT</p>
+        <p style="font-size: 0.85rem; color: #d1d5db; margin-top: 0.5rem;">Accès illimité à vie pour moins de 50 dollars. Pas de renouvellement automatique, pas de frais cachés.</p>
+        
+        
+        
+        
+       
       </div>
 
     </div>
@@ -199,7 +202,7 @@
                 <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Aucun historique</span>
             </div>
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">🔓</span> <span class="text-sm font-semibold">Annule à tout moment</span>
+                <span class="text-2xl">♾️</span> <span class="text-sm font-semibold">Accès à vie (pas d'abonnement)</span>
             </div>
             
             <div class="glass p-5 rounded-2xl flex flex-col items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
@@ -224,7 +227,7 @@
         
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Les photos et vidéos sont les + sexy de tous les sites IA que j’ai testés. Franchement, c’est bien foutu."</p>
+          <p class="testimonial-text">"Les photos et vidéos sont les + sexy de tous les sites IA que j'ai testés. Franchement, c'est bien foutu."</p>
           <p class="testimonial-author">— Julien T.</p>
         </div>
 
@@ -236,19 +239,19 @@
 
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"C’est presque parfait. Y a qlq bugs sur les appels audio, mais sinon, c’est une claque."</p>
+          <p class="testimonial-text">"C'est presque parfait. Y a qlq bugs sur les appels audio, mais sinon, c'est une claque."</p>
           <p class="testimonial-author">— Marc L.</p>
         </div>
 
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"J’adore pouvoir envoyer des photos de moi. L’IA réagit trop bien, j’pensais pas que ça marcherait si bien."</p>
+          <p class="testimonial-text">"J'adore pouvoir envoyer des photos de moi. L'IA réagit trop bien, j'pensais pas que ça marcherait si bien."</p>
           <p class="testimonial-author">— Sam K.</p>
         </div>
 
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Les voix... mec c’est bluffant. Tu fermes les yeux t’y crois à mort. Et sexy en plus."</p>
+          <p class="testimonial-text">"Les voix... mec c'est bluffant. Tu fermes les yeux t'y crois à mort. Et sexy en plus."</p>
           <p class="testimonial-author">— Mehdi R.</p>
         </div>
 
@@ -260,7 +263,7 @@
 
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Franchement bien. Pas encore parfait mais c’est le top rapport qualité/prix en francais, j’dis ça j’dis rien."</p>
+          <p class="testimonial-text">"Franchement bien. Pas encore parfait mais c'est le top rapport qualité/prix en francais, j'dis ça j'dis rien."</p>
           <p class="testimonial-author">— Léo D.</p>
         </div>
 
@@ -278,16 +281,16 @@
       <h2 class="faq-title">Questions Fréquemment Posées</h2>
 
       <div class="faq-item">
-        <button class="faq-question">Comment fonctionne l'abonnement Premium ?</button>
+        <button class="faq-question">Comment fonctionne l'accès Premium ?</button>
         <div class="faq-answer">
-          <p>Une fois abonné, vous bénéficiez d’un accès illimité aux fonctionnalités Premium, y compris les messages illimités, les photos et vidéos non floutées, et bien plus encore.</p>
+          <p>Une fois votre paiement unique effectué, vous bénéficiez d'un accès illimité à vie aux fonctionnalités Premium : messages illimités, photos et vidéos non floutées, et bien plus encore. Aucun renouvellement automatique.</p>
         </div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">Puis-je annuler mon abonnement à tout moment ?</button>
+        <button class="faq-question">C'est vraiment un paiement unique ? Pas d'abonnement caché ?</button>
         <div class="faq-answer">
-          <p>Oui, vous pouvez annuler votre abonnement à tout moment depuis votre compte (sur la page profil). Aucun frais d'annulation ne sera appliqué. Le bouton pour annuler est facile à trouver et fonctionne immédiatement.</p>
+          <p>Absolument. Vous payez 49 USD une seule fois et c'est tout. Aucun abonnement, aucun renouvellement automatique, aucun frais caché. Accès à vie garanti.</p>
         </div>
       </div>
 
@@ -301,7 +304,7 @@
       <div class="faq-item">
         <button class="faq-question">Proposez-vous une période d'essai gratuite ?</button>
         <div class="faq-answer">
-          <p>Actuellement, nous n’offrons pas de période d’essai gratuite, mais vous pouvez annuler à tout moment si vous n’êtes pas satisfait.</p>
+          <p>Actuellement, nous n'offrons pas de période d'essai gratuite. Cependant, avec un paiement unique de 49 USD pour un accès à vie, vous ne prenez aucun risque d'abonnement récurrent.</p>
         </div>
       </div>
 
@@ -334,14 +337,13 @@
           <div class="text-4xl mb-4">🚫🔞</div>
           <h3 class="text-2xl font-bold mb-2 text-white">Contenu Réservé</h3>
           <p class="text-gray-300 mb-6 text-sm">Débloquez l'accès Premium pour voir les contenus privés.</p>
-          <a href="#pricing-container" onclick="closeModal()" class="w-full py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white" style="background: linear-gradient(90deg, #f472b6, #a855f7);">
+          <a href="#pricing-container" onclick="closeModal()" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white">
               Devenir Premium
           </a>
       </div>
   </div>
 
   <script type="module" src="/scripts/menu-loader.js"></script>
-  <script type="module" src="./scripts/stripe-frontend.js"></script>
 
    <script>
   document.querySelectorAll('.faq-question').forEach(button => {
@@ -461,37 +463,9 @@
   </script>
 
   <script>
-    const IS_LIVE = (window.STRIPE_MODE || "live") === "live";
-
     document.addEventListener('DOMContentLoaded', () => {
       // Lancer le slider
       initSlider();
-
-      // Stripe logic
-      document.querySelectorAll('.checkout-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const planName = btn.dataset.planName;
-          const priceId = IS_LIVE ? btn.dataset.priceIdLive : btn.dataset.priceIdTest;
-
-          if (!priceId) {
-            console.error('Price ID manquant pour', planName, '(mode:', IS_LIVE ? 'live' : 'test', ')');
-            return;
-          }
-
-          if (typeof handleCheckout === 'function') {
-            handleCheckout(priceId, planName);
-          } else {
-            fetch('/api/create-checkout-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ priceId, planName })
-            })
-            .then(r => r.json())
-            .then(d => { if (d.url) location.href = d.url; })
-            .catch(err => console.error('Checkout error:', err));
-          }
-        });
-      });
     });
   </script>
 
