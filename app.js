@@ -839,39 +839,163 @@ app.post('/api/get-user-subscription', async (req, res) => {
 // =========================
 // 🔍 Vérification premium Stripe (optimisée)
 // =========================
-async function checkPremiumStripe(email) {
-  const customers = await stripe.customers.search({
-    query: `email:"${email}"`
-  });
 
-  if (!customers?.data?.length) {
+async function checkPremiumStripe(email) {
+  const cleanEmail = email.trim().toLowerCase();
+  console.log(`\n🔎 checkPremiumStripe pour ${cleanEmail}`);
+
+  let customers = [];
+
+  // 1) Tentative avec customers.search (rapide)
+  try {
+    const searchResult = await stripe.customers.search({
+      query: `email:"${cleanEmail}"`
+    });
+    customers = searchResult.data || [];
+    console.log(`   → customers.search : ${customers.length} client(s) trouvé(s)`);
+  } catch (err) {
+    console.error("   ⚠️ Erreur stripe.customers.search, on tente list():", err.message || err);
+  }
+
+  // 2) Fallback : customers.list({ email }) si search n'a rien trouvé
+  if (!customers.length) {
+    try {
+      const listResult = await stripe.customers.list({
+        email: cleanEmail,
+        limit: 10
+      });
+      customers = listResult.data || [];
+      console.log(`   → customers.list : ${customers.length} client(s) trouvé(s)`);
+    } catch (err) {
+      console.error("   ❌ Erreur stripe.customers.list:", err.message || err);
+      return false;
+    }
+  }
+
+  if (!customers.length) {
+    console.log(`   ❌ Aucun customer Stripe pour ${cleanEmail}`);
     return false;
   }
 
   let latestSub = null;
 
-  for (const customer of customers.data) {
-    const subscriptions = await stripe.subscriptions.list({
+  // 3) On parcourt les subscriptions de chaque customer
+  for (const customer of customers) {
+    console.log(`   👤 Client ${customer.id} (${customer.email})`);
+
+    const subs = await stripe.subscriptions.list({
       customer: customer.id,
       status: 'all',
-      limit: 3 // ✅ réduit la latence
+      limit: 10
     });
 
-    for (const sub of subscriptions.data) {
+    if (!subs.data.length) {
+      console.log(`      → aucune subscription`);
+      continue;
+    }
+
+    for (const sub of subs.data) {
+      console.log(`      → Sub ${sub.id} | status=${sub.status} | created=${sub.created}`);
+
       if (sub && (sub.status === 'active' || sub.status === 'canceled')) {
         if (!latestSub || sub.created > latestSub.created) {
           latestSub = sub;
         }
       }
     }
-
-    // ✅ early exit si abonnement actif trouvé
-    if (latestSub?.status === 'active') {
-      return true;
-    }
   }
 
-  return Boolean(latestSub);
+  if (!latestSub) {
+    console.log(`   ❌ Aucun abonnement (actif ou annulé) pour ${cleanEmail}`);
+    return false;
+  }
+
+  console.log(`   ✅ Abonnement Stripe trouvé pour ${cleanEmail} | status=${latestSub.status}`);
+
+  // 👉 Si tu veux seulement les abonnements ACTIFS : remplace par
+  // return latestSub.status === 'active';
+  return true;
+}
+
+
+
+// =====================================
+// 🔍 Vérification premium Gumroad (+ éventuel flag en base)
+// =====================================
+async function checkPremiumGumroad(email) {
+  try {
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+
+    // 1) Flag en base (si jamais tu mets un jour lifetimePremium etc.)
+    const user = await users.findOne({ email });
+
+    if (user && (user.isPremium === true || user.lifetimePremium === true || user.premium === true)) {
+      return true;
+    }
+
+    // 2) Vérif via Gumroad (one-shot)
+    const GUMROAD_ACCESS_TOKEN = process.env.GUMROAD_ACCESS_TOKEN;
+    const GUMROAD_PRODUCT_ID   = process.env.GUMROAD_PRODUCT_ID; // ID du produit MyAICrush
+
+    if (!GUMROAD_ACCESS_TOKEN || !GUMROAD_PRODUCT_ID) {
+      console.warn("⚠️ Gumroad non configuré (GUMROAD_ACCESS_TOKEN / GUMROAD_PRODUCT_ID manquants)");
+      return false;
+    }
+
+    const response = await axios.get('https://api.gumroad.com/v2/sales', {
+      params: {
+        access_token: GUMROAD_ACCESS_TOKEN,
+        product_id:   GUMROAD_PRODUCT_ID,
+        email:        email
+      }
+    });
+
+    const data = response.data;
+
+    // Si au moins 1 vente pour cet email et ce produit → premium = true
+    if (data && data.success && Array.isArray(data.sales) && data.sales.length > 0) {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('❌ Erreur checkPremiumGumroad:', error.response?.data || error.message);
+    return false; // en cas d’erreur on reste safe
+  }
+}
+
+
+// =====================================
+// 🔧 Helper global : STRIPE (abo) OU GUMROAD (one-shot)
+// =====================================
+async function getPremiumStatus(email) {
+  // 1) On commence par Stripe (abonnements)
+  try {
+    const isStripePremium = await checkPremiumStripe(email);
+    if (isStripePremium) {
+      console.log(`✅ Premium via STRIPE pour ${email}`);
+      return true;
+    }
+  } catch (err) {
+    console.error("❌ Erreur checkPremiumStripe:", err.message || err);
+    // on ne throw pas, on laisse une chance à Gumroad
+  }
+
+  // 2) Si pas premium Stripe → on teste Gumroad
+  try {
+    const isGumroadPremium = await checkPremiumGumroad(email);
+    if (isGumroadPremium) {
+      console.log(`✅ Premium via GUMROAD pour ${email}`);
+      return true;
+    }
+  } catch (err) {
+    console.error("❌ Erreur checkPremiumGumroad:", err.message || err);
+  }
+
+  // 3) Ni Stripe ni Gumroad
+  console.log(`⛔ Aucun premium trouvé pour ${email}`);
+  return false;
 }
 
 
@@ -904,14 +1028,15 @@ app.post('/api/is-premium', async (req, res) => {
 
       void (async () => {
         try {
-          const value = await checkPremiumStripe(email);
+          const value = await getPremiumStatus(email); // <– helper combiné
           premiumCache.set(email, {
             value,
             expiresAt: Date.now() + 60_000, // cache frais 60s
             refreshing: false
           });
         } catch (e) {
-          // En cas d’erreur Stripe → on garde l’ancien cache
+          console.error("❌ Erreur refresh cache /api/is-premium:", e.message || e);
+          // En cas d’erreur → on garde l’ancien cache quelques secondes
           premiumCache.set(email, {
             value: cached.value,
             expiresAt: Date.now() + 15_000,
@@ -923,8 +1048,8 @@ app.post('/api/is-premium', async (req, res) => {
       return res.json({ isPremium: cached.value, cached: true, stale: true });
     }
 
-    // ✅ 3) Aucun cache → appel Stripe (bloquant UNE FOIS)
-    const value = await checkPremiumStripe(email);
+    // ✅ 3) Aucun cache → vérifie Stripe + Gumroad UNE FOIS (bloquant)
+    const value = await getPremiumStatus(email);
 
     premiumCache.set(email, {
       value,
@@ -935,7 +1060,7 @@ app.post('/api/is-premium', async (req, res) => {
     return res.json({ isPremium: value, cached: false });
 
   } catch (error) {
-    console.error('❌ Erreur /api/is-premium:', error.message);
+    console.error('❌ Erreur /api/is-premium:', error.message || error);
     return res.status(500).json({ isPremium: false });
   }
 });
