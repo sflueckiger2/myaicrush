@@ -3578,6 +3578,129 @@ app.get('/api/story-media', async (req, res) => {
 
 
 
+// =====================================
+// 🔧 Helper : ajouter des jetons à un utilisateur
+// =====================================
+async function addTokensToUser(email, tokensToAdd) {
+  if (!email || !tokensToAdd) {
+    console.warn("⚠️ addTokensToUser appelé sans email ou tokensToAdd");
+    return;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  const result = await users.findOneAndUpdate(
+    { email: normalizedEmail },
+    {
+      $inc: { tokens: tokensToAdd },
+      $setOnInsert: { createdAt: new Date() }
+    },
+    { upsert: true, returnDocument: "after" }
+  );
+
+  console.log(
+    `✅ ${tokensToAdd} jetons ajoutés à ${normalizedEmail}. Nouveau solde :`,
+    result.value?.tokens
+  );
+}
+
+
+// ===============================
+// 🔔 WEBHOOK GUMROAD : PACKS DE JETONS
+// ===============================
+//
+// Dans Gumroad > Settings > Ping endpoint :
+//   https://myaicrush.ai/webhook/gumroad-tokens
+//
+app.post(
+  '/webhook/gumroad-tokens',
+  express.urlencoded({ extended: true }), // Gumroad envoie du x-www-form-urlencoded
+  async (req, res) => {
+    try {
+      const payload = req.body;
+      console.log("🟣 Webhook Gumroad (jetons) reçu:", payload);
+
+      // 1) Vérifier que ça vient bien de TON compte Gumroad
+      const expectedSellerId = process.env.GUMROAD_SELLER_ID;
+      if (expectedSellerId && payload.seller_id && payload.seller_id !== expectedSellerId) {
+        console.warn(
+          "❌ Webhook Gumroad ignoré : seller_id ne correspond pas",
+          payload.seller_id
+        );
+        // On renvoie 200 pour éviter des retries inutiles
+        return res.status(200).send('ignored (wrong seller)');
+      }
+
+      // 2) Ignorer les remboursements / chargebacks au cas où
+      const refundedFlags = [
+        payload.is_refunded,
+        payload.refunded,
+        payload.is_chargeback,
+        payload.disputed
+      ].map(v => String(v).toLowerCase());
+
+      if (refundedFlags.includes('true')) {
+        console.log("ℹ️ Vente remboursée / contestée, pas de jetons ajoutés.");
+        return res.status(200).send('ignored (refunded/chargeback)');
+      }
+
+      // 3) Récupérer l'email de l'acheteur
+      const email = (
+        payload.email ||
+        payload.purchaser_email ||
+        payload.buyer_email ||
+        ''
+      ).trim().toLowerCase();
+
+      const productId = payload.product_id;
+
+      if (!email || !productId) {
+        console.warn("⚠️ Webhook Gumroad sans email ou product_id", {
+          email,
+          productId
+        });
+        return res.status(400).send('missing email or product_id');
+      }
+
+      // 4) Mapping product_id → nombre de jetons
+      const productToTokens = {
+        [process.env.GUMROAD_TOKEN_10_PRODUCT_ID]: 10,
+        [process.env.GUMROAD_TOKEN_50_PRODUCT_ID]: 50,
+        [process.env.GUMROAD_TOKEN_100_PRODUCT_ID]: 100,
+        [process.env.GUMROAD_TOKEN_300_PRODUCT_ID]: 300,
+        [process.env.GUMROAD_TOKEN_700_PRODUCT_ID]: 700,
+        [process.env.GUMROAD_TOKEN_1000_PRODUCT_ID]: 1000
+      };
+
+      const tokensToAdd = productToTokens[productId];
+
+      if (!tokensToAdd) {
+        console.warn(
+          "⚠️ product_id Gumroad non mappé pour les jetons:",
+          productId
+        );
+        return res.status(200).send('unknown product, no tokens added');
+      }
+
+      // 5) Créditer les jetons
+      await addTokensToUser(email, tokensToAdd);
+
+      console.log(
+        `✅ Jetons ajoutés via Gumroad : +${tokensToAdd} pour ${email} (product_id: ${productId})`
+      );
+
+      return res.status(200).send('ok');
+    } catch (err) {
+      console.error("❌ Erreur webhook Gumroad tokens:", err.message || err);
+      return res.status(500).send('server error');
+    }
+  }
+);
+
+
 
 
 // Connecter à la base de données avant de démarrer le serveur

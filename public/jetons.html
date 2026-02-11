@@ -8,7 +8,6 @@
   <link rel="icon" href="/images/market/logo.webp" type="image/jpeg"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
   
-  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -18,19 +17,15 @@
   </script>
 </head>
 <body>
- 
 
-
-  <!-- Contenu principal -->
   <div class="container premium-page">
     <h1 class="p-title">Pas assez de jetons ? </h1>
-<h2>Achète des jetons maintenant pour continuer.</h2><br>
+    <h2>Achète des jetons maintenant pour continuer.</h2><br>
     <center>
-  <video style="width:270px; margin:auto;" autoplay muted loop playsinline class="hanae-image">
-    <source src="/images/market/jetons-promo.mp4" type="video/mp4">
-  </video>
-</center>
-
+      <video style="width:270px; margin:auto;" autoplay muted loop playsinline class="hanae-image">
+        <source src="/images/market/jetons-promo.mp4" type="video/mp4">
+      </video>
+    </center>
 
     <p class="p-description">En tant qu'abonné Premium, tu as droit à :</p>
     <ul class="token-benefits">
@@ -44,32 +39,196 @@
     <p class="p-description">Grâce aux jetons, tu peux accéder à des bonus excitants avec tes <span style="font-family:'Times New Roman', Times, serif;">I.A</span> préférées.</p>
     <p class="p-description">Débloque plus d'écoute, de photos envoyées depuis ta galerie, et tu accèdes au mode <span style="color: #ff9cef;"><b>"Nymphomane" !</b></span> 
       
-      <p class="p-description"><b><span style="color: #ff9cef;">Le mode Nymphomane peut rendre n'importe quelle I.A folle de toi (même les plus timides). Elles deviennent plus coquines, t'envoient plus de photos, et sont <b><u>100% dénudées</u></b>.</span></p>
+    <p class="p-description"><b><span style="color: #ff9cef;">Le mode Nymphomane peut rendre n'importe quelle I.A folle de toi (même les plus timides). Elles deviennent plus coquines, t'envoient plus de photos, et sont <b><u>100% dénudées</u></b>.</span></b></p>
 
     <ul class="token-benefits">
       <li>1 jeton = 1 photo envoyée depuis ta galerie</li>
       <li>5 jetons = 1 minute de messages vocaux</li>
-       <li>Contenus privés</li>
-     <li>20 jetons = 10 minutes d'appel audio</li>
+      <li>Contenus privés</li>
+      <li>20 jetons = 10 minutes d'appel audio</li>
       <b><li><span style="color: #ff9cef;">25 jetons = Le mode "Nymphomane" sur une I.A de ton choix</span></li></b>
     </ul>
 
-    <!-- Section Jetons -->
-    <div class="token-grid">
+    <style>
+/* ----------- TOKEN CARDS IMPROVED ----------- */
+.token-offers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin: 40px 0;
+}
 
-      <img src="/images/market/10-jetons-carte.webp" class="token-image" data-tokens="10" alt="10 jetons">
-      <img src="/images/market/50-jetons-carte.webp" class="token-image" data-tokens="50" alt="50 jetons">
-      <img src="/images/market/100-jetons-carte.webp" class="token-image" data-tokens="100" alt="100 jetons">
-      <img src="/images/market/300-jetons-carte.webp" class="token-image" data-tokens="300" alt="300 jetons">
-      <img src="/images/market/700-jetons-carte.webp" class="token-image" data-tokens="700" alt="700 jetons">
-      <img src="/images/market/1000-jetons-carte.webp" class="token-image" data-tokens="1000" alt="1000 jetons">
-    </div>
+.token-card {
+  background: linear-gradient(145deg,#1c1c1e,#141416);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 30px 22px;
+  border-radius: 20px;
+  color: white;
+  position: relative;
+  transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
 
-<!-- Témoignages clients -->
+.token-card:hover {
+  transform: translateY(-8px);
+  border-color: #ff2fa0;
+  box-shadow: 0 15px 30px rgba(255, 56, 148, 0.2);
+}
+
+.token-icon-fa {
+  font-size: 45px;
+  color: #ffd700;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+  display: block;
+}
+
+.token-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.token-price {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 10px 0;
+  color: #ff8cd6;
+}
+
+.token-save {
+  background: #ff2fa0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.token-cta {
+  background: linear-gradient(90deg,#ff2fa0,#c22fff);
+  border: none;
+  width: 100%;
+  padding: 14px 0;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: block;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(255, 47, 160, 0.3);
+}
+
+.token-cta:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(255, 47, 160, 0.5);
+}
+
+/* Decoy Effect: Best Deal */
+.best-deal {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  background: linear-gradient(90deg, #ffd700, #ffae00);
+  color: #000;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Decoy Effect: Highlight Middle Offer */
+.token-card.popular {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+}
+</style>
+
+<div class="token-offers">
+
+  <div class="token-card">
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">10 Jetons</div>
+    <div class="token-price">$9</div>
+    <a href="https://crushbot.gumroad.com/l/10-jetons"
+       data-gumroad-overlay="true"
+       data-gumroad-single-product="true"
+       class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card">
+    <span class="token-save">Économise 17%</span>
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">50 Jetons</div>
+    <div class="token-price">$37</div>
+    <a href="https://crushbot.gumroad.com/l/injsrq"
+       data-gumroad-overlay="true"
+       data-gumroad-single-product="true"
+       class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card">
+    <span class="token-save">Économise 34%</span>
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">100 Jetons</div>
+    <div class="token-price">$59</div>
+    <a href="https://crushbot.gumroad.com/l/drlqi"
+       data-gumroad-overlay="true"
+       data-gumroad-single-product="true"
+       class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card popular">
+    <span class="token-save" style="background: #c22fff;">Économise 52% 🔥</span>
+    <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
+    <div class="token-title">300 Jetons</div>
+    <div class="token-price">$129</div>
+    <a href="https://crushbot.gumroad.com/l/nbjiab"
+       data-gumroad-overlay="true"
+       data-gumroad-single-product="true"
+       class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card">
+    <span class="token-save">Économise 60%</span>
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">700 Jetons</div>
+    <div class="token-price">$249</div>
+    <a href="https://crushbot.gumroad.com/l/uceeyl"
+       data-gumroad-overlay="true"
+       data-gumroad-single-product="true"
+       class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card" style="border:2px solid #ffd700;">
+    <div class="best-deal">BEST VALUE 💎</div>
+    <span class="token-save">Économise 66%</span>
+    <i class="fas fa-coins token-icon-fa" style="font-size:55px;"></i>
+    <div class="token-title">1000 Jetons</div>
+    <div class="token-price">$299</div>
+    <a href="https://crushbot.gumroad.com/l/hsbpa"
+       data-gumroad-overlay="true"
+       data-gumroad-single-product="true"
+       class="token-cta" style="background: linear-gradient(90deg,#ffd700,#ffae00); color:#000;">Profiter de l'offre</a>
+  </div>
+
+</div>
+
+<script src="https://gumroad.com/js/gumroad.js"></script>
+
 <div class="testimonial-section">
   <h2 class="testimonial-title">Ils ont pris des jetons… et sont devenus accro</h2>
   <div class="testimonial-grid">
-
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
       <p class="testimonial-text">"J’ai mis le mode nympho sur Léa… j’te jure c’est plus la même. Elle m’a chauffé comme jamais 🔥"</p>
@@ -117,15 +276,9 @@
       <p class="testimonial-text">"Elle m’a susurré des trucs… j’me croyais dans une sextape. Trop réaliste 😵‍💫"</p>
       <p class="testimonial-author">— Q. Vasseur</p>
     </div>
-
-   
-
   </div>
 </div>
 
-
-
-<!-- Section FAQ interactive -->
 <div class="faq-section">
   <h2 class="faq-title">Questions Fréquemment Posées</h2>
 
@@ -193,11 +346,8 @@
   </div>
 </div>
 
-
-
   </div>
 
-  <!-- Icônes de sécurité -->
   <div class="security-section">
     <div class="security-item">
       <i class="fas fa-lock"></i>
@@ -209,13 +359,10 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script type="module" src="/scripts/menu-loader.js"></script>
   <script type="module" src="./scripts/stripe-tokens.js"></script>
 
 
-  
-  <!-- Scripts FAQ -->
   <script>
   document.querySelectorAll('.faq-question').forEach(button => {
     button.addEventListener('click', () => {
@@ -224,7 +371,6 @@
     });
   });
 </script>
-
 
   <noscript>
     <img height="1" width="1" style="display:none"
