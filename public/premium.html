@@ -99,9 +99,15 @@
         </video>
         <span class="vignette" aria-hidden="true"></span>
     </div>
-<a href="https://crushbot.gumroad.com/l/premium" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block mt-6">
-          🚀 Débloquer l'accès à vie - 49 USD
-        </a>
+<a href="#"
+   onclick="openGumroadModal(event)"
+   class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block mt-6">
+   🚀 Débloquer l'accès à vie - 49 USD
+</a>
+
+
+
+
  <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 1rem; text-align: center;">
           💳 Paiement sécurisé · 🔒 Pas d'abonnement · ✨ Accès instantané
         </p>
@@ -343,6 +349,45 @@
       </div>
   </div>
 
+  <!-- Modal checkout Gumroad -->
+<div id="gumroad-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+  <div class="relative w-full max-w-md max-h-[90vh] mx-4 bg-[#050516]
+              rounded-3xl shadow-2xl overflow-y-auto overflow-x-hidden">
+
+    <!-- Bouton close -->
+    <button type="button"
+            onclick="closeGumroadModal()"
+            class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl z-10">
+      ✕
+    </button>
+
+    <!-- Logo + titre (optionnel) -->
+    <div class="px-5 pt-5 pb-2 flex items-center gap-3">
+      <img src="/images/market/logo.webp"
+           alt="MyAiCrush"
+           class="w-9 h-9 rounded-full">
+      <div class="text-left">
+        <p class="text-xs text-pink-300 uppercase tracking-widest">Paiement sécurisé</p>
+        <p class="text-sm font-semibold text-white">Accès Premium à vie</p>
+      </div>
+    </div>
+
+    <!-- Ligne de séparation -->
+    <div class="h-px bg-white/10 mx-5 mb-2"></div>
+
+    <!-- Widget Gumroad EMBED : taille contrôlée par max-w-md -->
+    <!-- Widget Gumroad EMBED : taille contrôlée par max-w-md -->
+<div class="px-3 pb-4">
+  <div class="gumroad-product-embed">
+    <a href="https://crushbot.gumroad.com/l/premium">Loading...</a>
+  </div>
+</div>
+
+  </div>
+</div>
+
+
   <script type="module" src="/scripts/menu-loader.js"></script>
 
    <script>
@@ -468,6 +513,36 @@
       initSlider();
     });
   </script>
+
+<script src="https://gumroad.com/js/gumroad-embed.js"></script>
+
+
+<script>
+  function openGumroadModal(event) {
+    if (event) event.preventDefault();
+    const modal = document.getElementById('gumroad-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex'); // pour activer flex items-center/justify-center
+  }
+
+  function closeGumroadModal() {
+    const modal = document.getElementById('gumroad-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  // Fermer si on clique sur le fond noir
+  document.addEventListener('click', (e) => {
+    const modal = document.getElementById('gumroad-modal');
+    if (!modal) return;
+    if (e.target === modal) {
+      closeGumroadModal();
+    }
+  });
+</script>
+
 
 </body>
 </html>
