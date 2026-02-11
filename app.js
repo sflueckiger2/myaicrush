@@ -3595,15 +3595,16 @@ async function addTokensToUser(email, tokensToAdd) {
   const result = await users.findOneAndUpdate(
     { email: normalizedEmail },
     {
-      $inc: { tokens: tokensToAdd },
+      // 👉 ON N'UTILISE PLUS "tokens" ICI
+      $inc: { creditsPurchased: tokensToAdd },
       $setOnInsert: { createdAt: new Date() }
     },
     { upsert: true, returnDocument: "after" }
   );
 
   console.log(
-    `✅ ${tokensToAdd} jetons ajoutés à ${normalizedEmail}. Nouveau solde :`,
-    result.value?.tokens
+    `✅ ${tokensToAdd} jetons ajoutés à ${normalizedEmail}. Nouveau total creditsPurchased :`,
+    result.value?.creditsPurchased
   );
 }
 
