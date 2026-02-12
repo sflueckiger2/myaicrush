@@ -3672,6 +3672,30 @@ app.post(
 );
 
 
+// =====================================
+// 🔍 Route Premium Gumroad uniquement
+// =====================================
+app.post('/api/is-gumroad-premium', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ isPremium: false });
+  }
+
+  try {
+    const isPremium = await checkPremiumGumroad(email);
+
+    return res.json({
+      isPremium
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur /api/is-gumroad-premium:", error.message || error);
+    return res.status(500).json({ isPremium: false });
+  }
+});
+
+
 
 
 // Connecter à la base de données avant de démarrer le serveur

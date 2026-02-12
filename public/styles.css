@@ -3186,3 +3186,21 @@ vapi-widget {
 .mic-icon{
   display: block;
 }
+
+
+.premium-cta-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(90deg, #ff4fbf, #a855f7);
+  transition: all 0.2s ease;
+}
+
+.premium-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 79, 191, 0.4);
+}

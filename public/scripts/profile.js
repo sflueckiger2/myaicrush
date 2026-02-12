@@ -5,37 +5,50 @@ import { characters } from './data.js';
 async function checkPremiumStatus() {
   const user = JSON.parse(localStorage.getItem('user'));
 
-  if (!user || !user.email) {
-      console.log("Utilisateur non connecté.");
-      return;
-  }
-
-  console.log("📩 Vérification du statut premium pour :", user.email);
+  if (!user || !user.email) return;
 
   try {
-      const response = await fetch("/api/is-premium", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email })
-      });
+    const response = await fetch("/api/is-gumroad-premium", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email })
+    });
 
-      const data = await response.json();
-      console.log("🌟 Statut premium :", data.isPremium);
+    const data = await response.json();
+    const statusEl = document.getElementById("subscription-status");
 
-      const tokenSection = document.getElementById("tokens-section");
+    if (!statusEl) return;
 
-      if (tokenSection) {
-          if (!data.isPremium) {
-              console.log("⛔ Utilisateur NON premium, masquage de la section jetons.");
-              tokenSection.style.display = "none";
-          } else {
-              console.log("✅ Utilisateur premium, affichage de la section jetons.");
-          }
-      }
+    const shopLink = "https://shop.myaicrush.ai";
+
+    if (data.isPremium) {
+      statusEl.innerHTML = `
+        <div class="sub-ok">
+          Premium actif ✅
+        </div>
+      `;
+    } else {
+      statusEl.innerHTML = `
+  <div class="sub-off">
+    <p style="margin-bottom: 12px;">
+      Votre premium n'est pas actif ou va expirer sous peu.
+    </p>
+
+    <a href="https://shop.myaicrush.ai" 
+       target="_blank"
+       class="premium-cta-btn">
+       💎 Devenir Premium
+    </a>
+  </div>
+`;
+
+    }
+
   } catch (error) {
-      console.error("❌ Erreur lors de la vérification du statut premium :", error);
+    console.error("Erreur vérification Gumroad :", error);
   }
 }
+
 
 
 
