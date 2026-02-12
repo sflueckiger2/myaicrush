@@ -30,15 +30,22 @@ async function checkPremiumStatus() {
     } else {
       statusEl.innerHTML = `
   <div class="sub-off">
+    
     <p style="margin-bottom: 12px;">
       Votre premium n'est pas actif ou va expirer sous peu.
     </p>
 
+    <div class="lifetime-box">
+      💎 Premium à vie<br>
+      <span class="lifetime-price">Seulement 49$ — paiement unique</span>
+    </div>
+
     <a href="https://shop.myaicrush.ai" 
        target="_blank"
        class="premium-cta-btn">
-       💎 Devenir Premium
+       🚀 Activer le Premium
     </a>
+
   </div>
 `;
 
