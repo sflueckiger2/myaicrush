@@ -3470,42 +3470,12 @@ app.post('/api/one-click-payment', async (req, res) => {
 
 
 // ✅ Version complète : éligible si customerId Stripe + carte enregistrée
+// ❌ Stripe désactivé → One Click toujours inéligible
 app.post("/api/check-one-click-eligibility", async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ eligible: false, message: "Email manquant" });
-  }
-
-  try {
-    const db = client.db("MyAICrush");
-    const users = db.collection("users");
-
-    const user = await users.findOne({ email });
-
-    if (!user || !user.stripeCustomerId) {
-      return res.status(200).json({ eligible: false, reason: "Pas de stripeCustomerId" });
-    }
-
-    const customerId = user.stripeCustomerId;
-
-    // 🔍 Vérifie s’il a au moins une carte enregistrée
-    const paymentMethods = await stripe.paymentMethods.list({
-      customer: customerId,
-      type: 'card',
-    });
-
-    if (!paymentMethods.data || paymentMethods.data.length === 0) {
-      return res.status(200).json({ eligible: false, reason: "Aucune carte enregistrée" });
-    }
-
-    // ✅ Tout est bon : éligible au 1C
-    return res.status(200).json({ eligible: true });
-
-  } catch (err) {
-    console.error("❌ Erreur vérif éligibilité 1C (complète) :", err);
-    return res.status(500).json({ eligible: false, message: "Erreur serveur" });
-  }
+  return res.status(200).json({
+    eligible: false,
+    reason: "Stripe disabled"
+  });
 });
 
 
