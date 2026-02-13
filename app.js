@@ -2101,7 +2101,8 @@ app.post('/message', async (req, res) => {
             console.log("🖼️ Dernière image envoyée - Description :", lastImageDescription);
         }
 
-        const isPremium = await getIsPremiumStripeCached(email);
+        const isPremium = await getIsPremiumCached(email);
+
 
 console.log("🌟 Statut premium OK :", isPremium);
 
