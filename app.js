@@ -1003,7 +1003,7 @@ async function getPremiumStatus(email) {
 // ✅ ROUTE : VERIFIER SI PREMIUM (FAST + CACHE)
 // =========================
 
-// Cache mémoire : email -> { value, expiresAt, refreshing }
+
 
 app.post('/api/is-premium', async (req, res) => {
   const { email } = req.body;
@@ -1016,36 +1016,56 @@ app.post('/api/is-premium', async (req, res) => {
     const now = Date.now();
     const cached = premiumCache.get(email);
 
+    // ✅ 0) Debug instance (utile si multi-instances Render)
+    // console.log("🧩 instance", process.env.RENDER_INSTANCE_ID || process.pid, "email", email);
+
     // ✅ 1) Cache valide → réponse immédiate
     if (cached && cached.expiresAt > now) {
       return res.json({ isPremium: cached.value, cached: true });
     }
 
-    // ✅ 2) Cache expiré mais existant → on renvoie quand même (stale)
-    // et on refresh en arrière-plan (non bloquant)
-    if (cached && !cached.refreshing) {
-      cached.refreshing = true;
+    // ✅ 2) Cache expiré mais existant
+    if (cached && cached.expiresAt <= now) {
 
-      void (async () => {
-        try {
-          const value = await getPremiumStatus(email); // <– helper combiné
-          premiumCache.set(email, {
-            value,
-            expiresAt: Date.now() + 60_000, // cache frais 60s
-            refreshing: false
-          });
-        } catch (e) {
-          console.error("❌ Erreur refresh cache /api/is-premium:", e.message || e);
-          // En cas d’erreur → on garde l’ancien cache quelques secondes
-          premiumCache.set(email, {
-            value: cached.value,
-            expiresAt: Date.now() + 15_000,
-            refreshing: false
-          });
-        }
-      })();
+      // ✅ 2a) Stale autorisé UNIQUEMENT si on avait TRUE
+      // (évite de bloquer un vrai premium à cause d’un stale false)
+      if (cached.value === true && !cached.refreshing) {
+        cached.refreshing = true;
 
-      return res.json({ isPremium: cached.value, cached: true, stale: true });
+        void (async () => {
+          try {
+            const value = await getPremiumStatus(email); // helper combiné
+            premiumCache.set(email, {
+              value,
+              expiresAt: Date.now() + 60_000, // cache frais 60s
+              refreshing: false
+            });
+          } catch (e) {
+            console.error("❌ Erreur refresh cache /api/is-premium:", e.message || e);
+
+            // En cas d’erreur → on garde l’ancien cache (TRUE) un peu
+            premiumCache.set(email, {
+              value: cached.value, // true
+              expiresAt: Date.now() + 15_000,
+              refreshing: false
+            });
+          }
+        })();
+
+        return res.json({ isPremium: true, cached: true, stale: true });
+      }
+
+      // ✅ 2b) Si cached.value === false, ou refreshing déjà en cours
+      // → on fait un check BLOQUANT (pas de stale false)
+      const value = await getPremiumStatus(email);
+
+      premiumCache.set(email, {
+        value,
+        expiresAt: Date.now() + 60_000,
+        refreshing: false
+      });
+
+      return res.json({ isPremium: value, cached: false });
     }
 
     // ✅ 3) Aucun cache → vérifie Stripe + Gumroad UNE FOIS (bloquant)
@@ -1061,7 +1081,14 @@ app.post('/api/is-premium', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Erreur /api/is-premium:', error.message || error);
-    return res.status(500).json({ isPremium: false });
+
+    // ✅ Si erreur, on renvoie le cache si on l’a (plutôt que false)
+    const cached = premiumCache.get(email);
+    if (cached) {
+      return res.json({ isPremium: cached.value, cached: true, error: true });
+    }
+
+    return res.status(500).json({ isPremium: false, error: true });
   }
 });
 
