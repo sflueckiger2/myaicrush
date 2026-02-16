@@ -376,5 +376,132 @@
     <img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=TON_PIXEL_ID_ICI&ev=Purchase&noscript=1"/>
   </noscript>
+
+  <style>
+    .disclaimer-section { 
+        margin-top: 50px; 
+        border-top: 1px solid rgba(255,255,255,0.1); 
+        padding-bottom: 50px; 
+        font-family: sans-serif;
+        text-align: center;
+    }
+
+    /* Liens directs et Copyright */
+    .footer-links {
+        padding: 20px 10px 5px 10px;
+        color: #4b5563;
+        font-size: 0.7rem;
+    }
+    .footer-links a {
+        color: #4b5563;
+        text-decoration: none;
+        margin: 0 10px;
+        transition: color 0.3s ease;
+    }
+    .footer-links a:hover {
+        color: #f472b6;
+    }
+
+    .disclaimer-btn { 
+        width: 100%; 
+        color: #4b5563; 
+        font-size: 0.65rem; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        padding: 10px; 
+        cursor: pointer; 
+        transition: color 0.3s ease;
+    }
+    .disclaimer-btn:hover { color: #9ca3af; }
+
+    .disclaimer-content { 
+        max-height: 0; 
+        overflow: hidden; 
+        transition: all 0.4s ease-in-out; 
+        background: rgba(0,0,0,0.2); 
+        font-size: 0.75rem; 
+        color: #9ca3af; 
+        line-height: 1.5; 
+        text-align: left;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .disclaimer-content.open { 
+        max-height: 2000px; 
+        padding: 25px; 
+    }
+
+    .disclaimer-content .mb-4 { margin-bottom: 1rem; }
+    .disclaimer-content strong { color: #d1d5db; }
+    
+    .support-box {
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 0.5rem;
+    }
+    .text-pink-400 { color: #f472b6; }
+    .underline { text-decoration: underline; }
+</style>
+
+<div class="disclaimer-section">
+    <div class="footer-links">
+        <p class="mb-2">© 2026 MyAICrush - Tous droits réservés</p><br>
+        <div class="flex flex-wrap justify-center gap-2">
+            <a href="https://myaicrush.ai/privacy-policy.html">Politique de Confidentialité</a> | 
+            <a href="https://myaicrush.ai/terms-and-conditions.html">Conditions Générales</a>
+        </div>
+    </div>
+
+    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Mentions Légales & Support Facturation</div>
+    
+    <div id="disclaimer-content" class="disclaimer-content">
+        <div class="mb-4">
+            <strong>i) Restriction d'âge (Mandatoire)</strong><br>
+            Ce site Web est destiné aux adultes de 18 ans et plus (ou 21 ans là où la loi l'exige). En accédant à ce site, vous confirmez que vous avez au moins 18 ans. L'accès par des mineurs est strictement interdit.
+        </div>
+        <div class="mb-4">
+            <strong>ii) Divulgation de l'IA</strong><br>
+            Tous les personnages et conversations sont générés par intelligence artificielle. Aucun individu réel n'est impliqué dans les discussions ou le contenu. Tous les personnages sont fictifs et ne représentent pas des individus réels. Toute ressemblance avec des personnes réelles est purement fortuite.
+        </div>
+        <div class="mb-4">
+            <strong>iii) Clause de non-responsabilité pour contenu interdit</strong><br>
+            Nous interdisons strictement tout contenu impliquant des mineurs, des actes non consentis ou des activités illégales. Toutes les interactions sont modérées et filtrées pour prévenir tout contenu interdit.
+        </div>
+        <div class="mb-4">
+            <strong>iv) Politique relative au contenu généré par les utilisateurs</strong><br>
+            Les utilisateurs peuvent télécharger des images dans les discussions. Les images téléchargées ne peuvent être modifiées ou redistribuées. Tout contenu violant nos politiques sera supprimé et pourra entraîner la suspension du compte.
+        </div>
+        <div class="mb-4">
+            <strong>v) Divertissement uniquement</strong><br>
+            Cette plateforme est destinée uniquement à des fins de divertissement. Aucun conseil professionnel (juridique, médical, financier, psychologique) n'est fourni.
+        </div>
+        <div class="mb-4">
+            <strong>vi) Confidentialité et données</strong><br>
+            Les conversations peuvent être enregistrées à des fins de modération et de qualité. Vos données sont traitées conformément à notre Politique de Confidentialité. Nous ne vendons pas vos données personnelles.
+        </div>
+        <div class="support-box">
+            <strong>vii) Support Facturation et Remboursements</strong><br>
+            Pour toute demande concernant vos paiements ou pour faire valoir votre garantie de remboursement de 15 jours, veuillez contacter l'email suivant :<br>
+            <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
+            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Support Facturation Explodely</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDisclaimer() {
+        const content = document.getElementById('disclaimer-content');
+        content.classList.toggle('open');
+        if (content.classList.contains('open')) {
+            setTimeout(() => {
+                content.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 300);
+        }
+    }
+</script>
+
 </body>
 </html>
