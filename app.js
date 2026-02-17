@@ -1053,30 +1053,71 @@ app.post("/webhook/explodely", async (req, res) => {
         .map((s) => s.trim())
         .filter(Boolean);
 
-    const pickEmail = (v) => {
+    const uniq = (arr) => [...new Set(arr)];
+
+    const normalizeEmail = (v) => String(v || "").trim().toLowerCase();
+
+    const pickBestEmail = async (raw) => {
       // Explodely peut renvoyer "a@gmail.com,a@gmail.com,b@gmail.com"
-      // On nettoie et on retourne le 1er email valide
-      const parts = toList(v).map((x) => x.toLowerCase());
-      const valid = parts.find((e) => e.includes("@"));
-      return (valid || "").trim();
+      const candidates = uniq(
+        toList(raw)
+          .map(normalizeEmail)
+          .filter((e) => e.includes("@"))
+      );
+
+      if (candidates.length === 0) return "";
+
+      // ✅ Si un seul -> OK
+      if (candidates.length === 1) return candidates[0];
+
+      // ✅ Sinon: on prend celui qui existe dans MongoDB
+      const existing = await users
+        .find({ email: { $in: candidates } }, { projection: { email: 1 } })
+        .toArray();
+
+      if (existing.length === 1) return existing[0].email;
+      if (existing.length > 1) return existing[0].email; // 1er match
+
+      // ❌ Aucun match: on ne crédite pas (évite crédits fantômes)
+      return "";
     };
 
     // -----------------------------
     // Champs EXACTS d'après tes logs
     // -----------------------------
-    const emails = toList(payload.customerEmail).map((x) => x.toLowerCase());
     const productIds = toList(payload.productId);
     const eventTypes = toList(payload.type).map((x) => x.toLowerCase());
     const orderIds = toList(payload.orderid);
 
-    // Si jamais Explodely renvoie parfois un seul email mais plusieurs items
-    // on garde aussi une version "fallback"
-    const fallbackEmail = pickEmail(payload.customerEmail);
-
-    const count = Math.max(emails.length, productIds.length, eventTypes.length, orderIds.length);
+    const count = Math.max(productIds.length, eventTypes.length, orderIds.length);
 
     if (!count) {
       console.warn("⚠️ Webhook Explodely vide:", payload);
+      return res.status(200).send("ok");
+    }
+
+    // ✅ Email: choisi 1 seule fois, correctement
+    const email = await pickBestEmail(payload.customerEmail);
+
+    if (!email) {
+      console.warn("⚠️ Webhook Explodely: aucun email MyAiCrush matché:", {
+        customerEmail: payload.customerEmail,
+        productId: payload.productId,
+        type: payload.type,
+        orderid: payload.orderid,
+      });
+
+      // On log pour debug, mais on ne crédite pas
+      await explodelyEvents.insertOne({
+        createdAt: new Date(),
+        action: "no_matching_email",
+        rawCustomerEmail: String(payload.customerEmail || ""),
+        productIds,
+        eventTypes,
+        orderIds,
+        payload,
+      });
+
       return res.status(200).send("ok");
     }
 
@@ -1098,20 +1139,17 @@ app.post("/webhook/explodely", async (req, res) => {
     // Traitement item par item
     // -----------------------------
     for (let i = 0; i < count; i++) {
-      const emailRaw = emails[i] || fallbackEmail || "";
-      const email = pickEmail(emailRaw) || fallbackEmail;
-
       const productId = String(productIds[i] || "").trim();
       const eventType = String(eventTypes[i] || "").trim().toLowerCase();
       const orderId = String(orderIds[i] || "").trim();
 
       // Skip si incomplet
-      if (!email || !email.includes("@") || !productId || !eventType || !orderId) {
-        console.warn("⚠️ Explodely item incomplet:", { i, email, productId, eventType, orderId });
+      if (!productId || !eventType || !orderId) {
+        console.warn("⚠️ Explodely item incomplet:", { i, productId, eventType, orderId });
         continue;
       }
 
-      // Idempotency PAR ITEM (sinon tu bloques à cause des CSV)
+      // Idempotency PAR ITEM
       const eventKey = { orderId, productId, eventType, email };
       const already = await explodelyEvents.findOne(eventKey);
       if (already) {
@@ -1122,7 +1160,7 @@ app.post("/webhook/explodely", async (req, res) => {
       const isPremiumProduct = productId === premiumId;
       const tokensAmount = tokenMapping[productId];
 
-      // Détection refund-like (on affinera quand tu auras le vrai payload refund)
+      // Détection refund-like (à confirmer quand tu auras le vrai payload refund)
       const isRefundLike = ["refund", "refunded", "chargeback", "reversal", "cancel", "canceled"].includes(eventType);
 
       // ---- SALE ----
@@ -1223,6 +1261,7 @@ app.post("/webhook/explodely", async (req, res) => {
     return res.status(200).send("ok");
   }
 });
+
 
 
 
