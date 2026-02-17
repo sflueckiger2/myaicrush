@@ -1108,22 +1108,172 @@ function verifyExplodelySignature(req) {
   return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(provided));
 }
 
-// -------------------------------------
-// WEBHOOK EXPLODELY (achat + refund)
-// -------------------------------------
 
-// ✅ WEBHOOK EXPLODELY (JSON + FORM) + logs utiles
+
+// =====================================
+// 🔔 WEBHOOK EXPLODELY (SALE + REFUND + SAFETY + IDEMPOTENCY)
+// =====================================
+
 
 app.post("/webhook/explodely", async (req, res) => {
   try {
-    console.log("🟢 Explodely headers:", req.headers);
-    console.log("🟢 Explodely query:", req.query);
-    console.log("🟢 Explodely body:", req.body);
+    const payload = req.body || {};
 
+    // ✅ Champs EXACTS d'après TES logs Explodely
+    const email = String(payload.customerEmail || "").trim().toLowerCase();
+    const productId = String(payload.productId || "").trim();
+    const eventType = String(payload.type || "").trim().toLowerCase(); // "sale", "refund", ...
+    const orderId = String(payload.orderid || "").trim();
+
+    // ✅ Log utile 1 ligne (facile à lire)
+    console.log("🟢 Explodely webhook:", { email, productId, eventType, orderId });
+
+    // ⚠️ Si incomplet, on répond OK pour éviter les retries
+    if (!email || !productId || !eventType || !orderId) {
+      console.warn("⚠️ Webhook Explodely incomplet:", payload);
+      return res.status(200).send("ok");
+    }
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+    const explodelyEvents = database.collection("explodely_events");
+
+    // ✅ Anti-double: si déjà traité (sale/refund etc.) on ignore
+    const already = await explodelyEvents.findOne({ orderId, eventType });
+    if (already) {
+      console.log(`🟡 Explodely déjà traité: orderId=${orderId} type=${eventType}`);
+      return res.status(200).send("ok");
+    }
+
+    // ✅ Mapping jetons (ids = .env)
+    const tokenMapping = {
+      [process.env.EXPLODELY_TOKEN_10_ID]: 10,
+      [process.env.EXPLODELY_TOKEN_50_ID]: 50,
+      [process.env.EXPLODELY_TOKEN_100_ID]: 100,
+      [process.env.EXPLODELY_TOKEN_300_ID]: 300,
+      [process.env.EXPLODELY_TOKEN_700_ID]: 700,
+      [process.env.EXPLODELY_TOKEN_1000_ID]: 1000
+    };
+
+    const premiumProductId = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "").trim();
+    const isPremiumProduct = productId === premiumProductId;
+    const tokensAmount = tokenMapping[productId]; // undefined si pas jetons
+
+    // ✅ helper : marquer l’event traité (idempotency)
+    async function markEventDone(extra = {}) {
+      await explodelyEvents.insertOne({
+        orderId,
+        eventType,
+        email,
+        productId,
+        createdAt: new Date(),
+        ...extra
+      });
+    }
+
+    // =========================
+    // ✅ SALE
+    // =========================
+    if (eventType === "sale") {
+
+      // PREMIUM
+      if (isPremiumProduct) {
+        await users.updateOne(
+          { email },
+          { $set: { explodelyPremium: true } },
+          { upsert: true }
+        );
+
+        await markEventDone({ action: "premium_on" });
+        console.log(`✅ Premium Explodely activé pour ${email}`);
+        return res.status(200).send("ok");
+      }
+
+      // TOKENS
+      if (tokensAmount) {
+        const toAdd = Number(tokensAmount);
+        if (!Number.isFinite(toAdd) || toAdd <= 0) {
+          await markEventDone({ action: "tokens_invalid", tokensAmount });
+          console.warn("⚠️ tokensAmount invalide:", tokensAmount);
+          return res.status(200).send("ok");
+        }
+
+        await users.updateOne(
+          { email },
+          { $inc: { creditsPurchased: toAdd } },
+          { upsert: true }
+        );
+
+        await markEventDone({ action: "tokens_add", tokens: toAdd });
+        console.log(`💰 +${toAdd} jetons ajoutés à ${email}`);
+        return res.status(200).send("ok");
+      }
+
+      // inconnu
+      await markEventDone({ action: "unknown_product_sale" });
+      console.log("🟡 Produit Explodely non mappé (sale):", { productId });
+      return res.status(200).send("ok");
+    }
+
+    // =========================
+    // ✅ REFUND / CHARGEBACK
+    // =========================
+    const refundTypes = ["refund", "refunded", "chargeback", "reversal", "reversed", "dispute"];
+    const isRefundLike = refundTypes.includes(eventType);
+
+    if (isRefundLike) {
+
+      // PREMIUM refund => coupe premium
+      if (isPremiumProduct) {
+        await users.updateOne(
+          { email },
+          { $set: { explodelyPremium: false } },
+          { upsert: true }
+        );
+
+        await markEventDone({ action: "premium_off" });
+        console.log(`⛔ Premium Explodely désactivé (refund) pour ${email}`);
+        return res.status(200).send("ok");
+      }
+
+      // TOKENS refund => retire pack (sans descendre sous 0)
+      if (tokensAmount) {
+        const toRemove = Number(tokensAmount);
+        if (!Number.isFinite(toRemove) || toRemove <= 0) {
+          await markEventDone({ action: "tokens_invalid_refund", tokensAmount });
+          return res.status(200).send("ok");
+        }
+
+        const user = await users.findOne({ email }, { projection: { creditsPurchased: 1 } });
+        const current = Number(user?.creditsPurchased || 0);
+        const newValue = Math.max(0, current - toRemove);
+
+        await users.updateOne(
+          { email },
+          { $set: { creditsPurchased: newValue } },
+          { upsert: true }
+        );
+
+        await markEventDone({ action: "tokens_remove", tokens: toRemove, before: current, after: newValue });
+        console.log(`↩️ -${toRemove} jetons (refund) pour ${email} (avant=${current} après=${newValue})`);
+        return res.status(200).send("ok");
+      }
+
+      await markEventDone({ action: "unknown_product_refund" });
+      console.log("🟡 Produit Explodely non mappé (refund):", { productId, eventType });
+      return res.status(200).send("ok");
+    }
+
+    // =========================
+    // ✅ autres events: on ignore mais on log
+    // =========================
+    await markEventDone({ action: "ignored_event" });
+    console.log("ℹ️ Event Explodely ignoré:", { eventType, productId, email });
     return res.status(200).send("ok");
-  } catch (e) {
-    console.error("❌ Explodely webhook error:", e);
-    return res.status(500).send("server error");
+
+  } catch (error) {
+    console.error("❌ Erreur webhook Explodely:", error);
+    return res.status(200).send("ok");
   }
 });
 
@@ -1136,7 +1286,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
 
 app.post('/api/is-premium', async (req, res) => {
-  const { email } = req.body;
+const email = String(req.body.email || "").trim().toLowerCase();
 
   if (!email) {
     return res.status(400).json({ message: 'Email requis' });
