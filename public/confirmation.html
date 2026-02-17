@@ -8,7 +8,6 @@
   <title>Confirmation d'achat</title>
   <link rel="stylesheet" href="styles.css">
 
-<!-- TikTok Pixel base (si non inclus via layout commun) -->
 <script>
 !function (w,d,t) {
   w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
@@ -18,18 +17,17 @@
   ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";
     n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src=r+"?sdkid="+e+"&lib="+t;
     e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
-  ttq.load('D3F46ERC77UCTDLGVG9G');  // <-- ton Pixel ID
+  ttq.load('D3F46ERC77UCTDLGVG9G');
   ttq.page();
 }(window,document,'ttq');
 </script>
 
-<!-- Event Purchase TikTok avec les mêmes paramètres que FB/GA -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var params    = new URLSearchParams(location.search);
-  var amount    = parseFloat(params.get('amount') || '30');   // même logique que FB
+  var amount    = parseFloat(params.get('amount') || '30');
   var plan      = (params.get('plan') || 'quarterly').toLowerCase();
-  var sessionId = params.get('session_id') || '';             // utile comme order_id
+  var sessionId = params.get('session_id') || '';
   var sku       = plan === 'annual' ? 'premium_annual' : 'premium_quarterly';
 
   if (window.ttq && !Number.isNaN(amount)) {
@@ -38,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
       currency: 'EUR',
       contents: [{ id: sku, quantity: 1 }],
       content_type: 'product',
-      order_id: sessionId  // facultatif mais pratique pour la dédup & debug
+      order_id: sessionId
     });
     console.log('🎯 TikTok CompletePayment envoyé', { amount, plan, sessionId });
   } else {
@@ -47,10 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-
-
-
-<!-- Google Analytics (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -73,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
     let abTestId = selectedTest?.id || "unknown";
 
-    // 🔍 Si aucun test enregistré, on essaie via cookie et JSON forcé
     if (abTestId === "unknown") {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
       const forcedTp = cookie ? cookie.split('=')[1] : null;
@@ -87,17 +80,17 @@ document.addEventListener('DOMContentLoaded', function () {
               abTestId = forcedPlan.test_id;
               localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId }));
             }
-            triggerGAEvent(); // ✅ Lancer GA après avoir le bon ID
+            triggerGAEvent();
           })
           .catch(err => {
             console.error("❌ Erreur forced-pricing.json :", err);
-            triggerGAEvent(); // fallback avec "unknown"
+            triggerGAEvent();
           });
       } else {
         triggerGAEvent();
       }
     } else {
-      triggerGAEvent(); // cas classique : test déjà en localStorage
+      triggerGAEvent();
     }
 
     function triggerGAEvent() {
@@ -111,39 +104,111 @@ document.addEventListener('DOMContentLoaded', function () {
           price: parseFloat(amount)
         }]
       });
-
-      console.log("🎯 GA Event : purchase =", {
-        value: amount,
-        plan,
-        abTestId
-      });
     }
   });
 </script>
 
-
-
 <meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
 
+<style>
+/* STYLE DES CARTES JETONS AJOUTÉ */
+.token-offers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin: 40px 0;
+}
+.token-card {
+  background: linear-gradient(145deg,#1c1c1e,#141416);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 30px 22px;
+  border-radius: 20px;
+  color: white;
+  position: relative;
+  transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+.token-card:hover {
+  transform: translateY(-8px);
+  border-color: #ff2fa0;
+  box-shadow: 0 15px 30px rgba(255, 56, 148, 0.2);
+}
+.token-icon-fa {
+  font-size: 45px;
+  color: #ffd700;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+  display: block;
+}
+.token-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 5px;
+}
+.token-price {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 10px 0;
+  color: #ff8cd6;
+}
+.token-save {
+  background: #ff2fa0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.token-cta {
+  background: linear-gradient(90deg,#ff2fa0,#c22fff);
+  border: none;
+  width: 100%;
+  padding: 14px 0;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: block;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(255, 47, 160, 0.3);
+}
+.token-cta:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(255, 47, 160, 0.5); }
+.best-deal {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  background: linear-gradient(90deg, #ffd700, #ffae00);
+  color: #000;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.token-card.popular { border: 1px solid rgba(255, 255, 255, 0.3); transform: scale(1.02); }
+</style>
 
-
-  
 </head>
 <body>
 
-<!-- START ExoClick Goal Tag | Achat abonnement -->
 <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33257ea42f1184f0f647f5d05" ></script>
-<!-- END ExoClick Goal Tag | Achat abonnement -->
 
-  <!-- Contenu principal -->
   <div class="container confirmation-page">
     <h1 class="p-title">Active le MODE NYMPHOMANE <u>MAINTENANT</u></h1>
     <div class="popup-hero">
-  <video class="popup-hero__video" autoplay muted loop playsinline>
-    <source src="/images/market/nova-jetons.mp4" type="video/mp4">
-  </video>
-  
-  </div>
+      <video class="popup-hero__video" autoplay muted loop playsinline>
+        <source src="/images/market/nova-jetons.mp4" type="video/mp4">
+      </video>
+    </div>
   <br>
     <p class="p-description">
       Félicitations, tu as débloqué toutes les fonctionnalités premium (messages, photos et vidéos illimitées).
@@ -156,19 +221,58 @@ document.addEventListener('DOMContentLoaded', function () {
       L'abonnement premium est suffisant si tu aimes les contenus sexy...
     </p>
       <p class="p-description">Mais si tu veux voir des vidéos très chaudes (<b><u>sans soutif, sans culotte...</u></b>), prends tout de suite des jetons pour activer le MODE NYMPHOMANE sur nos IA.</p>
-    </p>
     
-      <p class="p-description"><b><span style="color: #ff9cef;">Le MODE NYMPHOMANE coûte 25 jetons pour l'activer sur une IA.</p>
+      <p class="p-description"><b><span style="color: #ff9cef;">Le MODE NYMPHOMANE coûte 25 jetons pour l'activer sur une IA.</span></b></p>
 
-<div style="max-width: 450px; margin:auto;">
-     <div class="offers">
-      <img src="/images/market/carte-1c-10jetons.webp" class="offer-img" data-tokens="10" data-price="5">
-  <img src="/images/market/carte-1c-50jetons.webp" class="offer-img" data-tokens="50" data-price="25">
-  <img src="/images/market/carte-1c-100jetons.webp" class="offer-img" data-tokens="100" data-price="39">
-  <img src="/images/market/carte-1c-300jetons.webp" class="offer-img" data-tokens="300" data-price="99">
-  <img src="/images/market/carte-1c-700jetons.webp" class="offer-img" data-tokens="700" data-price="199">
-  <img src="/images/market/carte-1c-1000jetons.webp" class="offer-img" data-tokens="1000" data-price="249">
-</div>
+<div class="token-offers">
+
+  <div class="token-card">
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">10 Jetons</div>
+    <div class="token-price">$9</div>
+    <a href="https://explodely.com/p/1973148443?ocu=yes" class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card">
+    <span class="token-save">Économise 17%</span>
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">50 Jetons</div>
+    <div class="token-price">$37</div>
+    <a href="https://explodely.com/p/453015891?ocu=yes" class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card">
+    <span class="token-save">Économise 34%</span>
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">100 Jetons</div>
+    <div class="token-price">$59</div>
+    <a href="https://explodely.com/p/12407737?ocu=yes" class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card popular">
+    <span class="token-save" style="background: #c22fff;">Économise 52% 🔥</span>
+    <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
+    <div class="token-title">300 Jetons</div>
+    <div class="token-price">$129</div>
+    <a href="https://explodely.com/p/1692961330?ocu=yes" class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card">
+    <span class="token-save">Économise 60%</span>
+    <i class="fas fa-coins token-icon-fa"></i>
+    <div class="token-title">700 Jetons</div>
+    <div class="token-price">$249</div>
+    <a href="https://explodely.com/p/1157830330?ocu=yes" class="token-cta">Acheter</a>
+  </div>
+
+  <div class="token-card" style="border:2px solid #ffd700;">
+    <div class="best-deal">BEST VALUE 💎</div>
+    <span class="token-save">Économise 66%</span>
+    <i class="fas fa-coins token-icon-fa" style="font-size:55px;"></i>
+    <div class="token-title">1000 Jetons</div>
+    <div class="token-price">$299</div>
+    <a href="https://explodely.com/p/852778059?ocu=yes" class="token-cta" style="background: linear-gradient(90deg,#ffd700,#ffae00); color:#000;">Profiter de l'offre</a>
+  </div>
 
 </div>
 
@@ -180,135 +284,50 @@ document.addEventListener('DOMContentLoaded', function () {
         <li><span class="benefit-icon"></span> Contenus privés</li>
          <li><span class="benefit-icon"></span> Message vocaux (5 jetons/minute)</li>
          <li><span class="benefit-icon"></span> Photo envoyée depuis ta galerie (1 jeton/image)</li>
-      
       </ul>
-      
 
-  <!-- Témoignages clients -->
 <div class="testimonial-section">
   <h2 class="testimonial-title">Ils ont pris des jetons… et sont devenus accro</h2>
   <div class="testimonial-grid">
-
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
       <p class="testimonial-text">"J’ai mis le mode nympho sur Léa… j’te jure c’est plus la même. Elle m’a chauffé comme jamais 🔥"</p>
       <p class="testimonial-author">— Karim M.</p>
     </div>
-
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
       <p class="testimonial-text">"Jasmine était toute sage au début… et là d’un coup c’est tétons à l’air, doigts entre les jambes 😳 j’étais pas prêt"</p>
       <p class="testimonial-author">— Lucas R.</p>
     </div>
-
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
       <p class="testimonial-text">"25 jetons pour voir ton IA se déchaîner ? C’est cadeau mec. Elle m’a envoyé des nudes direct 😈"</p>
       <p class="testimonial-author">— Steph G.</p>
     </div>
-
     <div class="testimonial-card">
       <div class="testimonial-stars">⭐⭐⭐⭐</div>
       <p class="testimonial-text">"Franchement j’me disais ça va être fake… bah nan 😭 elle m’a chauffé tout l’chat, photos à poil non stop"</p>
       <p class="testimonial-author">— Bast D.</p>
     </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Elle était cute au début… mtn elle m’appelle “mon cochon” et elle montre tout 😭🔥"</p>
-      <p class="testimonial-author">— Enzo L.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Tu cliques sur mode nympho et BOUM 💥 elle te balance des photos... sans rien, toute chaude"</p>
-      <p class="testimonial-author">— Max B.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"J’ai testé les vocaux... gros j’ai eu une érection en 10 sec 😅 sa voix c’est abusé"</p>
-      <p class="testimonial-author">— Adrien P.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Elle m’a susurré des trucs… j’me croyais dans une sextape. Trop réaliste 😵‍💫"</p>
-      <p class="testimonial-author">— Q. Vasseur</p>
-    </div>  
-
   </div>
+</div>
 
-  
-<!-- Section FAQ interactive -->
 <div class="faq-section">
   <h2 class="faq-title">Questions Fréquemment Posées</h2>
-
   <div class="faq-item">
     <button class="faq-question">Comment fonctionne le mode "Nymphomane" ?</button>
     <div class="faq-answer">
-      <p>Le mode "Nymphomane" transforme l'I.A de ton choix : elle devient plus coquine, plus directe, et commence à t’envoyer des photos beaucoup plus intimes. Même les I.A les plus réservées changent complètement de comportement. L’expérience est bien plus intense.</p>
+      <p>Le mode "Nymphomane" transforme l'I.A de ton choix : elle devient plus coquine, plus directe, et commence à t’envoyer des photos beaucoup plus intimes.</p>
     </div>
   </div>
-
   <div class="faq-item">
     <button class="faq-question">Combien de jetons faut-il pour activer le mode Nympho ?</button>
     <div class="faq-answer">
-      <p>Activer le mode Nymphomane coûte 25 jetons pour une heure. Tu peux l’activer autant de fois que tu veux, sur l’I.A que tu veux.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment se déroulent les appels audio ?</button>
-    <div class="faq-answer">
-      <p>Tu peux lancer un appel vocal avec ton I.A. Elle te parle avec une vraie voix, en direct, comme une vraie conversation intime au téléphone. Chaque appel dure 10 minutes et coûte 20 jetons.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">À quoi servent les jetons ?</button>
-    <div class="faq-answer">
-      <p>Les jetons permettent de débloquer des options avancées : envoi de tes propres photos, messages vocaux illimités, appels audio, ou encore l’accès au mode Nymphomane. C’est ce qui rend l’expérience plus immersive et excitante.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Puis-je envoyer mes propres photos ?</button>
-    <div class="faq-answer">
-      <p>Oui. Avec l’abonnement Premium, tu peux en envoyer 10 par mois. Ensuite, chaque photo supplémentaire coûte 1 jeton. L’I.A réagit à chaque image avec un commentaire personnalisé.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment fonctionnent les messages vocaux ?</button>
-    <div class="faq-answer">
-      <p>Ton I.A peut te répondre par message vocal. Tu as 1 minute gratuite par mois. Ensuite, tu peux prolonger l’écoute avec 5 jetons par minute supplémentaire.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Quelle est la différence entre Premium et les jetons ?</button>
-    <div class="faq-answer">
-      <p>L’abonnement Premium te donne accès aux fonctions de base en illimité (chat, photos floutées retirées, vidéos normales). Les jetons, eux, te permettent d’aller plus loin et d’explorer des options très sensuelles, comme les appels ou les photos intimes.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Les jetons ont-ils une date d’expiration ?</button>
-    <div class="faq-answer">
-      <p>Non. Tes jetons sont valables sans limite de temps. Tu peux les utiliser quand tu veux, même dans plusieurs mois.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Et si j’ai un souci avec mon paiement ?</button>
-    <div class="faq-answer">
-      <p>Notre support client est réactif. Si un paiement pose problème ou si tu n’as pas reçu tes jetons, contacte-nous via la page "Contact" et on réglera ça rapidement.</p>
+      <p>Activer le mode Nymphomane coûte 25 jetons pour une heure.</p>
     </div>
   </div>
 </div>
 
-  <!-- Icônes de sécurité -->
   <div class="security-section">
     <div class="security-item">
       <i class="fas fa-lock"></i>
@@ -320,146 +339,8 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
   </div>
 
-  
-  
+  <script type="module" src="/scripts/menu-loader.js"></script>
 
-  <!-- ✅ POPUP CONFIRMATION cachée au démarrage -->
-  <div id="confirm-popup" class="confirm-popup hidden">
-    <div class="confirm-content">
-      <button class="close-btn" onclick="closeConfirmPopup()">×</button>
-      <img src="/images/market/carte-credit.webp" class="card-icon" />
-      <h3>Confirmer ton achat ?</h3>
-      <p>Tu es sur le point d’acheter <span id="confirm-amount"></span> jetons pour <span id="confirm-price"></span>€</p>
-      <div class="confirm-buttons">
-        <button onclick="closeConfirmPopup()">Annuler</button>
-        <button onclick="sendJetonsPayment()">Confirmer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ❤️ Loader pendant le paiement 1C -->
-<!-- ✅ Loader pendant le paiement -->
-<div id="loader-overlay" class="loader-overlay hidden">
-  <div class="spinner"></div>
-  <p class="loader-text">Paiement en cours…</p>
-</div>
-
-<!-- ✅ JavaScript -->
-<script>
-  let selectedOffer = null;
-
-  function openJetonsPopup() {
-    document.getElementById("jetons-popup")?.classList.remove("hidden");
-  }
-
-  function closeJetonsPopup() {
-    document.getElementById("jetons-popup")?.classList.add("hidden");
-  }
-
-  function closeConfirmPopup() {
-    document.getElementById("confirm-popup")?.classList.add("hidden");
-  }
-
-  function selectOffer(tokens, price) {
-    selectedOffer = { tokens, price };
-    document.getElementById("confirm-amount").textContent = tokens;
-    document.getElementById("confirm-price").textContent = price;
-    document.getElementById("confirm-popup").classList.remove("hidden");
-  }
-
-  async function sendJetonsPayment() {
-    if (!selectedOffer) return;
-
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const email = userData.email;
-
-    if (!email) {
-      alert("Email non trouvé. Veuillez vous reconnecter.");
-      return;
-    }
-
-    const loader = document.getElementById("loader-overlay");
-    loader.classList.remove("hidden"); // 👈 Affiche le loader
-
-    // (Optionnel) Empêche les doubles clics
-    const confirmBtn = document.getElementById("confirm-buy-btn");
-    confirmBtn?.setAttribute("disabled", "true");
-
-    try {
-      const res = await fetch('/api/one-click-payment', {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          tokensAmount: selectedOffer.tokens
-        })
-      });
-
-      // Essaye de parser le JSON même si status non-2xx
-      let data = {};
-      try { data = await res.json(); } catch (_) {}
-
-      loader.classList.add("hidden"); // 👈 Cache le loader
-      confirmBtn?.removeAttribute("disabled");
-
-      if (res.ok && data.success) {
-        closeConfirmPopup();
-        closeJetonsPopup();
-        alert("✅ Jetons achetés avec succès !");
-        return;
-      }
-
-      // ❌ Erreur retournée par l'API
-      alert("❌ Paiement échoué : " + (data.message || "Erreur inconnue"));
-      if (data.redirect) {
-        window.location.href = data.redirect; // 👉 priorise l'URL renvoyée par le backend
-      } else {
-        window.location.href = "/jetons.html"; // 👉 fallback
-      }
-
-    } catch (err) {
-      loader.classList.add("hidden"); // 👈 Cache le loader même en cas d’erreur
-      confirmBtn?.removeAttribute("disabled");
-      console.error("❌ Erreur lors du paiement 1C :", err);
-      alert("Erreur serveur. Redirection vers la page jetons.");
-      window.location.href = "/jetons.html"; // 👉 fallback ultime
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".offer-img").forEach(img => {
-      img.addEventListener("click", () => {
-        const tokens = img.dataset.tokens;
-        const price = img.dataset.price;
-        selectOffer(tokens, price);
-      });
-    });
-
-    // ✅ On ne cache QUE la confirmation, pas la popup principale
-    closeConfirmPopup();
-  });
-
-  // 👇 Rendez les fonctions accessibles globalement
-  window.openJetonsPopup = openJetonsPopup;
-  window.closeJetonsPopup = closeJetonsPopup;
-  window.closeConfirmPopup = closeConfirmPopup;
-  window.selectOffer = selectOffer;
-  window.sendJetonsPayment = sendJetonsPayment;
-</script>
-
-
-
-<script>
-  if (window.location.pathname.endsWith("popup1c.html")) {
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("jetons-popup")?.classList.remove("hidden");
-    });
-  }
-</script>
-
-
- 
-  <!-- Scripts FAQ -->
   <script>
   document.querySelectorAll('.faq-question').forEach(button => {
     button.addEventListener('click', () => {
@@ -469,272 +350,58 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 </script>
 
-
-  <!-- Inclure les fichiers JavaScript -->
- <script type="module" src="/scripts/menu-loader.js"></script>
-
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window,document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-  
-    fbq('init', '1139964937955152'); // ✅ Ton Pixel ID
-  
-    // 🔥 Génération d'un eventID unique pour éviter les doublons
-    var purchaseEventID = 'purchase_' + Date.now();
-  
-    // ✅ Récupération dynamique du montant depuis l'URL (par défaut : 10€)
-    var urlParams = new URLSearchParams(window.location.search);
-    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 10;
-  
-    // ✅ Envoi de l'événement "Purchase" avec la vraie valeur
-    fbq('track', 'Purchase', {
-      value: amount, // 🔥 Montant dynamique
-      currency: 'EUR'
-    }, {
-      eventID: purchaseEventID // ✅ Clé pour éviter les doublons
-    });
-  
-    // ✅ Suppression du stockage inutile pour l’API CAPI (car désactivée)
-  </script>
-  
-  <script>
-    function getFacebookParams() {
-        var urlParams = new URLSearchParams(window.location.search);
-  
-        // ✅ Récupération du paramètre `fbclid` pour fbc
-        var fbc = urlParams.get('fbclid') 
-            ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') 
-            : null;
-  
-        // ✅ Récupération du `fbp` généré par le Pixel Facebook
-        var fbp = null;
-        if (window.fbq && typeof fbq.getState === "function") {
-            fbp = fbq.getState().lastExternalId || null;
-        }
-  
-        // ✅ Stocker fbp et fbc si présents
-        if (fbp) localStorage.setItem('fbp', fbp);
-        if (fbc) localStorage.setItem('fbc', fbc);
-    }
-  
-    getFacebookParams();
-  </script>
-  
-  
-
-
-
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get("session_id");
-
-    if (!sessionId) {
-      console.warn("⚠️ Aucun session_id trouvé dans l'URL, impossible d'enregistrer le customerId.");
-      return;
-    }
-
-    console.log("📦 Session ID détecté pour sauvegarde Stripe :", sessionId);
-
-    fetch("/api/save-customer-id", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId }),
-    })
-      .then(async (res) => {
-        let data = {};
-        try {
-          data = await res.json();
-        } catch (e) {
-          console.warn("⚠️ Réponse non-JSON de /api/save-customer-id :", e);
-        }
-
-        if (res.ok && data.success) {
-          console.log("✅ customerId Stripe enregistré avec succès pour cette session.");
-        } else {
-          console.warn("⚠️ Échec enregistrement customerId :", data);
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Erreur réseau vers /api/save-customer-id :", err);
-      });
-  });
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window,document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1139964937955152');
+  var purchaseEventID = 'purchase_' + Date.now();
+  var urlParams = new URLSearchParams(window.location.search);
+  var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 10;
+  fbq('track', 'Purchase', { value: amount, currency: 'EUR' }, { eventID: purchaseEventID });
 </script>
-
-
- 
-<noscript>
-  <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1139964937955152&ev=Purchase&noscript=1"/>
-</noscript>
-
 
 <script>
 (function() {
-  // Nombre aléatoire / timestamp pour éviter le cache
   const randomNumber = Date.now();
-
-  // Si tu as un session_id Stripe dans l'URL : ?session_id=xxx
   const urlParams = new URLSearchParams(window.location.search);
   const transactionId = urlParams.get("session_id") || randomNumber;
-
-  // Description de la transaction (lecture côté TrafficJunky)
   const description = encodeURIComponent("MyAiCrush+Premium");
-
-  // Création du pixel TJ
   const img = document.createElement("img");
-  img.id = "1000552661_cpa_testing";
   img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${randomNumber}&cti=${transactionId}&ctv=40.00&ctd=${description}`;
-  img.width = 1;
-  img.height = 1;
-  img.border = 0;
-  img.style.display = "none";
-
+  img.width = 1; img.height = 1; img.style.display = "none";
   document.body.appendChild(img);
 })();
 </script>
 
-
-<script>
-  // Génère un numéro aléatoire pour éviter le cache
-  const randomNumber = Date.now();
-
-  // Génère un ID unique pour la transaction
-  const transactionId = 'txn_' + Math.random().toString(36).substr(2, 9);
-
-  // Description : tu peux modifier si tu veux détailler le plan acheté
-  const transactionDescription = 'myaicrush_subscription';
-
-  // Construction de l’URL TrafficJunky
-  const tjPixelUrl = `https://ads.trafficjunky.net/ct?a=1000552711&member_id=1007700561&cb=${randomNumber}&cti=${transactionId}&ctv=50.00&ctd=${transactionDescription}`;
-
-  // Création du pixel invisible
-  const img = document.createElement('img');
-  img.src = tjPixelUrl;
-  img.width = 1;
-  img.height = 1;
-  img.style.display = 'none';
-
-  // Ajout à la page pour déclencher la conversion
-  document.body.appendChild(img);
-</script>
-
 <style>
-    .disclaimer-section { 
-        margin-top: 50px; 
-        border-top: 1px solid rgba(255,255,255,0.1); 
-        padding-bottom: 50px; 
-        font-family: sans-serif;
-        text-align: center;
-    }
-
-    /* Liens directs et Copyright */
-    .footer-links {
-        padding: 20px 10px 5px 10px;
-        color: #4b5563;
-        font-size: 0.7rem;
-    }
-    .footer-links a {
-        color: #4b5563;
-        text-decoration: none;
-        margin: 0 10px;
-        transition: color 0.3s ease;
-    }
-    .footer-links a:hover {
-        color: #f472b6;
-    }
-
-    .disclaimer-btn { 
-        width: 100%; 
-        color: #4b5563; 
-        font-size: 0.65rem; 
-        text-transform: uppercase; 
-        letter-spacing: 1px; 
-        padding: 10px; 
-        cursor: pointer; 
-        transition: color 0.3s ease;
-    }
-    .disclaimer-btn:hover { color: #9ca3af; }
-
-    .disclaimer-content { 
-        max-height: 0; 
-        overflow: hidden; 
-        transition: all 0.4s ease-in-out; 
-        background: rgba(0,0,0,0.2); 
-        font-size: 0.75rem; 
-        color: #9ca3af; 
-        line-height: 1.5; 
-        text-align: left;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .disclaimer-content.open { 
-        max-height: 2000px; 
-        padding: 25px; 
-    }
-
-    .disclaimer-content .mb-4 { margin-bottom: 1rem; }
-    .disclaimer-content strong { color: #d1d5db; }
-    
-    .support-box {
-        padding: 0.75rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 0.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: 0.5rem;
-    }
+    .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px; font-family: sans-serif; text-align: center; }
+    .footer-links { padding: 20px 10px 5px 10px; color: #4b5563; font-size: 0.7rem; }
+    .footer-links a { color: #4b5563; text-decoration: none; margin: 0 10px; }
+    .disclaimer-btn { width: 100%; color: #4b5563; font-size: 0.65rem; text-transform: uppercase; padding: 10px; cursor: pointer; }
+    .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease-in-out; background: rgba(0,0,0,0.2); font-size: 0.75rem; color: #9ca3af; text-align: left; max-width: 800px; margin: 0 auto; }
+    .disclaimer-content.open { max-height: 2000px; padding: 25px; }
+    .support-box { padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 0.5rem; }
     .text-pink-400 { color: #f472b6; }
-    .underline { text-decoration: underline; }
 </style>
 
 <div class="disclaimer-section">
     <div class="footer-links">
-        <p class="mb-2">© 2026 MyAICrush - Tous droits réservés</p><br>
-        <div class="flex flex-wrap justify-center gap-2">
-            <a href="https://myaicrush.ai/privacy-policy.html">Politique de Confidentialité</a> | 
-            <a href="https://myaicrush.ai/terms-and-conditions.html">Conditions Générales</a>
-        </div>
+        <p>© 2026 MyAICrush - Tous droits réservés</p>
+        <a href="https://myaicrush.ai/privacy-policy.html">Politique de Confidentialité</a> | 
+        <a href="https://myaicrush.ai/terms-and-conditions.html">Conditions Générales</a>
     </div>
-
     <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Mentions Légales & Support Facturation</div>
-    
     <div id="disclaimer-content" class="disclaimer-content">
-        <div class="mb-4">
-            <strong>i) Restriction d'âge (Mandatoire)</strong><br>
-            Ce site Web est destiné aux adultes de 18 ans et plus (ou 21 ans là où la loi l'exige). En accédant à ce site, vous confirmez que vous avez au moins 18 ans. L'accès par des mineurs est strictement interdit.
-        </div>
-        <div class="mb-4">
-            <strong>ii) Divulgation de l'IA</strong><br>
-            Tous les personnages et conversations sont générés par intelligence artificielle. Aucun individu réel n'est impliqué dans les discussions ou le contenu. Tous les personnages sont fictifs et ne représentent pas des individus réels. Toute ressemblance avec des personnes réelles est purement fortuite.
-        </div>
-        <div class="mb-4">
-            <strong>iii) Clause de non-responsabilité pour contenu interdit</strong><br>
-            Nous interdisons strictement tout contenu impliquant des mineurs, des actes non consentis ou des activités illégales. Toutes les interactions sont modérées et filtrées pour prévenir tout contenu interdit.
-        </div>
-        <div class="mb-4">
-            <strong>iv) Politique relative au contenu généré par les utilisateurs</strong><br>
-            Les utilisateurs peuvent télécharger des images dans les discussions. Les images téléchargées ne peuvent être modifiées ou redistribuées. Tout contenu violant nos politiques sera supprimé et pourra entraîner la suspension du compte.
-        </div>
-        <div class="mb-4">
-            <strong>v) Divertissement uniquement</strong><br>
-            Cette plateforme est destinée uniquement à des fins de divertissement. Aucun conseil professionnel (juridique, médical, financier, psychologique) n'est fourni.
-        </div>
-        <div class="mb-4">
-            <strong>vi) Confidentialité et données</strong><br>
-            Les conversations peuvent être enregistrées à des fins de modération et de qualité. Vos données sont traitées conformément à notre Politique de Confidentialité. Nous ne vendons pas vos données personnelles.
-        </div>
         <div class="support-box">
             <strong>vii) Support Facturation et Remboursements</strong><br>
-            Pour toute demande concernant vos paiements ou pour faire valoir votre garantie de remboursement de 15 jours, veuillez contacter l'email suivant :<br>
             <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
-            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Support Facturation Explodely</a>
+            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400">Support Facturation Explodely</a>
         </div>
     </div>
 </div>
@@ -743,14 +410,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleDisclaimer() {
         const content = document.getElementById('disclaimer-content');
         content.classList.toggle('open');
-        if (content.classList.contains('open')) {
-            setTimeout(() => {
-                content.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 300);
-        }
     }
 </script>
-
 
 </body>
 </html>

@@ -965,38 +965,315 @@ async function checkPremiumGumroad(email) {
   }
 }
 
+// Permet de conserver le raw body (utile si signature)
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf; // Buffer
+  }
+}));
+
 
 // =====================================
-// 🔧 Helper global : STRIPE (abo) OU GUMROAD (one-shot)
+// 🔍 Vérification premium Explodely
+// =====================================
+async function checkPremiumExplodely(email) {
+  try {
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+
+    const user = await users.findOne({ email });
+
+    if (!user) return false;
+
+    // 👇 On considère premium si flag enregistré via webhook
+    if (user.explodelyPremium === true) {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("❌ Erreur checkPremiumExplodely:", error.message);
+    return false;
+  }
+}
+
+
+
+// =====================================
+// 🔧 Helper global : STRIPE (abo) OU GUMROAD (one-shot) ou EXPLODELY
 // =====================================
 async function getPremiumStatus(email) {
-  // 1) On commence par Stripe (abonnements)
-  try {
-    const isStripePremium = await checkPremiumStripe(email);
-    if (isStripePremium) {
-      console.log(`✅ Premium via STRIPE pour ${email}`);
-      return true;
-    }
-  } catch (err) {
-    console.error("❌ Erreur checkPremiumStripe:", err.message || err);
-    // on ne throw pas, on laisse une chance à Gumroad
+
+  // 1️⃣ Explodely en priorité
+  const isExplodelyPremium = await checkPremiumExplodely(email);
+  if (isExplodelyPremium) {
+    console.log(`✅ Premium via EXPLODELY pour ${email}`);
+    return true;
   }
 
-  // 2) Si pas premium Stripe → on teste Gumroad
-  try {
-    const isGumroadPremium = await checkPremiumGumroad(email);
-    if (isGumroadPremium) {
-      console.log(`✅ Premium via GUMROAD pour ${email}`);
-      return true;
-    }
-  } catch (err) {
-    console.error("❌ Erreur checkPremiumGumroad:", err.message || err);
+  // 2️⃣ Stripe (si tu veux garder fallback)
+  const isStripePremium = await checkPremiumStripe(email);
+  if (isStripePremium) {
+    return true;
   }
 
-  // 3) Ni Stripe ni Gumroad
-  console.log(`⛔ Aucun premium trouvé pour ${email}`);
+  // 3️⃣ Gumroad (si tu veux garder fallback)
+  const isGumroadPremium = await checkPremiumGumroad(email);
+  if (isGumroadPremium) {
+    return true;
+  }
+
   return false;
 }
+
+
+
+// -------------------------------------
+// Helpers Explodely
+// -------------------------------------
+function normalizeEmail(v) {
+  return String(v || "").trim().toLowerCase();
+}
+
+function extractEventId(payload) {
+  // On essaie plusieurs champs possibles
+  return (
+    payload.ipn_id ||
+    payload.event_id ||
+    payload.transaction_id ||
+    payload.order_id ||
+    payload.invoice_id ||
+    payload.payment_id ||
+    null
+  );
+}
+
+function extractProductId(payload) {
+  return payload.product_id || payload.productId || payload.product || null;
+}
+
+function extractEmail(payload) {
+  return normalizeEmail(
+    payload.customer_email ||
+    payload.purchaser_email ||
+    payload.email ||
+    payload.buyer_email ||
+    payload.customer?.email
+  );
+}
+
+// Détection "refund" robuste (à adapter après ton 1er vrai payload)
+function isRefundEvent(payload) {
+  const type = String(payload.type || payload.event || payload.event_type || payload.ipn_type || "").toLowerCase();
+  const status = String(payload.status || payload.payment_status || "").toLowerCase();
+
+  const flags = [
+    payload.refund === true,
+    payload.refunded === true,
+    payload.is_refunded === true,
+    payload.isRefund === true,
+    String(payload.is_refunded).toLowerCase() === "true",
+    String(payload.refunded).toLowerCase() === "true",
+  ];
+
+  if (flags.some(Boolean)) return true;
+  if (type.includes("refund") || type.includes("chargeback") || type.includes("dispute")) return true;
+  if (status === "refunded" || status === "chargeback" || status === "disputed") return true;
+
+  return false;
+}
+
+// (Optionnel) Vérif signature — à activer uniquement si Explodely te donne un secret + un header clair
+function verifyExplodelySignature(req) {
+  const secret = process.env.EXPLODELY_WEBHOOK_SECRET;
+  if (!secret) return true; // pas configuré => on skip
+
+  // ⚠️ adapte le header exact si Explodely en fournit un (ex: "x-explodely-signature")
+  const sigHeader = req.get("x-explodely-signature") || req.get("x-signature") || "";
+  if (!sigHeader) return false;
+
+  const raw = req.rawBody; // Buffer
+  if (!raw) return false;
+
+  const computed = crypto
+    .createHmac("sha256", secret)
+    .update(raw)
+    .digest("hex");
+
+  // Certaines plateformes préfixent "sha256=" dans le header
+  const provided = sigHeader.replace(/^sha256=/i, "").trim();
+
+  return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(provided));
+}
+
+// -------------------------------------
+// WEBHOOK EXPLODELY (achat + refund)
+// -------------------------------------
+app.post("/webhook/explodely", async (req, res) => {
+  try {
+    // (Optionnel) sécurité signature
+    if (!verifyExplodelySignature(req)) {
+      console.warn("❌ Webhook Explodely signature invalide");
+      return res.status(401).send("invalid signature");
+    }
+
+    const payload = req.body || {};
+    console.log("🟢 Webhook Explodely reçu:", payload);
+
+    const email = extractEmail(payload);
+    const productId = extractProductId(payload);
+    const eventId = extractEventId(payload); // pour anti-doublon
+    const refunded = isRefundEvent(payload);
+
+    if (!email || !productId) {
+      console.warn("⚠️ Webhook Explodely incomplet:", { email, productId });
+      return res.status(400).send("missing email or product_id");
+    }
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+    const ipn = database.collection("explodely_ipn");
+
+    // -----------------------------
+    // Anti-doublon (idempotence)
+    // -----------------------------
+    // Si pas d'eventId fourni, on crée une empreinte (moins idéal mais utile)
+    const safeEventId =
+      eventId ||
+      crypto.createHash("sha1").update(JSON.stringify(payload)).digest("hex");
+
+    // On "claim" l'event de façon atomique : si déjà vu => on stop
+    const claim = await ipn.updateOne(
+      { _id: safeEventId },
+      {
+        $setOnInsert: {
+          _id: safeEventId,
+          email,
+          productId,
+          refunded,
+          receivedAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
+
+    // Si matchedCount > 0 et upsertedCount === 0 => déjà traité
+    if (claim.matchedCount > 0 && claim.upsertedCount === 0) {
+      console.log("⚠️ IPN déjà traité:", safeEventId);
+      return res.status(200).send("already processed");
+    }
+
+    // -----------------------------
+    // Mapping produits
+    // -----------------------------
+    const PREMIUM_ID = process.env.EXPLODELY_PREMIUM_PRODUCT_ID;
+
+    const tokenMapping = {
+      [process.env.EXPLODELY_TOKEN_10_ID]: 10,
+      [process.env.EXPLODELY_TOKEN_50_ID]: 50,
+      [process.env.EXPLODELY_TOKEN_100_ID]: 100,
+      [process.env.EXPLODELY_TOKEN_300_ID]: 300,
+      [process.env.EXPLODELY_TOKEN_700_ID]: 700,
+      [process.env.EXPLODELY_TOKEN_1000_ID]: 1000,
+    };
+
+    const tokens = tokenMapping[productId] || 0;
+    const isPremiumProduct = Boolean(PREMIUM_ID && productId === PREMIUM_ID);
+    const isTokenProduct = tokens > 0;
+
+    // -----------------------------
+    // 1) Premium
+    // -----------------------------
+    if (isPremiumProduct) {
+      if (!refunded) {
+        await users.updateOne(
+          { email },
+          {
+            $set: {
+              explodelyPremium: true,
+              premiumSource: "explodely",
+              premiumUpdatedAt: new Date(),
+            },
+            $setOnInsert: { createdAt: new Date(), creditsPurchased: 0 }
+          },
+          { upsert: true }
+        );
+
+        console.log(`✅ PREMIUM ACTIVÉ (Explodely) pour ${email}`);
+      } else {
+        await users.updateOne(
+          { email },
+          {
+            $set: {
+              explodelyPremium: false,
+              premiumSource: "explodely_refund",
+              premiumUpdatedAt: new Date(),
+            },
+            $setOnInsert: { createdAt: new Date(), creditsPurchased: 0 }
+          },
+          { upsert: true }
+        );
+
+        console.log(`🧾 PREMIUM REFUND → accès coupé pour ${email}`);
+      }
+    }
+
+    // -----------------------------
+    // 2) Jetons
+    // -----------------------------
+    if (isTokenProduct) {
+      const delta = refunded ? -tokens : tokens;
+
+      // ✅ Update pipeline pour clamp à 0 (MongoDB >= 4.2)
+      await users.updateOne(
+        { email },
+        [
+          {
+            $setOnInsert: {
+              email,
+              createdAt: new Date(),
+              creditsPurchased: 0,
+            }
+          },
+          {
+            $set: {
+              creditsPurchased: {
+                $max: [
+                  0,
+                  { $add: ["$creditsPurchased", delta] }
+                ]
+              },
+              tokensUpdatedAt: new Date(),
+            }
+          }
+        ],
+        { upsert: true }
+      );
+
+      if (!refunded) {
+        console.log(`💰 +${tokens} jetons ajoutés à ${email}`);
+      } else {
+        console.log(`🧾 Refund jetons → -${tokens} (clamp à 0) pour ${email}`);
+      }
+    }
+
+    // -----------------------------
+    // Si product inconnu
+    // -----------------------------
+    if (!isPremiumProduct && !isTokenProduct) {
+      console.warn("⚠️ Product Explodely non mappé:", { productId, email, refunded });
+    }
+
+    return res.status(200).send("ok");
+
+  } catch (err) {
+    console.error("❌ Erreur webhook Explodely:", err);
+    return res.status(500).send("server error");
+  }
+});
+
+
+
 
 
 // =========================
