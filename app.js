@@ -1040,158 +1040,184 @@ app.post("/webhook/explodely", async (req, res) => {
   try {
     const payload = req.body || {};
 
-    // ✅ Champs EXACTS d'après TES logs Explodely
-    const email = String(payload.customerEmail || "").trim().toLowerCase();
-    const productId = String(payload.productId || "").trim();
-    const eventType = String(payload.type || "").trim().toLowerCase(); // "sale", "refund", ...
-    const orderId = String(payload.orderid || "").trim();
-
-    // ✅ Log utile 1 ligne (facile à lire)
-    console.log("🟢 Explodely webhook:", { email, productId, eventType, orderId });
-
-    // ⚠️ Si incomplet, on répond OK pour éviter les retries
-    if (!email || !productId || !eventType || !orderId) {
-      console.warn("⚠️ Webhook Explodely incomplet:", payload);
-      return res.status(200).send("ok");
-    }
-
     const database = client.db("MyAICrush");
     const users = database.collection("users");
     const explodelyEvents = database.collection("explodely_events");
 
-    // ✅ Anti-double: si déjà traité (sale/refund etc.) on ignore
-    const already = await explodelyEvents.findOne({ orderId, eventType });
-    if (already) {
-      console.log(`🟡 Explodely déjà traité: orderId=${orderId} type=${eventType}`);
-      return res.status(200).send("ok");
-    }
+    // -----------------------------
+    // Helpers CSV → array
+    // -----------------------------
+    const toList = (v) =>
+      String(v || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-    // ✅ Mapping jetons (ids = .env)
-    const tokenMapping = {
-      [process.env.EXPLODELY_TOKEN_10_ID]: 10,
-      [process.env.EXPLODELY_TOKEN_50_ID]: 50,
-      [process.env.EXPLODELY_TOKEN_100_ID]: 100,
-      [process.env.EXPLODELY_TOKEN_300_ID]: 300,
-      [process.env.EXPLODELY_TOKEN_700_ID]: 700,
-      [process.env.EXPLODELY_TOKEN_1000_ID]: 1000
+    const pickEmail = (v) => {
+      // Explodely peut renvoyer "a@gmail.com,a@gmail.com,b@gmail.com"
+      // On nettoie et on retourne le 1er email valide
+      const parts = toList(v).map((x) => x.toLowerCase());
+      const valid = parts.find((e) => e.includes("@"));
+      return (valid || "").trim();
     };
 
-    const premiumProductId = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "").trim();
-    const isPremiumProduct = productId === premiumProductId;
-    const tokensAmount = tokenMapping[productId]; // undefined si pas jetons
+    // -----------------------------
+    // Champs EXACTS d'après tes logs
+    // -----------------------------
+    const emails = toList(payload.customerEmail).map((x) => x.toLowerCase());
+    const productIds = toList(payload.productId);
+    const eventTypes = toList(payload.type).map((x) => x.toLowerCase());
+    const orderIds = toList(payload.orderid);
 
-    // ✅ helper : marquer l’event traité (idempotency)
-    async function markEventDone(extra = {}) {
-      await explodelyEvents.insertOne({
-        orderId,
-        eventType,
-        email,
-        productId,
-        createdAt: new Date(),
-        ...extra
-      });
-    }
+    // Si jamais Explodely renvoie parfois un seul email mais plusieurs items
+    // on garde aussi une version "fallback"
+    const fallbackEmail = pickEmail(payload.customerEmail);
 
-    // =========================
-    // ✅ SALE
-    // =========================
-    if (eventType === "sale") {
+    const count = Math.max(emails.length, productIds.length, eventTypes.length, orderIds.length);
 
-      // PREMIUM
-      if (isPremiumProduct) {
-        await users.updateOne(
-          { email },
-          { $set: { explodelyPremium: true } },
-          { upsert: true }
-        );
-
-        await markEventDone({ action: "premium_on" });
-        console.log(`✅ Premium Explodely activé pour ${email}`);
-        return res.status(200).send("ok");
-      }
-
-      // TOKENS
-      if (tokensAmount) {
-        const toAdd = Number(tokensAmount);
-        if (!Number.isFinite(toAdd) || toAdd <= 0) {
-          await markEventDone({ action: "tokens_invalid", tokensAmount });
-          console.warn("⚠️ tokensAmount invalide:", tokensAmount);
-          return res.status(200).send("ok");
-        }
-
-        await users.updateOne(
-          { email },
-          { $inc: { creditsPurchased: toAdd } },
-          { upsert: true }
-        );
-
-        await markEventDone({ action: "tokens_add", tokens: toAdd });
-        console.log(`💰 +${toAdd} jetons ajoutés à ${email}`);
-        return res.status(200).send("ok");
-      }
-
-      // inconnu
-      await markEventDone({ action: "unknown_product_sale" });
-      console.log("🟡 Produit Explodely non mappé (sale):", { productId });
+    if (!count) {
+      console.warn("⚠️ Webhook Explodely vide:", payload);
       return res.status(200).send("ok");
     }
 
-    // =========================
-    // ✅ REFUND / CHARGEBACK
-    // =========================
-    const refundTypes = ["refund", "refunded", "chargeback", "reversal", "reversed", "dispute"];
-    const isRefundLike = refundTypes.includes(eventType);
+    // -----------------------------
+    // Mapping produits
+    // -----------------------------
+    const tokenMapping = {
+      [String(process.env.EXPLODELY_TOKEN_10_ID || "")]: 10,
+      [String(process.env.EXPLODELY_TOKEN_50_ID || "")]: 50,
+      [String(process.env.EXPLODELY_TOKEN_100_ID || "")]: 100,
+      [String(process.env.EXPLODELY_TOKEN_300_ID || "")]: 300,
+      [String(process.env.EXPLODELY_TOKEN_700_ID || "")]: 700,
+      [String(process.env.EXPLODELY_TOKEN_1000_ID || "")]: 1000
+    };
 
-    if (isRefundLike) {
+    const premiumId = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "");
 
-      // PREMIUM refund => coupe premium
-      if (isPremiumProduct) {
-        await users.updateOne(
-          { email },
-          { $set: { explodelyPremium: false } },
-          { upsert: true }
-        );
+    // -----------------------------
+    // Traitement item par item
+    // -----------------------------
+    for (let i = 0; i < count; i++) {
+      const emailRaw = emails[i] || fallbackEmail || "";
+      const email = pickEmail(emailRaw) || fallbackEmail;
 
-        await markEventDone({ action: "premium_off" });
-        console.log(`⛔ Premium Explodely désactivé (refund) pour ${email}`);
-        return res.status(200).send("ok");
+      const productId = String(productIds[i] || "").trim();
+      const eventType = String(eventTypes[i] || "").trim().toLowerCase();
+      const orderId = String(orderIds[i] || "").trim();
+
+      // Skip si incomplet
+      if (!email || !email.includes("@") || !productId || !eventType || !orderId) {
+        console.warn("⚠️ Explodely item incomplet:", { i, email, productId, eventType, orderId });
+        continue;
       }
 
-      // TOKENS refund => retire pack (sans descendre sous 0)
-      if (tokensAmount) {
-        const toRemove = Number(tokensAmount);
-        if (!Number.isFinite(toRemove) || toRemove <= 0) {
-          await markEventDone({ action: "tokens_invalid_refund", tokensAmount });
-          return res.status(200).send("ok");
+      // Idempotency PAR ITEM (sinon tu bloques à cause des CSV)
+      const eventKey = { orderId, productId, eventType, email };
+      const already = await explodelyEvents.findOne(eventKey);
+      if (already) {
+        console.log("🟡 Explodely item déjà traité:", eventKey);
+        continue;
+      }
+
+      const isPremiumProduct = productId === premiumId;
+      const tokensAmount = tokenMapping[productId];
+
+      // Détection refund-like (on affinera quand tu auras le vrai payload refund)
+      const isRefundLike = ["refund", "refunded", "chargeback", "reversal", "cancel", "canceled"].includes(eventType);
+
+      // ---- SALE ----
+      if (eventType === "sale") {
+        if (isPremiumProduct) {
+          await users.updateOne(
+            { email },
+            { $set: { explodelyPremium: true } },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", createdAt: new Date() });
+          console.log(`✅ Premium Explodely activé pour ${email} (orderId=${orderId})`);
+          continue;
         }
 
-        const user = await users.findOne({ email }, { projection: { creditsPurchased: 1 } });
-        const current = Number(user?.creditsPurchased || 0);
-        const newValue = Math.max(0, current - toRemove);
+        if (tokensAmount) {
+          const toAdd = Number(tokensAmount);
+          if (!Number.isFinite(toAdd) || toAdd <= 0) {
+            await explodelyEvents.insertOne({ ...eventKey, action: "tokens_invalid", createdAt: new Date() });
+            console.warn("⚠️ tokens invalid:", { productId, tokensAmount });
+            continue;
+          }
 
-        await users.updateOne(
-          { email },
-          { $set: { creditsPurchased: newValue } },
-          { upsert: true }
-        );
+          await users.updateOne(
+            { email },
+            { $inc: { creditsPurchased: toAdd } },
+            { upsert: true }
+          );
 
-        await markEventDone({ action: "tokens_remove", tokens: toRemove, before: current, after: newValue });
-        console.log(`↩️ -${toRemove} jetons (refund) pour ${email} (avant=${current} après=${newValue})`);
-        return res.status(200).send("ok");
+          await explodelyEvents.insertOne({ ...eventKey, action: "tokens_add", tokens: toAdd, createdAt: new Date() });
+          console.log(`💰 +${toAdd} jetons pour ${email} (orderId=${orderId})`);
+          continue;
+        }
+
+        await explodelyEvents.insertOne({ ...eventKey, action: "unknown_product_sale", createdAt: new Date() });
+        console.log("🟡 Produit non mappé (sale):", { email, productId, orderId });
+        continue;
       }
 
-      await markEventDone({ action: "unknown_product_refund" });
-      console.log("🟡 Produit Explodely non mappé (refund):", { productId, eventType });
-      return res.status(200).send("ok");
+      // ---- REFUND-LIKE ----
+      if (isRefundLike) {
+        if (isPremiumProduct) {
+          await users.updateOne(
+            { email },
+            { $set: { explodelyPremium: false } },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({ ...eventKey, action: "premium_off", createdAt: new Date() });
+          console.log(`⛔ Premium Explodely désactivé (refund-like) pour ${email} (orderId=${orderId})`);
+          continue;
+        }
+
+        if (tokensAmount) {
+          const toRemove = Number(tokensAmount);
+          if (!Number.isFinite(toRemove) || toRemove <= 0) {
+            await explodelyEvents.insertOne({ ...eventKey, action: "tokens_invalid_refund", createdAt: new Date() });
+            continue;
+          }
+
+          const user = await users.findOne({ email }, { projection: { creditsPurchased: 1 } });
+          const current = Number(user?.creditsPurchased || 0);
+          const newValue = Math.max(0, current - toRemove);
+
+          await users.updateOne(
+            { email },
+            { $set: { creditsPurchased: newValue } },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({
+            ...eventKey,
+            action: "tokens_remove",
+            tokens: toRemove,
+            before: current,
+            after: newValue,
+            createdAt: new Date()
+          });
+
+          console.log(`↩️ -${toRemove} jetons refund-like pour ${email} (avant=${current} après=${newValue})`);
+          continue;
+        }
+
+        await explodelyEvents.insertOne({ ...eventKey, action: "unknown_product_refund", createdAt: new Date() });
+        console.log("🟡 Produit non mappé (refund-like):", { email, productId, orderId, eventType });
+        continue;
+      }
+
+      // ---- OTHER ----
+      await explodelyEvents.insertOne({ ...eventKey, action: "ignored_event", createdAt: new Date() });
+      console.log("ℹ️ Event ignoré:", { email, productId, orderId, eventType });
     }
 
-    // =========================
-    // ✅ autres events: on ignore mais on log
-    // =========================
-    await markEventDone({ action: "ignored_event" });
-    console.log("ℹ️ Event Explodely ignoré:", { eventType, productId, email });
     return res.status(200).send("ok");
-
   } catch (error) {
     console.error("❌ Erreur webhook Explodely:", error);
     return res.status(200).send("ok");
