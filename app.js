@@ -123,6 +123,8 @@ const userLastImageDescriptions = new Map(); // Stocke la dernière description 
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true })); // ✅ important pour IPN
+
 
 
 
@@ -1111,137 +1113,19 @@ function verifyExplodelySignature(req) {
 // -------------------------------------
 
 // ✅ WEBHOOK EXPLODELY (JSON + FORM) + logs utiles
-app.post(
-  "/webhook/explodely",
-  express.json({ limit: "2mb" }),
-  express.urlencoded({ extended: true }), // ✅ important : support form-urlencoded
-  async (req, res) => {
-    try {
-      const payload = req.body || {};
 
-      console.log("🟢 Webhook Explodely reçu (headers):", {
-        "content-type": req.headers["content-type"],
-        "user-agent": req.headers["user-agent"],
-      });
+app.post("/webhook/explodely", async (req, res) => {
+  try {
+    console.log("🟢 Explodely headers:", req.headers);
+    console.log("🟢 Explodely query:", req.query);
+    console.log("🟢 Explodely body:", req.body);
 
-      console.log("🟢 Webhook Explodely reçu (body):", payload);
-
-      // ✅ Email: on tente plusieurs noms possibles
-      const email =
-        (payload.customer_email ||
-          payload.email ||
-          payload.buyer_email ||
-          payload.customerEmail ||
-          payload.customerEmailAddress ||
-          payload.user_email ||
-          payload.userEmail ||
-          "")
-          .toString()
-          .trim()
-          .toLowerCase();
-
-      // ✅ ProductId: on tente plusieurs noms possibles
-      const productId =
-        (payload.product_id ||
-          payload.productId ||
-          payload.product ||
-          payload.product_code ||
-          payload.item_id ||
-          payload.itemId ||
-          "")
-          .toString()
-          .trim();
-
-      // ✅ Event type (optionnel, utile pour refund)
-      const eventType =
-        (payload.event ||
-          payload.type ||
-          payload.ipn_type ||
-          payload.status ||
-          "")
-          .toString()
-          .trim()
-          .toLowerCase();
-
-      if (!email || !productId) {
-        console.log("❌ Champs manquants:", { email, productId, eventType });
-        return res.status(400).send("missing email or product_id");
-      }
-
-      const database = client.db("MyAICrush");
-      const users = database.collection("users");
-
-      // 🧠 Mapping tokens
-      const tokenMapping = {
-        [process.env.EXPLODELY_TOKEN_10_ID]: 10,
-        [process.env.EXPLODELY_TOKEN_50_ID]: 50,
-        [process.env.EXPLODELY_TOKEN_100_ID]: 100,
-        [process.env.EXPLODELY_TOKEN_300_ID]: 300,
-        [process.env.EXPLODELY_TOKEN_700_ID]: 700,
-        [process.env.EXPLODELY_TOKEN_1000_ID]: 1000
-      };
-
-      const isPremiumProduct = productId === process.env.EXPLODELY_PREMIUM_PRODUCT_ID;
-      const tokensToAdd = tokenMapping[productId];
-
-      // ✅ Détection refund (selon ce que Explodely envoie)
-      const isRefund =
-        eventType.includes("refund") ||
-        eventType.includes("chargeback") ||
-        payload.refunded === true ||
-        payload.is_refund === true ||
-        payload.payment_status === "refunded";
-
-      // 🏆 PREMIUM
-      if (isPremiumProduct) {
-        await users.updateOne(
-          { email },
-          { $set: { explodelyPremium: isRefund ? false : true } },
-          { upsert: true }
-        );
-
-        console.log(
-          isRefund
-            ? `🧯 REFUND premium → accès coupé pour ${email}`
-            : `✅ Premium activé via Explodely pour ${email}`
-        );
-      }
-
-      // 🪙 TOKENS
-      if (tokensToAdd) {
-        const delta = isRefund ? -tokensToAdd : tokensToAdd;
-
-        // ✅ sécurité : ne pas descendre sous 0
-        await users.updateOne(
-          { email },
-          [
-            {
-              $set: {
-                creditsPurchased: {
-                  $max: [{ $add: ["$creditsPurchased", delta] }, 0]
-                }
-              }
-            }
-          ],
-          { upsert: true }
-        );
-
-        console.log(
-          isRefund
-            ? `🧯 REFUND tokens → ${tokensToAdd} retirés à ${email}`
-            : `💰 ${tokensToAdd} jetons ajoutés à ${email}`
-        );
-      }
-
-      return res.status(200).send("ok");
-    } catch (error) {
-      console.error("❌ Erreur webhook Explodely:", error);
-      return res.status(500).send("server error");
-    }
+    return res.status(200).send("ok");
+  } catch (e) {
+    console.error("❌ Explodely webhook error:", e);
+    return res.status(500).send("server error");
   }
-);
-
-
+});
 
 
 
