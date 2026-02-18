@@ -2,13 +2,13 @@ import { characters } from './data.js';
 
 
 // Vérification du statut premium et affichage de la section "Jetons"
+// Vérification du statut premium (MongoDB: explodelyPremium uniquement)
 async function checkPremiumStatus() {
   const user = JSON.parse(localStorage.getItem('user'));
-
-  if (!user || !user.email) return;
+  if (!user?.email) return;
 
   try {
-    const response = await fetch("/api/is-gumroad-premium", {
+    const response = await fetch("/api/is-premium-db", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: user.email })
@@ -16,12 +16,9 @@ async function checkPremiumStatus() {
 
     const data = await response.json();
     const statusEl = document.getElementById("subscription-status");
-
     if (!statusEl) return;
 
-    const shopLink = "https://shop.myaicrush.ai";
-
-    if (data.isPremium) {
+    if (data.isPremium === true) {
       statusEl.innerHTML = `
         <div class="sub-ok">
           Premium actif ✅
@@ -29,30 +26,26 @@ async function checkPremiumStatus() {
       `;
     } else {
       statusEl.innerHTML = `
-  <div class="sub-off">
-    
-    <p style="margin-bottom: 12px;">
-      Votre premium n'est pas actif ou va expirer sous peu.
-    </p>
+        <div class="sub-off">
+          <p style="margin-bottom: 12px;">
+            Ton Premium n’est pas actif.
+          </p>
 
-    <div class="lifetime-box">
-      💎 Premium à vie<br>
-      <span class="lifetime-price">Seulement 49$ — paiement unique</span>
-    </div>
+          <div class="lifetime-box">
+            💎 Premium à vie<br>
+            <span class="lifetime-price">Seulement 49$ — paiement unique</span>
+          </div>
 
-    <a href="https://shop.myaicrush.ai" 
-       target="_blank"
-       class="premium-cta-btn">
-       🚀 Activer le Premium
-    </a>
-
-  </div>
-`;
-
+          <a href="https://explodely.com/p/22705532"
+             target="_blank"
+             class="premium-cta-btn">
+             🚀 Activer le Premium
+          </a>
+        </div>
+      `;
     }
-
   } catch (error) {
-    console.error("Erreur vérification Gumroad :", error);
+    console.error("❌ Erreur vérification premium DB :", error);
   }
 }
 
