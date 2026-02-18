@@ -15,8 +15,102 @@
     gtag('js', new Date());
     gtag('config', 'G-FJ5S0H9B1R');
   </script>
+
+  <style>
+    /* STYLE POPUP CONFIRMATION (DESIGN IOS DARK) */
+    .jetons-popup {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(8px);
+    }
+    .jetons-popup.hidden { display: none; }
+    .popup-content {
+      background: #1a1a1a;
+      padding: 40px 30px;
+      border-radius: 30px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .close-btn {
+      position: absolute;
+      top: 20px; right: 20px;
+      background: none; border: none; color: #fff;
+      font-size: 22px; cursor: pointer; opacity: 0.7;
+    }
+    .popup-cc-img {
+      width: 100px;
+      margin: 0 auto 20px;
+      display: block;
+    }
+    .popup-title {
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-family: sans-serif;
+    }
+    .popup-text {
+      color: #e0e0e0;
+      font-size: 18px;
+      margin-bottom: 30px;
+      line-height: 1.4;
+      font-family: sans-serif;
+    }
+    .popup-text b { color: #fff; }
+    .popup-footer-btns {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    .btn-cancel {
+      flex: 1;
+      background: #333;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 15px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-confirm {
+      flex: 1;
+      background: #d63384;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 15px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
+
+<div id="jetons-popup" class="jetons-popup hidden">
+  <div class="popup-content">
+    <button class="close-btn" onclick="closeJetonsPopup()">×</button>
+    <img src="/images/market/carte-credit.webp" class="popup-cc-img" alt="Card Icon">
+    <h2 class="popup-title">Confirmer ton achat ?</h2>
+    <p class="popup-text">
+      Tu es sur le point d'acheter <b id="confirm-tokens">0 jetons</b> pour <b id="confirm-price">0€</b>
+    </p>
+    <div class="popup-footer-btns">
+      <button class="btn-cancel" onclick="closeJetonsPopup()">Annuler</button>
+      <button id="final-confirm-btn" class="btn-confirm">Confirmer</button>
+    </div>
+  </div>
+</div>
 
   <div class="container premium-page">
     <h1 class="p-title">Pas assez de jetons ? </h1>
@@ -156,7 +250,7 @@
 
 <div class="token-offers">
 
-  <div class="token-card">
+  <div class="token-card" data-tokens="10 jetons" data-price="9$">
     <i class="fas fa-coins token-icon-fa"></i>
     <div class="token-title">10 Jetons</div>
     <div class="token-price">$9</div>
@@ -164,7 +258,7 @@
        class="token-cta">Acheter</a>
   </div>
 
-  <div class="token-card">
+  <div class="token-card" data-tokens="50 jetons" data-price="37$">
     <span class="token-save">Économise 17%</span>
     <i class="fas fa-coins token-icon-fa"></i>
     <div class="token-title">50 Jetons</div>
@@ -173,7 +267,7 @@
        class="token-cta">Acheter</a>
   </div>
 
-  <div class="token-card">
+  <div class="token-card" data-tokens="100 jetons" data-price="59$">
     <span class="token-save">Économise 34%</span>
     <i class="fas fa-coins token-icon-fa"></i>
     <div class="token-title">100 Jetons</div>
@@ -182,7 +276,7 @@
        class="token-cta">Acheter</a>
   </div>
 
-  <div class="token-card popular">
+  <div class="token-card popular" data-tokens="300 jetons" data-price="129$">
     <span class="token-save" style="background: #c22fff;">Économise 52% 🔥</span>
     <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
     <div class="token-title">300 Jetons</div>
@@ -191,7 +285,7 @@
        class="token-cta">Acheter</a>
   </div>
 
-  <div class="token-card">
+  <div class="token-card" data-tokens="700 jetons" data-price="249$">
     <span class="token-save">Économise 60%</span>
     <i class="fas fa-coins token-icon-fa"></i>
     <div class="token-title">700 Jetons</div>
@@ -200,7 +294,7 @@
        class="token-cta">Acheter</a>
   </div>
 
-  <div class="token-card" style="border:2px solid #ffd700;">
+  <div class="token-card" style="border:2px solid #ffd700;" data-tokens="1000 jetons" data-price="299$">
     <div class="best-deal">BEST VALUE 💎</div>
     <span class="token-save">Économise 66%</span>
     <i class="fas fa-coins token-icon-fa" style="font-size:55px;"></i>
@@ -489,6 +583,35 @@
             }, 300);
         }
     }
+
+    // GESTION DE LA POPUP
+    const popup = document.getElementById('jetons-popup');
+    const confirmTokensText = document.getElementById('confirm-tokens');
+    const confirmPriceText = document.getElementById('confirm-price');
+    const finalConfirmBtn = document.getElementById('final-confirm-btn');
+
+    function closeJetonsPopup() {
+        popup.classList.add('hidden');
+    }
+
+    document.querySelectorAll('.token-cta').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const card = this.closest('.token-card');
+            const tokens = card.getAttribute('data-tokens');
+            const price = card.getAttribute('data-price');
+            const url = this.getAttribute('href');
+
+            confirmTokensText.innerText = tokens;
+            confirmPriceText.innerText = price;
+            
+            finalConfirmBtn.onclick = function() {
+                window.location.href = url;
+            };
+
+            popup.classList.remove('hidden');
+        });
+    });
 </script>
 
 </body>
