@@ -28,7 +28,7 @@ async function checkPremiumStatus() {
       statusEl.innerHTML = `
         <div class="sub-off">
           <p style="margin-bottom: 12px;">
-            Ton Premium n’est pas actif.
+            Ton Premium n’est pas actif au expire ou prochain renouvellement.
           </p>
 
           <div class="lifetime-box">
