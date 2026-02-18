@@ -32,7 +32,7 @@ async function checkPremiumStatus() {
           </p>
 
           <div class="lifetime-box">
-            💎 Premium à vie<br>
+            💎 Premium <br>
             <span class="lifetime-price">Seulement 7$</span>
           </div>
 
