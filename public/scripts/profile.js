@@ -33,7 +33,7 @@ async function checkPremiumStatus() {
 
           <div class="lifetime-box">
             💎 Premium à vie<br>
-            <span class="lifetime-price">Seulement 49$ — paiement unique</span>
+            <span class="lifetime-price">Seulement 7$</span>
           </div>
 
           <a href="https://explodely.com/p/22705532"
