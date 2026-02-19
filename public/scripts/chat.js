@@ -319,9 +319,9 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             // Limite messages non-premium
             if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
                 addBotMessage(
-                    `Tu as dépassé ta limite de messages gratuits. 
+                    `You've reached your free message limit.
                      <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
-                     Deviens Premium</a> pour débloquer les messages illimités.`,
+                     Become Premium</a> to unlock unlimited messages.`,
                     messagesContainer
                 );
                 hideTypingIndicator();

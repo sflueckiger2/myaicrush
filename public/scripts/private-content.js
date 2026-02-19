@@ -51,7 +51,7 @@ async function handlePrivateUnlock(price, folder) {
   const user = JSON.parse(localStorage.getItem("user"));
 
   if (!user || !user.email) {
-    alert('Veuillez vous connecter pour débloquer ce contenu.');
+    alert('Please log in to unlock this content.');
     window.location.href = 'profile.html';
     return false;
   }
@@ -150,7 +150,7 @@ async function handlePrivateUnlock(price, folder) {
   } catch (error) {
     console.error('❌ Erreur lors du déblocage :', error);
     document.getElementById("loader-overlay")?.classList.add("hidden");
-    alert("Impossible de débloquer ce contenu.");
+    alert("Failed to unlock this content.");
     return false;
   }
 }
@@ -191,10 +191,10 @@ function createPrivateContentCards(character, unlockedContents) {
         </div>
         <h3>${content.title}</h3>
         <p class="description">${content.description}</p>
-        <div class="token-info"><i class="fas fa-coins"></i> ${content.price} Jetons</div>
-        <div class="pack-info" style="font-size: 0.9em; color: #d1d1e0;">Chargement…</div>
+        <div class="token-info"><i class="fas fa-coins"></i> ${content.price} Token</div>
+        <div class="pack-info" style="font-size: 0.9em; color: #d1d1e0;">Loading…</div>
         <button class="unlock-btn" data-folder="${content.folder}" data-price="${content.price}" style="background-color: ${isUnlocked ? '#4CAF50' : '#dd4d9d'};">
-          ${isUnlocked ? '✅ Voir le contenu' : `Débloquer`}
+          ${isUnlocked ? '✅ View content' : `Unlock`}
         </button>
       </div>
     `;
