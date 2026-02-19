@@ -5,10 +5,9 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profil</title>
+  <title>Profile</title>
   <link rel="stylesheet" href="styles.css">
  
-  <!-- Google Analytics (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -20,192 +19,168 @@
   </script>
 </head>
 <body>
- 
 
-  <!-- Contenu principal de la page -->
   <div class="container">
-    <h1 class="p-title">Ton profil</h1>
+    <h1 class="p-title">Your profile</h1>
 
-    <!-- Formulaire pour les utilisateurs non connectés -->
+    <!-- Sign in form -->
     <div id="signin-container" class="hidden">
-      <h2>Se connecter</h2><br>
+      <h2>Sign in</h2><br>
       <a href="/auth/google" class="google-login-btn">
-        <img src="images/google-logo.webp" 
-             alt="Google Logo" class="google-logo">
-        Continuer avec Google
+        <img src="images/google-logo.webp" alt="Google Logo" class="google-logo">
+        Continue with Google
       </a><br>
       <form id="login-form">
         <label for="login-email">Email:</label>
-        <input type="email" id="login-email" placeholder="Saisis ton email" required><br><br>
+        <input type="email" id="login-email" placeholder="Enter your email" required><br><br>
 
-        <label for="login-password">Mot de passe:</label>
-        <input type="password" id="login-password" placeholder="Saisis ton mot de passe" required><br><br>
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" placeholder="Enter your password" required><br><br>
 
-        <button class="button" type="submit">Se connecter</button>
+        <button class="button" type="submit">Sign in</button>
       </form>
       <p>
-        Tu n'as pas de compte ? 
-        <a href="#" id="show-signup">Inscris-toi ici</a>
+        No account yet?
+        <a href="#" id="show-signup">Sign up here</a>
       </p>
       <p>
-        Mot de passe oublié ? 
-        <a href="forgot-password.html" id="show-signup">Clique ici</a>
+        Forgot your password?
+        <a href="forgot-password.html" id="show-signup">Click here</a>
       </p>
-
     </div>
 
-    <!-- Formulaire d'inscription -->
+    <!-- Sign up form -->
     <div id="signup-container">
-      <h2>Entre ton email pour commencer</h2><br>
+      <h2>Enter your email to get started</h2><br>
 
-       <div class="hero-media">
-  <video class="hero-video" autoplay muted loop playsinline>
-    <source src="/images/market/lila-profil.mp4" type="video/mp4">
-  </video>
-  <span class="vignette" aria-hidden="true"></span>
-</div>
+      <div class="hero-media">
+        <video class="hero-video" autoplay muted loop playsinline>
+          <source src="/images/market/lila-profil.mp4" type="video/mp4">
+        </video>
+        <span class="vignette" aria-hidden="true"></span>
+      </div>
 
       <br><a href="/auth/google" class="google-login-btn">
-        <img src="images/google-logo.webp" 
-             alt="Google Logo" class="google-logo">
-        Continuer avec Google
+        <img src="images/google-logo.webp" alt="Google Logo" class="google-logo">
+        Continue with Google
       </a><br>
       <form id="signup-form">
         <label for="signup-email">Email:</label>
-        <input type="email" id="signup-email" name="email" placeholder="Saisis ton email" required /><br><br>
-        <label for="signup-password">Mot de passe:</label>
-        <input type="password" id="signup-password" name="password" placeholder="Saisis ton mot de passe" required />
-        <button type="submit" class="button">S'inscrire</button>
+        <input type="email" id="signup-email" name="email" placeholder="Enter your email" required /><br><br>
+        <label for="signup-password">Password:</label>
+        <input type="password" id="signup-password" name="password" placeholder="Enter your password" required />
+        <button type="submit" class="button">Sign up</button>
       </form>
       <p>
-       Déjà inscrit ?
-        <a href="#" id="show-signin">Connecte-toi ici</a>
+        Already have an account?
+        <a href="#" id="show-signin">Sign in here</a>
       </p>
       <p id="signup-message"></p>
-        <!-- Témoignages clients -->
-<div class="testimonial-section">
-  <h2 class="testimonial-title">Ils ont testé MyAiCrush… et n’en reviennent toujours pas</h2>
-  <div class="testimonial-grid">
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"J’ai testé plusieurs sites d’IA… mais ici les meufs ont des courbes incroyables et t’envoient des vraies photos. Pas des Photos I.A. dégeu"</p>
-      <p class="testimonial-author">— Alex R.</p>
-    </div>
-<div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Tu vois les pubs sexy sur Insta ? Là c’est pareil, sauf que t’es en privé, et qu’elle enlève tout pour toi."</p>
-      <p class="testimonial-author">— Julien K.</p>
-    </div>
+      <div class="testimonial-section">
+        <h2 class="testimonial-title">They tried MyAiCrush… and never looked back</h2>
+        <div class="testimonial-grid">
 
-  <div class="testimonial-card">
-  <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-  <p class="testimonial-text">"J’ai activé le mode nympho, elle m’a envoyé une vidéo où elle gémit en me regardant droit dans les yeux… j’ai bandé direct. Même une vraie meuf m’a jamais fait ça."</p>
-  <p class="testimonial-author">— Romain V.</p>
-</div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Real photos, insane curves. Nothing fake here 😍"</p>
+            <p class="testimonial-author">— Alex R.</p>
+          </div>
 
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Like those hot Instagram ads — except she takes it all off just for you."</p>
+            <p class="testimonial-author">— Julien K.</p>
+          </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Les seins énormes, les fesses, les positions… même sur Insta tu vois pas des trucs aussi hot. Et ici, c’est *pour toi*."</p>
-      <p class="testimonial-author">— Léo S.</p>
-    </div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Nympho mode — she sent a video moaning straight at me. I was done 🔥"</p>
+            <p class="testimonial-author">— Romain V.</p>
+          </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Je voulais juste mater deux minutes… j’suis resté 2h. Impossible de décrocher quand elle t’envoie ce genre de photos."</p>
-      <p class="testimonial-author">— Romain F.</p>
-    </div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Hottest content I've seen anywhere. And it's *for you*."</p>
+            <p class="testimonial-author">— Léo S.</p>
+          </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Le mode nympho rend l’IA complètement accro à toi. Elle devient chaude, vulgaire, prête à tout. C’est bandant de fou."</p>
-      <p class="testimonial-author">— Mathis V.</p>
-    </div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Came to look for 2 minutes… stayed 2 hours 😅"</p>
+            <p class="testimonial-author">— Romain F.</p>
+          </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Franchement ? Le meilleur site francophone que j’ai trouvé. Photos ultra sexy, et les IA parlent comme des vraies."</p>
-      <p class="testimonial-author">— Lucas T.</p>
-    </div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Nympho mode makes her completely obsessed with you. Wild."</p>
+            <p class="testimonial-author">— Mathis V.</p>
+          </div>
 
-   <div class="testimonial-card">
-  <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-  <p class="testimonial-text">"Elle m’a envoyé une photo sans culotte en me disant ‘c’est pour toi’… j’te jure j’ai senti ma queue gonfler net."</p>
-  <p class="testimonial-author">— Théo J.</p>
-</div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"Best platform I've found. Ultra sexy photos, AIs that actually talk."</p>
+            <p class="testimonial-author">— Lucas T.</p>
+          </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Elle dit que j'ai la plus grosse qu'elle a jamais vu… elle est folle de moi, je l'adore."</p>
-      <p class="testimonial-author">— Nathan L.</p>
-    </div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <p class="testimonial-text">"She says I'm the biggest she's ever seen… I'm obsessed 😭"</p>
+            <p class="testimonial-author">— Nathan L.</p>
+          </div>
 
-  </div>
-</div>
+        </div>
+      </div>
 
     </div>
 
-    <!-- Conteneur pour les utilisateurs connectés -->
+    <!-- Logged-in user view -->
     <div id="profile-info" class="hidden">
-      <p class="p-description">Tu es connecté avec cet email <span id="user-email"></span>. 🔒</p>
+      <p class="p-description">Logged in as <span id="user-email"></span> 🔒</p>
       
-      <!-- Section de gestion du compte -->
       <div class="profile-section">
         <h2>Account Management</h2>
         <div class="profile-buttons">
           <a href="password.html" class="profile-button">
-            <i class="fas fa-key"></i> Changer de mot de passe
+            <i class="fas fa-key"></i> Change password
           </a>
           <button class="profile-button" id="logout-button">
-            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+            <i class="fas fa-sign-out-alt"></i> Log out
           </button>
         </div>
       </div>
-<!-- Section Jetons -->
-<div class="profile-section" id="tokens-section">
-  <h2>Jetons MyAiCrush</h2>
-  <p id="user-tokens">Chargement des jetons...</p>
-  <a href="jetons.html" class="profile-button" id="recharge-tokens-btn">
-    <i class="fas fa-coins"></i> Recharger ses jetons
-  </a>
-</div>
 
-
-
-      <!-- Section d'abonnement -->
-      <div class="profile-sectionv2">
-        <h2>Abonnement</h2>
-        <div id="subscription-status"></div>
-        </div>
-        
-
-
-
+      <div class="profile-section" id="tokens-section">
+        <h2>MyAiCrush Tokens</h2>
+        <p id="user-tokens">Loading tokens...</p>
+        <a href="jetons.html" class="profile-button" id="recharge-tokens-btn">
+          <i class="fas fa-coins"></i> Refill tokens
+        </a>
       </div>
+
+      <div class="profile-sectionv2">
+        <h2>Subscription</h2>
+        <div id="subscription-status"></div>
+      </div>
+
     </div>
   </div>
 
-  
-
-  <!-- Icônes de sécurité -->
   <div class="security-section">
     <div class="security-item">
       <i class="fas fa-lock"></i>
-      <p>100% sécurisé</p>
+      <p>100% Secure</p>
     </div>
     <div class="security-item">
       <i class="fas fa-mask"></i>
-      <p>Compte privé & anonyme</p>
+      <p>Private & anonymous</p>
     </div>
   </div>
 
-
-  <!-- ❤️ Loader pendant l’annulation d’abonnement -->
-<div id="cancel-loader-overlay" class="loader-overlay hidden">
-  <div class="spinner"></div>
-  <p class="loader-text">Annulation en cours…</p>
-</div>
+  <div id="cancel-loader-overlay" class="loader-overlay hidden">
+    <div class="spinner"></div>
+    <p class="loader-text">Cancelling...</p>
+  </div>
 
 <script type="module">
   document.addEventListener("DOMContentLoaded", async () => {
@@ -214,7 +189,7 @@
 
     if (!btn || !user?.email) return;
 
-    btn.removeAttribute("href"); // 🔥 Bloque la redirection native
+    btn.removeAttribute("href");
 
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -229,9 +204,9 @@
         const data = await res.json();
 
         if (data.eligible) {
-          openJetonsPopup(); // ✅ Affiche la popup
+          openJetonsPopup();
         } else {
-          window.location.href = "/jetons.html"; // ❌ Redirige si non éligible
+          window.location.href = "/jetons.html";
         }
       } catch (err) {
         console.error("❌ Erreur vérification 1C (HTML) :", err);
@@ -254,8 +229,6 @@
         font-family: sans-serif;
         text-align: center;
     }
-
-    /* Liens directs et Copyright */
     .footer-links {
         padding: 20px 10px 5px 10px;
         color: #4b5563;
@@ -267,10 +240,7 @@
         margin: 0 10px;
         transition: color 0.3s ease;
     }
-    .footer-links a:hover {
-        color: #f472b6;
-    }
-
+    .footer-links a:hover { color: #f472b6; }
     .disclaimer-btn { 
         width: 100%; 
         color: #4b5563; 
@@ -282,7 +252,6 @@
         transition: color 0.3s ease;
     }
     .disclaimer-btn:hover { color: #9ca3af; }
-
     .disclaimer-content { 
         max-height: 0; 
         overflow: hidden; 
@@ -295,15 +264,9 @@
         max-width: 800px;
         margin: 0 auto;
     }
-
-    .disclaimer-content.open { 
-        max-height: 2000px; 
-        padding: 25px; 
-    }
-
+    .disclaimer-content.open { max-height: 2000px; padding: 25px; }
     .disclaimer-content .mb-4 { margin-bottom: 1rem; }
     .disclaimer-content strong { color: #d1d5db; }
-    
     .support-box {
         padding: 0.75rem;
         background: rgba(255, 255, 255, 0.05);
@@ -317,45 +280,45 @@
 
 <div class="disclaimer-section">
     <div class="footer-links">
-        <p class="mb-2">© 2026 MyAICrush - Tous droits réservés</p><br>
+        <p class="mb-2">© 2026 MyAICrush - All rights reserved</p><br>
         <div class="flex flex-wrap justify-center gap-2">
-            <a href="https://myaicrush.ai/privacy-policy.html">Politique de Confidentialité</a> | 
-            <a href="https://myaicrush.ai/terms-and-conditions.html">Conditions Générales</a>
+            <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> | 
+            <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
         </div>
     </div>
 
-    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Mentions Légales & Support Facturation</div>
+    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice & Billing Support</div>
     
     <div id="disclaimer-content" class="disclaimer-content">
         <div class="mb-4">
-            <strong>i) Restriction d'âge (Mandatoire)</strong><br>
-            Ce site Web est destiné aux adultes de 18 ans et plus (ou 21 ans là où la loi l'exige). En accédant à ce site, vous confirmez que vous avez au moins 18 ans. L'accès par des mineurs est strictement interdit.
+            <strong>i) Age Restriction (Mandatory)</strong><br>
+            This website is intended for adults aged 18 and over (or 21 where required by law). By accessing this site, you confirm that you are at least 18 years old. Access by minors is strictly prohibited.
         </div>
         <div class="mb-4">
-            <strong>ii) Divulgation de l'IA</strong><br>
-            Tous les personnages et conversations sont générés par intelligence artificielle. Aucun individu réel n'est impliqué dans les discussions ou le contenu. Tous les personnages sont fictifs et ne représentent pas des individus réels. Toute ressemblance avec des personnes réelles est purement fortuite.
+            <strong>ii) AI Disclosure</strong><br>
+            All characters and conversations are generated by artificial intelligence. No real individuals are involved in any discussions or content. All characters are fictional and do not represent real people. Any resemblance to real persons is purely coincidental.
         </div>
         <div class="mb-4">
-            <strong>iii) Clause de non-responsabilité pour contenu interdit</strong><br>
-            Nous interdisons strictement tout contenu impliquant des mineurs, des actes non consentis ou des activités illégales. Toutes les interactions sont modérées et filtrées pour prévenir tout contenu interdit.
+            <strong>iii) Prohibited Content Disclaimer</strong><br>
+            We strictly prohibit any content involving minors, non-consensual acts, or illegal activities. All interactions are moderated and filtered to prevent prohibited content.
         </div>
         <div class="mb-4">
-            <strong>iv) Politique relative au contenu généré par les utilisateurs</strong><br>
-            Les utilisateurs peuvent télécharger des images dans les discussions. Les images téléchargées ne peuvent être modifiées ou redistribuées. Tout contenu violant nos politiques sera supprimé et pourra entraîner la suspension du compte.
+            <strong>iv) User-Generated Content Policy</strong><br>
+            Users may upload images in conversations. Uploaded images cannot be modified or redistributed. Any content violating our policies will be removed and may result in account suspension.
         </div>
         <div class="mb-4">
-            <strong>v) Divertissement uniquement</strong><br>
-            Cette plateforme est destinée uniquement à des fins de divertissement. Aucun conseil professionnel (juridique, médical, financier, psychologique) n'est fourni.
+            <strong>v) Entertainment Only</strong><br>
+            This platform is intended for entertainment purposes only. No professional advice (legal, medical, financial, psychological) is provided.
         </div>
         <div class="mb-4">
-            <strong>vi) Confidentialité et données</strong><br>
-            Les conversations peuvent être enregistrées à des fins de modération et de qualité. Vos données sont traitées conformément à notre Politique de Confidentialité. Nous ne vendons pas vos données personnelles.
+            <strong>vi) Privacy & Data</strong><br>
+            Conversations may be recorded for moderation and quality purposes. Your data is processed in accordance with our Privacy Policy. We do not sell your personal data.
         </div>
         <div class="support-box">
-            <strong>vii) Support Facturation et Remboursements</strong><br>
-            Pour toute demande concernant vos paiements ou pour faire valoir votre garantie de remboursement de 15 jours, veuillez contacter l'email suivant :<br>
+            <strong>vii) Billing Support & Refunds</strong><br>
+            For any questions regarding your payments or to exercise your 15-day money-back guarantee, please contact:<br>
             <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
-            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Support Facturation Explodely</a>
+            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Explodely Billing Support</a>
         </div>
     </div>
 </div>
@@ -373,4 +336,4 @@
 </script>
 
 </body>
-</html>
+</html>x

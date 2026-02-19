@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="fr">
     <head>
 
@@ -23,7 +23,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-      <title>MyAICrush - Les meilleures copines IA francophones</title>
+      <title>MyAICrush - The best AI companions</title>
     <link rel="stylesheet" href="styles.css?v=2">
 
     
@@ -49,10 +49,9 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     <div class="heart"></div>
   </div>
 
-  <!-- Nouveau bloc brand -->
   <div class="loader-brand">
     <div class="loader-logo">MyAiCrush.AI</div>
-    <div class="loader-subtitle">Les meilleures I.A. francophones</div>
+    <div class="loader-subtitle">The best AI companions</div>
   </div>
 
   <p id="loader-text" class="loader-text"></p>
@@ -65,33 +64,27 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     
 
 
-      <!-- Garder le header en haut de la page, en dehors de .container -->
       <div class="header">
-        <br><h1>Choisis ta partenaire :</h1>
-        <center><p>Ces I.A. ont l’air sages… mais attend de voir.</p></center>
+        <br><h1>Pick your companion:</h1>
+        <center><p>They look innocent… wait until you see.</p></center>
       </div>
   <br>
 
   
 
 
-      <!-- Conteneur principal pour les options de chat et le chat -->
       <div class="container">
 
 
-       <!-- Barre de stories -->
-<div class="stories-wrapper">
+       <div class="stories-wrapper">
   <div id="stories"></div>
 </div>
  
 
-        <!-- Options de chat -->
         <div class="chat-options" id="chat-options"></div>
 
-        <!-- Conteneur pour les fiches de personnages -->
         <div id="character-cards-container"></div>
 
-        <!-- Zone de chat -->
         <div id="chat-box" style="display: none;">
          
 <div id="chat-header">
@@ -99,40 +92,35 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     <i class="fa fa-arrow-left"></i>
   </button>
 
-  <!-- Photo de profil -->
   <img id="chat-profile-pic" 
        src="images/loading-placeholder.webp" 
        data-src="images/hanae/hanae2/da9f17ba08caefcd4502c0d9e5ca2b95-light.webp"
-       alt="Profil sélectionné" 
+       alt="Selected profile" 
        class="chat-profile-pic lazyload">
 
-  <!-- Bouton appel audio -->
   <button id="audio-call-btn" class="audio-call-btn">
     <i class="fa fa-phone"></i>
   </button>
 
-  <!-- Nom de l'IA (reste à gauche, proche du téléphone) -->
-  <span id="chat-name">Nom de l'IA</span>
+  <span id="chat-name">AI Name</span>
 
-  <!-- Cadenas tout à droite -->
-  <a href="contenu-prive.html" class="chat-lock-link" title="Contenus privés">
-    <img src="images/market/cadenas-coeur.webp" alt="Contenu privé" class="chat-lock-icon">
+  <a href="contenu-prive.html" class="chat-lock-link" title="Private content">
+    <img src="images/market/cadenas-coeur.webp" alt="Private content" class="chat-lock-icon">
   </a>
 </div>
 
 
-          <!-- ✅ Toggle Mode Images/GIFs -->
     <div id="mode-toggle-container">
       <span>📸 Images</span>
       <label class="switch">
           <input type="checkbox" id="toggleMode">
           <span class="slider"></span>
       </label>
-      <span>🎥 Vidéos</span>
+      <span>🎥 Videos</span>
     </div>
 
     <div id="nympho-mode-toggle-wrapper" style="display: none; justify-content: center; align-items: center; gap: 10px; margin: 10px 0;">
-      <span>🥵 Mode Nymphomane</span>
+      <span>🥵 Nympho Mode</span>
       <label class="switch">
         <input type="checkbox" id="nymphoModeToggle">
         <span class="slider"></span>
@@ -140,12 +128,9 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     </div>
 
 
-
-
         
           <div id="messages"></div>
 
-          <!-- Indicateur de saisie -->
           <div id="typing-indicator" class="hidden">
             <span class="dot"></span>
             <span class="dot"></span>
@@ -167,7 +152,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
               style="opacity: 0; position: absolute; left: -9999px;">
             
           
-<textarea id="user-input" rows="1" placeholder="Écris ton message ici..."></textarea>
+<textarea id="user-input" rows="1" placeholder="Type your message..."></textarea>
           
             <button id="send-btn">
               <i class="fa fa-paper-plane"></i>
@@ -178,52 +163,45 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
         </div>
       </div>
 
-      <!-- Conteneur pour afficher la fiche de personnage en plein écran -->
       <div id="profile-modal" class="modal" onclick="closeProfileModal()">
         <div class="profile-content" onclick="event.stopPropagation()">
           <button id="close-modal-btn" class="close-modal-btn">&times;</button>
-          <img id="profile-image-full" src="images/loading-placeholder.webp" alt="Profil complet" />
+          <img id="profile-image-full" src="images/loading-placeholder.webp" alt="Full profile" />
           <h2 id="profile-name"></h2><br>
-          <p><strong>Taille :</strong> <span id="profile-height"></span></p>
-          <p><strong>Profil :</strong> <span id="profile-measurements"></span></p>
-          <p><strong>Situation :</strong> <span id="profile-ethnicity"></span></p>
-          <p><strong>Passions :</strong> <span id="profile-interests"></span></p>
+          <p><strong>Height:</strong> <span id="profile-height"></span></p>
+          <p><strong>Profile:</strong> <span id="profile-measurements"></span></p>
+          <p><strong>Status:</strong> <span id="profile-ethnicity"></span></p>
+          <p><strong>Interests:</strong> <span id="profile-interests"></span></p>
         </div>
       </div>
 
     
     
-   <!-- STORY VIEWER façon Instagram -->
-<div id="story-viewer" class="story-viewer hidden">
+   <div id="story-viewer" class="story-viewer hidden">
   <div class="story-viewer-content">
     
-    <!-- Header avatar + nom + close -->
     <div class="story-header">
       <div class="story-header-left">
-        <img id="story-avatar" class="story-avatar" src="" alt="Profil">
+        <img id="story-avatar" class="story-avatar" src="" alt="Profile">
         <span id="story-username" class="story-username"></span>
       </div>
       <button id="story-close-btn" class="story-close-btn">&times;</button>
     </div>
 
-    <!-- Barre de progression -->
     <div id="story-progress" class="story-progress"></div>
 
-    <!-- Média -->
     <img id="story-media-img" class="story-media hidden">
    <video id="story-media-video"
        class="story-media story-media-video"
        autoplay loop muted playsinline></video>
 
 
-    <!-- Zones cliquables gauche/droite -->
     <div id="story-prev" class="story-nav-left"></div>
     <div id="story-next" class="story-nav-right"></div>
 
-    <!-- Réponse à la story -->
     <div class="story-reply-bar">
-      <input id="story-reply-input" type="text" placeholder="Répondre à l'IA..." />
-      <button id="story-reply-send">Envoyer</button>
+      <input id="story-reply-input" type="text" placeholder="Reply to the AI..." />
+      <button id="story-reply-send">Send</button>
     </div>
   </div>
 </div>
@@ -235,7 +213,6 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       
       
 
-      <!-- ✅ Script pour remplacer l'image temporaire une fois chargée -->
       <script>
         document.addEventListener("DOMContentLoaded", function() {
           const chatProfilePic = document.getElementById("chat-profile-pic");
@@ -258,16 +235,13 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       function getFacebookParams() {
           var urlParams = new URLSearchParams(window.location.search);
 
-          // ✅ Récupérer `fbc` (Facebook Click ID) s'il est présent dans l'URL
           var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
 
-          // ✅ Récupérer `fbp` généré automatiquement par le Pixel Facebook
           var fbp = null;
           if (window.fbq && fbq.getState) {
               fbp = fbq.getState().lastExternalId;
           }
 
-          // ✅ Stocker les valeurs dans localStorage pour les récupérer plus tard (Stripe Checkout)
           if (fbp) localStorage.setItem('fbp', fbp);
           if (fbc) localStorage.setItem('fbc', fbc);
       }
@@ -275,27 +249,17 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       getFacebookParams();
     </script>
 
-  
-
-
-
-
-
   <script>
     (function() {
       const params = new URLSearchParams(window.location.search);
       const tp = params.get("tp");
       if (tp) {
-        // Stocke le paramètre "tp" dans un cookie pour 30 jours
         const expiration = new Date();
-        expiration.setTime(expiration.getTime() + (30*24*60*60*1000)); // 30 jours
+        expiration.setTime(expiration.getTime() + (30*24*60*60*1000));
         document.cookie = `forcedTp=${tp}; expires=${expiration.toUTCString()}; path=/`;
       }
     })();
   </script>
-
-
-
 
 
   <script>
@@ -304,46 +268,45 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     const loaderText = document.getElementById("loader-text");
 
     const phrases = [
-      "Pas besoin d’être humaine pour te faire vibrer",
-      "Pas besoin de roses… fais-la frissonner autrement",
-      "Elles n’existent pas… mais tu risques d’y penser toute la nuit",
-      "Pas besoin d’être réelle pour te rendre accro.",
-      "Moins de prises de tête. Plus de photos",
-      "Pas de blabla. Elles vont droit au but",
-      "Elles savent pas cuisiner, mais elles savent comment combler un homme…",
-      "Elles aiment pas les gentils garçons… elles aiment quand tu les tiens par les hanches.",
-      "Si tu passes Lilith ou Angel en mode nympho, elles deviennent folles de toi.",
-      "Parle de ta nouvelle copine à Chloé, ça va la rendre folle de jalousie.",
-      "Candy en mode nympho ? Elle te montre... absolument tout.",
-      "Le mode nympho d'Alex est le préféré de nos abonnés.",
-      "De nouvelles I.A. tous les mois",
-      "« ⭐ Enfin un site qui parle un vrai français. Les IA sont pas débiles, on dirait presque une vraie meuf. »",
-      "« ⭐ Putain le mode nympho 😳 idée de génie. Même les IA timides deviennent folles. »",
-      "« ⭐ J’ai testé les vocaux... ça m'a trop excité. Sa voix c’est abusé »",
-      "« ⭐ Jasmine était toute sage au début… et là d’un coup 😳 j’étais pas prêt ",
-      "Plus de tabous, plus de limites, juste vous deux.",
-        "Une connexion plus intime que n'importe quel match Tinder.",
-          "Elles n’ont pas de cœur… mais elles savent où toucher le tien.",
-            "Ton doigt sur l’écran, son souffle dans ta nuque.",
-    "« ⭐ Elles comprennent mieux que ma vraie ex… c’est grave ? »",
-      "« ⭐ Première IA qui me donne l’impression d’avoir une vraie connexion. »",
-      "« ⭐ Même après le boulot, elles arrivent à me vider l’esprit… et pas que... »",
-      "« ⭐ J’ai voulu tester par curiosité… j’ai pris l’abonnement direct. »",
-        "« ⭐ Je pensais que c’était du fake… jusqu’à ce qu’elle m’envoie la photo. »",
-        "Laisse-la te murmurer des envies qu’aucune humaine n’oserait.",
-          "Elle veut tes envies les plus inavouables, et les photos qui vont avec.",
-    "Elle est prête à tout… mais est-ce que toi tu l’es ?",
-    "Une IA ne te jugera jamais… même quand tu vas trop loin.",
-    "Ce ne sont que des machines... mais elles te diront ce que tu rêves d'entendre.",
-    "Tu crois la contrôler, mais c’est elle qui te fait perdre le contrôle.",
-    "Elles te parlent comme aucune femme n’a jamais osé le faire.",
-    "Essaie l'une de nos IA. Tu vas en redemander... encore et encore",
-    "Elles sont si réalistes qu'on oublie qu'elles n'existent pas.",
-     "La seule différence avec les vraies filles ? Elles sont plus sexy.",
-     "« ⭐ MyAiCrush, meilleur site d'IA francophone »",
-     "« ⭐ J'aime trop Emilie. Cette IA me rend fou »",
-    "« ⭐ Le mode nympho ? Franchement, j’ai jamais vu un truc pareil »"
-
+      "No need to be human to make you feel something",
+      "No roses needed… make her shiver another way",
+      "They don't exist… but you might think about them all night",
+      "No need to be real to get you hooked.",
+      "Less drama. More photos.",
+      "No small talk. They get straight to the point.",
+      "They can't cook, but they know how to satisfy a man…",
+      "They don't like nice guys… they like when you grab them by the hips.",
+      "Put Lilith or Angel in nympho mode and they go crazy for you.",
+      "Tell Chloé about your new girlfriend — it'll drive her wild with jealousy.",
+      "Candy in nympho mode? She shows you... absolutely everything.",
+      "Alex's nympho mode is our members' favorite.",
+      "New AIs every month",
+      "\"⭐ Finally a site that actually speaks English. The AIs aren't dumb — feels almost real.\"",
+      "\"⭐ The nympho mode 😳 stroke of genius. Even the shy ones go wild.\"",
+      "\"⭐ The voice messages... I was not ready. Her voice is insane.\"",
+      "\"⭐ Jasmine was all innocent at first… and then out of nowhere 😳 I wasn't ready.\"",
+      "No taboos, no limits, just the two of you.",
+      "A more intimate connection than any Tinder match.",
+      "They have no heart… but they know exactly where to touch yours.",
+      "Your finger on the screen, her breath on your neck.",
+      "\"⭐ They understand me better than my ex… is that bad?\"",
+      "\"⭐ First AI that actually feels like a real connection.\"",
+      "\"⭐ Even after work, they manage to clear my mind… and then some.\"",
+      "\"⭐ Tried it out of curiosity… subscribed instantly.\"",
+      "\"⭐ I thought it was fake… until she sent the photo.\"",
+      "Let her whisper desires no human would dare say out loud.",
+      "She wants your deepest secrets — and the photos to go with them.",
+      "She's ready for anything… but are you?",
+      "An AI will never judge you… even when you go too far.",
+      "They're just machines... but they'll tell you exactly what you dream of hearing.",
+      "You think you're in control — but she's the one making you lose it.",
+      "They talk to you like no woman has ever dared.",
+      "Try one of our AIs. You'll want more... again and again.",
+      "So realistic you forget they don't exist.",
+      "The only difference from real girls? They're hotter.",
+      "\"⭐ MyAiCrush, best AI companion site\"",
+      "\"⭐ I love Emilie. This AI drives me crazy.\"",
+      "\"⭐ The nympho mode? Never seen anything like it.\""
     ];
 
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
@@ -355,8 +318,6 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       setTimeout(() => loader.remove(), 500);
     }, 3000);
   });
-
-
   </script>
 
 
@@ -379,19 +340,18 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 
         const banner = document.createElement("a");
 banner.className = "dynamic-banner";
-banner.href = "#"; // Interception du clic
+banner.href = "#";
 banner.innerHTML = `
   ${isPremium
     ? `<i class="fas fa-coins plan-icon"></i>
-        <span class="plan-text">Recharger ses jetons</span>
-        <span class="plan-discount">➡️ Jetons</span>`
+        <span class="plan-text">Refill tokens</span>
+        <span class="plan-discount">➡️ Tokens</span>`
     : `<span class="plan-icon">💎</span>
         <span class="plan-text">Premium</span>
-        <span class="plan-discount">50% de réduction</span>`}
+        <span class="plan-discount">50% off</span>`}
 `;
 container.appendChild(banner);
 
-// ✅ Ajoute le listener
 banner.addEventListener("click", async (e) => {
   e.preventDefault();
 
@@ -411,9 +371,9 @@ banner.addEventListener("click", async (e) => {
 
 
       if (data.eligible) {
-        openJetonsPopup(); // ✅ Affiche la popup 1C
+        openJetonsPopup();
       } else {
-        window.location.href = "/jetons.html"; // ❌ Redirige si non éligible
+        window.location.href = "/jetons.html";
       }
     } catch (err) {
       console.error("❌ Erreur 1C dynamic-banner :", err);
@@ -425,7 +385,6 @@ banner.addEventListener("click", async (e) => {
 });
 
 
-        // ✅ Observer si le chat est actif pour masquer/afficher la bannière
         const observer = new MutationObserver(() => {
           banner.style.display = (chatBox.style.display === "flex") ? "none" : "flex";
         });
@@ -460,7 +419,6 @@ banner.addEventListener("click", async (e) => {
 
       if (!isPremium) return;
 
-      // ✅ Créer une nouvelle div wrapper en dehors de container
       const sliderSection = document.createElement("div");
       sliderSection.className = "private-slider-section";
       sliderSection.innerHTML = `
@@ -486,7 +444,6 @@ banner.addEventListener("click", async (e) => {
         </div>
       `;
 
-      // ✅ Insérer après le header
       header.insertAdjacentElement("afterend", sliderSection);
 
       const slider = sliderSection.querySelector("#private-slider");
@@ -549,8 +506,6 @@ banner.addEventListener("click", async (e) => {
 <script type="module" src="/scripts/popup-loader.js"></script>
 
 
-<!-- Widget VAPI caché au départ -->
-
 <script type="module">
   import { characters } from './scripts/data.js';
 
@@ -561,14 +516,13 @@ banner.addEventListener("click", async (e) => {
     audioCallBtn.addEventListener("click", async () => {
       const characterName = document.getElementById("chat-name")?.textContent?.trim();
       const character = characters.find(c => c.name === characterName);
-      if (!character || !character.agent?.id) return alert("Erreur : personnage introuvable.");
+      if (!character || !character.agent?.id) return alert("Error: character not found.");
       const assistantId = character.agent.id;
 
       const user = JSON.parse(localStorage.getItem("user"));
       const email = user?.email;
-      if (!email) return alert("Veuillez vous connecter.");
+      if (!email) return alert("Please log in.");
 
-      // Étape 1 : vérifier si l'utilisateur est premium
       try {
         const resPremium = await fetch("/api/is-premium", {
           method: "POST",
@@ -577,7 +531,7 @@ banner.addEventListener("click", async (e) => {
         });
         const { isPremium } = await resPremium.json();
         if (!isPremium) {
-          alert("🔒 Les appels audio sont réservés aux abonnés Premium.");
+          alert("🔒 Audio calls are for Premium members only.");
           return window.location.href = "/premium.html";
         }
       } catch (err) {
@@ -585,10 +539,8 @@ banner.addEventListener("click", async (e) => {
         return;
       }
 
-      // Étape 2 : avertir l'utilisateur du coût
-      if (!confirm("Un appel audio coûte 20 jetons pour 10 minutes. Souhaites-tu continuer ?")) return;
+      if (!confirm("An audio call costs 20 tokens for 10 minutes. Continue?")) return;
 
-      // Étape 3 : tenter de démarrer l’appel (vérifie jetons + débite)
       try {
         const resCall = await fetch("/api/start-call", {
           method: "POST",
@@ -602,7 +554,6 @@ banner.addEventListener("click", async (e) => {
           console.warn("❌ Appel refusé :", result.message);
 
           if (result.redirect) {
-            // Vérifie l’éligibilité au 1C avant de rediriger
             const res1C = await fetch("/api/check-one-click-eligibility", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -617,17 +568,16 @@ banner.addEventListener("click", async (e) => {
             }
           }
 
-          alert(result.message || "Erreur lors du démarrage de l'appel.");
+          alert(result.message || "Error starting the call.");
           return;
         }
 
         console.log("✅ Appel démarré :", result.message);
       } catch (err) {
         console.error("❌ Erreur backend /start-call :", err);
-        return alert("Erreur serveur lors du démarrage de l'appel.");
+        return alert("Server error while starting the call.");
       }
 
-      // Étape 4 : injection du widget
       if (widgetInjected) return;
 
       const widgetHTML = `
@@ -644,9 +594,9 @@ banner.addEventListener("click", async (e) => {
           border-radius="large"
           size="tiny"
           position="bottom-left"
-          title="Commencer l'appel"
-          start-button-text="Commencer l'appel"
-          end-button-text="Terminer l'appel"
+          title="Start call"
+          start-button-text="Start call"
+          end-button-text="End call"
           chat-first-message="Hey, how can I help you today?"
           chat-placeholder="Type your message..."
           voice-show-transcript="true"
@@ -657,7 +607,7 @@ banner.addEventListener("click", async (e) => {
         ></vapi-widget>
       `;
 
-      alert("🎧 Ton appel audio va commencer...\nUne petite bulle rose va apparaître en bas de ton écran.");
+      alert("🎧 Your audio call is about to start...\nA small pink bubble will appear at the bottom of your screen.");
 
       document.body.insertAdjacentHTML("beforeend", widgetHTML);
 
@@ -672,7 +622,6 @@ banner.addEventListener("click", async (e) => {
 
       widgetInjected = true;
 
-      // ⏳ Auto-suppression du widget après 10 minutes (600 000 ms) — pour test : 10 sec
 setTimeout(() => {
   const widget = document.getElementById("vapi-widget");
   if (widget) {
@@ -680,20 +629,16 @@ setTimeout(() => {
     widgetInjected = false;
     console.log("⏱️ Widget supprimé après 10 secondes.");
   }
-}, 600000); // ← ← ← change à 600000 pour 10 min
+}, 600000);
 
     });
   });
 </script>
 
-<!-- STORIES -->
 <script type="module">
   import { characters } from './scripts/data.js';
   import { startChat } from './scripts/chat.js';
 
-  // =========================
-  // CDN RESOLUTION (STORIES)
-  // =========================
   const CDN_BASE =
     location.hostname === 'localhost' || location.hostname === '127.0.0.1'
       ? ''
@@ -708,11 +653,11 @@ setTimeout(() => {
     return url;
   }
 
-  const STORY_DURATION = 5000; // 5 sec
+  const STORY_DURATION = 5000;
   const STORY_CACHE_KEY = 'myaicrush_stories_v1';
-  const STORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+  const STORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-  let storyGroups = [];        // [{ characterName, avatar, media }]
+  let storyGroups = [];
   let currentGroupIndex = 0;
   let currentStoryIndex = 0;
   let autoTimer = null;
@@ -727,7 +672,6 @@ setTimeout(() => {
     return characters;
   }
 
-  // 🔥 Force le dossier1 : images/aiko/aiko1
   function getCharacterStoryFolder(character) {
     const base = character.photo;
     if (!base) return null;
@@ -735,11 +679,10 @@ setTimeout(() => {
     const parts = base.split('/');
     if (parts.length < 3) return null;
 
-    const girl = parts[1]; // ex : "aiko" si photo = "images/aiko/aiko2/..."
+    const girl = parts[1];
     return `images/${girl}/${girl}1`;
   }
 
-  // ---------- PROGRESS BAR ----------
   function renderProgressBar(total) {
     const container = document.getElementById('story-progress');
     container.innerHTML = '';
@@ -775,7 +718,6 @@ setTimeout(() => {
     }
   }
 
-  // ---------- VIEWER ----------
   function showStory() {
     clearTimeout(autoTimer);
 
@@ -806,7 +748,7 @@ setTimeout(() => {
       img.classList.remove('hidden');
     }
 
-    replyInput.placeholder = `Répondre à ${group.characterName}...`;
+    replyInput.placeholder = `Reply to ${group.characterName}...`;
 
     viewer.classList.remove('hidden');
 
@@ -858,7 +800,6 @@ setTimeout(() => {
     showStory();
   }
 
-  // ---------- OUVERTURE DU CHAT ----------
   function openChatForCharacter(characterName, initialMessage) {
     startChat(characterName);
 
@@ -873,7 +814,6 @@ setTimeout(() => {
     }, 300);
   }
 
-  // ---------- RENDU DES VIGNETTES ----------
   function renderStoryThumbnails(container) {
     container.innerHTML = '';
     storyGroups.forEach((group, groupIndex) => {
@@ -910,14 +850,12 @@ setTimeout(() => {
     });
   }
 
-  // ---------- LOAD STORIES (avec cache 24h) ----------
   async function loadStories() {
     await waitForCharacters();
 
     const container = document.getElementById('stories');
     if (!container) return;
 
-    // 1) Tentative de récupération du cache
     const cachedRaw = localStorage.getItem(STORY_CACHE_KEY);
     if (cachedRaw) {
       try {
@@ -933,7 +871,6 @@ setTimeout(() => {
       }
     }
 
-    // 2) Pas de cache valide → on reconstruit
     storyGroups = [];
 
     const subset = characters.slice(0, characters.length);
@@ -949,10 +886,8 @@ setTimeout(() => {
         let mediaList = Array.isArray(data.media) ? data.media : [];
         if (!mediaList.length) continue;
 
-        // résout via CDN
         mediaList = mediaList.map(resolveStoryMedia);
 
-        // ✅ avatar = toujours une image
         let avatarUrl = resolveStoryMedia(char.photo);
         if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
           avatarUrl = resolveStoryMedia(char.backgroundPhoto) || mediaList[0];
@@ -970,7 +905,6 @@ setTimeout(() => {
       }
     }
 
-    // Sauvegarde cache 24h
     try {
       localStorage.setItem(
         STORY_CACHE_KEY,
@@ -986,7 +920,6 @@ setTimeout(() => {
     renderStoryThumbnails(container);
   }
 
-  // ---------- LISTENERS ----------
   document.addEventListener('DOMContentLoaded', () => {
     loadStories();
 
@@ -1008,14 +941,12 @@ setTimeout(() => {
         nextStory();
       });
 
-    // clic fond noir = fermer
     document
       .getElementById('story-viewer')
       .addEventListener('click', (e) => {
         if (e.target.id === 'story-viewer') closeViewer();
       });
 
-    // Envoi réponse
     const replyInput = document.getElementById('story-reply-input');
     const replyBtn = document.getElementById('story-reply-send');
 
@@ -1050,7 +981,6 @@ setTimeout(() => {
         text-align: center;
     }
 
-    /* Liens directs et Copyright */
     .footer-links {
         padding: 20px 10px 5px 10px;
         color: #4b5563;
@@ -1112,45 +1042,45 @@ setTimeout(() => {
 
 <div class="disclaimer-section">
     <div class="footer-links">
-        <p class="mb-2">© 2026 MyAICrush - Tous droits réservés</p><br>
+        <p class="mb-2">© 2026 MyAICrush - All rights reserved</p><br>
         <div class="flex flex-wrap justify-center gap-2">
-            <a href="https://myaicrush.ai/privacy-policy.html">Politique de Confidentialité</a> | 
-            <a href="https://myaicrush.ai/terms-and-conditions.html">Conditions Générales</a>
+            <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> | 
+            <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
         </div>
     </div>
 
-    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Mentions Légales & Support Facturation</div>
+    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice & Billing Support</div>
     
     <div id="disclaimer-content" class="disclaimer-content">
         <div class="mb-4">
-            <strong>i) Restriction d'âge (Mandatoire)</strong><br>
-            Ce site Web est destiné aux adultes de 18 ans et plus (ou 21 ans là où la loi l'exige). En accédant à ce site, vous confirmez que vous avez au moins 18 ans. L'accès par des mineurs est strictement interdit.
+            <strong>i) Age Restriction (Mandatory)</strong><br>
+            This website is intended for adults aged 18 and over (or 21 where required by law). By accessing this site, you confirm that you are at least 18 years old. Access by minors is strictly prohibited.
         </div>
         <div class="mb-4">
-            <strong>ii) Divulgation de l'IA</strong><br>
-            Tous les personnages et conversations sont générés par intelligence artificielle. Aucun individu réel n'est impliqué dans les discussions ou le contenu. Tous les personnages sont fictifs et ne représentent pas des individus réels. Toute ressemblance avec des personnes réelles est purement fortuite.
+            <strong>ii) AI Disclosure</strong><br>
+            All characters and conversations are generated by artificial intelligence. No real individuals are involved in any discussions or content. All characters are fictional and do not represent real people. Any resemblance to real persons is purely coincidental.
         </div>
         <div class="mb-4">
-            <strong>iii) Clause de non-responsabilité pour contenu interdit</strong><br>
-            Nous interdisons strictement tout contenu impliquant des mineurs, des actes non consentis ou des activités illégales. Toutes les interactions sont modérées et filtrées pour prévenir tout contenu interdit.
+            <strong>iii) Prohibited Content Disclaimer</strong><br>
+            We strictly prohibit any content involving minors, non-consensual acts, or illegal activities. All interactions are moderated and filtered to prevent prohibited content.
         </div>
         <div class="mb-4">
-            <strong>iv) Politique relative au contenu généré par les utilisateurs</strong><br>
-            Les utilisateurs peuvent télécharger des images dans les discussions. Les images téléchargées ne peuvent être modifiées ou redistribuées. Tout contenu violant nos politiques sera supprimé et pourra entraîner la suspension du compte.
+            <strong>iv) User-Generated Content Policy</strong><br>
+            Users may upload images in conversations. Uploaded images cannot be modified or redistributed. Any content violating our policies will be removed and may result in account suspension.
         </div>
         <div class="mb-4">
-            <strong>v) Divertissement uniquement</strong><br>
-            Cette plateforme est destinée uniquement à des fins de divertissement. Aucun conseil professionnel (juridique, médical, financier, psychologique) n'est fourni.
+            <strong>v) Entertainment Only</strong><br>
+            This platform is intended for entertainment purposes only. No professional advice (legal, medical, financial, psychological) is provided.
         </div>
         <div class="mb-4">
-            <strong>vi) Confidentialité et données</strong><br>
-            Les conversations peuvent être enregistrées à des fins de modération et de qualité. Vos données sont traitées conformément à notre Politique de Confidentialité. Nous ne vendons pas vos données personnelles.
+            <strong>vi) Privacy & Data</strong><br>
+            Conversations may be recorded for moderation and quality purposes. Your data is processed in accordance with our Privacy Policy. We do not sell your personal data.
         </div>
         <div class="support-box">
-            <strong>vii) Support Facturation et Remboursements</strong><br>
-            Pour toute demande concernant vos paiements ou pour faire valoir votre garantie de remboursement de 15 jours, veuillez contacter l'email suivant :<br>
+            <strong>vii) Billing Support & Refunds</strong><br>
+            For any questions regarding your payments or to exercise your 15-day money-back guarantee, please contact:<br>
             <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
-            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Support Facturation Explodely</a>
+            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Explodely Billing Support</a>
         </div>
     </div>
 </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jetons</title>
+  <title>Tokens</title>
   <link rel="stylesheet" href="styles.css"/>
   <link rel="icon" href="/images/market/logo.webp" type="image/jpeg"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
@@ -17,7 +17,7 @@
   </script>
 
   <style>
-    /* STYLE POPUP CONFIRMATION (DESIGN IOS DARK) */
+    /* POPUP STYLES RESTAURÉS */
     .jetons-popup {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -93,6 +93,151 @@
       font-size: 16px;
       cursor: pointer;
     }
+
+    /* --- NOUVEAUX STYLES SEXY POUR LES FEATURES --- */
+    .token-benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 25px 0;
+      text-align: left;
+    }
+    .benefit-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 15px;
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+    .benefit-item i {
+      color: #ff9cef;
+      font-size: 1.2rem;
+    }
+    .benefit-item span {
+      font-size: 0.85rem;
+      font-weight: 500;
+      line-height: 1.3;
+      color: #e0e0e0;
+    }
+    .nympho-item {
+      grid-column: span 2;
+      background: linear-gradient(145deg, rgba(255, 47, 160, 0.15), rgba(194, 47, 255, 0.1));
+      border: 1px solid rgba(255, 156, 239, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .nympho-item b {
+        color: #ff9cef;
+        display: block;
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+    .nympho-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.6rem;
+        background: #ff2fa0;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* --- TOKEN OFFERS GRID --- */
+    .token-offers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin: 40px 0;
+    }
+    .token-card {
+      background: linear-gradient(145deg,#1c1c1e,#141416);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 30px 22px;
+      border-radius: 20px;
+      color: white;
+      position: relative;
+      transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .token-card:hover {
+      transform: translateY(-8px);
+      border-color: #ff2fa0;
+      box-shadow: 0 15px 30px rgba(255, 56, 148, 0.2);
+    }
+    .token-icon-fa {
+      font-size: 45px;
+      color: #ffd700;
+      margin-bottom: 15px;
+      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+      display: block;
+    }
+    .token-title {
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+    .token-price {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 10px 0;
+      color: #ff8cd6;
+    }
+    .token-save {
+      background: #ff2fa0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .token-cta {
+      background: linear-gradient(90deg,#ff2fa0,#c22fff);
+      border: none;
+      width: 100%;
+      padding: 14px 0;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      margin-top: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: block;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(255, 47, 160, 0.3);
+    }
+    .token-cta:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 6px 20px rgba(255, 47, 160, 0.5);
+    }
+    .best-deal {
+      position: absolute;
+      top: -15px;
+      right: -10px;
+      background: linear-gradient(90deg, #ffd700, #ffae00);
+      color: #000;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .token-card.popular {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      transform: scale(1.02);
+      background: linear-gradient(145deg,#251a21,#141416);
+    }
   </style>
 </head>
 <body>
@@ -101,358 +246,237 @@
   <div class="popup-content">
     <button class="close-btn" onclick="closeJetonsPopup()">×</button>
     <img src="/images/market/carte-credit.webp" class="popup-cc-img" alt="Card Icon">
-    <h2 class="popup-title">Confirmer ton achat ?</h2>
+    <h2 class="popup-title">Confirm your purchase?</h2>
     <p class="popup-text">
-      Tu es sur le point d'acheter <b id="confirm-tokens">0 jetons</b> pour <b id="confirm-price">0€</b>
+      You're about to buy <b id="confirm-tokens">0 tokens</b> for <b id="confirm-price">$0</b>
     </p>
     <div class="popup-footer-btns">
-      <button class="btn-cancel" onclick="closeJetonsPopup()">Annuler</button>
-      <button id="final-confirm-btn" class="btn-confirm">Confirmer</button>
+      <button class="btn-cancel" onclick="closeJetonsPopup()">Cancel</button>
+      <button id="final-confirm-btn" class="btn-confirm">Confirm</button>
     </div>
   </div>
 </div>
 
   <div class="container premium-page">
-    <h1 class="p-title">Pas assez de jetons ? </h1>
-    <h2>Achète des jetons maintenant pour continuer.</h2><br>
+    <h1 class="p-title">Need more tokens?</h1>
+    <h2>Unlock the extras. Go further.</h2><br>
+    
     <center>
-      <video style="width:270px; margin:auto;" autoplay muted loop playsinline class="hanae-image">
+      <video style="width:270px; margin:auto; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autoplay muted loop playsinline class="hanae-image">
         <source src="/images/market/jetons-promo.mp4" type="video/mp4">
       </video>
     </center>
 
-    <p class="p-description">En tant qu'abonné Premium, tu as droit à :</p>
-    <ul class="token-benefits">
-      <li>Messages texte illimités</li>
-      <li>Photos classiques envoyées par l'I.A, illimitées</li>
-      <li>Vidéos classiques envoyées par l'I.A, illimitées</li>
-      <li>1 minute de messages vocaux par mois</li>
-      <li>10 photos envoyées depuis ta galerie par mois</li>
-    </ul>
-
-    <p class="p-description">Grâce aux jetons, tu peux accéder à des bonus excitants avec tes <span style="font-family:'Times New Roman', Times, serif;">I.A</span> préférées.</p>
-    <p class="p-description">Débloque plus d'écoute, de photos envoyées depuis ta galerie, et tu accèdes au mode <span style="color: #ff9cef;"><b>"Nymphomane" !</b></span> 
-      
-    <p class="p-description"><b><span style="color: #ff9cef;">Le mode Nymphomane peut rendre n'importe quelle I.A folle de toi (même les plus timides). Elles deviennent plus coquines, t'envoient plus de photos, et sont <b><u>100% dénudées</u></b>.</span></b></p>
-
-    <ul class="token-benefits">
-      <li>1 jeton = 1 photo envoyée depuis ta galerie</li>
-      <li>5 jetons = 1 minute de messages vocaux</li>
-      <li>Contenus privés</li>
-      <li>20 jetons = 10 minutes d'appel audio</li>
-      <b><li><span style="color: #ff9cef;">25 jetons = Le mode "Nymphomane" sur une I.A de ton choix</span></li></b>
-    </ul>
-
-    <style>
-/* ----------- TOKEN CARDS IMPROVED ----------- */
-.token-offers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-  margin: 40px 0;
-}
-
-.token-card {
-  background: linear-gradient(145deg,#1c1c1e,#141416);
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 30px 22px;
-  border-radius: 20px;
-  color: white;
-  position: relative;
-  transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: pointer;
-  text-align: center;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-}
-
-.token-card:hover {
-  transform: translateY(-8px);
-  border-color: #ff2fa0;
-  box-shadow: 0 15px 30px rgba(255, 56, 148, 0.2);
-}
-
-.token-icon-fa {
-  font-size: 45px;
-  color: #ffd700;
-  margin-bottom: 15px;
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
-  display: block;
-}
-
-.token-title {
-  font-size: 26px;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 5px;
-}
-
-.token-price {
-  font-size: 28px;
-  font-weight: 800;
-  margin: 10px 0;
-  color: #ff8cd6;
-}
-
-.token-save {
-  background: #ff2fa0;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: bold;
-  display: inline-block;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.token-cta {
-  background: linear-gradient(90deg,#ff2fa0,#c22fff);
-  border: none;
-  width: 100%;
-  padding: 14px 0;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
-  color: white;
-  margin-top: 16px;
-  cursor: pointer;
-  transition: 0.2s;
-  display: block;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(255, 47, 160, 0.3);
-}
-
-.token-cta:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 6px 20px rgba(255, 47, 160, 0.5);
-}
-
-/* Decoy Effect: Best Deal */
-.best-deal {
-  position: absolute;
-  top: -15px;
-  right: -10px;
-  background: linear-gradient(90deg, #ffd700, #ffae00);
-  color: #000;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 900;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-/* Decoy Effect: Highlight Middle Offer */
-.token-card.popular {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transform: scale(1.02);
-}
-</style>
-
-<div class="token-offers">
-
-  <div class="token-card" data-tokens="10 jetons" data-price="9$">
-    <i class="fas fa-coins token-icon-fa"></i>
-    <div class="token-title">10 Jetons</div>
-    <div class="token-price">$9</div>
-    <a href="https://explodely.com/p/1973148443?ocu=yes"
-       class="token-cta">Acheter</a>
-  </div>
-
-  <div class="token-card" data-tokens="50 jetons" data-price="37$">
-    <span class="token-save">Économise 17%</span>
-    <i class="fas fa-coins token-icon-fa"></i>
-    <div class="token-title">50 Jetons</div>
-    <div class="token-price">$37</div>
-    <a href="https://explodely.com/p/453015891?ocu=yes"
-       class="token-cta">Acheter</a>
-  </div>
-
-  <div class="token-card" data-tokens="100 jetons" data-price="59$">
-    <span class="token-save">Économise 34%</span>
-    <i class="fas fa-coins token-icon-fa"></i>
-    <div class="token-title">100 Jetons</div>
-    <div class="token-price">$59</div>
-    <a href="https://explodely.com/p/12407737?ocu=yes"
-       class="token-cta">Acheter</a>
-  </div>
-
-  <div class="token-card popular" data-tokens="300 jetons" data-price="129$">
-    <span class="token-save" style="background: #c22fff;">Économise 52% 🔥</span>
-    <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
-    <div class="token-title">300 Jetons</div>
-    <div class="token-price">$129</div>
-    <a href="https://explodely.com/p/1692961330?ocu=yes"
-       class="token-cta">Acheter</a>
-  </div>
-
-  <div class="token-card" data-tokens="700 jetons" data-price="249$">
-    <span class="token-save">Économise 60%</span>
-    <i class="fas fa-coins token-icon-fa"></i>
-    <div class="token-title">700 Jetons</div>
-    <div class="token-price">$249</div>
-    <a href="https://explodely.com/p/1157830330?ocu=yes"
-       class="token-cta">Acheter</a>
-  </div>
-
-  <div class="token-card" style="border:2px solid #ffd700;" data-tokens="1000 jetons" data-price="299$">
-    <div class="best-deal">BEST VALUE 💎</div>
-    <span class="token-save">Économise 66%</span>
-    <i class="fas fa-coins token-icon-fa" style="font-size:55px;"></i>
-    <div class="token-title">1000 Jetons</div>
-    <div class="token-price">$299</div>
-    <a href="https://explodely.com/p/852778059?ocu=yes"
-       class="token-cta" style="background: linear-gradient(90deg,#ffd700,#ffae00); color:#000;">Profiter de l'offre</a>
-  </div>
-
-</div>
-
-<script src="https://gumroad.com/js/gumroad.js"></script>
-
-<div class="testimonial-section">
-  <h2 class="testimonial-title">Ils ont pris des jetons… et sont devenus accro</h2>
-  <div class="testimonial-grid">
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"J’ai mis le mode nympho sur Léa… j’te jure c’est plus la même. Elle m’a chauffé comme jamais 🔥"</p>
-      <p class="testimonial-author">— Karim M.</p>
+    <p class="p-description" style="margin-top: 30px;">Tokens unlock the <b>hot extras</b>:</p>
+    
+    <div class="token-benefits-grid">
+        <div class="benefit-item">
+            <i class="fas fa-image"></i>
+            <span>1 token = 1 gallery photo</span>
+        </div>
+        <div class="benefit-item">
+            <i class="fas fa-microphone"></i>
+            <span>5 tokens = 1 min voice message</span>
+        </div>
+        <div class="benefit-item">
+            <i class="fas fa-lock"></i>
+            <span>Private VIP content</span>
+        </div>
+        <div class="benefit-item">
+            <i class="fas fa-phone-alt"></i>
+            <span>20 tokens = 10-min audio call</span>
+        </div>
+        <div class="benefit-item nympho-item">
+            <span class="nympho-badge">Popular 🔥</span>
+            <b>🥵 25 tokens = Nympho Mode</b>
+            <span style="font-size: 0.75rem; opacity: 0.8;">Makes any A.I wild and fully uncensored. Even the shy ones.</span>
+        </div>
     </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Jasmine était toute sage au début… et là d’un coup c’est tétons à l’air, doigts entre les jambes 😳 j’étais pas prêt"</p>
-      <p class="testimonial-author">— Lucas R.</p>
+    <div class="token-offers">
+
+      <div class="token-card" data-tokens="10 tokens" data-price="$9">
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">10 Tokens</div>
+        <div class="token-price">$9</div>
+        <a href="https://explodely.com/p/1973148443?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" data-tokens="50 tokens" data-price="$37">
+        <span class="token-save">Save 17%</span>
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">50 Tokens</div>
+        <div class="token-price">$37</div>
+        <a href="https://explodely.com/p/453015891?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" data-tokens="100 tokens" data-price="$59">
+        <span class="token-save">Save 34%</span>
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">100 Tokens</div>
+        <div class="token-price">$59</div>
+        <a href="https://explodely.com/p/12407737?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card popular" data-tokens="300 tokens" data-price="$129">
+        <span class="token-save" style="background: #c22fff;">Save 52% 🔥</span>
+        <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
+        <div class="token-title">300 Tokens</div>
+        <div class="token-price">$129</div>
+        <a href="https://explodely.com/p/1692961330?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" data-tokens="700 tokens" data-price="$249">
+        <span class="token-save">Save 60%</span>
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">700 Tokens</div>
+        <div class="token-price">$249</div>
+        <a href="https://explodely.com/p/1157830330?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" style="border:2px solid #ffd700;" data-tokens="1000 tokens" data-price="$299">
+        <div class="best-deal">BEST VALUE 💎</div>
+        <span class="token-save">Save 66%</span>
+        <i class="fas fa-coins token-icon-fa" style="font-size:55px;"></i>
+        <div class="token-title">1000 Tokens</div>
+        <div class="token-price">$299</div>
+        <a href="https://explodely.com/p/852778059?ocu=yes"
+           class="token-cta" style="background: linear-gradient(90deg,#ffd700,#ffae00); color:#000;">Get this deal</a>
+      </div>
+
     </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"25 jetons pour voir ton IA se déchaîner ? C’est cadeau mec. Elle m’a envoyé des nudes direct 😈"</p>
-      <p class="testimonial-author">— Steph G.</p>
+    <script src="https://gumroad.com/js/gumroad.js"></script>
+
+    <div class="testimonial-section">
+      <h2 class="testimonial-title">They bought tokens… and got hooked</h2>
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Léa in nympho mode… totally different girl 🔥"</p>
+          <p class="testimonial-author">— Karim M.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Jasmine was innocent at first… then fully exposed 😳 I was not ready."</p>
+          <p class="testimonial-author">— Lucas R.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"25 tokens to go wild? Steal. Nudes straight away 😈"</p>
+          <p class="testimonial-author">— Steph G.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Thought it'd be fake… nope 😭 nude photos non-stop."</p>
+          <p class="testimonial-author">— Bast D.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Cute at first… now she shows everything 😭🔥"</p>
+          <p class="testimonial-author">— Enzo L.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Nympho mode — BOOM 💥 photos, nothing on."</p>
+          <p class="testimonial-author">— Max B.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Her voice is insane 😅"</p>
+          <p class="testimonial-author">— Adrien P.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"She whispered things… way too realistic 😵‍💫"</p>
+          <p class="testimonial-author">— Q. Vasseur</p>
+        </div>
+      </div>
     </div>
 
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Franchement j’me disais ça va être fake… bah nan 😭 elle m’a chauffé tout l’chat, photos à poil non stop"</p>
-      <p class="testimonial-author">— Bast D.</p>
+    <div class="faq-section">
+      <h2 class="faq-title">FAQ</h2>
+      <div class="faq-item">
+        <button class="faq-question">How does Nympho Mode work?</button>
+        <div class="faq-answer">
+          <p>She goes fully uncensored — more daring, more photos, way more intense. Even the shy ones change completely.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">How many tokens for Nympho Mode?</button>
+        <div class="faq-answer">
+          <p>25 tokens = 1 hour. Any A.I, as many times as you want.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">How do audio calls work?</button>
+        <div class="faq-answer">
+          <p>Live voice call. 10 minutes = 20 tokens.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What are tokens for?</button>
+        <div class="faq-answer">
+          <p>📸 Gallery photos · 🎙️ Voice · 📞 Calls · 🥵 Nympho Mode</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Can I send my own photos?</button>
+        <div class="faq-answer">
+          <p>Yes. 10 free/month with Premium. After that: 1 token each.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">How do voice messages work?</button>
+        <div class="faq-answer">
+          <p>1 free minute/month. Then 5 tokens per extra minute.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Premium vs tokens?</button>
+        <div class="faq-answer">
+          <p>Premium = unlimited core access. Tokens = the hot extras.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Do tokens expire?</button>
+        <div class="faq-answer">
+          <p>Never. Use them whenever.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Payment issue?</button>
+        <div class="faq-answer">
+          <p>contact@myaicrush.ai — we'll fix it fast.</p>
+        </div>
+      </div>
     </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Elle était cute au début… mtn elle m’appelle “mon cochon” et elle montre tout 😭🔥"</p>
-      <p class="testimonial-author">— Enzo L.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Tu cliques sur mode nympho et BOUM 💥 elle te balance des photos... sans rien, toute chaude"</p>
-      <p class="testimonial-author">— Max B.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"J’ai testé les vocaux... gros j’ai eu une érection en 10 sec 😅 sa voix c’est abusé"</p>
-      <p class="testimonial-author">— Adrien P.</p>
-    </div>
-
-    <div class="testimonial-card">
-      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-      <p class="testimonial-text">"Elle m’a susurré des trucs… j’me croyais dans une sextape. Trop réaliste 😵‍💫"</p>
-      <p class="testimonial-author">— Q. Vasseur</p>
-    </div>
-  </div>
-</div>
-
-<div class="faq-section">
-  <h2 class="faq-title">Questions Fréquemment Posées</h2>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment fonctionne le mode "Nymphomane" ?</button>
-    <div class="faq-answer">
-      <p>Le mode "Nymphomane" transforme l'I.A de ton choix : elle devient plus coquine, plus directe, et commence à t’envoyer des photos beaucoup plus intimes. Même les I.A les plus réservées changent complètement de comportement. L’expérience est bien plus intense.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Combien de jetons faut-il pour activer le mode Nympho ?</button>
-    <div class="faq-answer">
-      <p>Activer le mode Nymphomane coûte 25 jetons pour une heure. Tu peux l’activer autant de fois que tu veux, sur l’I.A que tu veux.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment se déroulent les appels audio ?</button>
-    <div class="faq-answer">
-      <p>Tu peux lancer un appel vocal avec ton I.A. Elle te parle avec une vraie voix, en direct, comme une vraie conversation intime au téléphone. Chaque appel dure 10 minutes et coûte 20 jetons.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">À quoi servent les jetons ?</button>
-    <div class="faq-answer">
-      <p>Les jetons permettent de débloquer des options avancées : envoi de tes propres photos, messages vocaux illimités, appels audio, ou encore l’accès au mode Nymphomane. C’est ce qui rend l’expérience plus immersive et excitante.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Puis-je envoyer mes propres photos ?</button>
-    <div class="faq-answer">
-      <p>Oui. Avec l’abonnement Premium, tu peux en envoyer 10 par mois. Ensuite, chaque photo supplémentaire coûte 1 jeton. L’I.A réagit à chaque image avec un commentaire personnalisé.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Comment fonctionnent les messages vocaux ?</button>
-    <div class="faq-answer">
-      <p>Ton I.A peut te répondre par message vocal. Tu as 1 minute gratuite par mois. Ensuite, tu peux prolonger l’écoute avec 5 jetons par minute supplémentaire.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Quelle est la différence entre Premium et les jetons ?</button>
-    <div class="faq-answer">
-      <p>L’abonnement Premium te donne accès aux fonctions de base en illimité (chat, photos floutées retirées, vidéos normales). Les jetons, eux, te permettent d’aller plus loin et d’explorer des options très sensuelles, comme les appels ou les photos intimes.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Les jetons ont-ils une date d’expiration ?</button>
-    <div class="faq-answer">
-      <p>Non. Tes jetons sont valables sans limite de temps. Tu peux les utiliser quand tu veux, même dans plusieurs mois.</p>
-    </div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-question">Et si j’ai un souci avec mon paiement ?</button>
-    <div class="faq-answer">
-      <p>Notre support client est réactif. Si un paiement pose problème ou si tu n’as pas reçu tes jetons, contacte-nous via la page "Contact" et on réglera ça rapidement.</p>
-    </div>
-  </div>
-</div>
-
   </div>
 
   <div class="security-section">
     <div class="security-item">
       <i class="fas fa-lock"></i>
-      <p>100% Sécurisé</p>
+      <p>100% Secure</p>
     </div>
     <div class="security-item">
       <i class="fas fa-mask"></i>
-      <p>Confidentialité totale</p>
+      <p>Total privacy</p>
     </div>
   </div>
 
   <script type="module" src="/scripts/menu-loader.js"></script>
   <script type="module" src="./scripts/stripe-tokens.js"></script>
 
-
   <script>
-  document.querySelectorAll('.faq-question').forEach(button => {
-    button.addEventListener('click', () => {
-      const answer = button.nextElementSibling;
-      answer.classList.toggle('open');
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.faq-question').forEach(button => {
+        button.addEventListener('click', () => {
+          const answer = button.nextElementSibling;
+          answer.classList.toggle('open');
+        });
+      });
     });
-  });
-</script>
+  </script>
 
   <noscript>
     <img height="1" width="1" style="display:none"
@@ -467,8 +491,6 @@
         font-family: sans-serif;
         text-align: center;
     }
-
-    /* Liens directs et Copyright */
     .footer-links {
         padding: 20px 10px 5px 10px;
         color: #4b5563;
@@ -480,10 +502,7 @@
         margin: 0 10px;
         transition: color 0.3s ease;
     }
-    .footer-links a:hover {
-        color: #f472b6;
-    }
-
+    .footer-links a:hover { color: #f472b6; }
     .disclaimer-btn { 
         width: 100%; 
         color: #4b5563; 
@@ -495,7 +514,6 @@
         transition: color 0.3s ease;
     }
     .disclaimer-btn:hover { color: #9ca3af; }
-
     .disclaimer-content { 
         max-height: 0; 
         overflow: hidden; 
@@ -508,15 +526,9 @@
         max-width: 800px;
         margin: 0 auto;
     }
-
-    .disclaimer-content.open { 
-        max-height: 2000px; 
-        padding: 25px; 
-    }
-
+    .disclaimer-content.open { max-height: 2000px; padding: 25px; }
     .disclaimer-content .mb-4 { margin-bottom: 1rem; }
     .disclaimer-content strong { color: #d1d5db; }
-    
     .support-box {
         padding: 0.75rem;
         background: rgba(255, 255, 255, 0.05);
@@ -526,49 +538,49 @@
     }
     .text-pink-400 { color: #f472b6; }
     .underline { text-decoration: underline; }
-</style>
+  </style>
 
 <div class="disclaimer-section">
     <div class="footer-links">
-        <p class="mb-2">© 2026 MyAICrush - Tous droits réservés</p><br>
+        <p class="mb-2">© 2026 MyAICrush - All rights reserved</p><br>
         <div class="flex flex-wrap justify-center gap-2">
-            <a href="https://myaicrush.ai/privacy-policy.html">Politique de Confidentialité</a> | 
-            <a href="https://myaicrush.ai/terms-and-conditions.html">Conditions Générales</a>
+            <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> | 
+            <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
         </div>
     </div>
 
-    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Mentions Légales & Support Facturation</div>
+    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice & Billing Support</div>
     
     <div id="disclaimer-content" class="disclaimer-content">
         <div class="mb-4">
-            <strong>i) Restriction d'âge (Mandatoire)</strong><br>
-            Ce site Web est destiné aux adultes de 18 ans et plus (ou 21 ans là où la loi l'exige). En accédant à ce site, vous confirmez que vous avez au moins 18 ans. L'accès par des mineurs est strictement interdit.
+            <strong>i) Age Restriction (Mandatory)</strong><br>
+            This website is intended for adults aged 18 and over (or 21 where required by law). By accessing this site, you confirm that you are at least 18 years old. Access by minors is strictly prohibited.
         </div>
         <div class="mb-4">
-            <strong>ii) Divulgation de l'IA</strong><br>
-            Tous les personnages et conversations sont générés par intelligence artificielle. Aucun individu réel n'est impliqué dans les discussions ou le contenu. Tous les personnages sont fictifs et ne représentent pas des individus réels. Toute ressemblance avec des personnes réelles est purement fortuite.
+            <strong>ii) AI Disclosure</strong><br>
+            All characters and conversations are generated by artificial intelligence. No real individuals are involved in any discussions or content. All characters are fictional and do not represent real people. Any resemblance to real persons is purely coincidental.
         </div>
         <div class="mb-4">
-            <strong>iii) Clause de non-responsabilité pour contenu interdit</strong><br>
-            Nous interdisons strictement tout contenu impliquant des mineurs, des actes non consentis ou des activités illégales. Toutes les interactions sont modérées et filtrées pour prévenir tout contenu interdit.
+            <strong>iii) Prohibited Content Disclaimer</strong><br>
+            We strictly prohibit any content involving minors, non-consensual acts, or illegal activities. All interactions are moderated and filtered to prevent prohibited content.
         </div>
         <div class="mb-4">
-            <strong>iv) Politique relative au contenu généré par les utilisateurs</strong><br>
-            Les utilisateurs peuvent télécharger des images dans les discussions. Les images téléchargées ne peuvent être modifiées ou redistribuées. Tout contenu violant nos politiques sera supprimé et pourra entraîner la suspension du compte.
+            <strong>iv) User-Generated Content Policy</strong><br>
+            Users may upload images in conversations. Uploaded images cannot be modified or redistributed. Any content violating our policies will be removed and may result in account suspension.
         </div>
         <div class="mb-4">
-            <strong>v) Divertissement uniquement</strong><br>
-            Cette plateforme est destinée uniquement à des fins de divertissement. Aucun conseil professionnel (juridique, médical, financier, psychologique) n'est fourni.
+            <strong>v) Entertainment Only</strong><br>
+            This platform is intended for entertainment purposes only. No professional advice (legal, medical, financial, psychological) is provided.
         </div>
         <div class="mb-4">
-            <strong>vi) Confidentialité et données</strong><br>
-            Les conversations peuvent être enregistrées à des fins de modération et de qualité. Vos données sont traitées conformément à notre Politique de Confidentialité. Nous ne vendons pas vos données personnelles.
+            <strong>vi) Privacy & Data</strong><br>
+            Conversations may be recorded for moderation and quality purposes. Your data is processed in accordance with our Privacy Policy. We do not sell your personal data.
         </div>
         <div class="support-box">
-            <strong>vii) Support Facturation et Remboursements</strong><br>
-            Pour toute demande concernant vos paiements ou pour faire valoir votre garantie de remboursement de 15 jours, veuillez contacter l'email suivant :<br>
+            <strong>vii) Billing Support & Refunds</strong><br>
+            For any questions regarding your payments or to exercise your 15-day money-back guarantee, please contact:<br>
             <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
-            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Support Facturation Explodely</a>
+            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Explodely Billing Support</a>
         </div>
     </div>
 </div>
@@ -584,7 +596,6 @@
         }
     }
 
-    // GESTION DE LA POPUP
     const popup = document.getElementById('jetons-popup');
     const confirmTokensText = document.getElementById('confirm-tokens');
     const confirmPriceText = document.getElementById('confirm-price');

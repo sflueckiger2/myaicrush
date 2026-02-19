@@ -21,27 +21,27 @@ async function checkPremiumStatus() {
     if (data.isPremium === true) {
       statusEl.innerHTML = `
         <div class="sub-ok">
-          Premium actif ✅
+          Premium ✅
         </div>
       `;
     } else {
       statusEl.innerHTML = `
         <div class="sub-off">
-          <p style="margin-bottom: 12px;">
-            Ton Premium n’est pas actif au expire ou prochain renouvellement.
-          </p>
+  <p style="margin-bottom: 12px;">
+    Your Premium is not active, expired, or pending renewal.
+  </p>
 
-          <div class="lifetime-box">
-            💎 Premium - Accès à vie<br>
-            <span class="lifetime-price">49$ - un seul paiement</span>
-          </div>
+  <div class="lifetime-box">
+    💎 Premium — Lifetime Access<br>
+    <span class="lifetime-price">$49 — one-time payment</span>
+  </div>
 
-          <a href="https://explodely.com/p/887584369"
-             target="_blank"
-             class="premium-cta-btn">
-             🚀 Activer le Premium
-          </a>
-        </div>
+  <a href="https://explodely.com/p/887584369"
+     target="_blank"
+     class="premium-cta-btn">
+     🚀 Activate Premium
+  </a>
+</div>
       `;
     }
   } catch (error) {

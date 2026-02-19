@@ -1213,26 +1213,7 @@ if (callButton) {
 
 
 
-        // 🆕 Quick reply de départ basée sur le personnage
-    const userForQR = JSON.parse(localStorage.getItem("user"));
-    if (userForQR && userForQR.email) {
-      fetch(`${BASE_URL}/quick-replies-initial`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: userForQR.email,
-          characterName: characterName
-        }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log("👉 Quick reply initiale reçue :", data.quickReplies);
-          if (Array.isArray(data.quickReplies) && data.quickReplies.length > 0) {
-            renderQuickReplies(data.quickReplies); // utilise déjà tes boutons
-          }
-        })
-        .catch(err => console.error("❌ Erreur quick-replies-initial :", err));
-    }
+   
 
 
                 // ✅ Gestion de l'affichage du chat
