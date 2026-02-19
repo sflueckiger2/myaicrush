@@ -32,11 +32,11 @@ async function checkPremiumStatus() {
           </p>
 
           <div class="lifetime-box">
-            💎 Premium <br>
-            <span class="lifetime-price">Seulement 7$</span>
+            💎 Premium - Accès à vie<br>
+            <span class="lifetime-price">49$ - un seul paiement</span>
           </div>
 
-          <a href="https://explodely.com/p/22705532"
+          <a href="https://explodely.com/p/887584369"
              target="_blank"
              class="premium-cta-btn">
              🚀 Activer le Premium
