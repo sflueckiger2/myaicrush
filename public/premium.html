@@ -12,11 +12,9 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-      /* Styles spécifiques à la section Benefits */
       .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
       .gradient-text { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       
-      /* Style des Boutons Premium inspiré du Quiz */
       .cta-button-premium { 
           background: linear-gradient(90deg, #f472b6, #a855f7); 
           transition: all 0.3s ease; 
@@ -38,7 +36,6 @@
       }
       .cta-secondary:hover { background: rgba(255, 255, 255, 0.2); }
 
-      /* Animation */
       .pulse-pink { animation: pulse 2s infinite; }
       @keyframes pulse { 
           0% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.4); } 
@@ -49,7 +46,6 @@
       .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
       .faq-answer.open { max-height: 400px; }
 
-      /* Accordéon Disclaimer Discret */
       .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px; }
       .disclaimer-btn { width: 100%; text-align: center; color: #4b5563; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; padding: 15px; cursor: pointer; }
       .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease; background: rgba(0,0,0,0.2); font-size: 0.75rem; color: #9ca3af; line-height: 1.5; text-align: left; }
@@ -79,11 +75,11 @@
 </head>
 <body>
   <div class="container premium-page">
-    <h1 class="p-title">Tu mérites mieux que le gratuit.</h1>
+    <h1 class="p-title">Unlock everything. Once.</h1>
     <p class="p-description">
-      Photos <u><b>sans flou</b></u>, vidéos intimes, messages vocaux, conversations sans limite — tout ça avec des <span style="font-family:'Times New Roman', Times, serif;">I.A</span> qui ne te jugent jamais.
+      <u><b>Unblurred</b></u> photos & videos · Voice messages · Unlimited chats — <span style="font-family:'Times New Roman', Times, serif;">A.I</span> that never judges.
     </p>
-    <p class="p-description"><b>⚠️ <u>Une seule fois</u></b> : tu paies 49$, une fois, et c'est fini. Pas d'abonnement. Accès à vie.</p>
+    <p class="p-description"><b>⚠️ <u>$49 — one time. No subscription. Ever.</u></b></p>
    
     <div class="hero-media">
         <video class="hero-video" autoplay muted loop playsinline>
@@ -93,193 +89,178 @@
     </div>
 
     <a href="https://explodely.com/p/887584369" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block mt-6">
-        🔓 ACCÈS À VIE — 49 $ UNE SEULE FOIS
+        🔓 LIFETIME ACCESS — $49 ONE TIME
     </a>
 
     <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 1rem; text-align: center;">
-      💳 Paiement sécurisé · ✨ Accès immédiat · 🚫 Aucun abonnement, jamais
+      💳 Secure payment · ✨ Instant access · 🚫 No subscription, ever
     </p>
 
     <div id="pricing-container" class="pricing-section">
       <div class="pricing-card popular" style="max-width: 500px; margin: 0 auto;">
-        <div class="discount-banner">🔥 PAIEMENT UNIQUE — POUR TOUJOURS</div>
-        <h2>Accès Premium Illimité</h2>
-        <p class="price">49 $</p>
-        <p style="font-size: 0.9rem; color: #f472b6; font-weight: bold; margin-top: 0.5rem;">✅ TU PAIES UNE FOIS · TU PROFITES À VIE</p>
-        <p style="font-size: 0.85rem; color: #d1d5db; margin-top: 0.5rem;">Pendant que d'autres paient 20$/mois ailleurs, toi tu règles une fois et tu oublies. Toutes les nouvelles IA incluses dès leur sortie.</p>
+        <div class="discount-banner">🔥 ONE-TIME PAYMENT — FOREVER</div>
+        <h2>Unlimited Premium Access</h2>
+        <p class="price">$49</p>
+        <p style="font-size: 0.9rem; color: #f472b6; font-weight: bold; margin-top: 0.5rem;">✅ PAY ONCE · ENJOY FOREVER</p>
+        <p style="font-size: 0.85rem; color: #d1d5db; margin-top: 0.5rem;">All new AIs included. No monthly fees. Ever.</p>
       </div>
     </div>
 
     <a href="https://explodely.com/p/887584369" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        💎 Je prends l'accès à vie — 49 $
+        💎 Get lifetime access — $49
     </a>
 
     <section class="mb-24 px-4 mt-12 text-left">
-        <h2 class="text-3xl font-bold text-center mb-12 uppercase tracking-tight" style="color: white;">Ce que tu <span class="gradient-text">débloques</span></h2>
+        <h2 class="text-3xl font-bold text-center mb-12 uppercase tracking-tight" style="color: white;">What you <span class="gradient-text">unlock</span></h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">💬</span> <span class="text-sm font-semibold">Conversations sans limite — parle autant que tu veux</span>
+                <span class="text-2xl">💬</span> <span class="text-sm font-semibold">Unlimited conversations</span>
             </div>
             <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="revealVideo(this)">
                 <div class="flex items-center gap-4">
-                    <span class="text-2xl">✨</span> <span class="text-sm font-semibold">Fini le flou — vois tout en entier</span>
+                    <span class="text-2xl">✨</span> <span class="text-sm font-semibold">No blur — see everything</span>
                 </div>
                 <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
                     <video src="https://img.myaicrush.ai/images/morgana/morgana3/kling_20251024_Image_to_Video_Fais_rebon_5667_0.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md scale-110 transition-all duration-700 ease-in-out"></video>
                     <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 hover:bg-black/30 transition-all z-10 overlay-content">
                         <span class="text-3xl mb-2 drop-shadow-lg">🔒</span>
-                        <span class="text-[10px] font-bold uppercase tracking-widest bg-black/60 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm">👆 Clic pour enlever le flou</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest bg-black/60 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm">👆 Tap to remove blur</span>
                     </div>
                 </div>
             </div>
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">📸</span> <span class="text-sm font-semibold">Envoie tes photos — elle répond comme si c'était vrai</span>
-            </div>
-            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <div class="flex items-center gap-4">
-                    <span class="text-2xl">🎙️</span> <span class="text-sm font-semibold">Sa voix dans ton oreille</span>
-                </div>
-                <div class="w-full mt-2">
-                    <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mb-1">🎧 Écoute un extrait :</p>
-                     <audio controls class="w-full h-8 rounded opacity-90" style="filter: invert(1) hue-rotate(180deg);">
-                        <source src="/audio/voix-match-quiz.mp3" type="audio/mpeg">
-                        Ton navigateur ne supporte pas l'audio.
-                    </audio>
-                </div>
+                <span class="text-2xl">📸</span> <span class="text-sm font-semibold">Send your photos — she reacts</span>
             </div>
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Images illimitées — à la demande</span>
+                <span class="text-2xl">🎙️</span> <span class="text-sm font-semibold">Her voice — in your ear</span>
+            </div>
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Unlimited images — on demand</span>
             </div>
             <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openModal()">
                 <div class="flex items-center gap-4">
-                    <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Contenu intime — photos & vidéos sans censure</span>
+                    <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Uncensored photos & videos</span>
                 </div>
                 <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
                     <video src="https://img.myaicrush.ai/images/magalie/magalie4/6873d0bf448a312ed5decb604dae881c.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md"></video>
                     <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-all z-10">
                         <span class="text-4xl mb-2 drop-shadow-lg filter drop-shadow-pink">🔒</span>
-                        <span class="text-[10px] font-bold uppercase tracking-widest bg-pink-600/80 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm text-white shadow-lg">Premium Requis</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest bg-pink-600/80 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm text-white shadow-lg">Premium Required</span>
                     </div>
                 </div>
             </div>
-            <div class="glass p-5 rounded-2xl flex flex-col items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">👑</span> 
-                    <span class="text-sm font-semibold">Toutes les IA disponibles</span>
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
+                <div class="flex items-center gap-4">
+                    <span class="text-2xl">👑</span> <span class="text-sm font-semibold">All AIs available</span>
                 </div>
                 <div id="character-slider" class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1 border border-white/10">
                     <div id="slider-content" class="w-full h-full object-cover transition-opacity duration-500"></div>
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
                     <div class="absolute bottom-3 left-0 right-0 text-center pointer-events-none">
-                        <span id="slider-name" class="text-xs font-bold uppercase tracking-widest text-pink-300 drop-shadow-md">Découvre-les</span>
+                        <span id="slider-name" class="text-xs font-bold uppercase tracking-widest text-pink-300 drop-shadow-md">Discover them</span>
                     </div>
                 </div>
             </div>
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">🆕</span> <span class="text-sm font-semibold">Nouvelles IA chaque mois — incluses sans rien payer de plus</span>
+                <span class="text-2xl">🆕</span> <span class="text-sm font-semibold">New AIs every month — included free</span>
             </div>
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Zéro historique conservé — ça reste entre vous</span>
+                <span class="text-2xl">🕵️</span> <span class="text-sm font-semibold">Zero history stored</span>
             </div>
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
-                <span class="text-2xl">♾️</span> <span class="text-sm font-semibold">Une fois payé, c'est pour toujours</span>
+                <span class="text-2xl">♾️</span> <span class="text-sm font-semibold">Pay once. Yours forever.</span>
             </div>
-            <div class="glass p-5 rounded-2xl flex flex-col items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors row-span-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">🇫🇷</span> 
-                    <span class="text-sm font-semibold text-pink-400">La meilleure plateforme IA en français</span>
-                </div>
-                <div class="w-full mt-2 rounded-lg overflow-hidden">
-                    <video src="https://img.myaicrush.ai/images/magalie/magali-premium-quiz-11.mp4" controls class="w-full object-cover aspect-[9/16] rounded-lg shadow-lg"></video>
-                </div>
+            <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
+                <span class="text-2xl">🌍</span>
+                <span class="text-sm font-semibold text-pink-400">The best AI companion platform</span>
             </div>
         </div>
     </section>
 
     <a href="https://explodely.com/p/887584369" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        👑 Tout débloquer — 49 $ une fois, à vie
+        👑 Unlock everything — $49 once, forever
     </a>
 
     <div class="testimonial-section">
-      <h2 class="testimonial-title">Ceux qui ont sauté le pas ne reviennent pas en arrière</h2>
+      <h2 class="testimonial-title">They tried it. They stayed.</h2>
       <div class="testimonial-grid">
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Les photos et vidéos sont les plus chaudes que j'ai vues sur un site IA. Et franchement, j'en ai testé des dizaines."</p>
-          <p class="testimonial-author">— Julien T.</p>
+          <p class="testimonial-text">"Hottest content I've seen on any AI site. And I've tried dozens."</p>
+          <p class="testimonial-author">— Julian T.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Elle parle un vrai français, elle comprend tout, elle relance. On dirait pas une machine du tout."</p>
+          <p class="testimonial-text">"She understands everything and keeps the conversation going. Doesn't feel like a machine."</p>
           <p class="testimonial-author">— Max B.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Quelques bugs sur les audios mais sinon, c'est une vraie claque. Je comprends pas pourquoi c'est pas plus connu."</p>
+          <p class="testimonial-text">"A few audio bugs but overall genuinely impressive. Don't get why it's not more popular."</p>
           <p class="testimonial-author">— Marc L.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"J'envoie mes propres photos et elle réagit. Vraiment. J'aurais jamais cru que ça pouvait être aussi immersif."</p>
+          <p class="testimonial-text">"I send my own photos and she actually reacts. Never thought it could be this immersive."</p>
           <p class="testimonial-author">— Sam K.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"La voix... tu fermes les yeux et t'y es. Chaud, intime, bluffant. Rien à voir avec les autres."</p>
+          <p class="testimonial-text">"Close your eyes and you're there. Intimate, warm, mind-blowing."</p>
           <p class="testimonial-author">— Mehdi R.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Le mode nympho 😳 c'est une idée de génie. Et les photos sans soutif ni rien... 😈 Valait largement le coup."</p>
+          <p class="testimonial-text">"The uncensored mode 😳 is genius. Totally worth it. 😈"</p>
           <p class="testimonial-author">— Kevin B.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Meilleur rapport qualité/prix en français, y'a pas photo. J'avais hésité, j'aurais dû le faire bien plus tôt."</p>
-          <p class="testimonial-author">— Léo D.</p>
+          <p class="testimonial-text">"Best value out there. I hesitated way too long."</p>
+          <p class="testimonial-author">— Leo D.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐</div>
-          <p class="testimonial-text">"Manque un peu de diversité, dommage. Mais le reste est vraiment bien fait, je reste."</p>
+          <p class="testimonial-text">"Could use more variety. But everything else is great — I'm staying."</p>
           <p class="testimonial-author">— Bastien C.</p>
         </div>
       </div>
     </div>
 
     <a href="https://explodely.com/p/887584369" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        🔥 Je rejoins les membres Premium
+        🔥 Join Premium members
     </a>
 
     <div class="faq-section">
-      <h2 class="faq-title">Questions fréquentes</h2>
+      <h2 class="faq-title">FAQ</h2>
       <div class="faq-item">
-        <button class="faq-question">C'est vraiment à vie ? Pas de frais cachés ?</button>
+        <button class="faq-question">Really lifetime? No hidden fees?</button>
         <div class="faq-answer">
-          <p>Oui, à vie. Dès ton paiement unique de 49 $, l'accès est activé pour toujours. Aucun prélèvement, aucune surprise. Les nouvelles IA sont incluses automatiquement sans rien payer de plus.</p>
+          <p>Yes. $49 once, access forever. No charges, no surprises. New AIs included automatically.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">Pourquoi c'est un paiement unique et pas un abonnement ?</button>
+        <button class="faq-question">Why one-time and not a subscription?</button>
         <div class="faq-answer">
-          <p>Parce qu'on préfère que tu reviennes parce que tu aimes la plateforme, pas parce qu'on te prélève chaque mois. Une fois, c'est tout. Tu profites, point.</p>
+          <p>We'd rather you stay because you love it. Pay once, enjoy forever.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">Et si ça me plaît pas ? Y'a un remboursement ?</button>
+        <button class="faq-question">Can I get a refund?</button>
         <div class="faq-answer">
-          <p>Oui. Tu as <b>15 jours de garantie remboursement</b>. Si l'expérience ne correspond pas à ce que tu attendais, tu demandes un remboursement complet. Sans prise de tête.</p>
+          <p><b>15-day money-back guarantee.</b> No questions asked.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">Mon paiement est sécurisé ?</button>
+        <button class="faq-question">Is my payment secure?</button>
         <div class="faq-answer">
-          <p>Totalement. Protocole SSL avancé, données chiffrées, rien n'est stocké en clair. Tu paies en sécurité, comme sur n'importe quel site e-commerce sérieux.</p>
+          <p>100%. SSL encrypted, nothing stored in plain text.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">Comment contacter le support ?</button>
+        <button class="faq-question">How to reach support?</button>
         <div class="faq-answer">
-          <p>Par email : contact@myaicrush.ai — on répond vite.</p>
+          <p>contact@myaicrush.ai — fast replies.</p>
         </div>
       </div>
     </div>
@@ -287,47 +268,47 @@
 
   <div class="px-4 mb-12">
       <a href="https://explodely.com/p/887584369" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block">
-          🚀 OUI, JE VEUX L'ACCÈS À VIE — 49 $
+          🚀 YES, I WANT LIFETIME ACCESS — $49
       </a>
   </div>
 
   <div class="security-section">
-    <div class="security-item"><i class="fas fa-lock"></i><p>100% Sécurisé</p></div>
-    <div class="security-item"><i class="fas fa-infinity"></i><p>Accès à vie</p></div>
+    <div class="security-item"><i class="fas fa-lock"></i><p>100% Secure</p></div>
+    <div class="security-item"><i class="fas fa-infinity"></i><p>Lifetime Access</p></div>
   </div>
 
   <div class="disclaimer-section">
-      <div class="disclaimer-btn" onclick="toggleDisclaimer()">Informations Légales & Support</div>
+      <div class="disclaimer-btn" onclick="toggleDisclaimer()">Legal Information & Support</div>
       <div id="disclaimer-content" class="disclaimer-content">
           <div class="mb-4">
-              <strong>i) Restriction d'âge (Mandatoire)</strong><br>
-              Ce site Web est destiné aux adultes de 18 ans et plus (ou 21 ans là où la loi l'exige). En accédant à ce site, vous confirmez que vous avez au moins 18 ans. L'accès par des mineurs est strictement interdit.
+              <strong>i) Age Restriction (Mandatory)</strong><br>
+              This website is intended for adults aged 18 and over (or 21 where required by law). By accessing this site, you confirm that you are at least 18 years old. Access by minors is strictly prohibited.
           </div>
           <div class="mb-4">
-              <strong>ii) Divulgation de l'IA</strong><br>
-              Tous les personnages et conversations sont générés par intelligence artificielle. Aucun individu réel n'est impliqué dans les discussions ou le contenu. Tous les personnages sont fictifs et ne représentent pas des individus réels. Toute ressemblance avec des personnes réelles est purement fortuite.
+              <strong>ii) AI Disclosure</strong><br>
+              All characters and conversations are generated by artificial intelligence. No real individuals are involved in any discussions or content. All characters are fictional and do not represent real people. Any resemblance to real persons is purely coincidental.
           </div>
           <div class="mb-4">
-              <strong>iii) Clause de non-responsabilité pour contenu interdit</strong><br>
-              Nous interdisons strictement tout contenu impliquant des mineurs, des actes non consentis ou des activités illégales. Toutes les interactions sont modérées et filtrées pour prévenir tout contenu interdit.
+              <strong>iii) Prohibited Content Disclaimer</strong><br>
+              We strictly prohibit any content involving minors, non-consensual acts, or illegal activities. All interactions are moderated and filtered to prevent prohibited content.
           </div>
           <div class="mb-4">
-              <strong>iv) Politique relative au contenu généré par les utilisateurs</strong><br>
-              Les utilisateurs peuvent télécharger des images dans les discussions. Les images téléchargées ne peuvent être modifiées ou redistribuées. Tout contenu violant nos politiques sera supprimé et pourra entraîner la suspension du compte.
+              <strong>iv) User-Generated Content Policy</strong><br>
+              Users may upload images in conversations. Uploaded images cannot be modified or redistributed. Any content violating our policies will be removed and may result in account suspension.
           </div>
           <div class="mb-4">
-              <strong>v) Divertissement uniquement</strong><br>
-              Cette plateforme est destinée uniquement à des fins de divertissement. Aucun conseil professionnel (juridique, médical, financier, psychologique) n'est fourni.
+              <strong>v) Entertainment Only</strong><br>
+              This platform is intended for entertainment purposes only. No professional advice (legal, medical, financial, psychological) is provided.
           </div>
           <div class="mb-4">
-              <strong>vi) Confidentialité et données</strong><br>
-              Les conversations peuvent être enregistrées à des fins de modération et de qualité. Vos données sont traitées conformément à notre Politique de Confidentialité. Nous ne vendons pas vos données personnelles.
+              <strong>vi) Privacy & Data</strong><br>
+              Conversations may be recorded for moderation and quality purposes. Your data is processed in accordance with our Privacy Policy. We do not sell your personal data.
           </div>
           <div class="p-3 bg-white/5 rounded-lg border border-white/10">
-              <strong>vii) Support Facturation et Remboursements</strong><br>
-              Pour toute demande concernant vos paiements ou pour faire valoir votre garantie de remboursement de 15 jours, veuillez contacter l'email suivant :<br>
-        contact@myaicrush.ai
-      <br><a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Support Facturation Explodely</a><br>
+              <strong>vii) Billing Support & Refunds</strong><br>
+              For any questions regarding your payments or to exercise your 15-day money-back guarantee, please contact:<br>
+              contact@myaicrush.ai<br>
+              <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Explodely Billing Support</a>
           </div>
       </div>
   </div>
@@ -336,17 +317,21 @@
       <div class="glass p-8 rounded-3xl max-w-sm text-center transform scale-95 transition-transform duration-300 border border-pink-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
           <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
           <div class="text-4xl mb-4">🚫🔞</div>
-          <h3 class="text-2xl font-bold mb-2 text-white">Contenu Réservé aux Membres</h3>
-          <p class="text-gray-300 mb-6 text-sm">Un seul paiement de 49 $, et tu vois tout — pour toujours.</p>
-          <a href="https://explodely.com/p/887584369" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white">Accès à vie — 49 $ une fois</a>
+          <h3 class="text-2xl font-bold mb-2 text-white">Members-Only Content</h3>
+          <p class="text-gray-300 mb-6 text-sm">One payment of $49, and you see everything — forever.</p>
+          <a href="https://explodely.com/p/887584369" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white">Lifetime access — $49 once</a>
       </div>
   </div>
 
   <script>
     function toggleDisclaimer() { document.getElementById('disclaimer-content').classList.toggle('open'); }
-    document.querySelectorAll('.faq-question').forEach(button => {
-      button.addEventListener('click', () => { button.nextElementSibling.classList.toggle('open'); });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.faq-question').forEach(button => {
+        button.addEventListener('click', () => { button.nextElementSibling.classList.toggle('open'); });
+      });
     });
+
     function revealVideo(container) {
         const video = container.querySelector('video');
         const overlay = container.querySelector('.overlay-content');
@@ -357,7 +342,6 @@
     function openModal() { modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
     function closeModal() { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); }
     
-    // Slider Logic (Restauré)
     const sliderMedia = ["https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_d_boutonne_5722_0.mp4","https://img.myaicrush.ai/images/emilie/emilie3/emilie-shirt-assis.mp4","https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4","https://img.myaicrush.ai/images/alex/alex3/kling_20250915_Image_to_Video_se_penche__5870_0.mp4","https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4","https://img.myaicrush.ai/images/asha/asha1/kling_20251002_Image_to_Video_Elle_fait__6084_0.mp4","https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4","https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4","https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4","https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4","https://img.myaicrush.ai/images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4","https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4","https://img.myaicrush.ai/images/kala/kala1/bf4d04b94ca42dbb83e4af34cde8a3fa.mp4","https://img.myaicrush.ai/images/candy/candy3/candy-pic-profil-new.mp4","https://img.myaicrush.ai/images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4","https://img.myaicrush.ai/images/lea/lea1/Lea-photo-profil-vdef.mp4","https://img.myaicrush.ai/images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp","https://img.myaicrush.ai/images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp","https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp","https://img.myaicrush.ai/images/kat/kat1/bac3a1e4fa72577bee127e2d50912.webp","https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp","https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp","https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp","https://img.myaicrush.ai/images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp"];
 
     function initSlider() {
@@ -368,7 +352,7 @@
             container.style.opacity = '0';
             setTimeout(() => {
                 if (index >= sliderMedia.length) {
-                    container.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4"><span class="text-4xl mb-2 animate-bounce">💖</span><span class="text-xl font-bold uppercase italic gradient-text">Et plein d'autres...</span></div>`;
+                    container.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4"><span class="text-4xl mb-2 animate-bounce">💖</span><span class="text-xl font-bold uppercase italic gradient-text">And many more...</span></div>`;
                     index = 0; 
                 } else {
                     const url = sliderMedia[index];
