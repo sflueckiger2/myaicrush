@@ -55,10 +55,10 @@ if (character.hasVideos) {
 let badgesToShow = [];
 
 if (character.new) {
-    badgesToShow.push({ text: "Nouveau", class: "new-badge" });
+    badgesToShow.push({ text: "New", class: "new-badge" });
 }
 if (character.hasVideos) {
-    badgesToShow.push({ text: "🎥 Vidéos", class: "video-badge" });
+    badgesToShow.push({ text: "🎥 Videos", class: "video-badge" });
 }
 if (character.hasNymphoMode) {
     badgesToShow.push({ text: "🥵 Nympho", class: "nympho-badge" });
