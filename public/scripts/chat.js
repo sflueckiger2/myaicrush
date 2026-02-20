@@ -1220,7 +1220,7 @@ if (callButton) {
                 document.querySelector('.chat-options').style.display = 'none';
                 document.getElementById('chat-box').style.display = 'flex';
 
-                document.querySelector('.header').classList.add('hidden');
+                
                 document.querySelector('.container').classList.add('fullscreen');
 
                 // 🔒 Cacher la barre de stories quand le chat est ouvert

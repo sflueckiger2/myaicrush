@@ -400,7 +400,7 @@ banner.addEventListener("click", async (e) => {
   <script>
 
   document.addEventListener("DOMContentLoaded", async () => {
-    const header = document.querySelector(".header");
+    const header = document.getElementById("cheaper-plan-dynamic-banner");
 
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user || !user.email) return;
@@ -421,19 +421,16 @@ banner.addEventListener("click", async (e) => {
       sliderSection.innerHTML = `
         <div id="private-slider" class="private-slider">
           <div class="slider-inner">
-             <img src="images/market/hanae-slider-prive.webp" alt="Slide 5" />
-              <img src="images/market/chloe-slider-prive.webp" alt="Slide 3" />
-               <img src="images/market/lea-slider-prive.webp" alt="Slide 4" />
-            <img src="images/market/angel-slider-prive.webp" alt="Slide 7" />
-             <img src="images/market/asha-slider-prive.webp" alt="Slide 2" />
-             <img src="images/market/alex-slider-prive.webp" alt="Slide 2" />
-            <img src="images/market/emilie-slider-prive.webp" alt="Slide 2" />
-             <img src="images/market/naomi-slider-prive.webp" alt="Slide 2" />
-            <img src="images/market/lila-slider-prive.webp" alt="Slide 2" />
-            <img src="images/market/astrid-slider-prive.webp" alt="Slide 6" />
-            <img src="images/market/candy-slider-prive.webp" alt="Slide 1" />
-            <img src="images/market/jasmine-slider-prive.webp" />
-            <img src="images/market/nour-slider-prive.webp" alt="Slide 2" />
+             <img src="images/market/hanae-slider-prive-en.webp" alt="Slide 5" />
+              <img src="images/market/naomi-slider-prive-en.webp" alt="Slide 2" />
+              <img src="images/market/chloe-slider-prive-en.webp" alt="Slide 3" />
+               <img src="images/market/lea-slider-prive-en.webp" alt="Slide 4" />
+             <img src="images/market/asha-slider-prive-en.webp" alt="Slide 2" />
+             <img src="images/market/alex-slider-prive-en.webp" alt="Slide 2" />
+            <img src="images/market/emilie-slider-prive-en.webp" alt="Slide 2" />
+            <img src="images/market/lila-slider-prive-en.webp" alt="Slide 2" />
+            <img src="images/market/candy-slider-prive-en.webp" alt="Slide 1" />
+            <img src="images/market/jasmine-slider-prive-en.webp" />
            
           </div>
           <button class="slider-arrow left-arrow">&#10094;</button>
@@ -442,6 +439,18 @@ banner.addEventListener("click", async (e) => {
       `;
 
       header.insertAdjacentElement("afterend", sliderSection);
+      
+      const chatBoxEl = document.getElementById("chat-box");
+
+const sliderObserver = new MutationObserver(() => {
+  if (chatBoxEl.style.display === "flex") {
+    sliderSection.classList.add("hidden-slider");
+  } else {
+    sliderSection.classList.remove("hidden-slider");
+  }
+});
+
+sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style'] });
 
       const slider = sliderSection.querySelector("#private-slider");
       const sliderInner = slider.querySelector(".slider-inner");
@@ -1095,6 +1104,24 @@ setTimeout(() => {
 </script>
 
 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const chatBox = document.getElementById("chat-box");
+    const footer = document.querySelector(".disclaimer-section");
+
+    if (!chatBox || !footer) return;
+
+    const observer = new MutationObserver(() => {
+      if (chatBox.style.display === "flex") {
+        footer.classList.add("hidden-footer");
+      } else {
+        footer.classList.remove("hidden-footer");
+      }
+    });
+
+    observer.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
+  });
+</script>
 
     </body>
     </html>

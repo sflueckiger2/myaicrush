@@ -3223,3 +3223,10 @@ vapi-widget {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(255, 79, 191, 0.4);
 }
+
+.hidden-slider {
+  display: none !important;
+}
+.hidden-footer {
+  display: none !important;
+}

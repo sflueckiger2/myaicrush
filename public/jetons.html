@@ -17,83 +17,6 @@
   </script>
 
   <style>
-    /* POPUP STYLES RESTAURÉS */
-    .jetons-popup {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      backdrop-filter: blur(8px);
-    }
-    .jetons-popup.hidden { display: none; }
-    .popup-content {
-      background: #1a1a1a;
-      padding: 40px 30px;
-      border-radius: 30px;
-      max-width: 420px;
-      width: 90%;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.1);
-      position: relative;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-    .close-btn {
-      position: absolute;
-      top: 20px; right: 20px;
-      background: none; border: none; color: #fff;
-      font-size: 22px; cursor: pointer; opacity: 0.7;
-    }
-    .popup-cc-img {
-      width: 100px;
-      margin: 0 auto 20px;
-      display: block;
-    }
-    .popup-title {
-      color: #fff;
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 10px;
-      font-family: sans-serif;
-    }
-    .popup-text {
-      color: #e0e0e0;
-      font-size: 18px;
-      margin-bottom: 30px;
-      line-height: 1.4;
-      font-family: sans-serif;
-    }
-    .popup-text b { color: #fff; }
-    .popup-footer-btns {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-    }
-    .btn-cancel {
-      flex: 1;
-      background: #333;
-      color: white;
-      border: none;
-      padding: 14px;
-      border-radius: 15px;
-      font-weight: 600;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .btn-confirm {
-      flex: 1;
-      background: #d63384;
-      color: white;
-      border: none;
-      padding: 14px;
-      border-radius: 15px;
-      font-weight: 600;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
     /* --- NOUVEAUX STYLES SEXY POUR LES FEATURES --- */
     .token-benefits-grid {
       display: grid;
@@ -150,14 +73,25 @@
     /* --- TOKEN OFFERS GRID --- */
     .token-offers {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
+      /* Par défaut (Mobile) : 2 colonnes égales */
+      grid-template-columns: repeat(2, 1fr); 
+      gap: 15px; /* Un peu moins d'espace sur mobile pour que ça tienne */
       margin: 40px 0;
     }
+
+    /* Desktop : Passage à 3 colonnes quand l'écran est assez large */
+    @media (min-width: 768px) {
+      .token-offers {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+    }
+
     .token-card {
       background: linear-gradient(145deg,#1c1c1e,#141416);
       border: 1px solid rgba(255,255,255,0.08);
-      padding: 30px 22px;
+      /* Réduction légère du padding pour le mode 2 colonnes sur mobile */
+      padding: 20px 15px; 
       border-radius: 20px;
       color: white;
       position: relative;
@@ -165,6 +99,15 @@
       cursor: pointer;
       text-align: center;
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @media (min-width: 768px) {
+      .token-card {
+        padding: 30px 22px;
+      }
     }
     .token-card:hover {
       transform: translateY(-8px);
@@ -242,21 +185,6 @@
 </head>
 <body>
 
-<div id="jetons-popup" class="jetons-popup hidden">
-  <div class="popup-content">
-    <button class="close-btn" onclick="closeJetonsPopup()">×</button>
-    <img src="/images/market/carte-credit.webp" class="popup-cc-img" alt="Card Icon">
-    <h2 class="popup-title">Confirm your purchase?</h2>
-    <p class="popup-text">
-      You're about to buy <b id="confirm-tokens">0 tokens</b> for <b id="confirm-price">$0</b>
-    </p>
-    <div class="popup-footer-btns">
-      <button class="btn-cancel" onclick="closeJetonsPopup()">Cancel</button>
-      <button id="final-confirm-btn" class="btn-confirm">Confirm</button>
-    </div>
-  </div>
-</div>
-
   <div class="container premium-page">
     <h1 class="p-title">Need more tokens?</h1>
     <h2>Unlock the extras. Go further.</h2><br>
@@ -299,7 +227,7 @@
         <i class="fas fa-coins token-icon-fa"></i>
         <div class="token-title">10 Tokens</div>
         <div class="token-price">$9</div>
-        <a href="https://explodely.com/p/1973148443?ocu=yes" class="token-cta">Buy</a>
+        <a href="https://explodely.com/p/1973148443" class="token-cta">Buy</a>
       </div>
 
       <div class="token-card" data-tokens="50 tokens" data-price="$37">
@@ -307,7 +235,7 @@
         <i class="fas fa-coins token-icon-fa"></i>
         <div class="token-title">50 Tokens</div>
         <div class="token-price">$37</div>
-        <a href="https://explodely.com/p/453015891?ocu=yes" class="token-cta">Buy</a>
+        <a href="https://explodely.com/p/453015891" class="token-cta">Buy</a>
       </div>
 
       <div class="token-card" data-tokens="100 tokens" data-price="$59">
@@ -315,7 +243,7 @@
         <i class="fas fa-coins token-icon-fa"></i>
         <div class="token-title">100 Tokens</div>
         <div class="token-price">$59</div>
-        <a href="https://explodely.com/p/12407737?ocu=yes" class="token-cta">Buy</a>
+        <a href="https://explodely.com/p/12407737" class="token-cta">Buy</a>
       </div>
 
       <div class="token-card popular" data-tokens="300 tokens" data-price="$129">
@@ -323,7 +251,7 @@
         <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
         <div class="token-title">300 Tokens</div>
         <div class="token-price">$129</div>
-        <a href="https://explodely.com/p/1692961330?ocu=yes" class="token-cta">Buy</a>
+        <a href="https://explodely.com/p/1692961330" class="token-cta">Buy</a>
       </div>
 
       <div class="token-card" data-tokens="700 tokens" data-price="$249">
@@ -331,7 +259,7 @@
         <i class="fas fa-coins token-icon-fa"></i>
         <div class="token-title">700 Tokens</div>
         <div class="token-price">$249</div>
-        <a href="https://explodely.com/p/1157830330?ocu=yes" class="token-cta">Buy</a>
+        <a href="https://explodely.com/p/1157830330" class="token-cta">Buy</a>
       </div>
 
       <div class="token-card" style="border:2px solid #ffd700;" data-tokens="1000 tokens" data-price="$299">
@@ -340,7 +268,7 @@
         <i class="fas fa-coins token-icon-fa" style="font-size:55px;"></i>
         <div class="token-title">1000 Tokens</div>
         <div class="token-price">$299</div>
-        <a href="https://explodely.com/p/852778059?ocu=yes"
+        <a href="https://explodely.com/p/852778059"
            class="token-cta" style="background: linear-gradient(90deg,#ffd700,#ffae00); color:#000;">Get this deal</a>
       </div>
 
@@ -595,34 +523,6 @@
             }, 300);
         }
     }
-
-    const popup = document.getElementById('jetons-popup');
-    const confirmTokensText = document.getElementById('confirm-tokens');
-    const confirmPriceText = document.getElementById('confirm-price');
-    const finalConfirmBtn = document.getElementById('final-confirm-btn');
-
-    function closeJetonsPopup() {
-        popup.classList.add('hidden');
-    }
-
-    document.querySelectorAll('.token-cta').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const card = this.closest('.token-card');
-            const tokens = card.getAttribute('data-tokens');
-            const price = card.getAttribute('data-price');
-            const url = this.getAttribute('href');
-
-            confirmTokensText.innerText = tokens;
-            confirmPriceText.innerText = price;
-            
-            finalConfirmBtn.onclick = function() {
-                window.location.href = url;
-            };
-
-            popup.classList.remove('hidden');
-        });
-    });
 </script>
 
 </body>
