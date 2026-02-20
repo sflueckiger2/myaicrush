@@ -1,126 +1,91 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmation d'achat de jetons</title>
+  <title>Tokens purchased</title>
   <link rel="stylesheet" href="styles.css">
 
-  <!-- Google Analytics (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    dataLayer.push(arguments);
-  }
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('js', new Date());
+    document.addEventListener("DOMContentLoaded", () => {
+      const fullUrl = window.location.pathname + window.location.search;
+      gtag('config', 'G-FJ5S0H9B1R', { page_path: fullUrl });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const fullUrl = window.location.pathname + window.location.search;
-    gtag('config', 'G-FJ5S0H9B1R', {
-      page_path: fullUrl
-    });
+      const amount = new URLSearchParams(window.location.search).get('amount') || 10;
+      const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+      let abTestId = selectedTest?.id || "unknown";
 
-    const amount = new URLSearchParams(window.location.search).get('amount') || 10;
-
-    const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
-    let abTestId = selectedTest?.id || "unknown";
-
-    if (abTestId === "unknown") {
-      const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
-      const forcedTp = cookie ? cookie.split('=')[1] : null;
-
-      if (forcedTp) {
-        fetch('/forced-pricing.json')
-          .then(res => res.json())
-          .then(config => {
+      if (abTestId === "unknown") {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
+        const forcedTp = cookie ? cookie.split('=')[1] : null;
+        if (forcedTp) {
+          fetch('/forced-pricing.json').then(res => res.json()).then(config => {
             const forcedPlan = config[forcedTp];
             if (forcedPlan && forcedPlan.test_id) {
               abTestId = forcedPlan.test_id;
               localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId }));
             }
             triggerTokenEvent();
-          })
-          .catch(err => {
-            console.error("❌ Erreur forced-pricing.json :", err);
-            triggerTokenEvent();
-          });
-      } else {
-        triggerTokenEvent();
+          }).catch(() => triggerTokenEvent());
+        } else { triggerTokenEvent(); }
+      } else { triggerTokenEvent(); }
+
+      function triggerTokenEvent() {
+        gtag('event', 'token_purchase', {
+          value: parseFloat(amount), currency: 'EUR',
+          item_name: 'Tokens', price: parseFloat(amount), abTestId: abTestId
+        });
       }
-    } else {
-      triggerTokenEvent();
-    }
-
-    function triggerTokenEvent() {
-      gtag('event', 'token_purchase', {
-        value: parseFloat(amount),
-        currency: 'EUR',
-        item_name: 'Jetons',
-        price: parseFloat(amount),
-        abTestId: abTestId
-      });
-
-      console.log("🎯 GA Event : token_purchase =", {
-        value: amount,
-        abTestId
-      });
-    }
-  });
-</script>
-
-
-  
-
+    });
+  </script>
 </head>
 <body>
-  
 
-  <!-- Contenu principal -->
   <div class="container confirmation-page">
-    <h1 class="p-title">Merci pour ton achat</h1>
+    <h1 class="p-title">Tokens added! 🎉</h1>
     <p class="p-description">
-      Tes jetons ont été ajoutés à ton profil. 
+      Your tokens are now in your account.
     </p>
     <p class="p-description">
-      Tu peux désormais les utiliser avec tes IA préférées.
+      Use them with any of your A.I.
     </p>
     <p class="p-description">
-      Pour consulter ton solde de jetons, rends-toi dans la section « Profil ».
+      To check your balance, go to your <b>Profile</b>.
     </p>
     <p class="p-description">
-      Merci de ta confiance,
-      <br>
-      L'équipe MyAiCrush
+      Thank you,<br>
+      The MyAiCrush Team ❤️
     </p>
 
-    <!-- Bouton pour retourner à la page d'accueil -->
     <div class="action-section">
       <button id="startChatButton" class="checkout-button" onclick="window.location.href='index.html'">
-        Commencer à discuter
+        Start chatting
       </button>
     </div>
   </div>
 
-  <!-- Icônes de sécurité -->
   <div class="security-section">
     <div class="security-item">
       <i class="fas fa-lock"></i>
-      <p>100% Sécurisé</p>
+      <p>100% Secure</p>
     </div>
     <div class="security-item">
       <i class="fas fa-mask"></i>
-      <p>Confidentialité totale</p>
+      <p>Total privacy</p>
     </div>
   </div>
 
-
-  <!-- Inclure les fichiers JavaScript -->
   <script type="module" src="/scripts/menu-loader.js"></script>
 
+  <!-- Facebook Pixel -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -130,85 +95,43 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window,document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-  
-    fbq('init', '1139964937955152'); // ✅ Ton Pixel ID
-  
-   // ✅ Suivi personnalisé pour l'achat de jetons
-var urlParams = new URLSearchParams(window.location.search);
-var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 20;
-
-var tokenEventId = 'token_purchase_' + Date.now();
-
-fbq('trackCustom', 'TokenPurchase', {
-  value: amount,
-  currency: 'EUR'
-}, {
-  eventID: tokenEventId
-});
-
+    fbq('init', '1139964937955152');
+    var urlParams = new URLSearchParams(window.location.search);
+    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 20;
+    var tokenEventId = 'token_purchase_' + Date.now();
+    fbq('trackCustom', 'TokenPurchase', { value: amount, currency: 'EUR' }, { eventID: tokenEventId });
   </script>
-  
+
   <script>
     function getFacebookParams() {
-        var urlParams = new URLSearchParams(window.location.search);
-  
-        // ✅ Récupération du paramètre `fbclid` pour fbc
-        var fbc = urlParams.get('fbclid') 
-            ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') 
-            : null;
-  
-        // ✅ Récupération du `fbp` généré par le Pixel Facebook
-        var fbp = null;
-        if (window.fbq && typeof fbq.getState === "function") {
-            fbp = fbq.getState().lastExternalId || null;
-        }
-  
-        // ✅ Stocker fbp et fbc si présents
-        if (fbp) localStorage.setItem('fbp', fbp);
-        if (fbc) localStorage.setItem('fbc', fbc);
+      var urlParams = new URLSearchParams(window.location.search);
+      var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
+      var fbp = null;
+      if (window.fbq && typeof fbq.getState === "function") { fbp = fbq.getState().lastExternalId || null; }
+      if (fbp) localStorage.setItem('fbp', fbp);
+      if (fbc) localStorage.setItem('fbc', fbc);
     }
-  
     getFacebookParams();
   </script>
-  
+
   <script>
     document.addEventListener("DOMContentLoaded", async function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get("session_id");
-    
-        if (!sessionId) {
-            console.error("❌ Aucune session_id trouvée dans l'URL !");
-            return;
-        }
-    
-        console.log(`📡 Vérification du paiement avec session_id: ${sessionId}`);
-    
-        try {
-            const response = await fetch("/api/confirm-payment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sessionId })
-            });
-    
-            const result = await response.json();
-            console.log("✅ Réponse de /api/confirm-payment :", result);
-    
-            if (result.success) {
-                
-                // Redirige vers le profil ou met à jour l'affichage
-            } else {
-                alert("❌ Erreur lors de la confirmation du paiement.");
-            }
-    
-        } catch (error) {
-            console.error("❌ Erreur lors de la validation du paiement :", error);
-        }
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get("session_id");
+      if (!sessionId) { console.error("❌ No session_id found in URL."); return; }
+      try {
+        const response = await fetch("/api/confirm-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        });
+        const result = await response.json();
+        if (!result.success) { alert("❌ Payment confirmation failed."); }
+      } catch (error) {
+        console.error("❌ Payment validation error:", error);
+      }
     });
-    </script>
- 
-
-
-
+  </script>
 
 </body>
 </html>
