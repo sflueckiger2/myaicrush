@@ -116,7 +116,7 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
         const { isPremium } = await premiumCheck.json();
 
         if (!isPremium) {
-            alert("🎥 Le mode vidéo est réservé aux membres Premium. Tu veux voir ses vidéos ? 😈");
+            alert("🎥 Premium members only. ");
             toggleMode.checked = false;
             window.location.href = "/premium.html";
             return;
@@ -166,7 +166,7 @@ if (nymphoToggle) {
     const { isPremium } = await premiumCheck.json();
 
     if (!isPremium) {
-      alert("Ce mode est réservé aux membres Premium 😈");
+      alert("Premium members only. 😈");
       window.location.href = "/premium.html";
       nymphoToggle.checked = false;
       return;
@@ -642,7 +642,7 @@ if (isVideo) {
 
         // ✅ Ajouter le bouton Unlock
         const unlockButton = document.createElement('button');
-        unlockButton.textContent = 'Retirer le flou';
+        unlockButton.textContent = 'Unlock';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
             window.location.href = '/premium.html';
@@ -1447,7 +1447,7 @@ if (uploadBtn) {
 
             const { isPremium } = await premiumResponse.json();
             if (!isPremium) {
-                window.location.href = "image-upload.html"; // 🔥 Redirection vers une autre page si non-premium
+                window.location.href = "premium.html"; // 🔥 Redirection vers une autre page si non-premium
                 return;
             }
 
