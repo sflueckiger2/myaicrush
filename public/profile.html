@@ -54,7 +54,7 @@
       <h2>Enter your email to get started</h2><br>
 
       <div class="hero-media">
-        <video class="hero-video" autoplay muted loop playsinline>
+       <video class="hero-video" id="hero-video" autoplay muted loop playsinline>
           <source src="/images/market/lila-profil-en.mp4" type="video/mp4">
         </video>
         <span class="vignette" aria-hidden="true"></span>
@@ -333,6 +333,13 @@
             }, 300);
         }
     }
+</script>
+
+<script>
+  document.addEventListener("click", () => {
+    const video = document.getElementById("hero-video");
+    video.muted = false;
+  }, { once: true });
 </script>
 
 </body>
