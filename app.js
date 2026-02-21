@@ -1438,8 +1438,9 @@ app.post('/api/cancel-subscription', async (req, res) => {
 
 
 // Charger les personnages depuis le fichier JSON
-const characters = require('./characters.json');
-
+const charactersFR = require('./characters.fr.json');
+const charactersEN = require('./characters.json');
+const characters = charactersEN; 
 // Configuration Google OAuth
 
 const { OAuth2Client } = require('google-auth-library');
@@ -1525,8 +1526,12 @@ app.get('/auth/google/callback', async (req, res) => {
 
 
 // Ajouter un middleware pour servir le fichier characters.json à partir de la racine
+
 app.get('/characters.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'characters.json'));
+  const lang = req.headers['accept-language'] || '';
+  const isFrench = lang.toLowerCase().startsWith('fr');
+  const file = isFrench ? 'characters.fr.json' : 'characters.json';
+  res.sendFile(path.join(__dirname, file));
 });
 
 let conversationHistory = [];
