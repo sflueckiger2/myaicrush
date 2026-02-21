@@ -1942,15 +1942,14 @@ function adjustUserLevel(email, comfortLevel) {
 
   console.log(`📈 [${email}] Confort: ${comfortLevel}, Changement: ${levelChange}, Nouveau Niveau: ${newLevel}, Ancien Niveau: ${previousLevel}`);
 
-  if (levelChange > 0 && newLevel > previousLevel) {
-    if (newLevel >= 1.1 && previousLevel < 1.1) return { message: "Niveau supérieur : tu débloques une photo", type: "up" };
-    if (newLevel >= 1.3 && previousLevel < 1.3) return { message: "Niveau supérieur : ça devient plus chaud", type: "up" };
-    if (newLevel >= 1.5 && previousLevel < 1.5) return { message: "Niveau supérieur : Déblocage photos intimes", type: "up" };
+if (levelChange > 0 && newLevel > previousLevel) {
+    if (newLevel >= 1.1 && previousLevel < 1.1) return { message: "Level up: you unlock a photo", type: "up" };
+    if (newLevel >= 1.3 && previousLevel < 1.3) return { message: "Level up: things are getting hotter", type: "up" };
+    if (newLevel >= 1.5 && previousLevel < 1.5) return { message: "Level up: intimate photos unlocked", type: "up" };
   } else if (levelChange < 0 && previousLevel > newLevel) {
-    if (newLevel < 1.3 && previousLevel >= 1.3) return { message: "Tu baisses dans son estime", type: "down" };
-    if (newLevel < 1.5 && previousLevel >= 1.5) return { message: "Ça ne lui a pas plu.", type: "down" };
+    if (newLevel < 1.3 && previousLevel >= 1.3) return { message: "She likes you less now", type: "down" };
+    if (newLevel < 1.5 && previousLevel >= 1.5) return { message: "She didn't like that", type: "down" };
   }
-
   return null;
 }
 
