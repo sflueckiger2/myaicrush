@@ -96,11 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const userInput = document.getElementById("user-input");
   if (userInput) userInput.placeholder = "Écris ton message…";
 
-  // ===== MODE TOGGLE — IMAGES / VIDÉOS =====
-  const modeSpans = document.querySelectorAll("#mode-toggle-container span");
-  if (modeSpans[0]) modeSpans[0].textContent = "📸 Photos";
-  if (modeSpans[1]) modeSpans[1].textContent = "🎥 Vidéos";
-
+  
   // ===== NYMPHO MODE TOGGLE =====
   const nymphoSpan = document.querySelector("#nympho-mode-toggle-wrapper span");
   if (nymphoSpan) nymphoSpan.textContent = "🥵 Mode Nympho";
