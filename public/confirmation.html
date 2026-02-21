@@ -655,21 +655,23 @@
   </script>
 
   <!-- Facebook Pixel -->
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window,document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '1139964937955152');
-    var purchaseEventID = 'purchase_' + Date.now();
-    var urlParams = new URLSearchParams(window.location.search);
-    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 10;
-    fbq('track', 'Purchase', { value: amount, currency: 'EUR' }, { eventID: purchaseEventID });
-  </script>
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window,document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+
+  fbq('init', '1139964937955152');
+
+  var purchaseEventID = 'purchase_' + Date.now();
+
+  // 🔥 Valeur FIXE : 49 USD
+  fbq('track', 'Purchase', { value: 49, currency: 'USD' }, { eventID: purchaseEventID });
+</script>
 
   <!-- TrafficJunky -->
   <script>
