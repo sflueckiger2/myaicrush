@@ -461,28 +461,21 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('bot-message');
 
-    // ✅ Appliquer le style spécial si c'est un message d'avertissement
     if (isWarning) {
-        messageElement.classList.add('warning'); 
+        messageElement.classList.add('warning');
     }
 
-    // ✅ Créer un conteneur pour le texte du bot
     const messageContent = document.createElement('span');
     messageContent.innerHTML = botReply;
 
-    // ✅ Ajouter un bouton " Écouter le message vocal"
+    // === 🔊 Bouton audio (sans texte) ===
     const voiceButton = document.createElement('button');
-    voiceButton.classList.add('voice-button');
-    voiceButton.innerHTML = ''; // Vide le bouton
+    voiceButton.classList.add('voice-button'); 
     const icon = document.createElement('i');
-    icon.classList.add('fas', 'fa-volume-up'); // Ajoute l'icône FA
+    icon.classList.add('fas', 'fa-volume-up');
     voiceButton.appendChild(icon);
-    voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
 
-    voiceButton.onclick = () => {
-        speakMessage(botReply);
-    };
-
+    // === 🔍 Vérif premium ===
     const user = JSON.parse(localStorage.getItem("user"));
     if (user && user.email) {
         fetch("/api/is-premium", {
@@ -490,41 +483,36 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: user.email }),
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(({ isPremium }) => {
+            voiceButton.innerHTML = ""; 
+            voiceButton.appendChild(icon);
+
             if (isPremium) {
-                voiceButton.innerHTML = ''; // Vide le bouton
-                voiceButton.appendChild(icon); // Réinsère l'icône du son
-                voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
                 voiceButton.onclick = () => speakMessage(botReply);
             } else {
-                voiceButton.innerHTML = ''; // Vide le bouton
-                voiceButton.appendChild(icon); // Utilise l'icône audio au lieu du cadenas
-                voiceButton.appendChild(document.createTextNode(' Écouter le message vocal'));
+                voiceButton.onclick = () => window.location.href = "premium.html";
             }
         })
-        .catch(error => console.error("❌ Erreur vérification premium :", error));
+        .catch(err => console.error("❌ Erreur API premium :", err));
     } else {
-        voiceButton.innerHTML = ' Écouter le message vocal';
         voiceButton.onclick = () => window.location.href = "premium.html";
     }
 
-    // ✅ Ajouter le texte + le bouton au message
+    // === Structure affichage ===
     messageElement.appendChild(messageContent);
 
-const buttonContainer = document.createElement('div');
-buttonContainer.classList.add('voice-button-container');
-buttonContainer.appendChild(voiceButton);
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('voice-button-container');
+    buttonContainer.appendChild(voiceButton);
 
-// 🔥 Le bouton au-dessus du message IA
-if (!isWarning) {
-    messagesContainer.appendChild(buttonContainer);
-}
+    if (!isWarning) {
+        messagesContainer.appendChild(buttonContainer);
+    }
 
-messagesContainer.appendChild(messageElement);
+    messagesContainer.appendChild(messageElement);
 
-scrollToBottom(messagesContainer);
-
+    scrollToBottom(messagesContainer);
 }
 
 
@@ -558,16 +546,16 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
         .then(response => response.json())
         .then(({ isPremium }) => {
             if (isPremium) {
-                voiceButton.innerHTML = ' Écouter le message vocal';
+                voiceButton.innerHTML = '<i class="fas fa-volume-up"></i>';
                 voiceButton.onclick = () => speakMessage(botReply);
             } else {
-                voiceButton.innerHTML = ' Écouter le message vocal';
+                voiceButton.innerHTML = '<i class="fas fa-volume-up"></i>';
                 voiceButton.onclick = () => window.location.href = "premium.html";
             }
         })
         .catch(error => console.error("❌ Erreur vérification premium :", error));
     } else {
-        voiceButton.innerHTML = ' Écouter le message vocal';
+        voiceButton.innerHTML = '<i class="fas fa-volume-up"></i>';
         voiceButton.onclick = () => window.location.href = "premium.html";
     }
 

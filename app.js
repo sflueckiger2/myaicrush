@@ -2105,34 +2105,26 @@ function ensureThree(replies) {
 
 
 const QUICK_REPLIES_FALLBACK = [
-  "J’ai envie de toi là, maintenant… dis-moi que tu le sens aussi.",
-  "Tu me chauffes dangereusement… tu fais exprès ou quoi ?",
-  "Si tu étais là, je te collerais contre le mur sans réfléchir.",
-  "T’as aucune idée de ce que tu me fais là…",
-  "Dis-moi que t’aimes quand je te parle comme ça.",
-  "J’ai envie de te provoquer encore un peu…",
-  "Tu veux que je sois sage… ou absolument pas ?",
-  "Je sens que t’aimes quand je prends le contrôle.",
-  "T’es en train de me rendre fou, tu le sais ça ?",
-  "J’ai envie de te faire perdre le fil… doucement.",
-  "Regarde ce que tu déclenches chez moi…",
-  "T’as ce petit truc insolent qui me donne envie d’aller plus loin.",
-  "J’ai envie de t’entendre dire mon prénom.",
-  "Tu préfères quand je te parle doucement… ou quand je suis brutal ?",
-  "Je te ferais bien rougir encore un peu.",
-  "Avoue que t’aimes quand je te désire comme ça.",
-  "T’as l’air dangereusement tentante ce soir.",
-  "Dis-moi ce que t’as envie que je te fasse.",
-  "Je suis loin d’avoir fini avec toi.",
-  "Tu veux jouer… ou tu veux vraiment jouer ?",
-  "Je te ferais bien frissonner rien qu’avec des mots.",
-  "T’as l’air beaucoup trop sexy pour rester sage.",
-  "J’ai envie de te faire craquer lentement.",
-  "Tu me donnes envie d’être très mauvais.",
-  "Je sens que tu peux en encaisser beaucoup plus que tu le dis.",
-  "T’es prête à aller là où ça devient vraiment intéressant ?",
-  "J’ai envie de voir jusqu’où tu peux me provoquer.",
-  "Dis-moi… t’es plutôt soumise ou insolente ?"
+ "😈🧱😉",
+"🥵🤤",
+"😏💬🔥",
+"😈✨",
+"😇😈❓",
+"😏🖐️🔥",
+"🤤🧠💥",
+"🔥👅",
+"👀🔥",
+"😈😉✨",
+"🫦🤭",
+"🫢😏🔥",
+"😳❤️‍🔥",
+"😏🔥💫",
+"🥵👀",
+"🤫🔥",
+"😈♾️",
+"🎭🔥",
+"💬✨😈",
+"🥵🚫😇"
 ];
 
 
@@ -2215,69 +2207,6 @@ function normalizeText(v, maxLen) {
 }
 
 
-
-// =========================
-// ✅ ROUTE: initial quick replies (début de conversation)
-// Cache 24h par personnage
-// =========================
-app.post("/quick-replies-initial", async (req, res) => {
-  try {
-    const { characterName } = req.body;
-
-    if (!characterName) {
-      return res.json({ quickReplies: pickFallbacks(3) });
-    }
-
-    const cacheKey = `qr_init:${characterName}`;
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json({ quickReplies: cached });
-
-    const userCharacter = characters.find(c => c.name === characterName);
-    if (!userCharacter) {
-      return res.json({ quickReplies: pickFallbacks(3) });
-    }
-
-    const context = normalizeText(userCharacter.ethnicity || userCharacter.description || "", 420);
-
-    const systemPrompt = `
-Tu aides un utilisateur (masculin) à savoir quoi répondre ensuite dans un chat de séduction.
-
-Contexte de la discussion : "${context}"
-
-Consignes :
-- Propose EXACTEMENT 3 messages de départ.
-- Ton : Coquin, séduction.
-- Tu es un homme.
-- Maximum 15 mots par message.
-- AUCUNE numérotation, AUCUNE explication, aucun texte autour.
-- Réponds STRICTEMENT au format JSON : ["...", "...", "..."].
-`.trim();
-
-    let finalReplies = pickFallbacks(3);
-
-    try {
-      const fwRes = await fireworksChat({
-        systemPrompt,
-        temperature: 0.9,
-        timeoutMs: 3000
-      });
-
-      const raw = (fwRes?.data?.choices?.[0]?.message?.content || "").trim();
-      const parsed = parseQuickReplies(raw);
-      finalReplies = ensureThree(parsed);
-    } catch (_) {
-      finalReplies = pickFallbacks(3);
-    }
-
-    // cache long: 24h
-    cacheSet(cacheKey, finalReplies, 24 * 60 * 60 * 1000);
-
-    return res.json({ quickReplies: finalReplies });
-
-  } catch (err) {
-    return res.json({ quickReplies: pickFallbacks(3) });
-  }
-});
 
 // =========================
 // ✅ ROUTE: quick replies après un message (dynamiques)
