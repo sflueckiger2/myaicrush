@@ -1771,3 +1771,52 @@ if (document.readyState === "loading") {
 } else {
   initAutoGrowTextarea();
 }
+
+
+// ==============================
+// 🔙 Bouton retour : fermer le chat proprement
+// ==============================
+document.addEventListener("DOMContentLoaded", () => {
+  const backBtn = document.getElementById("back-btn");
+  if (!backBtn) return;
+
+  backBtn.addEventListener("click", () => {
+    const chatBox = document.getElementById("chat-box");
+    const container = document.querySelector(".container");
+    const storiesWrapper = document.querySelector(".stories-wrapper");
+    const chatOptions = document.querySelector(".chat-options");
+    const cards = document.getElementById("character-cards-container");
+    const menu = document.querySelector(".menu");
+
+    // 🔒 Fermer le chat
+    if (chatBox) {
+      chatBox.style.display = "none";
+      // On remet aussi le fond comme avant
+      chatBox.style.backgroundImage = "";
+      chatBox.style.backgroundColor = "";
+      chatBox.style.backdropFilter = "";
+      chatBox.style.backgroundBlendMode = "";
+    }
+
+    // 🧱 Revenir à l’écran de sélection
+    if (chatOptions) chatOptions.style.display = "flex";
+    if (cards) cards.style.display = "block";
+    if (storiesWrapper) storiesWrapper.style.display = "";
+
+    // 🔁 Enlever le plein écran
+    if (container) container.classList.remove("fullscreen");
+
+    // 🍔 Ré-afficher le menu si tu l’utilises
+    if (menu) menu.classList.remove("hidden");
+
+    // 🧮 Reset des variables liées au clavier (important pour le scroll)
+    document.documentElement.style.setProperty("--kb", "0px");
+    // on recalcule la hauteur de la barre d’input si la fonction existe
+    if (typeof updateInputHeightVar === "function") {
+      updateInputHeightVar();
+    }
+
+    // 🔝 Revenir en haut (optionnel mais souvent plus clean)
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
