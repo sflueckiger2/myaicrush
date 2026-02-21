@@ -67,7 +67,7 @@ async function handlePrivateUnlock(price, folder) {
     const { isPremium } = await premiumRes.json();
 
     if (!isPremium) {
-      alert('Les contenus privés sont réservés à nos abonnés Premium.');
+      alert('Premium only.');
       window.location.href = '/premium.html';
       return false;
     }
