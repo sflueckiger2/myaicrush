@@ -1038,6 +1038,41 @@ async function getPremiumStatus(email) {
 
 
 
+// =====================================================
+// 🧩 Builder user par défaut (créé via webhook Explodely)
+// =====================================================
+function buildUserDefaultsFromExplodely(email) {
+  const now = new Date();
+
+  return {
+    email: String(email).trim().toLowerCase(),
+
+    // 🔐 IMPORTANT :
+    // On ne met PAS de mot de passe ici.
+    // Il sera défini plus tard quand l'utilisateur fera un signup normal.
+    password: null,
+
+    createdAt: now,
+
+    // 🎧 Audio
+    audioMinutesUsed: 0,
+
+    // 💰 Jetons
+    creditsPurchased: 0,
+
+    // 🧾 Flags premium
+    explodelyPremium: false, // sera écrasé par $set si nécessaire
+
+    // 🏷️ Info utile pour debug / tracking
+    accountSource: "explodely-webhook",
+
+    // Optionnel si tu veux être ultra propre :
+    lastLoginAt: null,
+    stripeCustomerId: null,
+    gumroadPremium: false
+  };
+}
+
 
 app.post("/webhook/explodely", async (req, res) => {
   try {
@@ -1046,6 +1081,22 @@ app.post("/webhook/explodely", async (req, res) => {
     const database = client.db("MyAICrush");
     const users = database.collection("users");
     const explodelyEvents = database.collection("explodely_events");
+
+    // -----------------------------
+    // Defaults pour user créé via Explodely
+    // -----------------------------
+    const buildUserDefaultsFromExplodely = (email) => {
+      const now = new Date();
+      return {
+        email,
+        password: null,              // important : pas de password généré
+        createdAt: now,
+        audioMinutesUsed: 0,
+        creditsPurchased: 0,
+        // Tu peux ajouter d'autres champs par défaut ici au besoin
+        source: "explodely"
+      };
+    };
 
     // -----------------------------
     // Helpers CSV → array
@@ -1070,7 +1121,8 @@ app.post("/webhook/explodely", async (req, res) => {
 
       if (candidates.length === 0) return "";
 
-      // ✅ Si un seul -> OK
+      // ✅ Si un seul email -> on le prend (même s'il n'existe pas encore en DB,
+      // on créera alors un user complet avec $setOnInsert)
       if (candidates.length === 1) return candidates[0];
 
       // ✅ Sinon: on prend celui qui existe dans MongoDB
@@ -1171,7 +1223,10 @@ app.post("/webhook/explodely", async (req, res) => {
         if (isPremiumProduct) {
           await users.updateOne(
             { email },
-            { $set: { explodelyPremium: true } },
+            {
+              $set: { explodelyPremium: true },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
             { upsert: true }
           );
 
@@ -1190,7 +1245,10 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await users.updateOne(
             { email },
-            { $inc: { creditsPurchased: toAdd } },
+            {
+              $inc: { creditsPurchased: toAdd },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
             { upsert: true }
           );
 
@@ -1209,7 +1267,10 @@ app.post("/webhook/explodely", async (req, res) => {
         if (isPremiumProduct) {
           await users.updateOne(
             { email },
-            { $set: { explodelyPremium: false } },
+            {
+              $set: { explodelyPremium: false },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
             { upsert: true }
           );
 
@@ -1231,7 +1292,10 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await users.updateOne(
             { email },
-            { $set: { creditsPurchased: newValue } },
+            {
+              $set: { creditsPurchased: newValue },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
             { upsert: true }
           );
 
@@ -1264,7 +1328,6 @@ app.post("/webhook/explodely", async (req, res) => {
     return res.status(200).send("ok");
   }
 });
-
 
 
 
@@ -2824,67 +2887,190 @@ async function addUserToElastic(email) {
 }
 
 
+// =====================================================
+// 📧 Inscription contact dans Systeme.io (Tag FR / EN)
+// =====================================================
+// ⚙️ Ajouter / taguer un utilisateur dans Systeme.io
+async function addUserToSystemeIo(email, acceptLanguage = "") {
+  try {
+    const SYSTEME_API_KEY = process.env.SYSTEME_API_KEY;
+    const SYSTEME_API_BASE_URL = process.env.SYSTEME_API_BASE_URL || "https://api.systeme.io";
 
+    // ⚠️ Ce sont les IDs NUMÉRIQUES de tes tags (pas les noms)
+    const TAG_FR = process.env.SYSTEME_TAG_FR; // ex: "1892270"
+    const TAG_EN = process.env.SYSTEME_TAG_EN; // ex: "1892271"
 
+    if (!SYSTEME_API_KEY) {
+      console.warn("⚠️ SYSTEME_API_KEY manquante, skip Systeme.io");
+      return;
+    }
 
-// ✅ ROUTE SIGNUP AVEC VÉRIFICATION D'EMAIL
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    if (!normalizedEmail) {
+      console.warn("⚠️ Email vide pour addUserToSystemeIo, skip");
+      return;
+    }
+
+    const isFrench = (acceptLanguage || "").toLowerCase().startsWith("fr");
+    const tagId = isFrench ? TAG_FR : TAG_EN;
+
+    if (!tagId) {
+      console.warn("⚠️ Aucun tagId configuré pour", isFrench ? "FR" : "EN");
+      // On peut quand même créer le contact sans tag
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-API-Key": SYSTEME_API_KEY, // ✅ Auth correcte pour Systeme.io
+    };
+
+    // 1️⃣ Création (ou update) du contact
+    const contactRes = await fetch(`${SYSTEME_API_BASE_URL}/api/contacts`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email: normalizedEmail }),
+    });
+
+    if (!contactRes.ok) {
+      const errText = await contactRes.text();
+      console.warn("⚠️ Erreur création contact Systeme.io:", contactRes.status, errText);
+      return;
+    }
+
+    const contactData = await contactRes.json();
+    const contactId = contactData.id;
+
+    if (!contactId) {
+      console.warn("⚠️ Impossible de récupérer contactId Systeme.io:", contactData);
+      return;
+    }
+
+    // 2️⃣ Ajout du tag si dispo
+    if (tagId) {
+      const tagRes = await fetch(`${SYSTEME_API_BASE_URL}/api/contacts/${contactId}/tags`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ tagId: Number(tagId) }),
+      });
+
+      if (!tagRes.ok) {
+        const errText = await tagRes.text();
+        console.warn("⚠️ Erreur assignation tag Systeme.io:", tagRes.status, errText);
+        return;
+      }
+
+      console.log(`✅ Systeme.io: ${normalizedEmail} ajouté avec tag ${isFrench ? "myaicrush-fr" : "myaicrush-en"}`);
+    } else {
+      console.log(`✅ Systeme.io: ${normalizedEmail} ajouté (sans tag car tagId manquant)`);
+    }
+
+  } catch (err) {
+    console.error("❌ Erreur addUserToSystemeIo:", err);
+  }
+}
+
+// ✅ ROUTE SIGNUP AVEC VÉRIFICATION D'EMAIL + COMPTES EXPLODELY + SYSTEME.IO
 app.post('/api/signup', async (req, res) => {
+  try {
     const { email, password } = req.body;
 
+    // 1) Validation basique
     if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    if (!isValidEmail(email)) {
-        return res.status(400).json({ message: 'Invalid email format' });
+    // 2) Normalisation de l'email
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Invalid email format' });
     }
 
-    const isValidDomain = await isDisposableOrInvalidEmail(email);
+    const isValidDomain = await isDisposableOrInvalidEmail(normalizedEmail);
     if (!isValidDomain) {
-        return res.status(400).json({ message: 'Adresse email invalide' });
+      return res.status(400).json({ message: 'Adresse email invalide' });
     }
 
-    try {
-        const database = client.db('MyAICrush');
-        const users = database.collection('users');
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
 
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await users.findOne({ email });
-        const isNewUser = !existingUser;
+    // 3) On regarde si un user existe déjà avec cet email (inclut ceux créés via Explodely)
+    const existingUser = await users.findOne({ email: normalizedEmail });
 
-        if (existingUser) {
-            return res.status(400).json({ message: 'Un compte avec cet email existe déjà', isNewUser: false });
+    // On hash le mot de passe une seule fois
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // ============================
+    // 1️⃣ Cas : user existe déjà avec un password défini
+    // ============================
+    if (existingUser && existingUser.password) {
+      return res.status(400).json({
+        message: 'Un compte avec cet email existe déjà',
+        isNewUser: false,
+        upgradedFromExplodely: false
+      });
+    }
+
+    // ============================
+    // 2️⃣ Cas : user existe mais sans password (créé via Explodely)
+    // ============================
+    if (existingUser && !existingUser.password) {
+      await users.updateOne(
+        { _id: existingUser._id },
+        {
+          $set: {
+            password: hashedPassword,
+            audioMinutesUsed: existingUser.audioMinutesUsed ?? 0,
+            creditsPurchased: existingUser.creditsPurchased ?? 0,
+            createdAt: existingUser.createdAt || new Date()
+          }
         }
+      );
 
-        // Générer un hash pour le mot de passe
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+      console.log("✅ Inscription complétée pour un compte Explodely existant :", normalizedEmail);
 
-        // Ajouter l'utilisateur avec le mot de passe haché
-        await users.insertOne({ 
-            email, 
-            password: hashedPassword, 
-            audioMinutesUsed: 0, 
-            creditsPurchased: 0,  // ✅ Ajout du compteur de crédits
-            createdAt: new Date() 
-        });
-        
-        
+      // Inscription / tag dans Systeme.io (FR/EN selon navigateur)
+      const acceptLanguage = req.headers["accept-language"] || "";
+      await addUserToSystemeIo(normalizedEmail, acceptLanguage);
 
-        console.log("✅ Inscription réussie pour :", email);
-
-        // ✅ Ajout à Elastic
-        await addUserToElastic(email);
-
-
-        res.status(201).json({ message: 'User created successfully!', isNewUser: true });
-
-    } catch (error) {
-        console.error('❌ Erreur lors de l\'inscription:', error);
-        res.status(500).json({ message: 'Internal server error' });
+      return res.status(200).json({
+        message: 'Compte complété avec succès',
+        isNewUser: false,
+        upgradedFromExplodely: true
+      });
     }
-});
 
+    // ============================
+    // 3️⃣ Cas : aucun user → création classique
+    // ============================
+    await users.insertOne({
+      email: normalizedEmail,
+      password: hashedPassword,
+      audioMinutesUsed: 0,
+      creditsPurchased: 0,
+      explodelyPremium: false,
+      createdAt: new Date()
+    });
+
+    console.log("✅ Inscription réussie pour :", normalizedEmail);
+
+    // Inscription / tag dans Systeme.io (FR/EN selon navigateur)
+    const acceptLanguage = req.headers["accept-language"] || "";
+    await addUserToSystemeIo(normalizedEmail, acceptLanguage);
+
+    return res.status(201).json({
+      message: 'User created successfully!',
+      isNewUser: true,
+      upgradedFromExplodely: false
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'inscription:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 const schedule = require('node-schedule');
 
