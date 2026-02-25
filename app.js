@@ -1046,33 +1046,20 @@ function buildUserDefaultsFromExplodely(email) {
 
   return {
     email: String(email).trim().toLowerCase(),
-
-    // 🔐 IMPORTANT :
-    // On ne met PAS de mot de passe ici.
-    // Il sera défini plus tard quand l'utilisateur fera un signup normal.
-    password: null,
-
+    password: null,              // sera défini au signup
     createdAt: now,
-
-    // 🎧 Audio
     audioMinutesUsed: 0,
 
-    // 💰 Jetons
-    creditsPurchased: 0,
+    // ❌ SURTOUT PAS ICI :
+    // creditsPurchased: 0,
+    // explodelyPremium: false,
 
-    // 🧾 Flags premium
-    explodelyPremium: false, // sera écrasé par $set si nécessaire
-
-    // 🏷️ Info utile pour debug / tracking
     accountSource: "explodely-webhook",
-
-    // Optionnel si tu veux être ultra propre :
     lastLoginAt: null,
     stripeCustomerId: null,
     gumroadPremium: false
   };
 }
-
 
 app.post("/webhook/explodely", async (req, res) => {
   try {
@@ -1082,21 +1069,6 @@ app.post("/webhook/explodely", async (req, res) => {
     const users = database.collection("users");
     const explodelyEvents = database.collection("explodely_events");
 
-    // -----------------------------
-    // Defaults pour user créé via Explodely
-    // -----------------------------
-    const buildUserDefaultsFromExplodely = (email) => {
-      const now = new Date();
-      return {
-        email,
-        password: null,              // important : pas de password généré
-        createdAt: now,
-        audioMinutesUsed: 0,
-        creditsPurchased: 0,
-        // Tu peux ajouter d'autres champs par défaut ici au besoin
-        source: "explodely"
-      };
-    };
 
     // -----------------------------
     // Helpers CSV → array
