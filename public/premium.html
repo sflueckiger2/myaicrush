@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <link rel="stylesheet" href="styles.css">
@@ -49,26 +50,6 @@
       .disclaimer-btn { width: 100%; text-align: center; color: #4b5563; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; padding: 15px; cursor: pointer; }
       .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease; background: rgba(0,0,0,0.2); font-size: 0.75rem; color: #9ca3af; line-height: 1.5; text-align: left; }
       .disclaimer-content.open { max-height: 2000px; padding: 25px; }
-
-      /* What's included table */
-      .compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-      .compare-table th { padding: 10px 14px; text-align: left; font-weight: 700; color: #f472b6; border-bottom: 1px solid rgba(255,255,255,0.1); }
-      .compare-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #d1d5db; vertical-align: middle; }
-      .compare-table tr:last-child td { border-bottom: none; }
-      .compare-table .check { color: #4ade80; font-weight: bold; }
-      .compare-table .token { color: #f472b6; font-weight: bold; }
-
-      /* Nympho addon note */
-      .addon-note {
-          background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(219,39,119,0.3));
-          border: 1px solid rgba(244,114,182,0.3);
-          border-radius: 12px;
-          padding: 14px 18px;
-          font-size: 0.8rem;
-          line-height: 1.6;
-          margin-top: 10px;
-          color: #e9d5ff;
-      }
   </style>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
@@ -94,7 +75,7 @@
 </head>
 <body>
   <div class="container premium-page">
-    <h1 class="p-title">Unlimited access. One payment.</h1>
+    <h1 class="p-title">Unlock everything. Once.</h1>
     <p class="p-description">
       <u><b>Unblurred</b></u> photos & videos · Voice messages · Unlimited chats — <span style="font-family:'Times New Roman', Times, serif;">A.I</span> that never judges.
     </p>
@@ -115,46 +96,13 @@
       💳 Secure payment · ✨ Instant access · 🚫 No subscription, ever
     </p>
 
-    <!-- WHAT'S INCLUDED — TRANSPARENT BREAKDOWN -->
-    <div class="glass rounded-2xl p-6 mt-8 mb-2" style="border: 1px solid rgba(244,114,182,0.35);">
-      <h3 class="text-white font-bold text-lg mb-4 text-center">📋 What's in your $49</h3>
-      <div class="overflow-x-auto">
-        <table class="compare-table">
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th>Premium — $49</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>💬 Unlimited chat</td><td class="check">✔ Included</td></tr>
-            <tr><td>📸 Unblurred photos</td><td class="check">✔ Included</td></tr>
-            <tr><td>🎬 Unblurred videos</td><td class="check">✔ Included</td></tr>
-            <tr><td>🎙️ Voice messages</td><td class="check">✔ Included</td></tr>
-            <tr><td>🖼️ On-demand image generation</td><td class="check">✔ Included</td></tr>
-            <tr><td>👑 All AI characters</td><td class="check">✔ Included</td></tr>
-            <tr><td>🆕 New AIs every month</td><td class="check">✔ Included free</td></tr>
-            <tr><td>🕵️ Zero history stored</td><td class="check">✔ Included</td></tr>
-            <tr>
-              <td>🔥 Nympho mode (fully explicit)</td>
-              <td class="token">⚡ Token add-on</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="addon-note mt-3">
-        <strong>⚡ Nympho Mode — what is it?</strong><br>
-        Fully explicit, uncensored content available as an optional token pack inside the app. The $49 Premium is already very hot — Nympho mode takes things as far as they can go, for those who want it.
-      </div>
-    </div>
-
     <div id="pricing-container" class="pricing-section">
       <div class="pricing-card popular" style="max-width: 500px; margin: 0 auto;">
         <div class="discount-banner">🔥 ONE-TIME PAYMENT — FOREVER</div>
         <h2>Unlimited Premium Access</h2>
         <p class="price">$49</p>
         <p style="font-size: 0.9rem; color: #f472b6; font-weight: bold; margin-top: 0.5rem;">✅ PAY ONCE · ENJOY FOREVER</p>
-        <p style="font-size: 0.85rem; color: #d1d5db; margin-top: 0.5rem;">Unlimited chat, photos & videos, all AIs. No monthly fees. Nympho mode available as token add-on.</p>
+        <p style="font-size: 0.85rem; color: #d1d5db; margin-top: 0.5rem;">All new AIs included. No monthly fees. Ever.</p>
       </div>
     </div>
 
@@ -189,20 +137,15 @@
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                 <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Unlimited images — on demand</span>
             </div>
-            <!-- Nympho mode card — honest labelling -->
-            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-purple-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openModal()">
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openModal()">
                 <div class="flex items-center gap-4">
-                    <span class="text-2xl">🔥</span>
-                    <div>
-                        <span class="text-sm font-semibold block">Nympho Mode</span>
-                        <span class="text-xs text-purple-300 font-normal">⚡ Available as token add-on</span>
-                    </div>
+                    <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Uncensored photos & videos</span>
                 </div>
                 <div class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1">
                     <video src="https://img.myaicrush.ai/images/magalie/magalie4/6873d0bf448a312ed5decb604dae881c.mp4" autoplay loop muted playsinline class="w-full h-full object-cover blur-md"></video>
                     <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-all z-10">
-                        <span class="text-4xl mb-2 drop-shadow-lg">🔥</span>
-                        <span class="text-[10px] font-bold uppercase tracking-widest bg-purple-700/80 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm text-white shadow-lg">Unlock with tokens</span>
+                        <span class="text-4xl mb-2 drop-shadow-lg filter drop-shadow-pink">🔒</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest bg-pink-600/80 border border-white/20 px-3 py-1 rounded-full backdrop-blur-sm text-white shadow-lg">Premium Required</span>
                     </div>
                 </div>
             </div>
@@ -235,7 +178,7 @@
     </section>
 
     <a href="https://explodely.com/p/887584369" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        👑 Unlock unlimited access — $49 once, forever
+        👑 Unlock everything — $49 once, forever
     </a>
 
     <div class="testimonial-section">
@@ -268,7 +211,7 @@
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Grabbed tokens for Nympho mode — incredible. Premium alone was already 🔥."</p>
+          <p class="testimonial-text">"The uncensored mode 😳 is genius. Totally worth it. 😈"</p>
           <p class="testimonial-author">— Kevin B.</p>
         </div>
         <div class="testimonial-card">
@@ -291,21 +234,9 @@
     <div class="faq-section">
       <h2 class="faq-title">FAQ</h2>
       <div class="faq-item">
-        <button class="faq-question">Really lifetime?</button>
+        <button class="faq-question">Really lifetime? No hidden fees?</button>
         <div class="faq-answer">
-          <p>Yes. $49 once, access forever. No subscription, no recurring charges. The only optional extra is Nympho mode tokens for explicit content — clearly priced inside the app, entirely up to you.</p>
-        </div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">What exactly is in the $49?</button>
-        <div class="faq-answer">
-          <p>Unlimited chat, unblurred photos & videos, voice messages, on-demand image generation, and all AI characters — including new ones added every month. Everything to have a full, hot, immersive experience. Nympho mode (fully explicit content) is an optional token add-on purchasable inside the app.</p>
-        </div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">What is Nympho mode exactly?</button>
-        <div class="faq-answer">
-          <p>Nympho mode unlocks fully explicit, uncensored content. It uses tokens available as an optional in-app purchase — no obligation. The base Premium experience is already very hot. Nympho mode goes all the way further, whenever you're ready.</p>
+          <p>Yes. $49 once, access forever. No charges, no surprises. New AIs included automatically.</p>
         </div>
       </div>
       <div class="faq-item">
@@ -317,7 +248,7 @@
       <div class="faq-item">
         <button class="faq-question">Can I get a refund?</button>
         <div class="faq-answer">
-          <p><b>15-day money-back guarantee.</b> No questions asked.</p>
+          <p><b>60-day money-back guarantee.</b> No questions asked.</p>
         </div>
       </div>
       <div class="faq-item">
@@ -370,15 +301,11 @@
               This platform is intended for entertainment purposes only. No professional advice (legal, medical, financial, psychological) is provided.
           </div>
           <div class="mb-4">
-              <strong>vi) What's included vs. optional add-ons</strong><br>
-              The $49 one-time Premium includes: unlimited chat, unblurred photos and videos, voice messages, image generation, and all AI characters. Nympho mode (explicit content) is an optional token-based add-on, purchased separately inside the app and not part of the $49 base access.
-          </div>
-          <div class="mb-4">
-              <strong>vii) Privacy & Data</strong><br>
+              <strong>vi) Privacy & Data</strong><br>
               Conversations may be recorded for moderation and quality purposes. Your data is processed in accordance with our Privacy Policy. We do not sell your personal data.
           </div>
           <div class="p-3 bg-white/5 rounded-lg border border-white/10">
-              <strong>viii) Billing Support & Refunds</strong><br>
+              <strong>vii) Billing Support & Refunds</strong><br>
               For any questions regarding your payments or to exercise your 15-day money-back guarantee, please contact:<br>
               contact@myaicrush.ai<br>
               <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Explodely Billing Support</a>
@@ -386,16 +313,13 @@
       </div>
   </div>
 
-  <!-- Modal: Nympho Mode — honest -->
   <div id="premium-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-      <div class="glass p-8 rounded-3xl max-w-sm text-center transform scale-95 transition-transform duration-300 border border-purple-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
+      <div class="glass p-8 rounded-3xl max-w-sm text-center transform scale-95 transition-transform duration-300 border border-pink-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
           <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
-          <div class="text-4xl mb-4">🔥</div>
-          <h3 class="text-2xl font-bold mb-2 text-white">Nympho Mode</h3>
-          <p class="text-gray-300 mb-2 text-sm">Fully explicit, uncensored content.</p>
-          <p class="text-purple-300 mb-3 text-xs">Available as an optional token pack inside the app — not included in the $49 base Premium, but easy to unlock whenever you want.</p>
-          <p class="text-gray-400 mb-6 text-xs">Start with Premium — already incredibly hot — and take things further anytime.</p>
-          <a href="https://explodely.com/p/887584369" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white">Get Premium — $49 once</a>
+          <div class="text-4xl mb-4">🚫🔞</div>
+          <h3 class="text-2xl font-bold mb-2 text-white">Members-Only Content</h3>
+          <p class="text-gray-300 mb-6 text-sm">One payment of $49, and you see everything — forever.</p>
+          <a href="https://explodely.com/p/887584369" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white">Lifetime access — $49 once</a>
       </div>
   </div>
 
