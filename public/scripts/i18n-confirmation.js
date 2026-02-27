@@ -1,5 +1,5 @@
-// i18n-confirmation.js — Traduction française de confirmation.html
-// Ajoute cette ligne dans confirmation.html juste avant </body> :
+// i18n-confirmation.js — Traduction française de la page xsell Alex
+// Ajoute cette ligne dans le HTML juste avant </body> :
 // <script type="module" src="/scripts/i18n-confirmation.js"></script>
 
 const isFrench = navigator.language?.startsWith("fr");
@@ -19,69 +19,141 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== SÉPARATEUR =====
   const separator = document.querySelector(".upsell-separator span");
-  if (separator) separator.textContent = "Une dernière chose";
+  if (separator) separator.textContent = "Rien que pour toi";
 
-  // ===== NYMPHO HERO =====
-  const nymphoBadge = document.querySelector(".nympho-badge-hero");
-  if (nymphoBadge) nymphoBadge.textContent = "🔥 Upgrade populaire";
+  // ===== PROFIL CARTE =====
+  const cardHandle = document.querySelector(".card-handle");
+  if (cardHandle) cardHandle.textContent = "@alex.exclusive • Contenu exclusif";
 
-  const nymphoTitle = document.querySelector(".nympho-hero h2");
-  if (nymphoTitle) nymphoTitle.innerHTML = `Débloquer <span>le Mode Nympho</span><br>maintenant.`;
+  // ===== COMPTEUR PHOTO/VIDÉO =====
+  const previewCount = document.querySelector(".preview-count");
+  if (previewCount) previewCount.innerHTML = "<span>63 photos</span> + <span>27 vidéos</span>";
 
-  const nymphoDesc = document.querySelector(".nympho-hero p");
-  if (nymphoDesc) nymphoDesc.innerHTML = `Le Premium te donne déjà tout le contenu chaud.<br>Mais le Mode Nympho ? C'est un autre niveau.<br>Zéro filtre. Zéro limite. Complètement sauvage. 🥵`;
+  // ===== TITRE & DESCRIPTION =====
+  const cardTitle = document.querySelector(".card-title");
+  if (cardTitle) cardTitle.textContent = "Alex — Ses moments les plus intimes 🛏️";
 
-  const priceBadge = document.querySelector(".nympho-hero .price-badge");
-  if (priceBadge) priceBadge.textContent = "25 tokens = 1 heure de Mode Nympho";
+  const cardDesc = document.querySelector(".card-desc");
+  if (cardDesc) cardDesc.innerHTML = `Allongée dans ses draps, Alex se touche doucement… Ses mains explorent chaque courbe, ses yeux brillent de plaisir, sa respiration s'accélère. <em>Un shooting intime et incroyablement excitant</em>, où elle se laisse aller à ses petits plaisirs secrets.`;
 
-  // ===== BENEFITS GRID =====
-  const benefitItems = document.querySelectorAll(".benefit-grid .benefit-item");
-  const benefitsFR = [
-    { title: "Mode Nympho", sub: "25 tokens / 1 heure" },
-    { title: "Appel audio", sub: "20 tokens / 10 min" },
-    { title: "Message vocal", sub: "5 tokens / 1 min" },
-    { title: "Envoyer une photo", sub: "1 token / image" },
+  // ===== PILLS =====
+  const pills = document.querySelectorAll(".pill");
+  const pillsFR = [
+    "🔥 GROS TÉTONS",
+    "👙 TOUTE NUE",
+    "🛏️ SCÈNE AU LIT",
+    "💦 SE TOUCHE LA CHATTE",
+    "😈 EXPLICITE",
+    "📸 63 PHOTOS",
+    "🎥 27 VIDÉOS",
   ];
-  benefitItems.forEach((item, i) => {
-    if (!benefitsFR[i]) return;
-    const b = item.querySelector("span b");
-    const span = item.querySelector("span");
-    if (b) b.textContent = benefitsFR[i].title;
-    if (span) {
-      // Remplace le texte après le <b>
-      const textNode = [...span.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
-      if (textNode) textNode.textContent = benefitsFR[i].sub;
+  pills.forEach((pill, i) => {
+    if (pillsFR[i]) pill.textContent = pillsFR[i];
+  });
+
+  // ===== BONUS BOX =====
+  const bonusText = document.querySelector(".bonus-text");
+  if (bonusText) {
+    const b = bonusText.querySelector("b");
+    if (b) b.textContent = "Des tokens inclus avec ton achat";
+    const textNode = [...bonusText.childNodes].find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+    if (textNode) textNode.textContent = "";
+    // On réécrit le contenu après le <b> proprement
+    bonusText.innerHTML = `<b>Des tokens inclus avec ton achat</b>
+      Utilise-les pour activer le <em>Mode Nympho</em> et débloquer du contenu intime avec des dizaines d'autres IA — pousse-les à leur maximum et rends chaque conversation bien plus coquine 🔥`;
+  }
+
+  // ===== BOUTON UNLOCK =====
+  const unlockLabel = document.querySelector(".unlock-btn-label");
+  if (unlockLabel) {
+    // Préserver le <small>
+    const small = unlockLabel.querySelector("small");
+    
+    const unlockLabel = document.querySelector(".unlock-btn-label");
+if (unlockLabel) {
+  const small = unlockLabel.querySelector("small");
+  unlockLabel.textContent = "Débloquer cette collection";
+  if (small) {
+    small.textContent = "Accès immédiat · Paiement unique";
+    unlockLabel.appendChild(small);
+  }
+}
+    if (small) small.textContent = "Accès immédiat · Paiement unique";
+  }
+
+  // ===== TÉMOIGNAGES =====
+  const testimonialTitle = document.querySelector(".testimonial-title");
+  if (testimonialTitle) testimonialTitle.textContent = "Eux non plus n'ont pas pu résister 🔥";
+
+  const testimonials = [
+    { text: "\"Cette collection au lit… j'étais vraiment pas prêt. Elle est absolument incroyable 🛏️\"", author: "— Karim M." },
+    { text: "\"Je pensais que ce serait des photos basiques. Pas du tout — elle va jusqu'au bout 😳\"", author: "— Lucas R." },
+    { text: "\"Ce regard qu'elle donne à l'objectif… ça vaut chaque centime 😈\"", author: "— Steph G." },
+    { text: "\"Acheté sur un coup de tête. Zéro regret. 63 photos de pur bonheur.\"", author: "— Bast D." },
+  ];
+
+  document.querySelectorAll(".testimonial-card").forEach((card, i) => {
+    if (!testimonials[i]) return;
+    const text = card.querySelector(".testimonial-text");
+    const author = card.querySelector(".testimonial-author");
+    if (text) text.textContent = testimonials[i].text;
+    if (author) author.textContent = testimonials[i].author;
+  });
+
+  // ===== FAQ =====
+  const faqTitle = document.querySelector(".faq-title");
+  if (faqTitle) faqTitle.textContent = "Réponses rapides";
+
+  const faqItems = [
+    {
+      q: "Qu'est-ce que j'obtiens pour 59 $ ?",
+      a: "Accès complet à la collection intime d'Alex : 63 photos et 27 vidéos de haute qualité, débloqués définitivement avec un seul paiement."
+    },
+    {
+      q: "L'accès est vraiment instantané ?",
+      a: "Oui — dès que ton paiement est validé, la collection entière est à toi. Aucune attente, aucun abonnement."
+    },
+    {
+      q: "Quels tokens est-ce que j'obtiens avec l'achat ?",
+      a: "Ton achat inclut des tokens utilisables sur toutes les IA de la plateforme — active le Mode Nympho, débloque du contenu intime exclusif, demande des photos perso et pousse chaque IA dans ses derniers retranchements."
+    },
+    {
+      q: "Mon paiement est-il discret ?",
+      a: "100%. Toutes les transactions sont chiffrées et discrètes. Le débit apparaît sous un nom neutre sur ton relevé."
+    },
+  ];
+
+  document.querySelectorAll(".faq-item").forEach((item, i) => {
+    if (!faqItems[i]) return;
+    const question = item.querySelector(".faq-question");
+    const answer = item.querySelector(".faq-answer p");
+    if (question) {
+      // Préserver le ::after via textContent sur le bouton
+      question.childNodes.forEach(n => {
+        if (n.nodeType === Node.TEXT_NODE) n.textContent = faqItems[i].q;
+      });
+      // Si textContent seul suffit (pas d'enfants texte), fallback :
+      if (!question.childNodes.length || question.textContent.trim() === "") {
+        question.textContent = faqItems[i].q;
+      } else {
+        // Méthode robuste : on remplace le premier nœud texte
+        const firstText = [...question.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+        if (firstText) firstText.textContent = faqItems[i].q;
+      }
     }
+    if (answer) answer.innerHTML = faqItems[i].a;
   });
 
-  // ===== NYMPHO REMINDER =====
-  const reminder = document.querySelector(".nympho-reminder span");
-  if (reminder) reminder.innerHTML = `Le pack 10 tokens ne suffit pas pour le Mode Nympho. Pour l'activer, il te faut <b>au moins 25 tokens</b> — prends le pack 50 et active-le deux fois.`;
-
-  // ===== TOKEN CARDS — BOUTONS & BADGES =====
-  document.querySelectorAll(".token-cta").forEach(btn => {
-    if (btn.textContent.trim() === "Buy") btn.textContent = "Acheter";
-    if (btn.textContent.trim() === "Get this deal") btn.textContent = "Profiter de l'offre";
-  });
-
-  document.querySelectorAll(".token-save").forEach(badge => {
-    badge.textContent = badge.textContent
-      .replace("Save 17%", "−17%")
-      .replace("Save 34%", "−34%")
-      .replace("Save 52% 🔥", "−52% 🔥")
-      .replace("Save 60%", "−60%")
-      .replace("Save 66%", "−66%");
-  });
-
-  const bestDeal = document.querySelector(".best-deal");
-  if (bestDeal) bestDeal.textContent = "MEILLEURE OFFRE 💎";
+  // ===== SÉCURITÉ =====
+  const securityItems = document.querySelectorAll(".security-item p");
+  if (securityItems[0]) securityItems[0].textContent = "Paiement sécurisé";
+  if (securityItems[1]) securityItems[1].textContent = "Confidentialité totale";
+  if (securityItems[2]) securityItems[2].textContent = "Accès permanent";
 
   // ===== POPUP DE CONFIRMATION =====
   const popupTitle = document.querySelector(".popup-title");
   if (popupTitle) popupTitle.textContent = "Confirmer ta commande ?";
 
-  // On traduit UNIQUEMENT les noeuds texte autour des spans dynamiques
-  // sans toucher à #confirm-tokens et #confirm-price (mis à jour par le JS original)
   const popupText = document.querySelector(".popup-text");
   if (popupText) {
     popupText.childNodes.forEach(node => {
@@ -99,62 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnConfirm = document.querySelector(".btn-confirm");
   if (btnConfirm) btnConfirm.textContent = "Confirmer ✓";
 
-  // ===== TÉMOIGNAGES =====
-  const testimonialTitle = document.querySelector(".testimonial-title");
-  if (testimonialTitle) testimonialTitle.textContent = "Ils ont pris des tokens. Ils sont devenus accros. 🔥";
-
-  const testimonials = [
-    { text: "\"Léa en mode nympho… c'est une autre fille. J'étais vraiment pas prêt 🔥\"", author: "— Karim M." },
-    { text: "\"Jasmine était toute douce au début… et puis boom. Plus rien dessus. J'en revenais pas 😳\"", author: "— Lucas R." },
-    { text: "\"25 tokens pour le mode nympho ? C'est donné. Elle est partie en live direct 😈\"", author: "— Steph G." },
-    { text: "\"Je pensais que c'était du flan. C'est pas du flan 😭 Photos non-stop. Impossible d'arrêter.\"", author: "— Bast D." },
-  ];
-
-  document.querySelectorAll(".testimonial-card").forEach((card, i) => {
-    if (!testimonials[i]) return;
-    const text = card.querySelector(".testimonial-text");
-    const author = card.querySelector(".testimonial-author");
-    if (text) text.textContent = testimonials[i].text;
-    if (author) author.textContent = testimonials[i].author;
-  });
-
-  // ===== FAQ =====
-  const faqTitle = document.querySelector(".faq-title");
-  if (faqTitle) faqTitle.textContent = "Réponses rapides";
-
-  const faqItems = [
-    {
-      q: "C'est quoi le Mode Nympho ?",
-      a: "Ton IA lâche tout — plus osée, plus de photos, zéro limite. Même les plus timides se transforment complètement."
-    },
-    {
-      q: "Combien de tokens pour l'activer ?",
-      a: "25 tokens = 1 heure de Mode Nympho. Fonctionne avec toutes les IA, autant de fois que tu veux."
-    },
-    {
-      q: "Les tokens expirent-ils ?",
-      a: "Jamais. Utilise-les quand tu veux, à ton rythme."
-    },
-    {
-      q: "À quoi d'autre servent les tokens ?",
-      a: "📸 Photos de galerie · 🎙️ Messages vocaux · 📞 Appels audio · 🥵 Mode Nympho"
-    },
-  ];
-
-  document.querySelectorAll(".faq-item").forEach((item, i) => {
-    if (!faqItems[i]) return;
-    const question = item.querySelector(".faq-question");
-    const answer = item.querySelector(".faq-answer p");
-    if (question) question.textContent = faqItems[i].q;
-    if (answer) answer.innerHTML = faqItems[i].a;
-  });
-
-  // ===== SÉCURITÉ =====
-  const securityItems = document.querySelectorAll(".security-item p");
-  if (securityItems[0]) securityItems[0].textContent = "100% Sécurisé";
-  if (securityItems[1]) securityItems[1].textContent = "Confidentialité totale";
-  if (securityItems[2]) securityItems[2].textContent = "Tokens sans expiration";
-
   // ===== FOOTER =====
   const footerCopyright = document.querySelector(".footer-links p");
   if (footerCopyright) footerCopyright.textContent = "© 2026 MyAICrush – Tous droits réservés";
@@ -171,9 +187,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (supportBox) {
     const strong = supportBox.querySelector("strong");
     if (strong) strong.textContent = "Support paiement & Remboursements";
-    const br = supportBox.querySelector("br");
-    if (br && br.nextSibling) {
-      br.nextSibling.textContent = "Une question sur ton paiement ? On est là :";
+    const allBr = supportBox.querySelectorAll("br");
+    if (allBr[0] && allBr[0].nextSibling?.nodeType === Node.TEXT_NODE) {
+      allBr[0].nextSibling.textContent = "Une question sur ton paiement ? On est là :";
     }
     const explodelyLink = supportBox.querySelector('a[href*="shorturl"]');
     if (explodelyLink) explodelyLink.textContent = "Support paiement Explodely";

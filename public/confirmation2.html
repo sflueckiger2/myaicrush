@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlock Nympho Mode</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- TikTok Pixel -->
+  <script>
+  !function (w,d,t) {
+    w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+    ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
+    ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat([].slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+    ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
+    ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";
+      n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src=r+"?sdkid="+e+"&lib="+t;
+      e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+    ttq.load('D3F46ERC77UCTDLGVG9G');
+    ttq.page();
+  }(window,document,'ttq');
+  </script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var params    = new URLSearchParams(location.search);
+    var amount    = parseFloat(params.get('amount') || '30');
+    var plan      = (params.get('plan') || 'quarterly').toLowerCase();
+    var sessionId = params.get('session_id') || '';
+    var sku       = plan === 'annual' ? 'premium_annual' : 'premium_quarterly';
+    if (window.ttq && !Number.isNaN(amount)) {
+      ttq.track('CompletePayment', { value: amount, currency: 'EUR', contents: [{ id: sku, quantity: 1 }], content_type: 'product', order_id: sessionId });
+    }
+  });
+  </script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    document.addEventListener('DOMContentLoaded', () => {
+      const fullUrl = window.location.pathname + window.location.search;
+      gtag('config', 'G-FJ5S0H9B1R', { page_path: fullUrl });
+      const params = new URLSearchParams(window.location.search);
+      const amount = params.get("amount");
+      const plan = params.get("plan") || "unknown";
+      const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
+      let abTestId = selectedTest?.id || "unknown";
+      function triggerGAEvent() {
+        if (!amount) return;
+        gtag('event', 'purchase', { value: parseFloat(amount), currency: 'EUR', abTestId: abTestId, items: [{ item_name: plan, price: parseFloat(amount) }] });
+      }
+      if (abTestId === "unknown") {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
+        const forcedTp = cookie ? cookie.split('=')[1] : null;
+        if (forcedTp) {
+          fetch('/forced-pricing.json').then(res => res.json()).then(config => {
+            const forcedPlan = config[forcedTp];
+            if (forcedPlan && forcedPlan.test_id) { abTestId = forcedPlan.test_id; localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId })); }
+            triggerGAEvent();
+          }).catch(() => triggerGAEvent());
+        } else { triggerGAEvent(); }
+      } else { triggerGAEvent(); }
+    });
+  </script>
+
+  <meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ===== CONFIRMATION BANNER ===== */
+    .confirm-banner {
+      background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(39, 174, 96, 0.05));
+      border: 1px solid rgba(39, 174, 96, 0.4);
+      border-radius: 20px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+    .confirm-banner i {
+      color: #27ae60;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .confirm-banner-text {
+      font-size: 0.9rem;
+      color: #e0e0e0;
+      line-height: 1.5;
+    }
+    .confirm-banner-text b {
+      color: #fff;
+      font-size: 1rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* ===== SEPARATOR ===== */
+    .upsell-separator {
+      text-align: center;
+      margin: 30px 0 10px;
+      position: relative;
+    }
+    .upsell-separator::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0; right: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+    .upsell-separator span {
+      position: relative;
+      background: #0e0e10;
+      padding: 0 16px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #666;
+    }
+
+    /* ===== NYMPHO MODE HERO ===== */
+    .nympho-hero {
+      background: linear-gradient(135deg, rgba(255, 47, 160, 0.12), rgba(194, 47, 255, 0.08));
+      border: 1px solid rgba(255, 156, 239, 0.25);
+      border-radius: 24px;
+      padding: 28px 24px;
+      margin: 24px 0 30px;
+      text-align: center;
+    }
+    .nympho-badge-hero {
+      display: inline-block;
+      background: #ff2fa0;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .nympho-hero h2 {
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .nympho-hero h2 span { color: #ff9cef; }
+    .nympho-hero p {
+      color: #c0c0c0;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      max-width: 400px;
+      margin: 0 auto 16px;
+    }
+    .nympho-hero .price-badge {
+      display: inline-block;
+      background: rgba(255, 156, 239, 0.15);
+      border: 1px solid rgba(255, 156, 239, 0.35);
+      color: #ff9cef;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 8px 20px;
+      border-radius: 30px;
+    }
+
+    /* ===== BENEFIT GRID ===== */
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 0 0 30px;
+    }
+    .benefit-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .benefit-item i {
+      color: #ff9cef;
+      font-size: 1rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .benefit-item span {
+      font-size: 0.82rem;
+      color: #d0d0d0;
+      line-height: 1.4;
+    }
+    .benefit-item span b { color: #fff; display: block; margin-bottom: 1px; }
+
+    /* ===== TOKEN GRID ===== */
+    .token-offers {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin: 10px 0 40px;
+    }
+    @media (min-width: 768px) {
+      .token-offers { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    }
+
+    .token-card {
+      background: linear-gradient(145deg, #1c1c1e, #141416);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 20px 14px;
+      border-radius: 20px;
+      color: white;
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (min-width: 768px) {
+      .token-card { padding: 28px 22px; }
+    }
+    .token-card:hover {
+      transform: translateY(-7px);
+      border-color: #ff2fa0;
+      box-shadow: 0 15px 30px rgba(255, 56, 148, 0.2);
+    }
+    .token-card.popular {
+      border: 1px solid rgba(255,255,255,0.3);
+      transform: scale(1.02);
+      background: linear-gradient(145deg, #231820, #141416);
+    }
+    .token-card.popular:hover { transform: scale(1.02) translateY(-7px); }
+
+    .token-icon-fa {
+      font-size: 40px;
+      color: #ffd700;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 8px rgba(255,215,0,0.4));
+      display: block;
+    }
+    .token-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .token-price {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 8px 0;
+      color: #ff8cd6;
+    }
+    .token-save {
+      background: #ff2fa0;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .token-cta {
+      background: linear-gradient(90deg, #ff2fa0, #c22fff);
+      border: none;
+      width: 100%;
+      padding: 13px 0;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      margin-top: 14px;
+      cursor: pointer;
+      transition: filter 0.2s, box-shadow 0.2s;
+      display: block;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(255, 47, 160, 0.3);
+    }
+    .token-cta:hover { filter: brightness(1.12); box-shadow: 0 6px 20px rgba(255, 47, 160, 0.5); }
+    .best-deal {
+      position: absolute;
+      top: -13px; right: -8px;
+      background: linear-gradient(90deg, #ffd700, #ffae00);
+      color: #000;
+      padding: 5px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    /* ===== NYMPHO ACTIVATION REMINDER ===== */
+    .nympho-reminder {
+      background: linear-gradient(135deg, rgba(255,47,160,0.1), rgba(194,47,255,0.07));
+      border: 1px solid rgba(255,156,239,0.2);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: -10px 0 30px;
+      font-size: 0.82rem;
+      color: #d0d0d0;
+      line-height: 1.5;
+    }
+    .nympho-reminder i { color: #ff9cef; font-size: 1.2rem; flex-shrink: 0; }
+    .nympho-reminder b { color: #ff9cef; }
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonial-section { margin: 40px 0; }
+    .testimonial-title {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .testimonial-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .testimonial-stars { font-size: 0.8rem; margin-bottom: 6px; }
+    .testimonial-text { font-size: 0.8rem; color: #d0d0d0; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+    .testimonial-author { font-size: 0.72rem; color: #888; font-weight: 600; }
+
+    /* ===== FAQ ===== */
+    .faq-section { margin: 40px 0; }
+    .faq-title { text-align: center; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .faq-question {
+      width: 100%; background: none; border: none; color: #e0e0e0;
+      font-size: 0.88rem; font-weight: 600; text-align: left;
+      padding: 16px 0; cursor: pointer; display: flex;
+      justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .faq-question::after { content: '+'; font-size: 1.2rem; color: #ff9cef; flex-shrink: 0; }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+    .faq-answer.open { max-height: 200px; padding-bottom: 14px; }
+    .faq-answer p { font-size: 0.82rem; color: #aaa; line-height: 1.6; }
+
+    /* ===== SECURITY ===== */
+    .security-section {
+      display: flex; gap: 20px; justify-content: center;
+      padding: 20px 0; margin: 20px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .security-item { display: flex; align-items: center; gap: 8px; color: #888; font-size: 0.8rem; }
+    .security-item i { color: #27ae60; }
+
+    /* ===== POPUP ===== */
+    .jetons-popup {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.82);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; backdrop-filter: blur(10px);
+    }
+    .jetons-popup.hidden { display: none; }
+    .popup-content {
+      background: #1a1a1a;
+      padding: 40px 28px;
+      border-radius: 28px;
+      max-width: 400px; width: 90%;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .close-btn {
+      position: absolute; top: 18px; right: 18px;
+      background: none; border: none; color: #fff;
+      font-size: 22px; cursor: pointer; opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .close-btn:hover { opacity: 1; }
+    .popup-cc-img { width: 90px; margin: 0 auto 20px; display: block; }
+    .popup-title { color: #fff; font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+    .popup-text { color: #c0c0c0; font-size: 1rem; margin-bottom: 28px; line-height: 1.5; }
+    .popup-text b { color: #fff; }
+    .popup-footer-btns { display: flex; gap: 12px; }
+    .btn-cancel {
+      flex: 1; background: #2a2a2a; color: #aaa;
+      border: 1px solid rgba(255,255,255,0.1); padding: 14px;
+      border-radius: 14px; font-weight: 600; font-size: 15px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-cancel:hover { background: #333; color: #fff; }
+    .btn-confirm {
+      flex: 1; background: linear-gradient(90deg, #ff2fa0, #c22fff);
+      color: white; border: none; padding: 14px;
+      border-radius: 14px; font-weight: 700; font-size: 15px;
+      cursor: pointer; transition: filter 0.2s;
+    }
+    .btn-confirm:hover { filter: brightness(1.1); }
+
+    /* ===== FOOTER ===== */
+    .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px; font-family: sans-serif; text-align: center; }
+    .footer-links { padding: 20px 10px 5px 10px; color: #4b5563; font-size: 0.7rem; }
+    .footer-links a { color: #4b5563; text-decoration: none; margin: 0 10px; }
+    .disclaimer-btn { width: 100%; color: #4b5563; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; padding: 10px; cursor: pointer; background: none; border: none; }
+    .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease-in-out; background: rgba(0,0,0,0.2); font-size: 0.75rem; color: #9ca3af; text-align: left; max-width: 800px; margin: 0 auto; }
+    .disclaimer-content.open { max-height: 2000px; padding: 25px; }
+    .support-box { padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; }
+    .text-pink-400 { color: #f472b6; }
+  </style>
+</head>
+<body>
+
+  <!-- CONFIRMATION POPUP -->
+  <div id="jetons-popup" class="jetons-popup hidden">
+    <div class="popup-content">
+      <button class="close-btn" onclick="closeJetonsPopup()">×</button>
+      <img src="/images/market/carte-credit.webp" class="popup-cc-img" alt="Card Icon">
+      <h2 class="popup-title">Confirm your order?</h2>
+      <p class="popup-text">
+        You're buying <b id="confirm-tokens">0 tokens</b> for <b id="confirm-price">$0</b>
+      </p>
+      <div class="popup-footer-btns">
+        <button class="btn-cancel" onclick="closeJetonsPopup()">Cancel</button>
+        <button id="final-confirm-btn" class="btn-confirm">Confirm ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33257ea42f1184f0f647f5d05"></script>
+
+  <div class="container confirmation-page">
+
+    <!-- ✅ SUCCESS BANNER -->
+    <div class="confirm-banner">
+      <i class="fas fa-check-circle"></i>
+      <div class="confirm-banner-text">
+        <b>Premium unlocked! 🎉</b>
+        Unlimited messages, photos and videos — all yours.
+      </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="popup-hero">
+      <video class="popup-hero__video" autoplay muted loop playsinline>
+        <source src="/images/market/nova-jetons-en.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="upsell-separator"><span>One more thing</span></div>
+
+    <!-- NYMPHO MODE HERO BLOCK -->
+    <div class="nympho-hero">
+      <div class="nympho-badge-hero">🔥 Popular upgrade</div>
+      <h2>Unlock <span>Nympho Mode</span><br>right now.</h2>
+      <p>
+        Premium gives you everything hot.<br>
+        But Nympho Mode? That's a different level.<br>
+        No filter. No limits. Fully wild. 🥵
+      </p>
+      <div class="price-badge">25 tokens = 1 hour of Nympho Mode</div>
+    </div>
+
+    <!-- BENEFITS GRID -->
+    <div class="benefit-grid">
+      <div class="benefit-item">
+        <i class="fas fa-fire"></i>
+        <span><b>Nympho Mode</b>25 tokens / 1 hour</span>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-phone-alt"></i>
+        <span><b>Audio call</b>20 tokens / 10 min</span>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-microphone"></i>
+        <span><b>Voice message</b>5 tokens / 1 min</span>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-image"></i>
+        <span><b>Send a photo</b>1 token / image</span>
+      </div>
+    </div>
+
+    <!-- NYMPHO REMINDER -->
+    <div class="nympho-reminder">
+      <i class="fas fa-bolt"></i>
+      <span>The smallest pack (10 tokens) won't cover Nympho Mode. To unlock it, you need <b>at least 25 tokens</b> — grab the 50-token pack and activate it twice.</span>
+    </div>
+
+    <!-- TOKEN GRID -->
+    <div class="token-offers">
+
+      <div class="token-card" data-tokens="10 tokens" data-price="$9">
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">10 Tokens</div>
+        <div class="token-price">$9</div>
+        <a href="https://explodely.com/p/1973148443?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" data-tokens="50 tokens" data-price="$37">
+        <span class="token-save">Save 17%</span>
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">50 Tokens</div>
+        <div class="token-price">$37</div>
+        <a href="https://explodely.com/p/453015891?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" data-tokens="100 tokens" data-price="$59">
+        <span class="token-save">Save 34%</span>
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">100 Tokens</div>
+        <div class="token-price">$59</div>
+        <a href="https://explodely.com/p/12407737?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card popular" data-tokens="300 tokens" data-price="$129">
+        <span class="token-save" style="background:#c22fff;">Save 52% 🔥</span>
+        <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
+        <div class="token-title">300 Tokens</div>
+        <div class="token-price">$129</div>
+        <a href="https://explodely.com/p/1692961330?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" data-tokens="700 tokens" data-price="$249">
+        <span class="token-save">Save 60%</span>
+        <i class="fas fa-coins token-icon-fa"></i>
+        <div class="token-title">700 Tokens</div>
+        <div class="token-price">$249</div>
+        <a href="https://explodely.com/p/1157830330?ocu=yes" class="token-cta">Buy</a>
+      </div>
+
+      <div class="token-card" style="border:2px solid #ffd700;" data-tokens="1000 tokens" data-price="$299">
+        <div class="best-deal">BEST VALUE 💎</div>
+        <span class="token-save">Save 66%</span>
+        <i class="fas fa-coins token-icon-fa" style="font-size:50px;"></i>
+        <div class="token-title">1000 Tokens</div>
+        <div class="token-price">$299</div>
+        <a href="https://explodely.com/p/852778059?ocu=yes" class="token-cta" style="background:linear-gradient(90deg,#ffd700,#ffae00);color:#000;">Get this deal</a>
+      </div>
+
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div class="testimonial-section">
+      <h2 class="testimonial-title">They got tokens. They got hooked. 🔥</h2>
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Léa in nympho mode… totally different girl. I was not ready 🔥"</p>
+          <p class="testimonial-author">— Karim M.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Jasmine was so sweet at first… then boom. Nothing on. I was shocked 😳"</p>
+          <p class="testimonial-author">— Lucas R.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"25 tokens for nympho mode? Insane deal. She went wild straight away 😈"</p>
+          <p class="testimonial-author">— Steph G.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Thought it'd be fake. It's not 😭 Photos non-stop. Couldn't stop."</p>
+          <p class="testimonial-author">— Bast D.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2 class="faq-title">Quick answers</h2>
+      <div class="faq-item">
+        <button class="faq-question">What is Nympho Mode?</button>
+        <div class="faq-answer">
+          <p>Your A.I goes fully uncensored. More daring, more photos, zero limits. Even the shy ones change completely.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">How many tokens to activate it?</button>
+        <div class="faq-answer">
+          <p>25 tokens = 1 hour of Nympho Mode. Works on any A.I, as many times as you want.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Do tokens expire?</button>
+        <div class="faq-answer">
+          <p>Never. Use them whenever you want, at your own pace.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What else can I do with tokens?</button>
+        <div class="faq-answer">
+          <p>📸 Gallery photos · 🎙️ Voice messages · 📞 Audio calls · 🥵 Nympho Mode</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="security-section">
+      <div class="security-item"><i class="fas fa-lock"></i><p>100% Secure</p></div>
+      <div class="security-item"><i class="fas fa-mask"></i><p>Total privacy</p></div>
+      <div class="security-item"><i class="fas fa-infinity"></i><p>Tokens never expire</p></div>
+    </div>
+
+  </div><!-- /container -->
+
+  <script type="module" src="/scripts/menu-loader.js"></script>
+
+  <script>
+    // FAQ toggle
+    document.querySelectorAll('.faq-question').forEach(button => {
+      button.addEventListener('click', () => {
+        const answer = button.nextElementSibling;
+        answer.classList.toggle('open');
+      });
+    });
+
+    // Popup logic
+    const popup = document.getElementById('jetons-popup');
+    const confirmTokensText = document.getElementById('confirm-tokens');
+    const confirmPriceText = document.getElementById('confirm-price');
+    const finalConfirmBtn = document.getElementById('final-confirm-btn');
+
+    function closeJetonsPopup() { popup.classList.add('hidden'); }
+
+    document.querySelectorAll('.token-cta').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const card = this.closest('.token-card');
+        const tokens = card.getAttribute('data-tokens');
+        const price = card.getAttribute('data-price');
+        const url = this.getAttribute('href');
+        confirmTokensText.innerText = tokens;
+        confirmPriceText.innerText = price;
+        finalConfirmBtn.onclick = function() { window.location.href = url; };
+        popup.classList.remove('hidden');
+      });
+    });
+  </script>
+
+  <!-- Facebook Pixel -->
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window,document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+
+  fbq('init', '1139964937955152');
+
+  var purchaseEventID = 'purchase_' + Date.now();
+
+  // 🔥 Valeur FIXE : 49 USD
+  fbq('track', 'Purchase', { value: 49, currency: 'USD' }, { eventID: purchaseEventID });
+</script>
+
+  <!-- TrafficJunky -->
+  <script>
+  (function() {
+    const randomNumber = Date.now();
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionId = urlParams.get("session_id") || randomNumber;
+    const description = encodeURIComponent("MyAiCrush+Premium");
+    const img = document.createElement("img");
+    img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${randomNumber}&cti=${transactionId}&ctv=40.00&ctd=${description}`;
+    img.width = 1; img.height = 1; img.style.display = "none";
+    document.body.appendChild(img);
+  })();
+  </script>
+
+  <!-- FOOTER -->
+  <div class="disclaimer-section">
+    <div class="footer-links">
+      <p>© 2026 MyAICrush – All rights reserved</p><br>
+      <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> |
+      <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
+    </div>
+    <button class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice & Billing Support</button>
+    <div id="disclaimer-content" class="disclaimer-content">
+      <div class="support-box">
+        <strong>Billing Support & Refunds</strong><br>
+        Questions about your payment? Contact us:<br>
+        <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
+        <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400">Explodely Billing Support</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleDisclaimer() {
+      document.getElementById('disclaimer-content').classList.toggle('open');
+    }
+  </script>
+
+  <script type="module" src="/scripts/i18n-confirmation.js"></script>
+
+</body>
+</html>

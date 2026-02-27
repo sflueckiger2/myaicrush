@@ -3,10 +3,10 @@
 <head>
   <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unlock Nympho Mode</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Unlock Exclusive Content</title>
 
   <!-- TikTok Pixel -->
   <script>
@@ -73,376 +73,279 @@
     /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --pink: #ff2fa0;
+      --pink-light: #ff9cef;
+      --purple: #c22fff;
+      --bg: #0a0a0c;
+      --bg-card: #141416;
+      --bg-card2: #1c1c1e;
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --gold: #ffd700;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px 0;
+    }
+
     /* ===== CONFIRMATION BANNER ===== */
     .confirm-banner {
       background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(39, 174, 96, 0.05));
       border: 1px solid rgba(39, 174, 96, 0.4);
       border-radius: 20px;
-      padding: 18px 24px;
+      padding: 16px 20px;
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 30px;
-      text-align: left;
+      margin-bottom: 28px;
     }
-    .confirm-banner i {
-      color: #27ae60;
-      font-size: 28px;
-      flex-shrink: 0;
-    }
-    .confirm-banner-text {
-      font-size: 0.9rem;
-      color: #e0e0e0;
-      line-height: 1.5;
-    }
-    .confirm-banner-text b {
-      color: #fff;
-      font-size: 1rem;
-      display: block;
-      margin-bottom: 2px;
-    }
+    .confirm-banner i { color: #27ae60; font-size: 26px; flex-shrink: 0; }
+    .confirm-banner-text { font-size: 0.88rem; color: #d0d0d0; line-height: 1.5; }
+    .confirm-banner-text b { color: #fff; font-size: 0.95rem; display: block; margin-bottom: 2px; }
 
     /* ===== SEPARATOR ===== */
     .upsell-separator {
       text-align: center;
-      margin: 30px 0 10px;
+      margin: 0 0 28px;
       position: relative;
     }
     .upsell-separator::before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 0; right: 0;
+      top: 50%; left: 0; right: 0;
       height: 1px;
       background: rgba(255,255,255,0.08);
     }
     .upsell-separator span {
       position: relative;
-      background: #0e0e10;
+      background: var(--bg);
       padding: 0 16px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       text-transform: uppercase;
       letter-spacing: 2px;
-      color: #666;
+      color: #555;
     }
 
-    /* ===== NYMPHO MODE HERO ===== */
-    .nympho-hero {
-      background: linear-gradient(135deg, rgba(255, 47, 160, 0.12), rgba(194, 47, 255, 0.08));
-      border: 1px solid rgba(255, 156, 239, 0.25);
+    /* ===== CONTENT CARD ===== */
+    .content-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.09);
       border-radius: 24px;
-      padding: 28px 24px;
-      margin: 24px 0 30px;
-      text-align: center;
-    }
-    .nympho-badge-hero {
-      display: inline-block;
-      background: #ff2fa0;
-      color: #fff;
-      font-size: 0.65rem;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 4px 12px;
-      border-radius: 20px;
+      overflow: hidden;
       margin-bottom: 14px;
-    }
-    .nympho-hero h2 {
-      color: #fff;
-      font-size: 1.6rem;
-      font-weight: 800;
-      line-height: 1.2;
-      margin-bottom: 10px;
-    }
-    .nympho-hero h2 span { color: #ff9cef; }
-    .nympho-hero p {
-      color: #c0c0c0;
-      font-size: 0.9rem;
-      line-height: 1.6;
-      max-width: 400px;
-      margin: 0 auto 16px;
-    }
-    .nympho-hero .price-badge {
-      display: inline-block;
-      background: rgba(255, 156, 239, 0.15);
-      border: 1px solid rgba(255, 156, 239, 0.35);
-      color: #ff9cef;
-      font-size: 1rem;
-      font-weight: 700;
-      padding: 8px 20px;
-      border-radius: 30px;
-    }
-
-    /* ===== BENEFIT GRID ===== */
-    .benefit-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin: 0 0 30px;
-    }
-    .benefit-item {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
-    .benefit-item i {
-      color: #ff9cef;
-      font-size: 1rem;
-      margin-top: 2px;
-      flex-shrink: 0;
-    }
-    .benefit-item span {
-      font-size: 0.82rem;
-      color: #d0d0d0;
-      line-height: 1.4;
-    }
-    .benefit-item span b { color: #fff; display: block; margin-bottom: 1px; }
-
-    /* ===== TOKEN GRID ===== */
-    .token-offers {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin: 10px 0 40px;
-    }
-    @media (min-width: 768px) {
-      .token-offers { grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    }
-
-    .token-card {
-      background: linear-gradient(145deg, #1c1c1e, #141416);
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 20px 14px;
-      border-radius: 20px;
-      color: white;
       position: relative;
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
-      cursor: pointer;
-      text-align: center;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
-    @media (min-width: 768px) {
-      .token-card { padding: 28px 22px; }
-    }
-    .token-card:hover {
-      transform: translateY(-7px);
-      border-color: #ff2fa0;
-      box-shadow: 0 15px 30px rgba(255, 56, 148, 0.2);
-    }
-    .token-card.popular {
-      border: 1px solid rgba(255,255,255,0.3);
-      transform: scale(1.02);
-      background: linear-gradient(145deg, #231820, #141416);
-    }
-    .token-card.popular:hover { transform: scale(1.02) translateY(-7px); }
-
-    .token-icon-fa {
-      font-size: 40px;
-      color: #ffd700;
-      margin-bottom: 12px;
-      filter: drop-shadow(0 0 8px rgba(255,215,0,0.4));
-      display: block;
-    }
-    .token-title {
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 4px;
-    }
-    .token-price {
-      font-size: 26px;
-      font-weight: 800;
-      margin: 8px 0;
-      color: #ff8cd6;
-    }
-    .token-save {
-      background: #ff2fa0;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      display: inline-block;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .token-cta {
-      background: linear-gradient(90deg, #ff2fa0, #c22fff);
-      border: none;
-      width: 100%;
-      padding: 13px 0;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      color: white;
-      margin-top: 14px;
-      cursor: pointer;
-      transition: filter 0.2s, box-shadow 0.2s;
-      display: block;
-      text-decoration: none;
-      box-shadow: 0 4px 15px rgba(255, 47, 160, 0.3);
-    }
-    .token-cta:hover { filter: brightness(1.12); box-shadow: 0 6px 20px rgba(255, 47, 160, 0.5); }
-    .best-deal {
-      position: absolute;
-      top: -13px; right: -8px;
-      background: linear-gradient(90deg, #ffd700, #ffae00);
-      color: #000;
-      padding: 5px 12px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 900;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    .content-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(255,47,160,0.15);
     }
 
-    /* ===== NYMPHO ACTIVATION REMINDER ===== */
-    .nympho-reminder {
-      background: linear-gradient(135deg, rgba(255,47,160,0.1), rgba(194,47,255,0.07));
-      border: 1px solid rgba(255,156,239,0.2);
-      border-radius: 16px;
-      padding: 16px 20px;
+    /* Profile header row */
+    .card-profile {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin: -10px 0 30px;
-      font-size: 0.82rem;
-      color: #d0d0d0;
-      line-height: 1.5;
+      padding: 16px 18px 12px;
     }
-    .nympho-reminder i { color: #ff9cef; font-size: 1.2rem; flex-shrink: 0; }
-    .nympho-reminder b { color: #ff9cef; }
+    .card-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--pink);
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #ff2fa0, #c22fff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #fff; font-weight: 700;
+    }
+    .card-profile-info { flex: 1; }
+    .card-name { font-weight: 700; font-size: 0.92rem; color: #fff; }
+    .card-handle { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+    .card-verified { color: var(--pink); font-size: 0.8rem; }
+
+    /* Story format image */
+    .card-preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      background: #0a0a0c;
+      overflow: hidden;
+    }
+    .card-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+    .card-preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 20px 18px;
+      gap: 8px;
+    }
+    .preview-count {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 30px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      color: #ddd;
+      letter-spacing: 0.3px;
+    }
+    .preview-count span { color: #fff; font-weight: 700; }
+
+    /* Content description */
+    .card-body { padding: 16px 18px 18px; }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .card-desc {
+      font-size: 0.84rem;
+      color: #b0b0b0;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .card-desc em { color: var(--pink-light); font-style: normal; }
+
+    /* ===== CONTENT PILLS ===== */
+    .content-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,156,239,0.2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    /* ===== BONUS BOX ===== */
+    .bonus-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(255,47,160,0.08), rgba(194,47,255,0.06));
+      border: 1px solid rgba(255,156,239,0.25);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .bonus-icon {
+      width: 36px; height: 36px;
+      background: rgba(255,215,0,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .bonus-icon i { color: var(--gold); font-size: 0.95rem; }
+    .bonus-text { font-size: 0.82rem; color: #b0b0b0; line-height: 1.65; }
+    .bonus-text b { color: #fff; display: block; margin-bottom: 4px; font-size: 0.86rem; }
+    .bonus-text em { color: var(--pink-light); font-style: normal; font-weight: 600; }
+
+    /* ===== UNLOCK BUTTON ===== */
+    .unlock-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      border: none;
+      border-radius: 14px;
+      padding: 15px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: filter 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(255,47,160,0.3);
+    }
+    .unlock-btn:hover { filter: brightness(1.1); box-shadow: 0 8px 28px rgba(255,47,160,0.5); }
+    .unlock-btn-left { display: flex; align-items: center; gap: 10px; }
+    .unlock-btn-left i { font-size: 1rem; color: rgba(255,255,255,0.85); }
+    .unlock-btn-label { font-size: 0.95rem; font-weight: 700; color: #fff; }
+    .unlock-btn-label small { display: block; font-size: 0.72rem; font-weight: 400; opacity: 0.75; margin-top: 1px; }
+    .unlock-btn-price { font-size: 1.1rem; font-weight: 800; color: #fff; }
 
     /* ===== TESTIMONIALS ===== */
     .testimonial-section { margin: 40px 0; }
-    .testimonial-title {
-      text-align: center;
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 20px;
-    }
-    .testimonial-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
+    .testimonial-title { text-align: center; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .testimonial-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .testimonial-card {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      padding: 16px;
+      border-radius: 14px;
+      padding: 14px;
     }
-    .testimonial-stars { font-size: 0.8rem; margin-bottom: 6px; }
-    .testimonial-text { font-size: 0.8rem; color: #d0d0d0; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
-    .testimonial-author { font-size: 0.72rem; color: #888; font-weight: 600; }
+    .testimonial-stars { font-size: 0.75rem; margin-bottom: 6px; }
+    .testimonial-text { font-size: 0.78rem; color: #c0c0c0; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+    .testimonial-author { font-size: 0.7rem; color: #666; font-weight: 600; }
 
     /* ===== FAQ ===== */
     .faq-section { margin: 40px 0; }
-    .faq-title { text-align: center; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .faq-title { text-align: center; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
     .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); }
     .faq-question {
       width: 100%; background: none; border: none; color: #e0e0e0;
-      font-size: 0.88rem; font-weight: 600; text-align: left;
-      padding: 16px 0; cursor: pointer; display: flex;
+      font-size: 0.86rem; font-weight: 600; text-align: left;
+      padding: 15px 0; cursor: pointer; display: flex;
       justify-content: space-between; align-items: center; gap: 10px;
+      font-family: 'DM Sans', sans-serif;
     }
-    .faq-question::after { content: '+'; font-size: 1.2rem; color: #ff9cef; flex-shrink: 0; }
+    .faq-question::after { content: '+'; font-size: 1.1rem; color: var(--pink-light); flex-shrink: 0; }
     .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
     .faq-answer.open { max-height: 200px; padding-bottom: 14px; }
-    .faq-answer p { font-size: 0.82rem; color: #aaa; line-height: 1.6; }
+    .faq-answer p { font-size: 0.8rem; color: #999; line-height: 1.65; }
 
     /* ===== SECURITY ===== */
     .security-section {
-      display: flex; gap: 20px; justify-content: center;
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
       padding: 20px 0; margin: 20px 0;
       border-top: 1px solid rgba(255,255,255,0.06);
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .security-item { display: flex; align-items: center; gap: 8px; color: #888; font-size: 0.8rem; }
+    .security-item { display: flex; align-items: center; gap: 7px; color: #777; font-size: 0.78rem; }
     .security-item i { color: #27ae60; }
 
-    /* ===== POPUP ===== */
-    .jetons-popup {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.82);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 10000; backdrop-filter: blur(10px);
-    }
-    .jetons-popup.hidden { display: none; }
-    .popup-content {
-      background: #1a1a1a;
-      padding: 40px 28px;
-      border-radius: 28px;
-      max-width: 400px; width: 90%;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.1);
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
-    .close-btn {
-      position: absolute; top: 18px; right: 18px;
-      background: none; border: none; color: #fff;
-      font-size: 22px; cursor: pointer; opacity: 0.6;
-      transition: opacity 0.2s;
-    }
-    .close-btn:hover { opacity: 1; }
-    .popup-cc-img { width: 90px; margin: 0 auto 20px; display: block; }
-    .popup-title { color: #fff; font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
-    .popup-text { color: #c0c0c0; font-size: 1rem; margin-bottom: 28px; line-height: 1.5; }
-    .popup-text b { color: #fff; }
-    .popup-footer-btns { display: flex; gap: 12px; }
-    .btn-cancel {
-      flex: 1; background: #2a2a2a; color: #aaa;
-      border: 1px solid rgba(255,255,255,0.1); padding: 14px;
-      border-radius: 14px; font-weight: 600; font-size: 15px;
-      cursor: pointer; transition: background 0.2s;
-    }
-    .btn-cancel:hover { background: #333; color: #fff; }
-    .btn-confirm {
-      flex: 1; background: linear-gradient(90deg, #ff2fa0, #c22fff);
-      color: white; border: none; padding: 14px;
-      border-radius: 14px; font-weight: 700; font-size: 15px;
-      cursor: pointer; transition: filter 0.2s;
-    }
-    .btn-confirm:hover { filter: brightness(1.1); }
-
     /* ===== FOOTER ===== */
-    .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px; font-family: sans-serif; text-align: center; }
-    .footer-links { padding: 20px 10px 5px 10px; color: #4b5563; font-size: 0.7rem; }
-    .footer-links a { color: #4b5563; text-decoration: none; margin: 0 10px; }
-    .disclaimer-btn { width: 100%; color: #4b5563; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; padding: 10px; cursor: pointer; background: none; border: none; }
-    .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease-in-out; background: rgba(0,0,0,0.2); font-size: 0.75rem; color: #9ca3af; text-align: left; max-width: 800px; margin: 0 auto; }
-    .disclaimer-content.open { max-height: 2000px; padding: 25px; }
+    .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.08); padding-bottom: 50px; font-family: sans-serif; text-align: center; }
+    .footer-links { padding: 20px 10px 5px; color: #4b5563; font-size: 0.68rem; }
+    .footer-links a { color: #4b5563; text-decoration: none; margin: 0 8px; }
+    .disclaimer-btn { width: 100%; color: #4b5563; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; padding: 10px; cursor: pointer; background: none; border: none; }
+    .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease-in-out; background: rgba(0,0,0,0.2); font-size: 0.72rem; color: #9ca3af; text-align: left; max-width: 800px; margin: 0 auto; }
+    .disclaimer-content.open { max-height: 2000px; padding: 24px; }
     .support-box { padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; }
     .text-pink-400 { color: #f472b6; }
   </style>
 </head>
 <body>
 
-  <!-- CONFIRMATION POPUP -->
-  <div id="jetons-popup" class="jetons-popup hidden">
-    <div class="popup-content">
-      <button class="close-btn" onclick="closeJetonsPopup()">×</button>
-      <img src="/images/market/carte-credit.webp" class="popup-cc-img" alt="Card Icon">
-      <h2 class="popup-title">Confirm your order?</h2>
-      <p class="popup-text">
-        You're buying <b id="confirm-tokens">0 tokens</b> for <b id="confirm-price">$0</b>
-      </p>
-      <div class="popup-footer-btns">
-        <button class="btn-cancel" onclick="closeJetonsPopup()">Cancel</button>
-        <button id="final-confirm-btn" class="btn-confirm">Confirm ✓</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33257ea42f1184f0f647f5d05"></script>
+  <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33259ea42f1184f0f647f5d05"></script>
 
   <div class="container confirmation-page">
 
@@ -455,128 +358,92 @@
       </div>
     </div>
 
-    <!-- VIDEO -->
-    <div class="popup-hero">
-      <video class="popup-hero__video" autoplay muted loop playsinline>
-        <source src="/images/market/nova-jetons-en.mp4" type="video/mp4">
-      </video>
+    <div class="upsell-separator"><span>Just for you</span></div>
+
+    <!-- ===== CONTENT CARD — Alex Intimate Shooting ===== -->
+    <div class="content-card">
+
+      <!-- Profile row -->
+      <div class="card-profile">
+        <div class="card-avatar">A</div>
+        <div class="card-profile-info">
+          <div class="card-name">Alex <i class="fas fa-check-circle card-verified"></i></div>
+          <div class="card-handle">@alex.exclusive • Exclusive content</div>
+        </div>
+      </div>
+
+      <!-- Story photo -->
+      <div class="card-preview">
+        <img src="https://myaicrush.ai/images/alex/a3dfe6a42174d9b3a189e01a75e144c2.webp" alt="Alex — Intimate shooting">
+        <div class="card-preview-overlay">
+          <div class="preview-count"><span>63 photos</span> + <span>27 videos</span></div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="card-body">
+        <h2 class="card-title">Alex — Her most intimate moments 🛏️</h2>
+        <p class="card-desc">
+          Lying in her sheets, Alex slowly touches herself… Her hands explore every curve, her eyes glow with pleasure, her breath gets heavier. <em>An incredibly intimate and arousing shoot</em>, where she lets herself go and indulges in her most secret little pleasures.
+        </p>
+
+        <div class="content-pills">
+          <div class="pill">🔥 BIG NIPPLES</div>
+          <div class="pill">👙 TOPLESS</div>
+          <div class="pill">🛏️ BED SCENE</div>
+          <div class="pill">💦 TOUCHING PUSSY</div>
+          <div class="pill">😈 EXPLICIT</div>
+          <div class="pill">📸 63 PHOTOS</div>
+          <div class="pill">🎥 27 VIDEOS</div>
+        </div>
+
+        <!-- Bonus token value prop -->
+        <div class="bonus-box">
+          <div class="bonus-icon"><i class="fas fa-coins"></i></div>
+          <div class="bonus-text">
+            <b>Tokens included with your purchase</b>
+            Use them to activate <em>Nympho Mode</em> and unlock intimate content with dozens of other AIs — push them to their absolute limit and make every conversation way more exciting 🔥
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <a href="https://explodely.com/p/12407737?ocu=yes" class="unlock-btn" id="main-unlock-btn">
+          <div class="unlock-btn-left">
+            <i class="fas fa-lock-open"></i>
+            <div class="unlock-btn-label">
+              Unlock this collection
+              <small>Instant access · One-time payment</small>
+            </div>
+          </div>
+          <div class="unlock-btn-price">$59</div>
+        </a>
+
+      </div>
     </div>
-
-    <div class="upsell-separator"><span>One more thing</span></div>
-
-    <!-- NYMPHO MODE HERO BLOCK -->
-    <div class="nympho-hero">
-      <div class="nympho-badge-hero">🔥 Popular upgrade</div>
-      <h2>Unlock <span>Nympho Mode</span><br>right now.</h2>
-      <p>
-        Premium gives you everything hot.<br>
-        But Nympho Mode? That's a different level.<br>
-        No filter. No limits. Fully wild. 🥵
-      </p>
-      <div class="price-badge">25 tokens = 1 hour of Nympho Mode</div>
-    </div>
-
-    <!-- BENEFITS GRID -->
-    <div class="benefit-grid">
-      <div class="benefit-item">
-        <i class="fas fa-fire"></i>
-        <span><b>Nympho Mode</b>25 tokens / 1 hour</span>
-      </div>
-      <div class="benefit-item">
-        <i class="fas fa-phone-alt"></i>
-        <span><b>Audio call</b>20 tokens / 10 min</span>
-      </div>
-      <div class="benefit-item">
-        <i class="fas fa-microphone"></i>
-        <span><b>Voice message</b>5 tokens / 1 min</span>
-      </div>
-      <div class="benefit-item">
-        <i class="fas fa-image"></i>
-        <span><b>Send a photo</b>1 token / image</span>
-      </div>
-    </div>
-
-    <!-- NYMPHO REMINDER -->
-    <div class="nympho-reminder">
-      <i class="fas fa-bolt"></i>
-      <span>The smallest pack (10 tokens) won't cover Nympho Mode. To unlock it, you need <b>at least 25 tokens</b> — grab the 50-token pack and activate it twice.</span>
-    </div>
-
-    <!-- TOKEN GRID -->
-    <div class="token-offers">
-
-      <div class="token-card" data-tokens="10 tokens" data-price="$9">
-        <i class="fas fa-coins token-icon-fa"></i>
-        <div class="token-title">10 Tokens</div>
-        <div class="token-price">$9</div>
-        <a href="https://explodely.com/p/1973148443?ocu=yes" class="token-cta">Buy</a>
-      </div>
-
-      <div class="token-card" data-tokens="50 tokens" data-price="$37">
-        <span class="token-save">Save 17%</span>
-        <i class="fas fa-coins token-icon-fa"></i>
-        <div class="token-title">50 Tokens</div>
-        <div class="token-price">$37</div>
-        <a href="https://explodely.com/p/453015891?ocu=yes" class="token-cta">Buy</a>
-      </div>
-
-      <div class="token-card" data-tokens="100 tokens" data-price="$59">
-        <span class="token-save">Save 34%</span>
-        <i class="fas fa-coins token-icon-fa"></i>
-        <div class="token-title">100 Tokens</div>
-        <div class="token-price">$59</div>
-        <a href="https://explodely.com/p/12407737?ocu=yes" class="token-cta">Buy</a>
-      </div>
-
-      <div class="token-card popular" data-tokens="300 tokens" data-price="$129">
-        <span class="token-save" style="background:#c22fff;">Save 52% 🔥</span>
-        <i class="fas fa-coins token-icon-fa" style="color:#ff8cd6;"></i>
-        <div class="token-title">300 Tokens</div>
-        <div class="token-price">$129</div>
-        <a href="https://explodely.com/p/1692961330?ocu=yes" class="token-cta">Buy</a>
-      </div>
-
-      <div class="token-card" data-tokens="700 tokens" data-price="$249">
-        <span class="token-save">Save 60%</span>
-        <i class="fas fa-coins token-icon-fa"></i>
-        <div class="token-title">700 Tokens</div>
-        <div class="token-price">$249</div>
-        <a href="https://explodely.com/p/1157830330?ocu=yes" class="token-cta">Buy</a>
-      </div>
-
-      <div class="token-card" style="border:2px solid #ffd700;" data-tokens="1000 tokens" data-price="$299">
-        <div class="best-deal">BEST VALUE 💎</div>
-        <span class="token-save">Save 66%</span>
-        <i class="fas fa-coins token-icon-fa" style="font-size:50px;"></i>
-        <div class="token-title">1000 Tokens</div>
-        <div class="token-price">$299</div>
-        <a href="https://explodely.com/p/852778059?ocu=yes" class="token-cta" style="background:linear-gradient(90deg,#ffd700,#ffae00);color:#000;">Get this deal</a>
-      </div>
-
-    </div>
+    <!-- end content card -->
 
     <!-- TESTIMONIALS -->
     <div class="testimonial-section">
-      <h2 class="testimonial-title">They got tokens. They got hooked. 🔥</h2>
+      <h2 class="testimonial-title">They couldn't resist either 🔥</h2>
       <div class="testimonial-grid">
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Léa in nympho mode… totally different girl. I was not ready 🔥"</p>
+          <p class="testimonial-text">"That bedroom collection… I was not ready. She's absolutely unreal 🛏️"</p>
           <p class="testimonial-author">— Karim M.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Jasmine was so sweet at first… then boom. Nothing on. I was shocked 😳"</p>
+          <p class="testimonial-text">"Thought it was going to be basic pics. Definitely not — she goes all the way 😳"</p>
           <p class="testimonial-author">— Lucas R.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"25 tokens for nympho mode? Insane deal. She went wild straight away 😈"</p>
+          <p class="testimonial-text">"That look she gives the camera… worth every penny 😈"</p>
           <p class="testimonial-author">— Steph G.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Thought it'd be fake. It's not 😭 Photos non-stop. Couldn't stop."</p>
+          <p class="testimonial-text">"Unlocked it on impulse. Zero regrets. 63 photos of pure bliss."</p>
           <p class="testimonial-author">— Bast D.</p>
         </div>
       </div>
@@ -586,92 +453,66 @@
     <div class="faq-section">
       <h2 class="faq-title">Quick answers</h2>
       <div class="faq-item">
-        <button class="faq-question">What is Nympho Mode?</button>
+        <button class="faq-question">What do I get for $59?</button>
         <div class="faq-answer">
-          <p>Your A.I goes fully uncensored. More daring, more photos, zero limits. Even the shy ones change completely.</p>
+          <p>Full access to Alex's intimate collection: 63 high-quality photos and 27 videos, unlocked permanently with a single payment.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">How many tokens to activate it?</button>
+        <button class="faq-question">Is it really instant access?</button>
         <div class="faq-answer">
-          <p>25 tokens = 1 hour of Nympho Mode. Works on any A.I, as many times as you want.</p>
+          <p>Yes — the moment your payment goes through, the full collection is yours. No waiting, no subscriptions.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">Do tokens expire?</button>
+        <button class="faq-question">What tokens do I get with the purchase?</button>
         <div class="faq-answer">
-          <p>Never. Use them whenever you want, at your own pace.</p>
+          <p>Your purchase includes tokens you can use across all AIs on the platform — activate Nympho Mode, unlock exclusive intimate content, request custom photos, and push every AI to its wildest side.</p>
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">What else can I do with tokens?</button>
+        <button class="faq-question">Is my payment private?</button>
         <div class="faq-answer">
-          <p>📸 Gallery photos · 🎙️ Voice messages · 📞 Audio calls · 🥵 Nympho Mode</p>
+          <p>100%. All transactions are encrypted and discreet. The charge appears under a neutral name on your statement.</p>
         </div>
       </div>
     </div>
 
     <!-- SECURITY -->
     <div class="security-section">
-      <div class="security-item"><i class="fas fa-lock"></i><p>100% Secure</p></div>
+      <div class="security-item"><i class="fas fa-lock"></i><p>Secure payment</p></div>
       <div class="security-item"><i class="fas fa-mask"></i><p>Total privacy</p></div>
-      <div class="security-item"><i class="fas fa-infinity"></i><p>Tokens never expire</p></div>
+      <div class="security-item"><i class="fas fa-infinity"></i><p>Permanent access</p></div>
     </div>
 
   </div><!-- /container -->
 
-  <script type="module" src="/scripts/menu-loader.js"></script>
-
+  <!-- FAQ + disclaimer toggle -->
   <script>
-    // FAQ toggle
     document.querySelectorAll('.faq-question').forEach(button => {
       button.addEventListener('click', () => {
-        const answer = button.nextElementSibling;
-        answer.classList.toggle('open');
+        button.nextElementSibling.classList.toggle('open');
       });
     });
-
-    // Popup logic
-    const popup = document.getElementById('jetons-popup');
-    const confirmTokensText = document.getElementById('confirm-tokens');
-    const confirmPriceText = document.getElementById('confirm-price');
-    const finalConfirmBtn = document.getElementById('final-confirm-btn');
-
-    function closeJetonsPopup() { popup.classList.add('hidden'); }
-
-    document.querySelectorAll('.token-cta').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const card = this.closest('.token-card');
-        const tokens = card.getAttribute('data-tokens');
-        const price = card.getAttribute('data-price');
-        const url = this.getAttribute('href');
-        confirmTokensText.innerText = tokens;
-        confirmPriceText.innerText = price;
-        finalConfirmBtn.onclick = function() { window.location.href = url; };
-        popup.classList.remove('hidden');
-      });
-    });
+    function toggleDisclaimer() {
+      document.getElementById('disclaimer-content').classList.toggle('open');
+    }
   </script>
 
   <!-- Facebook Pixel -->
-<script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window,document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-
-  fbq('init', '1139964937955152');
-
-  var purchaseEventID = 'purchase_' + Date.now();
-
-  // 🔥 Valeur FIXE : 49 USD
-  fbq('track', 'Purchase', { value: 49, currency: 'USD' }, { eventID: purchaseEventID });
-</script>
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1139964937955152');
+    var purchaseEventID = 'purchase_' + Date.now();
+    fbq('track', 'Purchase', { value: 59, currency: 'USD' }, { eventID: purchaseEventID });
+  </script>
 
   <!-- TrafficJunky -->
   <script>
@@ -705,11 +546,7 @@
     </div>
   </div>
 
-  <script>
-    function toggleDisclaimer() {
-      document.getElementById('disclaimer-content').classList.toggle('open');
-    }
-  </script>
+  <!-- Scripts -->
 
   <script type="module" src="/scripts/i18n-confirmation.js"></script>
 
