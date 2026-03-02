@@ -594,7 +594,9 @@ Please include:
     const isEscalation = role === 'bot' && text.includes(HUMAN_EMAIL);
     div.className = ['msg', role, isEscalation ? 'escalation' : ''].filter(Boolean).join(' ');
     // Linkify email
-    div.innerHTML = text.replace(HUMAN_EMAIL, `<a href="mailto:${HUMAN_EMAIL}">${HUMAN_EMAIL}</a>`);
+    div.innerHTML = text
+  .replace(/https:\/\/myaicrush\.ai\/profile\.html/g, `<a href="https://myaicrush.ai/profile.html" target="_blank" style="color:#f472b6;text-decoration:underline dotted;">myaicrush.ai/profile.html</a>`)
+  .replace(HUMAN_EMAIL, `<a href="mailto:${HUMAN_EMAIL}">${HUMAN_EMAIL}</a>`);
     container.appendChild(div);
     setTimeout(() => container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }), 30);
   }

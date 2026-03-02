@@ -1388,8 +1388,7 @@ form input::placeholder {
 
 #signup-container a,
 #signin-container a {
-  color: rgb(39 40 44);
-  text-decoration: none;
+  color : #dd4d9d!important;
   width: 90%;
   margin-left: auto;
   margin-right: auto;
@@ -1439,11 +1438,13 @@ form input::placeholder {
   text-decoration: underline!important;
 
 }
-#show-signup{
+
+.show-signup{
   color : #dd4d9d!important;
   text-decoration: underline!important;
   
 }
+
 
 .premium-link {
   color: #007bff;
