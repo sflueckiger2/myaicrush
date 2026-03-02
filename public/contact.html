@@ -1,148 +1,628 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact</title>
-  <link rel="stylesheet" href="styles.css">
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-FJ5S0H9B1R');
-  </script>
-</head>
-<body>
-  
-  <div class="container premium-page">
-    <h1 class="p-title">Contact</h1>
-    <p class="p-description">
-      Any questions? Reach us at: contact@myaicrush.ai
-    </p>
-  </div>
-
-  <script type="module" src="/scripts/menu-loader.js"></script>
+  <title>Contact & Support – MyAiCrush</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
 
   <style>
-    .disclaimer-section { 
-        margin-top: 50px; 
-        border-top: 1px solid rgba(255,255,255,0.1); 
-        padding-bottom: 50px; 
-        font-family: sans-serif;
-        text-align: center;
+    :root {
+      --pink: #f472b6;
+      --pink-soft: #fce7f3;
+      --pink-dim: rgba(244, 114, 182, 0.18);
+      --bg: #0c0f1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: rgba(244, 114, 182, 0.2);
+      --border-muted: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      /* subtle noise texture */
+      background-image: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(244,114,182,0.12) 0%, transparent 60%);
+    }
+
+    /* ─── Page wrapper ─── */
+    .page {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 3rem 1.25rem 4rem;
+    }
+
+    /* ─── Header ─── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .page-header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+
+    /* ─── Chat card ─── */
+    .chat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(244,114,182,0.06);
+    }
+
+    /* ─── Chat top bar ─── */
+    .chat-topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-muted);
+      background: rgba(255,255,255,0.02);
+    }
+    .chat-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbcfe8, #ec4899, #0f172a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(244,114,182,0.25);
+    }
+    .chat-topbar-info strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .chat-topbar-info span {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .online-dot {
+      width: 8px; height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      margin-right: 4px;
+      display: inline-block;
+      box-shadow: 0 0 6px #4ade80;
+    }
+
+    /* ─── Message area ─── */
+    .chat-messages {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      min-height: 120px;
+      max-height: 55vh;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    .msg {
+      max-width: 82%;
+      padding: 0.65rem 0.95rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      white-space: pre-line;
+      animation: msgIn 0.22s ease both;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg.bot {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      color: #e2e8f0;
+    }
+    .msg.user {
+      background: linear-gradient(135deg, rgba(244,114,182,0.22), rgba(244,114,182,0.1));
+      border: 1px solid rgba(244,114,182,0.3);
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+      color: #fce7f3;
+      text-align: right;
+    }
+    .msg.escalation {
+      border-left: 3px solid var(--pink);
+      padding-left: 0.85rem;
+    }
+
+    /* ─── Contact email highlight inside message ─── */
+    .msg a {
+      color: var(--pink);
+      text-decoration: underline dotted;
+    }
+
+    /* ─── Quick questions ─── */
+    .chat-footer {
+      padding: 1rem 1.25rem 1.25rem;
+      border-top: 1px solid var(--border-muted);
+    }
+    .qqt {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+      font-weight: 600;
+    }
+    .qq-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .qq-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border-muted);
+      color: #cbd5e1;
+      border-radius: 999px;
+      padding: 0.38rem 0.85rem;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .qq-btn:hover {
+      background: var(--pink-dim);
+      border-color: rgba(244,114,182,0.5);
+      color: #fce7f3;
+      transform: translateY(-1px);
+    }
+    .qq-btn:active { transform: translateY(0); }
+    .qq-btn.active {
+      background: var(--pink-dim);
+      border-color: rgba(244,114,182,0.6);
+      color: var(--pink);
+    }
+
+    .chat-hint {
+      font-size: 0.68rem;
+      color: #4b5563;
+      margin-top: 0.65rem;
+      line-height: 1.5;
+    }
+    .chat-hint i { color: var(--pink); opacity: 0.7; margin-right: 3px; }
+
+    /* ─── Footer / Legal ─── */
+    .legal-section {
+      margin-top: 3rem;
+      border-top: 1px solid var(--border-muted);
+      text-align: center;
     }
     .footer-links {
-        padding: 20px 10px 5px 10px;
-        color: #4b5563;
-        font-size: 0.7rem;
+      padding: 1.25rem 1rem 0.5rem;
+      color: #374151;
+      font-size: 0.7rem;
     }
     .footer-links a {
-        color: #4b5563;
-        text-decoration: none;
-        margin: 0 10px;
-        transition: color 0.3s ease;
+      color: #4b5563;
+      text-decoration: none;
+      margin: 0 8px;
+      transition: color 0.2s;
     }
-    .footer-links a:hover { color: #f472b6; }
-    .disclaimer-btn { 
-        width: 100%; 
-        color: #4b5563; 
-        font-size: 0.65rem; 
-        text-transform: uppercase; 
-        letter-spacing: 1px; 
-        padding: 10px; 
-        cursor: pointer; 
-        transition: color 0.3s ease;
+    .footer-links a:hover { color: var(--pink); }
+    .legal-toggle {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #4b5563;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      background: none; border: none; font-family: inherit;
+      width: 100%;
     }
-    .disclaimer-btn:hover { color: #9ca3af; }
-    .disclaimer-content { 
-        max-height: 0; 
-        overflow: hidden; 
-        transition: all 0.4s ease-in-out; 
-        background: rgba(0,0,0,0.2); 
-        font-size: 0.75rem; 
-        color: #9ca3af; 
-        line-height: 1.5; 
-        text-align: left;
-        max-width: 800px;
-        margin: 0 auto;
+    .legal-toggle:hover { color: #9ca3af; }
+    .legal-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+      background: rgba(0,0,0,0.18);
+      font-size: 0.76rem;
+      color: #9ca3af;
+      line-height: 1.6;
+      text-align: left;
+      max-width: 700px;
+      margin: 0 auto;
+      border-radius: 0 0 12px 12px;
     }
-    .disclaimer-content.open { max-height: 2000px; padding: 25px; }
-    .disclaimer-content .mb-4 { margin-bottom: 1rem; }
-    .disclaimer-content strong { color: #d1d5db; }
-    .support-box {
-        padding: 0.75rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 0.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: 0.5rem;
+    .legal-body.open { max-height: 2000px; padding: 1.5rem; }
+    .legal-body section { margin-bottom: 1rem; }
+    .legal-body strong { color: #d1d5db; }
+    .legal-body .billing-box {
+      padding: 0.75rem;
+      background: rgba(244,114,182,0.07);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-top: 0.5rem;
     }
-    .text-pink-400 { color: #f472b6; }
-    .underline { text-decoration: underline; }
-</style>
+    .legal-body a { color: var(--pink); }
 
-<div class="disclaimer-section">
+    @media (max-width: 560px) {
+      .page { padding: 2rem 0.75rem 3rem; }
+      .qq-btn { font-size: 0.74rem; }
+      .msg { max-width: 92%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="page-header">
+    <h1>Contact & Support 🩷</h1>
+    <p>Talk with Juliette, our virtual support assistant. Tap a question — she'll guide you instantly. If your case needs a manual action, she'll give you the right email.</p>
+  </div>
+
+  <div class="chat-card">
+
+    <!-- Top bar -->
+    <div class="chat-topbar">
+      <div class="chat-avatar"><i class="fas fa-comment-dots" style="color:#fce7f3"></i></div>
+      <div class="chat-topbar-info">
+        <strong>Juliette – MyAiCrush Support</strong>
+        <span><span class="online-dot"></span>Online · Please don't share card details here 💳🚫</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg bot">
+        Hi 🩷 I'm Juliette, your virtual support assistant.<br><br>
+        Tap on one of the questions below and I'll explain how things work step by step.<br><br>
+        If your case really needs a manual action (refund, billing correction, account deletion…), I'll give you the correct email to contact the human team.
+      </div>
+    </div>
+
+    <!-- Quick questions -->
+    <div class="chat-footer">
+      <div class="qqt">Quick questions — tap to get an answer</div>
+      <div class="qq-grid" id="qq-grid">
+        <button class="qq-btn" data-key="premium_not_active">Premium not active after payment</button>
+        <button class="qq-btn" data-key="premium_vs_tokens">Premium vs tokens — what's the difference?</button>
+        <button class="qq-btn" data-key="tokens_not_received">I bought tokens but didn't receive them</button>
+        <button class="qq-btn" data-key="tokens_refund">Refund for tokens</button>
+        <button class="qq-btn" data-key="forgot_password">Forgot my password</button>
+        <button class="qq-btn" data-key="cant_login">I can't log in</button>
+        <button class="qq-btn" data-key="refund_request">I want a refund</button>
+        <button class="qq-btn" data-key="double_charge">Charged twice</button>
+        <button class="qq-btn" data-key="delete_account">Delete my account</button>
+        <button class="qq-btn" data-key="nympho_mode">Nymphomaniac mode</button>
+        <button class="qq-btn" data-key="audio_calls">Audio calls</button>
+        <button class="qq-btn" data-key="mobile_app">Mobile app</button>
+        <button class="qq-btn" data-key="privacy_security">Privacy & security</button>
+        <button class="qq-btn" data-key="other_issue">My issue isn't listed</button>
+      </div>
+      <div class="chat-hint">
+        <i class="fas fa-circle-info"></i>
+        For refunds, double charges or account deletion, Juliette will give you the right email after her explanation.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legal / Footer -->
+  <div class="legal-section">
     <div class="footer-links">
-        <p class="mb-2">© 2026 MyAICrush - All rights reserved</p><br>
-        <div class="flex flex-wrap justify-center gap-2">
-            <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> | 
-            <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
-        </div>
+      <p style="margin-bottom:0.5rem">© 2026 MyAICrush – All rights reserved</p>
+      <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> |
+      <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
     </div>
+    <button class="legal-toggle" onclick="toggleLegal()">+ Legal Notice & Billing Support</button>
+    <div id="legal-body" class="legal-body">
+      <section><strong>i) Age Restriction</strong><br>
+        This website is intended for adults aged 18 and over (or 21 where required by law). By accessing this site, you confirm that you are at least 18 years old.</section>
+      <section><strong>ii) AI Disclosure</strong><br>
+        All characters and conversations are generated by artificial intelligence. No real individuals are involved. All characters are fictional and any resemblance to real persons is purely coincidental.</section>
+      <section><strong>iii) Prohibited Content</strong><br>
+        We strictly prohibit any content involving minors, non-consensual acts, or illegal activities. All interactions are moderated.</section>
+      <section><strong>iv) User-Generated Content</strong><br>
+        Users may upload images in conversations. Uploaded images cannot be modified or redistributed. Violations may result in account suspension.</section>
+      <section><strong>v) Entertainment Only</strong><br>
+        This platform is for entertainment only. No professional advice (legal, medical, financial, psychological) is provided.</section>
+      <section><strong>vi) Privacy & Data</strong><br>
+        Conversations may be stored for moderation. We do not sell your personal data. See our <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a>.</section>
+      <section>
+        <strong>vii) Billing Support & Refunds</strong>
+        <div class="billing-box">
+          For payment questions or to exercise your 15-day money-back guarantee:<br>
+          <a href="mailto:contact@myaicrush.ai">contact@myaicrush.ai</a><br>
+          <a href="https://shorturl.at/bzQUX" target="_blank">Explodely Billing Support ↗</a>
+        </div>
+      </section>
+    </div>
+  </div>
 
-    <div class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice & Billing Support</div>
-    
-    <div id="disclaimer-content" class="disclaimer-content">
-        <div class="mb-4">
-            <strong>i) Age Restriction (Mandatory)</strong><br>
-            This website is intended for adults aged 18 and over (or 21 where required by law). By accessing this site, you confirm that you are at least 18 years old. Access by minors is strictly prohibited.
-        </div>
-        <div class="mb-4">
-            <strong>ii) AI Disclosure</strong><br>
-            All characters and conversations are generated by artificial intelligence. No real individuals are involved in any discussions or content. All characters are fictional and do not represent real people. Any resemblance to real persons is purely coincidental.
-        </div>
-        <div class="mb-4">
-            <strong>iii) Prohibited Content Disclaimer</strong><br>
-            We strictly prohibit any content involving minors, non-consensual acts, or illegal activities. All interactions are moderated and filtered to prevent prohibited content.
-        </div>
-        <div class="mb-4">
-            <strong>iv) User-Generated Content Policy</strong><br>
-            Users may upload images in conversations. Uploaded images cannot be modified or redistributed. Any content violating our policies will be removed and may result in account suspension.
-        </div>
-        <div class="mb-4">
-            <strong>v) Entertainment Only</strong><br>
-            This platform is intended for entertainment purposes only. No professional advice (legal, medical, financial, psychological) is provided.
-        </div>
-        <div class="mb-4">
-            <strong>vi) Privacy & Data</strong><br>
-            Conversations may be recorded for moderation and quality purposes. Your data is processed in accordance with our Privacy Policy. We do not sell your personal data.
-        </div>
-        <div class="support-box">
-            <strong>vii) Billing Support & Refunds</strong><br>
-            For any questions regarding your payments or to exercise your 15-day money-back guarantee, please contact:<br>
-            <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
-            <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400 underline">Explodely Billing Support</a>
-        </div>
-    </div>
 </div>
 
 <script>
-    function toggleDisclaimer() {
-        const content = document.getElementById('disclaimer-content');
-        content.classList.toggle('open');
-        if (content.classList.contains('open')) {
-            setTimeout(() => {
-                content.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 300);
-        }
+  const HUMAN_EMAIL = "contact@myaicrush.ai";
+
+  const FAQ = {
+    premium_not_active: {
+      question: "My Premium isn't working / not active after payment",
+      answer: `I understand, it's annoying when you pay and Premium doesn't show up 💗
+
+In most cases, it's simply an email mismatch – Premium is linked to the email used for the payment.
+
+Here's how you can fix it yourself in 2 minutes:
+
+1️⃣ Go to your profile page:
+https://myaicrush.ai/profile.html
+
+2️⃣ Look at the email shown there (the one you're currently logged in with).
+
+3️⃣ Open your inbox and find the payment confirmation email you received. The email that received this confirmation is the one linked to Premium.
+
+4️⃣ If the two emails are different, you have two options:
+- Log out and log in again using the payment email
+- Or, from the profile page, create a new account using the payment email
+
+Once you're logged in with the payment email, Premium will be recognized automatically.
+
+If after these steps Premium still doesn't appear, contact us at:
+${HUMAN_EMAIL}
+
+🌸`
+    },
+    premium_vs_tokens: {
+      question: "What's the difference between Premium and tokens?",
+      answer: `Quick recap:
+
+• Premium = unlimited chat with the AIs + access to all characters + better overall experience.
+• Tokens = used for extras:
+  – nymphomaniac mode
+  – private content (hotter photos/videos)
+  – some audio features and special options
+
+So even with Premium, certain very "hot" features still consume tokens.
+
+🌸`
+    },
+    tokens_not_received: {
+      question: "I bought tokens but didn't receive them",
+      answer: `Tokens are usually credited instantly after payment.
+
+Please check:
+
+1️⃣ Go to your profile page:
+https://myaicrush.ai/profile.html
+
+2️⃣ Make sure you're logged in with the same email you used for the token payment.
+
+If the balance still doesn't look right, please email:
+${HUMAN_EMAIL}
+
+Include:
+• the email of your MyAiCrush account
+• a screenshot or details of the token payment
+
+🌸`
+    },
+    tokens_refund: {
+      question: "Can I get a refund for tokens?",
+      answer: `In general, tokens that have already been used cannot be refunded.
+
+If you think there was a bug (for example a big deduction you don't understand), you can contact:
+${HUMAN_EMAIL}
+
+Please include:
+• your email
+• the date of the token purchase
+• what looked wrong to you
+
+The team can check your case and may offer a commercial gesture (like some free tokens).
+
+🌸`
+    },
+    forgot_password: {
+      question: "I forgot my password",
+      answer: `No worries, it happens 😌
+
+1️⃣ Go to:
+https://myaicrush.ai/profile.html
+
+2️⃣ Click on "Forgot password"
+
+3️⃣ Follow the instructions in the email you receive (check spam/promotions if needed).
+
+If you still don't receive anything, send an email to:
+${HUMAN_EMAIL}
+
+🌸`
+    },
+    cant_login: {
+      question: "I can't log in",
+      answer: `First, try this:
+
+1️⃣ Go to:
+https://myaicrush.ai/profile.html
+
+2️⃣ Make sure you're using the correct email (the same one used for payments and previous logins).
+
+3️⃣ If you forgot your password, click on "Forgot password" and follow the reset process.
+
+If you still can't log in, please write to:
+${HUMAN_EMAIL}
+
+🌸`
+    },
+    refund_request: {
+      question: "I want a refund",
+      answer: `I'm sorry the experience didn't meet your expectations 💗
+
+Refunds need to be handled manually by the billing team.
+
+Please send an email to:
+${HUMAN_EMAIL}
+
+Include:
+• the email you use on MyAiCrush
+• which purchase you want a refund for (Premium, tokens, etc.)
+• the approximate date of purchase
+• a short explanation (it helps us improve)
+
+The team will review your request and get back to you.
+
+🌸`
+    },
+    double_charge: {
+      question: "I was charged twice",
+      answer: `That definitely needs a manual check, and I'm really sorry for the stress 😕
+
+Please email:
+${HUMAN_EMAIL}
+
+With:
+• your MyAiCrush email
+• a screenshot showing the two charges (amount + dates)
+
+The team will verify and refund any duplicate charge if confirmed.
+
+🌸`
+    },
+    delete_account: {
+      question: "I want to delete my account",
+      answer: `Account deletion must be done manually for security reasons.
+
+Please write to:
+${HUMAN_EMAIL}
+
+And clearly state: "I want the complete deletion of my account and data".
+
+The team will process the deletion as soon as possible.
+
+🌸`
+    },
+    nympho_mode: {
+      question: "What is the nymphomaniac mode?",
+      answer: `The nymphomaniac mode is a special extra that makes the AI:
+
+• much spicier and more direct
+• more explicit in its replies (within legal and safety limits)
+• able to unlock more explicit content, depending on the character
+
+This mode is paid with tokens and is not included in Premium, because it unlocks a higher level of intensity and uses more resources.
+
+🌸`
+    },
+    audio_calls: {
+      question: "How do audio calls work?",
+      answer: `Audio calls are designed to let you interact with the AI by voice.
+
+However, audio calls are currently unavailable on MyAiCrush, even if you still see mentions of them in some places.
+
+We're working on bringing a new, more stable version in the future. In the meantime, you can still enjoy chat and all other features.
+
+🌸`
+    },
+    mobile_app: {
+      question: "Do you have a mobile app?",
+      answer: `There's no native mobile app (App Store / Google Play) yet.
+
+But the MyAiCrush website is fully mobile-optimized, and you can add it to your home screen to use it almost like an app.
+
+🌸`
+    },
+    privacy_security: {
+      question: "Is it private and secure?",
+      answer: `The platform is designed to be as private and secure as possible:
+
+• we don't sell your personal data
+• conversations may be stored for moderation and quality
+• the content is strictly adult and filtered
+
+Full details here:
+Privacy Policy: https://myaicrush.ai/privacy-policy.html
+
+🌸`
+    },
+    other_issue: {
+      question: "My issue is not listed",
+      answer: `Thanks for your message 💌
+
+This page covers the most frequent questions: Premium, tokens, login, refunds, nymphomaniac mode, audio calls, etc.
+
+If your situation is more specific or complex, the best way is to contact the human support team:
+
+${HUMAN_EMAIL}
+
+Please include:
+• your MyAiCrush email
+• a short description of the issue
+• a screenshot if it helps
+
+🌸`
     }
+  };
+
+  function addMsg(text, role) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    const isEscalation = role === 'bot' && text.includes(HUMAN_EMAIL);
+    div.className = ['msg', role, isEscalation ? 'escalation' : ''].filter(Boolean).join(' ');
+    // Linkify email
+    div.innerHTML = text.replace(HUMAN_EMAIL, `<a href="mailto:${HUMAN_EMAIL}">${HUMAN_EMAIL}</a>`);
+    container.appendChild(div);
+    setTimeout(() => container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }), 30);
+  }
+
+  document.getElementById('qq-grid').addEventListener('click', e => {
+    const btn = e.target.closest('.qq-btn');
+    if (!btn) return;
+    const data = (window.FAQ || FAQ)[btn.dataset.key];
+    if (!data) return;
+    // Highlight active
+    document.querySelectorAll('.qq-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    addMsg(data.question, 'user');
+    setTimeout(() => addMsg(data.answer, 'bot'), 220);
+  });
+
+  function toggleLegal() {
+    const el = document.getElementById('legal-body');
+    el.classList.toggle('open');
+    if (el.classList.contains('open')) {
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'end' }), 320);
+    }
+  }
 </script>
-<script type="module" src="/scripts/i18n-contact.js"></script>
-<script type="module" src="/scripts/i18n-menu.js"></script>
+
+
+  <script type="module" src="/scripts/i18n-contact.js"></script>
+  <script type="module" src="/scripts/i18n-menu.js"></script>
 
 </body>
 </html>
