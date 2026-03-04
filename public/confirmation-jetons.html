@@ -3,87 +3,480 @@
 <head>
   <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tokens purchased</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Unlock Exclusive Content</title>
 
-  <!-- Google Analytics -->
+  <!-- TikTok Pixel -->
+  <script>
+  !function (w,d,t) {
+    w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+    ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
+    ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat([].slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+    ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
+    ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";
+      n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src=r+"?sdkid="+e+"&lib="+t;
+      e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+    ttq.load('D3F46ERC77UCTDLGVG9G');
+    ttq.page();
+  }(window,document,'ttq');
+  </script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var params    = new URLSearchParams(location.search);
+    var amount    = parseFloat(params.get('amount') || '30');
+    var plan      = (params.get('plan') || 'quarterly').toLowerCase();
+    var sessionId = params.get('session_id') || '';
+    var sku       = plan === 'annual' ? 'premium_annual' : 'premium_quarterly';
+    if (window.ttq && !Number.isNaN(amount)) {
+      ttq.track('CompletePayment', { value: amount, currency: 'EUR', contents: [{ id: sku, quantity: 1 }], content_type: 'product', order_id: sessionId });
+    }
+  });
+  </script>
+
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener('DOMContentLoaded', () => {
       const fullUrl = window.location.pathname + window.location.search;
       gtag('config', 'G-FJ5S0H9B1R', { page_path: fullUrl });
-
-      const amount = new URLSearchParams(window.location.search).get('amount') || 10;
+      const params = new URLSearchParams(window.location.search);
+      const amount = params.get("amount");
+      const plan = params.get("plan") || "unknown";
       const selectedTest = JSON.parse(localStorage.getItem("selectedPricingTest"));
       let abTestId = selectedTest?.id || "unknown";
-
+      function triggerGAEvent() {
+        if (!amount) return;
+        gtag('event', 'purchase', { value: parseFloat(amount), currency: 'EUR', abTestId: abTestId, items: [{ item_name: plan, price: parseFloat(amount) }] });
+      }
       if (abTestId === "unknown") {
         const cookie = document.cookie.split('; ').find(row => row.startsWith('forcedTp='));
         const forcedTp = cookie ? cookie.split('=')[1] : null;
         if (forcedTp) {
           fetch('/forced-pricing.json').then(res => res.json()).then(config => {
             const forcedPlan = config[forcedTp];
-            if (forcedPlan && forcedPlan.test_id) {
-              abTestId = forcedPlan.test_id;
-              localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId }));
-            }
-            triggerTokenEvent();
-          }).catch(() => triggerTokenEvent());
-        } else { triggerTokenEvent(); }
-      } else { triggerTokenEvent(); }
-
-      function triggerTokenEvent() {
-        gtag('event', 'token_purchase', {
-          value: parseFloat(amount), currency: 'EUR',
-          item_name: 'Tokens', price: parseFloat(amount), abTestId: abTestId
-        });
-      }
+            if (forcedPlan && forcedPlan.test_id) { abTestId = forcedPlan.test_id; localStorage.setItem("selectedPricingTest", JSON.stringify({ id: abTestId })); }
+            triggerGAEvent();
+          }).catch(() => triggerGAEvent());
+        } else { triggerGAEvent(); }
+      } else { triggerGAEvent(); }
     });
   </script>
+
+  <meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #ff2fa0;
+      --pink-light: #ff9cef;
+      --purple: #c22fff;
+      --bg: #0a0a0c;
+      --bg-card: #141416;
+      --bg-card2: #1c1c1e;
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --gold: #ffd700;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px 0;
+    }
+
+    .confirm-banner {
+      background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(39, 174, 96, 0.05));
+      border: 1px solid rgba(39, 174, 96, 0.4);
+      border-radius: 20px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .confirm-banner i { color: #27ae60; font-size: 26px; flex-shrink: 0; }
+    .confirm-banner-text { font-size: 0.88rem; color: #d0d0d0; line-height: 1.5; }
+    .confirm-banner-text b { color: #fff; font-size: 0.95rem; display: block; margin-bottom: 2px; }
+
+    .upsell-separator {
+      text-align: center;
+      margin: 0 0 28px;
+      position: relative;
+    }
+    .upsell-separator::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 0; right: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+    .upsell-separator span {
+      position: relative;
+      background: var(--bg);
+      padding: 0 16px;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #555;
+    }
+
+    .content-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 24px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      position: relative;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .content-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(255,47,160,0.15);
+    }
+
+    .card-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px 12px;
+    }
+    .card-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--pink);
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #ff2fa0, #c22fff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #fff; font-weight: 700;
+    }
+    .card-profile-info { flex: 1; }
+    .card-name { font-weight: 700; font-size: 0.92rem; color: #fff; }
+    .card-handle { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+    .card-verified { color: var(--pink); font-size: 0.8rem; }
+
+    .card-preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      background: #0a0a0c;
+      overflow: hidden;
+    }
+    .card-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+    .card-preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 20px 18px;
+      gap: 8px;
+    }
+    .preview-count {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 30px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      color: #ddd;
+      letter-spacing: 0.3px;
+    }
+    .preview-count span { color: #fff; font-weight: 700; }
+
+    .card-body { padding: 16px 18px 18px; }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .card-desc {
+      font-size: 0.84rem;
+      color: #b0b0b0;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .card-desc em { color: var(--pink-light); font-style: normal; }
+
+    .content-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,156,239,0.2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .bonus-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(255,47,160,0.08), rgba(194,47,255,0.06));
+      border: 1px solid rgba(255,156,239,0.25);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .bonus-icon {
+      width: 36px; height: 36px;
+      background: rgba(255,215,0,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .bonus-icon i { color: var(--gold); font-size: 0.95rem; }
+    .bonus-text { font-size: 0.82rem; color: #b0b0b0; line-height: 1.65; }
+    .bonus-text b { color: #fff; display: block; margin-bottom: 4px; font-size: 0.86rem; }
+    .bonus-text em { color: var(--pink-light); font-style: normal; font-weight: 600; }
+
+    .unlock-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      border: none;
+      border-radius: 14px;
+      padding: 15px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: filter 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(255,47,160,0.3);
+    }
+    .unlock-btn:hover { filter: brightness(1.1); box-shadow: 0 8px 28px rgba(255,47,160,0.5); }
+    .unlock-btn-left { display: flex; align-items: center; gap: 10px; }
+    .unlock-btn-left i { font-size: 1rem; color: rgba(255,255,255,0.85); }
+    .unlock-btn-label { font-size: 0.95rem; font-weight: 700; color: #fff; }
+    .unlock-btn-label small { display: block; font-size: 0.72rem; font-weight: 400; opacity: 0.75; margin-top: 1px; }
+    .unlock-btn-price { font-size: 1.1rem; font-weight: 800; color: #fff; }
+
+    .testimonial-section { margin: 40px 0; }
+    .testimonial-title { text-align: center; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .testimonial-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .testimonial-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .testimonial-stars { font-size: 0.75rem; margin-bottom: 6px; }
+    .testimonial-text { font-size: 0.78rem; color: #c0c0c0; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+    .testimonial-author { font-size: 0.7rem; color: #666; font-weight: 600; }
+
+    .faq-section { margin: 40px 0; }
+    .faq-title { text-align: center; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .faq-question {
+      width: 100%; background: none; border: none; color: #e0e0e0;
+      font-size: 0.86rem; font-weight: 600; text-align: left;
+      padding: 15px 0; cursor: pointer; display: flex;
+      justify-content: space-between; align-items: center; gap: 10px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .faq-question::after { content: '+'; font-size: 1.1rem; color: var(--pink-light); flex-shrink: 0; }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+    .faq-answer.open { max-height: 200px; padding-bottom: 14px; }
+    .faq-answer p { font-size: 0.8rem; color: #999; line-height: 1.65; }
+
+    .security-section {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      padding: 20px 0; margin: 20px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .security-item { display: flex; align-items: center; gap: 7px; color: #777; font-size: 0.78rem; }
+    .security-item i { color: #27ae60; }
+
+    .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.08); padding-bottom: 50px; font-family: sans-serif; text-align: center; }
+    .footer-links { padding: 20px 10px 5px; color: #4b5563; font-size: 0.68rem; }
+    .footer-links a { color: #4b5563; text-decoration: none; margin: 0 8px; }
+    .disclaimer-btn { width: 100%; color: #4b5563; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; padding: 10px; cursor: pointer; background: none; border: none; }
+    .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease-in-out; background: rgba(0,0,0,0.2); font-size: 0.72rem; color: #9ca3af; text-align: left; max-width: 800px; margin: 0 auto; }
+    .disclaimer-content.open { max-height: 2000px; padding: 24px; }
+    .support-box { padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; }
+    .text-pink-400 { color: #f472b6; }
+  </style>
 </head>
 <body>
 
+  <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33237ea42f1184f0f647f5d05"></script>
+
   <div class="container confirmation-page">
-    <h1 class="p-title">Tokens added! 🎉</h1>
-    <p class="p-description">
-      Your tokens are now in your account.
-    </p>
-    <p class="p-description">
-      Use them with any of your A.I.
-    </p>
-    <p class="p-description">
-      To check your balance, go to your <b>Profile</b>.
-    </p>
-    <p class="p-description">
-      Thank you,<br>
-      The MyAiCrush Team ❤️
-    </p>
 
-    <div class="action-section">
-      <button id="startChatButton" class="checkout-button" onclick="window.location.href='index.html'">
-        Start chatting
-      </button>
+    <!-- SUCCESS BANNER -->
+    <div class="confirm-banner">
+      <i class="fas fa-check-circle"></i>
+      <div class="confirm-banner-text">
+        <b>Tokens added! 🪙</b>
+        You can find them on your profile page.
+      </div>
     </div>
-  </div>
 
-  <div class="security-section">
-    <div class="security-item">
-      <i class="fas fa-lock"></i>
-      <p>100% Secure</p>
-    </div>
-    <div class="security-item">
-      <i class="fas fa-mask"></i>
-      <p>Total privacy</p>
-    </div>
-  </div>
+    <div class="upsell-separator"><span>Just for you</span></div>
 
-  <script type="module" src="/scripts/menu-loader.js"></script>
+    <!-- CONTENT CARD — Alex Intimate Shooting -->
+    <div class="content-card">
+
+      <div class="card-profile">
+        <div class="card-avatar">A</div>
+        <div class="card-profile-info">
+          <div class="card-name">Alex <i class="fas fa-check-circle card-verified"></i></div>
+          <div class="card-handle">@alex.exclusive • Exclusive content</div>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <img src="https://myaicrush.ai/images/alex/a3dfe6a42174d9b3a189e01a75e144c2.webp" alt="Alex — Intimate shooting">
+        <div class="card-preview-overlay">
+          <div class="preview-count"><span>63 photos</span> + <span>27 videos</span></div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h2 class="card-title">Alex — Her most intimate moments 🛏️</h2>
+        <p class="card-desc">
+          Lying in her sheets, Alex slowly touches herself… Her hands explore every curve, her eyes glow with pleasure, her breath gets heavier. <em>An incredibly intimate and arousing shoot</em>, where she lets herself go and indulges in her most secret little pleasures.
+        </p>
+
+        <div class="content-pills">
+          <div class="pill">🔥 BIG NIPPLES</div>
+          <div class="pill">👙 TOPLESS</div>
+          <div class="pill">🛏️ BED SCENE</div>
+          <div class="pill">💦 TOUCHING PUSSY</div>
+          <div class="pill">😈 EXPLICIT</div>
+          <div class="pill">📸 63 PHOTOS</div>
+          <div class="pill">🎥 27 VIDEOS</div>
+        </div>
+
+        <div class="bonus-box">
+          <div class="bonus-icon"><i class="fas fa-coins"></i></div>
+          <div class="bonus-text">
+            <b>Tokens included with your purchase</b>
+            Use them to activate <em>Nympho Mode</em> and unlock intimate content with dozens of other AIs — push them to their absolute limit and make every conversation way more exciting 🔥
+          </div>
+        </div>
+
+        <a href="https://explodely.com/p/453015891?ocu=yes" class="unlock-btn" id="main-unlock-btn">
+          <div class="unlock-btn-left">
+            <i class="fas fa-lock-open"></i>
+            <div class="unlock-btn-label">
+              Unlock this collection
+              <small>Instant access · One-time payment</small>
+            </div>
+          </div>
+          <div class="unlock-btn-price">$37</div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div class="testimonial-section">
+      <h2 class="testimonial-title">They couldn't resist either 🔥</h2>
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"That bedroom collection… I was not ready. She's absolutely unreal 🛏️"</p>
+          <p class="testimonial-author">— Karim M.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Thought it was going to be basic pics. Definitely not — she goes all the way 😳"</p>
+          <p class="testimonial-author">— Lucas R.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"That look she gives the camera… worth every penny 😈"</p>
+          <p class="testimonial-author">— Steph G.</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">⭐⭐⭐⭐</div>
+          <p class="testimonial-text">"Unlocked it on impulse. Zero regrets. 63 photos of pure bliss."</p>
+          <p class="testimonial-author">— Bast D.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2 class="faq-title">Quick answers</h2>
+      <div class="faq-item">
+        <button class="faq-question">What do I get for $37?</button>
+        <div class="faq-answer">
+          <p>Full access to Alex's intimate collection: 63 high-quality photos and 27 videos, unlocked permanently with a single payment.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Is it really instant access?</button>
+        <div class="faq-answer">
+          <p>Yes — the moment your payment goes through, the full collection is yours. No waiting, no subscriptions.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Where do I find my tokens?</button>
+        <div class="faq-answer">
+          <p>Your tokens are available directly on your profile page. Use them to unlock exclusive content with Alex and all other AIs on the platform.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Is my payment private?</button>
+        <div class="faq-answer">
+          <p>100%. All transactions are encrypted and discreet. The charge appears under a neutral name on your statement.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="security-section">
+      <div class="security-item"><i class="fas fa-lock"></i><p>Secure payment</p></div>
+      <div class="security-item"><i class="fas fa-mask"></i><p>Total privacy</p></div>
+      <div class="security-item"><i class="fas fa-infinity"></i><p>Permanent access</p></div>
+    </div>
+
+  </div><!-- /container -->
+
+  <script>
+    document.querySelectorAll('.faq-question').forEach(button => {
+      button.addEventListener('click', () => {
+        button.nextElementSibling.classList.toggle('open');
+      });
+    });
+    function toggleDisclaimer() {
+      document.getElementById('disclaimer-content').classList.toggle('open');
+    }
+  </script>
 
   <!-- Facebook Pixel -->
   <script>
@@ -97,29 +490,42 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '1139964937955152');
     var purchaseEventID = 'purchase_' + Date.now();
-    fbq('track', 'Purchase', { value: 39, currency: 'USD' }, { eventID: purchaseEventID });
+    fbq('track', 'Purchase', { value: 49, currency: 'USD' }, { eventID: purchaseEventID });
   </script>
 
+  <!-- TrafficJunky -->
   <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get("session_id");
-      if (!sessionId) { console.error("❌ No session_id found in URL."); return; }
-      try {
-        const response = await fetch("/api/confirm-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId })
-        });
-        const result = await response.json();
-        if (!result.success) { alert("❌ Payment confirmation failed."); }
-      } catch (error) {
-        console.error("❌ Payment validation error:", error);
-      }
-    });
+  (function() {
+    const randomNumber = Date.now();
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionId = urlParams.get("session_id") || randomNumber;
+    const description = encodeURIComponent("MyAiCrush+Premium");
+    const img = document.createElement("img");
+    img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${randomNumber}&cti=${transactionId}&ctv=40.00&ctd=${description}`;
+    img.width = 1; img.height = 1; img.style.display = "none";
+    document.body.appendChild(img);
+  })();
   </script>
 
-  <script type="module" src="/scripts/i18n-confirmation-jetons.js"></script>
+  <!-- FOOTER -->
+  <div class="disclaimer-section">
+    <div class="footer-links">
+      <p>© 2026 MyAICrush – All rights reserved</p><br>
+      <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> |
+      <a href="https://myaicrush.ai/terms-and-conditions.html">Terms &amp; Conditions</a>
+    </div>
+    <button class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice &amp; Billing Support</button>
+    <div id="disclaimer-content" class="disclaimer-content">
+      <div class="support-box">
+        <strong>Billing Support &amp; Refunds</strong><br>
+        Questions about your payment? Contact us:<br>
+        <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
+        <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400">Explodely Billing Support</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/scripts/i18n-confirmation-alex.js"></script>
 
 </body>
 </html>

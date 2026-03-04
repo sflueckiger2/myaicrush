@@ -70,7 +70,6 @@
   <meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
 
   <style>
-    /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -98,7 +97,6 @@
       padding: 24px 16px 0;
     }
 
-    /* ===== CONFIRMATION BANNER ===== */
     .confirm-banner {
       background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(39, 174, 96, 0.05));
       border: 1px solid rgba(39, 174, 96, 0.4);
@@ -113,7 +111,6 @@
     .confirm-banner-text { font-size: 0.88rem; color: #d0d0d0; line-height: 1.5; }
     .confirm-banner-text b { color: #fff; font-size: 0.95rem; display: block; margin-bottom: 2px; }
 
-    /* ===== SEPARATOR ===== */
     .upsell-separator {
       text-align: center;
       margin: 0 0 28px;
@@ -136,7 +133,6 @@
       color: #555;
     }
 
-    /* ===== CONTENT CARD ===== */
     .content-card {
       background: var(--bg-card);
       border: 1px solid rgba(255,255,255,0.09);
@@ -151,7 +147,6 @@
       box-shadow: 0 16px 40px rgba(255,47,160,0.15);
     }
 
-    /* Profile header row */
     .card-profile {
       display: flex;
       align-items: center;
@@ -172,7 +167,6 @@
     .card-handle { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
     .card-verified { color: var(--pink); font-size: 0.8rem; }
 
-    /* Story format image */
     .card-preview {
       position: relative;
       width: 100%;
@@ -186,6 +180,8 @@
       object-fit: cover;
       object-position: center top;
       display: block;
+      filter: blur(12px);
+      transform: scale(1.05);
     }
     .card-preview-overlay {
       position: absolute;
@@ -210,7 +206,6 @@
     }
     .preview-count span { color: #fff; font-weight: 700; }
 
-    /* Content description */
     .card-body { padding: 16px 18px 18px; }
     .card-title {
       font-family: 'Playfair Display', serif;
@@ -228,7 +223,6 @@
     }
     .card-desc em { color: var(--pink-light); font-style: normal; }
 
-    /* ===== CONTENT PILLS ===== */
     .content-pills {
       display: flex;
       flex-wrap: wrap;
@@ -247,7 +241,6 @@
       text-transform: uppercase;
     }
 
-    /* ===== BONUS BOX ===== */
     .bonus-box {
       display: flex;
       align-items: flex-start;
@@ -270,7 +263,6 @@
     .bonus-text b { color: #fff; display: block; margin-bottom: 4px; font-size: 0.86rem; }
     .bonus-text em { color: var(--pink-light); font-style: normal; font-weight: 600; }
 
-    /* ===== UNLOCK BUTTON ===== */
     .unlock-btn {
       display: flex;
       align-items: center;
@@ -292,7 +284,6 @@
     .unlock-btn-label small { display: block; font-size: 0.72rem; font-weight: 400; opacity: 0.75; margin-top: 1px; }
     .unlock-btn-price { font-size: 1.1rem; font-weight: 800; color: #fff; }
 
-    /* ===== TESTIMONIALS ===== */
     .testimonial-section { margin: 40px 0; }
     .testimonial-title { text-align: center; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
     .testimonial-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -306,7 +297,6 @@
     .testimonial-text { font-size: 0.78rem; color: #c0c0c0; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
     .testimonial-author { font-size: 0.7rem; color: #666; font-weight: 600; }
 
-    /* ===== FAQ ===== */
     .faq-section { margin: 40px 0; }
     .faq-title { text-align: center; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
     .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); }
@@ -322,7 +312,6 @@
     .faq-answer.open { max-height: 200px; padding-bottom: 14px; }
     .faq-answer p { font-size: 0.8rem; color: #999; line-height: 1.65; }
 
-    /* ===== SECURITY ===== */
     .security-section {
       display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
       padding: 20px 0; margin: 20px 0;
@@ -332,7 +321,6 @@
     .security-item { display: flex; align-items: center; gap: 7px; color: #777; font-size: 0.78rem; }
     .security-item i { color: #27ae60; }
 
-    /* ===== FOOTER ===== */
     .disclaimer-section { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.08); padding-bottom: 50px; font-family: sans-serif; text-align: center; }
     .footer-links { padding: 20px 10px 5px; color: #4b5563; font-size: 0.68rem; }
     .footer-links a { color: #4b5563; text-decoration: none; margin: 0 8px; }
@@ -349,55 +337,50 @@
 
   <div class="container confirmation-page">
 
-    <!-- ✅ SUCCESS BANNER -->
+    <!-- SUCCESS BANNER -->
     <div class="confirm-banner">
       <i class="fas fa-check-circle"></i>
       <div class="confirm-banner-text">
-        <b>Premium unlocked! 🎉</b>
+        <b>Premium added! 🎉</b>
         Unlimited messages, photos and videos — all yours.
       </div>
     </div>
 
     <div class="upsell-separator"><span>Just for you</span></div>
 
-    <!-- ===== CONTENT CARD — Alex Intimate Shooting ===== -->
+    <!-- CONTENT CARD — Nour Bath -->
     <div class="content-card">
 
-      <!-- Profile row -->
       <div class="card-profile">
-        <div class="card-avatar">A</div>
+        <div class="card-avatar">N</div>
         <div class="card-profile-info">
-          <div class="card-name">Alex <i class="fas fa-check-circle card-verified"></i></div>
-          <div class="card-handle">@alex.exclusive • Exclusive content</div>
+          <div class="card-name">Nour <i class="fas fa-check-circle card-verified"></i></div>
+          <div class="card-handle">@nour.exclusive • Exclusive content</div>
         </div>
       </div>
 
-      <!-- Story photo -->
       <div class="card-preview">
-        <img src="https://myaicrush.ai/images/alex/a3dfe6a42174d9b3a189e01a75e144c2.webp" alt="Alex — Intimate shooting">
+        <img src="images/nour/c40075a77b3cb9c0ce50ee9e1361b6b3.webp" alt="Nour — A little treat in the bath">
         <div class="card-preview-overlay">
-          <div class="preview-count"><span>63 photos</span> + <span>27 videos</span></div>
+          <div class="preview-count"><span>Private collection</span> · unlocked with tokens</div>
         </div>
       </div>
 
-      <!-- Description -->
       <div class="card-body">
-        <h2 class="card-title">Alex — Her most intimate moments 🛏️</h2>
+        <h2 class="card-title">Nour — A little treat in the bath 🚿</h2>
         <p class="card-desc">
-          Lying in her sheets, Alex slowly touches herself… Her hands explore every curve, her eyes glow with pleasure, her breath gets heavier. <em>An incredibly intimate and arousing shoot</em>, where she lets herself go and indulges in her most secret little pleasures.
+          Still breathless from her workout, skin gleaming with sweat and her sports bra clinging to her chest, Nour pulled you into her bathroom. The shower still running, she got on her knees without warning — lips already parted for you. She looked up at you with that knowing little smile, hands on your hips, and <em>sucked you like she wanted to drain you completely</em>. Warm water on her face, muffled moans, saliva everywhere… Nour was obscene, starving, out of control — exactly the way you like her.
         </p>
 
         <div class="content-pills">
-          <div class="pill">🔥 BIG NIPPLES</div>
-          <div class="pill">👙 TOPLESS</div>
-          <div class="pill">🛏️ BED SCENE</div>
-          <div class="pill">💦 TOUCHING PUSSY</div>
+          <div class="pill">🚿 SHOWER SCENE</div>
+          <div class="pill">💋 BLOWJOB</div>
           <div class="pill">😈 EXPLICIT</div>
-          <div class="pill">📸 63 PHOTOS</div>
-          <div class="pill">🎥 27 VIDEOS</div>
+          <div class="pill">💦 WET &amp; WILD</div>
+          <div class="pill">💦 BOOBSJOB</div>
+          <div class="pill">👁️ EYE CONTACT</div>
         </div>
 
-        <!-- Bonus token value prop -->
         <div class="bonus-box">
           <div class="bonus-icon"><i class="fas fa-coins"></i></div>
           <div class="bonus-text">
@@ -406,7 +389,6 @@
           </div>
         </div>
 
-        <!-- CTA -->
         <a href="https://explodely.com/p/12407737?ocu=yes" class="unlock-btn" id="main-unlock-btn">
           <div class="unlock-btn-left">
             <i class="fas fa-lock-open"></i>
@@ -420,7 +402,6 @@
 
       </div>
     </div>
-    <!-- end content card -->
 
     <!-- TESTIMONIALS -->
     <div class="testimonial-section">
@@ -428,23 +409,23 @@
       <div class="testimonial-grid">
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"That bedroom collection… I was not ready. She's absolutely unreal 🛏️"</p>
-          <p class="testimonial-author">— Karim M.</p>
+          <p class="testimonial-text">"Post-workout, soaking wet, on her knees… bro I had to pause and breathe 💀"</p>
+          <p class="testimonial-author">— Ryan T.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Thought it was going to be basic pics. Definitely not — she goes all the way 😳"</p>
-          <p class="testimonial-author">— Lucas R.</p>
+          <p class="testimonial-text">"That hungry look she gives while the water hits her face. I'm cooked. Genuinely cooked. 🥵"</p>
+          <p class="testimonial-author">— Mehdi A.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"That look she gives the camera… worth every penny 😈"</p>
-          <p class="testimonial-author">— Steph G.</p>
+          <p class="testimonial-text">"She came straight from the gym and just… went for it. No warning. Filthy in the best way possible."</p>
+          <p class="testimonial-author">— Tom V.</p>
         </div>
         <div class="testimonial-card">
           <div class="testimonial-stars">⭐⭐⭐⭐</div>
-          <p class="testimonial-text">"Unlocked it on impulse. Zero regrets. 63 photos of pure bliss."</p>
-          <p class="testimonial-author">— Bast D.</p>
+          <p class="testimonial-text">"The boobsjob with the shower running… I've watched it like 6 times already 🔁"</p>
+          <p class="testimonial-author">— Jules F.</p>
         </div>
       </div>
     </div>
@@ -455,7 +436,7 @@
       <div class="faq-item">
         <button class="faq-question">What do I get for $59?</button>
         <div class="faq-answer">
-          <p>Full access to Alex's intimate collection: 63 high-quality photos and 27 videos, unlocked permanently with a single payment.</p>
+          <p>Full access to Nour's exclusive bath collection, unlocked permanently with a single payment — or use your tokens to access it instantly.</p>
         </div>
       </div>
       <div class="faq-item">
@@ -465,9 +446,9 @@
         </div>
       </div>
       <div class="faq-item">
-        <button class="faq-question">What tokens do I get with the purchase?</button>
+        <button class="faq-question">Where do I find my tokens?</button>
         <div class="faq-answer">
-          <p>Your purchase includes tokens you can use across all AIs on the platform — activate Nympho Mode, unlock exclusive intimate content, request custom photos, and push every AI to its wildest side.</p>
+          <p>Your tokens are available directly on your profile page. Use them to unlock exclusive content with Nour and all other AIs on the platform.</p>
         </div>
       </div>
       <div class="faq-item">
@@ -487,7 +468,6 @@
 
   </div><!-- /container -->
 
-  <!-- FAQ + disclaimer toggle -->
   <script>
     document.querySelectorAll('.faq-question').forEach(button => {
       button.addEventListener('click', () => {
@@ -533,20 +513,18 @@
     <div class="footer-links">
       <p>© 2026 MyAICrush – All rights reserved</p><br>
       <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> |
-      <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
+      <a href="https://myaicrush.ai/terms-and-conditions.html">Terms &amp; Conditions</a>
     </div>
-    <button class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice & Billing Support</button>
+    <button class="disclaimer-btn" onclick="toggleDisclaimer()">+ Legal Notice &amp; Billing Support</button>
     <div id="disclaimer-content" class="disclaimer-content">
       <div class="support-box">
-        <strong>Billing Support & Refunds</strong><br>
+        <strong>Billing Support &amp; Refunds</strong><br>
         Questions about your payment? Contact us:<br>
         <a href="mailto:contact@myaicrush.ai" class="text-pink-400">contact@myaicrush.ai</a><br>
         <a href="https://shorturl.at/bzQUX" target="_blank" class="text-pink-400">Explodely Billing Support</a>
       </div>
     </div>
   </div>
-
-  <!-- Scripts -->
 
   <script type="module" src="/scripts/i18n-confirmation.js"></script>
 

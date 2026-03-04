@@ -1,18 +1,18 @@
-// i18n-confirmation-nour.js — Traduction française de la page xsell Nour
+// i18n-confirmation-alex.js — Traduction française de la page xsell Alex
 // Inclure juste avant </body> :
-// <script type="module" src="/scripts/i18n-confirmation-nour.js"></script>
+// <script type="module" src="/scripts/i18n-confirmation-alex.js"></script>
 
 function applyFrenchTranslations() {
 
   // ===== BANNIÈRE DE CONFIRMATION =====
   const bannerB = document.querySelector(".confirm-banner-text b");
-  if (bannerB) bannerB.textContent = "Premium ajouté ! 🎉";
+  if (bannerB) bannerB.textContent = "Jetons ajoutés ! 🪙";
 
   const bannerText = document.querySelector(".confirm-banner-text");
   if (bannerText) {
     bannerText.childNodes.forEach(n => {
       if (n.nodeType === Node.TEXT_NODE && n.textContent.trim()) {
-        n.textContent = " Messages, photos et vidéos illimités — tout ça t'appartient.";
+        n.textContent = " Tu peux les retrouver sur ta page de profil.";
       }
     });
   }
@@ -23,28 +23,29 @@ function applyFrenchTranslations() {
 
   // ===== PROFIL CARTE =====
   const cardHandle = document.querySelector(".card-handle");
-  if (cardHandle) cardHandle.textContent = "@nour.exclusive • Contenu exclusif";
+  if (cardHandle) cardHandle.textContent = "@alex.exclusive • Contenu exclusif";
 
-  // ===== COMPTEUR =====
+  // ===== COMPTEUR PHOTO/VIDÉO =====
   const previewCount = document.querySelector(".preview-count");
-  if (previewCount) previewCount.innerHTML = "<span>Collection privée</span> · débloquée avec des jetons";
+  if (previewCount) previewCount.innerHTML = "<span>63 photos</span> + <span>27 vidéos</span>";
 
   // ===== TITRE =====
   const cardTitle = document.querySelector(".card-title");
-  if (cardTitle) cardTitle.textContent = "Nour — Une petite gâterie dans le bain 🚿";
+  if (cardTitle) cardTitle.textContent = "Alex — Ses moments les plus intimes 🛏️";
 
   // ===== DESCRIPTION =====
   const cardDesc = document.querySelector(".card-desc");
-  if (cardDesc) cardDesc.innerHTML = `Encore essoufflée après son sport, la peau brillante de sueur et sa brassière collée à sa poitrine, Nour t'a entraîné dans sa salle de bain. La douche encore ouverte, elle s'est mise à genoux sans prévenir — lèvres déjà entrouvertes pour toi. Elle t'a regardé avec ce petit sourire complice, les mains sur tes hanches, et elle t'a sucé comme si elle voulait te vider. Eau chaude sur son visage, gémissements étouffés, salive partout… <em>Nour était obscène, affamée, hors de contrôle</em> — exactement comme tu l'aimes.`;
+  if (cardDesc) cardDesc.innerHTML = `Allongée dans ses draps, Alex se touche doucement… Ses mains explorent chaque courbe, ses yeux brillent de plaisir, sa respiration s'accélère. <em>Un shooting intime et incroyablement excitant</em>, où elle se laisse aller à ses petits plaisirs secrets.`;
 
   // ===== PILLS =====
   const pillsText = [
-    "🚿 SCÈNE DOUCHE",
-    "💋 PIPE",
+    "🔥 GROS TÉTONS",
+    "👙 TOUTE NUE",
+    "🛏️ SCÈNE AU LIT",
+    "💦 SE TOUCHE LA CHATTE",
     "😈 EXPLICITE",
-    "💦 MOUILLÉE",
-    "🍑 BOOBSJOB",
-    "👁️ CONTACT VISUEL",
+    "📸 63 PHOTOS",
+    "🎥 27 VIDÉOS",
   ];
   document.querySelectorAll(".pill").forEach((pill, i) => {
     if (pillsText[i]) pill.textContent = pillsText[i];
@@ -73,12 +74,11 @@ function applyFrenchTranslations() {
   if (testimonialTitle) testimonialTitle.textContent = "Eux non plus n'ont pas pu résister 🔥";
 
   const testimonialsFR = [
-    { text: "\"Post-sport, trempée, à genoux… j'ai dû souffler un bon coup avant de continuer 💀\"", author: "— Ryan T." },
-    { text: "\"Ce regard affamé avec l'eau qui coule sur son visage. Je suis mort. Littéralement mort. 🥵\"", author: "— Mehdi A." },
-    { text: "\"Elle rentre du sport et enchaîne direct sans prévenir. Obscène dans le bon sens du terme.\"", author: "— Tom V." },
-    { text: "\"Le boobsjob sous la douche… je l'ai repassé genre 6 fois déjà 🔁\"", author: "— Jules F." },
+    { text: "\"Cette collection au lit… j'étais vraiment pas prêt. Elle est absolument incroyable 🛏️\"", author: "— Karim M." },
+    { text: "\"Je pensais que ce serait des photos basiques. Pas du tout — elle va jusqu'au bout 😳\"", author: "— Lucas R." },
+    { text: "\"Ce regard qu'elle donne à l'objectif… ça vaut chaque centime 😈\"", author: "— Steph G." },
+    { text: "\"Acheté sur un coup de tête. Zéro regret. 63 photos de pur bonheur.\"", author: "— Bast D." },
   ];
-
   document.querySelectorAll(".testimonial-card").forEach((card, i) => {
     if (!testimonialsFR[i]) return;
     const text = card.querySelector(".testimonial-text");
@@ -94,8 +94,8 @@ function applyFrenchTranslations() {
   // ===== FAQ ITEMS =====
   const faqFR = [
     {
-      q: "Qu'est-ce que j'obtiens pour 59 $ ?",
-      a: "Accès complet à la collection exclusive de Nour dans la salle de bain, débloqué définitivement avec un seul paiement — ou utilise tes jetons pour y accéder instantanément."
+      q: "Qu'est-ce que j'obtiens pour 37 $ ?",
+      a: "Accès complet à la collection intime d'Alex : 63 photos et 27 vidéos de haute qualité, débloqués définitivement avec un seul paiement."
     },
     {
       q: "L'accès est vraiment instantané ?",
@@ -103,7 +103,7 @@ function applyFrenchTranslations() {
     },
     {
       q: "Où est-ce que je retrouve mes jetons ?",
-      a: "Tes jetons sont disponibles directement sur ta page profil. Utilise-les pour débloquer du contenu exclusif avec Nour et toutes les autres IA de la plateforme."
+      a: "Tes jetons sont disponibles directement sur ta page de profil. Utilise-les pour débloquer du contenu exclusif avec Alex et toutes les autres IA de la plateforme."
     },
     {
       q: "Mon paiement est-il discret ?",
@@ -158,6 +158,7 @@ if (navigator.language?.startsWith("fr")) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", applyFrenchTranslations);
   } else {
+    // DOM déjà prêt (script chargé en defer/module après parsing)
     applyFrenchTranslations();
   }
 }
