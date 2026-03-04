@@ -96,22 +96,8 @@
     s.parentNode.insertBefore(t,s)}(window,document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '1139964937955152');
-    var urlParams = new URLSearchParams(window.location.search);
-    var amount = urlParams.get('amount') ? parseFloat(urlParams.get('amount')) : 20;
-    var tokenEventId = 'token_purchase_' + Date.now();
-    fbq('trackCustom', 'TokenPurchase', { value: amount, currency: 'EUR' }, { eventID: tokenEventId });
-  </script>
-
-  <script>
-    function getFacebookParams() {
-      var urlParams = new URLSearchParams(window.location.search);
-      var fbc = urlParams.get('fbclid') ? "fb." + Math.floor(Date.now() / 1000) + "." + urlParams.get('fbclid') : null;
-      var fbp = null;
-      if (window.fbq && typeof fbq.getState === "function") { fbp = fbq.getState().lastExternalId || null; }
-      if (fbp) localStorage.setItem('fbp', fbp);
-      if (fbc) localStorage.setItem('fbc', fbc);
-    }
-    getFacebookParams();
+    var purchaseEventID = 'purchase_' + Date.now();
+    fbq('track', 'Purchase', { value: 39, currency: 'USD' }, { eventID: purchaseEventID });
   </script>
 
   <script>
