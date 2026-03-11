@@ -10,20 +10,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== TITRE & DESCRIPTION =====
   const title = document.querySelector("h1.p-title");
-  if (title) title.textContent = "Tout débloquer. Une seule fois.";
+  if (title) title.textContent = "Tout débloquer. Chaque mois.";
 
   const descriptions = document.querySelectorAll("p.p-description");
   if (descriptions[0]) descriptions[0].innerHTML = `Photos & vidéos <u><b>sans flou</b></u> · Messages vocaux · Chats illimités — Une IA qui ne te juge jamais.`;
-  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>49 $ — une seule fois. Zéro abonnement. Jamais.</u></b>`;
+  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>29 $/mois — résilie quand tu veux.</u></b>`;
 
   // ===== BOUTONS CTA =====
   const ctaButtons = document.querySelectorAll("a.cta-button-premium");
   const ctaTexts = [
-    "🔓 ACCÈS À VIE — 49 $ UNE SEULE FOIS",
-    "💎 Accès à vie — 49 $",
-    "👑 Tout débloquer — 49 $, une fois pour toutes",
+    "🔓 ACCÈS PREMIUM — 29 $/MOIS",
+    "💎 Accès premium — 29 $/mois",
+    "👑 Tout débloquer — 29 $/mois",
     "🔥 Rejoindre les membres Premium",
-    "🚀 OUI, JE VEUX L'ACCÈS À VIE — 49 $",
+    "🚀 OUI, JE VEUX L'ACCÈS PREMIUM — 29 $/MOIS",
   ];
   ctaButtons.forEach((btn, i) => {
     if (ctaTexts[i]) btn.textContent = ctaTexts[i];
@@ -31,20 +31,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== NOTE SOUS LE PREMIER CTA =====
   const ctaNote = document.querySelector('p[style*="0.75rem"]');
-  if (ctaNote) ctaNote.textContent = "💳 Paiement sécurisé · ✨ Accès immédiat · 🚫 Aucun abonnement, jamais";
+  if (ctaNote) ctaNote.textContent = "💳 Paiement sécurisé · ✨ Accès immédiat · 🔄 Résiliation à tout moment";
 
   // ===== CARTE PRICING =====
   const discountBanner = document.querySelector(".discount-banner");
-  if (discountBanner) discountBanner.textContent = "🔥 PAIEMENT UNIQUE — ACCÈS À VIE";
+  if (discountBanner) discountBanner.textContent = "🔥 ABONNEMENT MENSUEL";
 
   const pricingCard = document.querySelector(".pricing-card h2");
   if (pricingCard) pricingCard.textContent = "Accès Premium Illimité";
 
   const payOnce = document.querySelector('.pricing-card p[style*="f472b6"]');
-  if (payOnce) payOnce.textContent = "✅ PAYE UNE FOIS · PROFITE POUR TOUJOURS";
+  if (payOnce) payOnce.textContent = "✅ ACCÈS COMPLET · RÉSILIE QUAND TU VEUX";
 
   const noFees = document.querySelector('.pricing-card p[style*="d1d5db"]');
-  if (noFees) noFees.textContent = "Toutes les nouvelles IA incluses. Zéro frais mensuel. Jamais.";
+  if (noFees) noFees.textContent = "Toutes les nouvelles IA incluses. Aucun frais caché.";
 
   // ===== SECTION "CE QUE TU DÉBLOQUES" =====
   const unlockTitle = document.querySelector("section h2");
@@ -59,9 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
     "Unlimited images — on demand": "Photos illimitées — à la demande",
     "Uncensored photos & videos": "Photos & vidéos sans censure",
     "All AIs available": "Toutes les IA disponibles",
-    "New AIs every month — included free": "Nouvelles IA chaque mois — incluses gratuitement",
+    "New AIs every month — included": "Nouvelles IA chaque mois — incluses",
     "Zero history stored": "Aucun historique conservé",
-    "Pay once. Yours forever.": "Tu paies une fois. C'est à toi pour toujours.",
+    "Cancel anytime. No commitment.": "Résilie quand tu veux. Sans engagement.",
     "The best AI companion platform": "La meilleure plateforme de compagnes IA",
     "Discover them": "Découvre-les",
   };
@@ -76,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sliderName) sliderName.textContent = "Découvre-les";
 
   // "And many more..." dans le slider (injecté dynamiquement)
-  // On observe le slider pour le traduire quand il apparaît
   const sliderContent = document.getElementById("slider-content");
   if (sliderContent) {
     const sliderObserver = new MutationObserver(() => {
@@ -131,12 +130,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const faqItems = [
     {
-      q: "Vraiment à vie ? Pas de frais cachés ?",
-      a: "Oui. 49 $ une fois, accès pour toujours. Aucun prélèvement, aucune surprise. Les nouvelles IA sont incluses automatiquement."
+      q: "Qu'est-ce qui est inclus dans l'abonnement à 29 $/mois ?",
+      a: "Tout — chats illimités, photos & vidéos sans flou, messages vocaux, et toutes les nouvelles IA au fur et à mesure. Aucun frais caché."
     },
     {
-      q: "Pourquoi un paiement unique et pas un abonnement ?",
-      a: "On préfère que tu restes parce que tu adores, pas parce que tu as oublié de te désabonner. Paye une fois, profite pour toujours."
+      q: "Est-ce que je peux résilier à tout moment ?",
+      a: "Oui, absolument. Résilie quand tu veux, sans justification. Tu gardes l'accès jusqu'à la fin de ta période de facturation."
     },
     {
       q: "Est-ce que je peux me faire rembourser ?",
@@ -163,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== SÉCURITÉ =====
   const securityItems = document.querySelectorAll(".security-item p");
   if (securityItems[0]) securityItems[0].textContent = "100% Sécurisé";
-  if (securityItems[1]) securityItems[1].textContent = "Accès à vie";
+  if (securityItems[1]) securityItems[1].textContent = "Résiliation à tout moment";
 
   // ===== MENTIONS LÉGALES =====
   const disclaimerBtn = document.querySelector(".disclaimer-btn");
@@ -210,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (strong) strong.textContent = "vii) Support paiement & Remboursements";
     const br = supportBox.querySelector("br");
     if (br && br.nextSibling) {
-      br.nextSibling.textContent = "Une question sur ton paiement ou tu veux être remboursé ? Contacte-nous :";
+      br.nextSibling.textContent = "Une question sur ton abonnement ou tu veux être remboursé ? Contacte-nous :";
     }
     const explodelyLink = supportBox.querySelector('a[href*="shorturl"]');
     if (explodelyLink) explodelyLink.textContent = "Support paiement Explodely";
@@ -221,10 +220,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (modalTitle) modalTitle.textContent = "Contenu réservé aux membres";
 
   const modalDesc = document.querySelector("#premium-modal p");
-  if (modalDesc) modalDesc.textContent = "Un seul paiement de 49 $, et tu vois tout — pour toujours.";
+  if (modalDesc) modalDesc.textContent = "29 $/mois — vois tout, résilie quand tu veux.";
 
   const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
-  if (modalCta) modalCta.textContent = "Accès à vie — 49 $ une seule fois";
+  if (modalCta) modalCta.textContent = "Accès premium — 29 $/mois";
 
 }); // fin DOMContentLoaded
 
