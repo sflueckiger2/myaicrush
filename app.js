@@ -921,58 +921,6 @@ async function checkPremiumStripe(email) {
 
 
 
-// =====================================
-// 🔍 Vérification premium Gumroad (+ éventuel flag en base)
-// =====================================
-async function checkPremiumGumroad(email) {
-  try {
-    const database = client.db("MyAICrush");
-    const users = database.collection("users");
-
-    // 1) Flag en base (si jamais tu mets un jour lifetimePremium etc.)
-    const user = await users.findOne({ email });
-
-    if (user && (user.isPremium === true || user.lifetimePremium === true || user.premium === true)) {
-      return true;
-    }
-
-    // 2) Vérif via Gumroad (one-shot)
-    const GUMROAD_ACCESS_TOKEN = process.env.GUMROAD_ACCESS_TOKEN;
-    const GUMROAD_PRODUCT_ID   = process.env.GUMROAD_PRODUCT_ID; // ID du produit MyAICrush
-
-    if (!GUMROAD_ACCESS_TOKEN || !GUMROAD_PRODUCT_ID) {
-      console.warn("⚠️ Gumroad non configuré (GUMROAD_ACCESS_TOKEN / GUMROAD_PRODUCT_ID manquants)");
-      return false;
-    }
-
-    const response = await axios.get('https://api.gumroad.com/v2/sales', {
-      params: {
-        access_token: GUMROAD_ACCESS_TOKEN,
-        product_id:   GUMROAD_PRODUCT_ID,
-        email:        email
-      }
-    });
-
-    const data = response.data;
-
-    // Si au moins 1 vente pour cet email et ce produit → premium = true
-    if (data && data.success && Array.isArray(data.sales) && data.sales.length > 0) {
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('❌ Erreur checkPremiumGumroad:', error.response?.data || error.message);
-    return false; // en cas d’erreur on reste safe
-  }
-}
-
-// Permet de conserver le raw body (utile si signature)
-app.use(express.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf; // Buffer
-  }
-}));
 
 
 // =====================================
@@ -982,59 +930,45 @@ async function checkPremiumExplodely(email) {
   try {
     const database = client.db("MyAICrush");
     const users = database.collection("users");
-
     const user = await users.findOne({ email });
 
     if (!user) return false;
+    if (user.explodelyPremium !== true) return false;
 
-    // 👇 On considère premium si flag enregistré via webhook
-    if (user.explodelyPremium === true) {
+    if (user.premiumExpiresAt) {
+      const expired = new Date() >= new Date(user.premiumExpiresAt);
+      if (expired) {
+        premiumCache.delete(email); // 🧹 vide le cache immédiatement
+        return false;
+      }
       return true;
     }
 
-    return false;
+    return true;
   } catch (error) {
     console.error("❌ Erreur checkPremiumExplodely:", error.message);
     return false;
   }
 }
 
-
-
 // =====================================
-// 🔧 Helper global : STRIPE (abo) OU GUMROAD (one-shot) ou EXPLODELY
+// 🔧 Helper global : STRIPE OU EXPLODELY
 // =====================================
 async function getPremiumStatus(email) {
-
-  // 1️⃣ Explodely en priorité
   const isExplodelyPremium = await checkPremiumExplodely(email);
   if (isExplodelyPremium) {
     console.log(`✅ Premium via EXPLODELY pour ${email}`);
     return true;
   }
 
-  // 2️⃣ Stripe (si tu veux garder fallback)
   const isStripePremium = await checkPremiumStripe(email);
   if (isStripePremium) {
-    return true;
-  }
-
-  // 3️⃣ Gumroad (si tu veux garder fallback)
-  const isGumroadPremium = await checkPremiumGumroad(email);
-  if (isGumroadPremium) {
+    console.log(`✅ Premium via STRIPE pour ${email}`);
     return true;
   }
 
   return false;
 }
-
-
-
-
-// =====================================
-// 🔔 WEBHOOK EXPLODELY (SALE + REFUND + SAFETY + IDEMPOTENCY)
-// =====================================
-
 
 
 
@@ -1193,14 +1127,17 @@ app.post("/webhook/explodely", async (req, res) => {
       // ---- SALE ----
       if (eventType === "sale") {
         if (isPremiumProduct) {
-          await users.updateOne(
-            { email },
-            {
-              $set: { explodelyPremium: true },
-              $setOnInsert: buildUserDefaultsFromExplodely(email),
-            },
-            { upsert: true }
-          );
+         await users.updateOne(
+  { email },
+  {
+    $set: { 
+      explodelyPremium: true,
+      explodelyMainOrderId: orderId  // 👈 à l'intérieur du $set
+    },
+    $setOnInsert: buildUserDefaultsFromExplodely(email),
+  },
+  { upsert: true }
+);
 
           await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", createdAt: new Date() });
           console.log(`✅ Premium Explodely activé pour ${email} (orderId=${orderId})`);
@@ -1310,7 +1247,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
 
 app.post('/api/is-premium', async (req, res) => {
-const email = String(req.body.email || "").trim().toLowerCase();
+  const email = String(req.body.email || "").trim().toLowerCase();
 
   if (!email) {
     return res.status(400).json({ message: 'Email requis' });
@@ -1319,9 +1256,6 @@ const email = String(req.body.email || "").trim().toLowerCase();
   try {
     const now = Date.now();
     const cached = premiumCache.get(email);
-
-    // ✅ 0) Debug instance (utile si multi-instances Render)
-    // console.log("🧩 instance", process.env.RENDER_INSTANCE_ID || process.pid, "email", email);
 
     // ✅ 1) Cache valide → réponse immédiate
     if (cached && cached.expiresAt > now) {
@@ -1332,24 +1266,21 @@ const email = String(req.body.email || "").trim().toLowerCase();
     if (cached && cached.expiresAt <= now) {
 
       // ✅ 2a) Stale autorisé UNIQUEMENT si on avait TRUE
-      // (évite de bloquer un vrai premium à cause d’un stale false)
       if (cached.value === true && !cached.refreshing) {
         cached.refreshing = true;
 
         void (async () => {
           try {
-            const value = await getPremiumStatus(email); // helper combiné
+            const value = await getPremiumStatus(email);
             premiumCache.set(email, {
               value,
-              expiresAt: Date.now() + 60_000, // cache frais 60s
+              expiresAt: Date.now() + 60_000,
               refreshing: false
             });
           } catch (e) {
             console.error("❌ Erreur refresh cache /api/is-premium:", e.message || e);
-
-            // En cas d’erreur → on garde l’ancien cache (TRUE) un peu
             premiumCache.set(email, {
-              value: cached.value, // true
+              value: cached.value,
               expiresAt: Date.now() + 15_000,
               refreshing: false
             });
@@ -1359,10 +1290,8 @@ const email = String(req.body.email || "").trim().toLowerCase();
         return res.json({ isPremium: true, cached: true, stale: true });
       }
 
-      // ✅ 2b) Si cached.value === false, ou refreshing déjà en cours
-      // → on fait un check BLOQUANT (pas de stale false)
+      // ✅ 2b) Si cached.value === false ou refreshing en cours → check bloquant
       const value = await getPremiumStatus(email);
-
       premiumCache.set(email, {
         value,
         expiresAt: Date.now() + 60_000,
@@ -1372,9 +1301,8 @@ const email = String(req.body.email || "").trim().toLowerCase();
       return res.json({ isPremium: value, cached: false });
     }
 
-    // ✅ 3) Aucun cache → vérifie Stripe + Gumroad UNE FOIS (bloquant)
+    // ✅ 3) Aucun cache → check bloquant
     const value = await getPremiumStatus(email);
-
     premiumCache.set(email, {
       value,
       expiresAt: now + 60_000,
@@ -1386,7 +1314,6 @@ const email = String(req.body.email || "").trim().toLowerCase();
   } catch (error) {
     console.error('❌ Erreur /api/is-premium:', error.message || error);
 
-    // ✅ Si erreur, on renvoie le cache si on l’a (plutôt que false)
     const cached = premiumCache.get(email);
     if (cached) {
       return res.json({ isPremium: cached.value, cached: true, error: true });
@@ -1397,6 +1324,56 @@ const email = String(req.body.email || "").trim().toLowerCase();
 });
 
 
+
+
+
+
+// route annuler abo explodely
+app.post("/api/cancel-subscription", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email manquant" });
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+
+    const user = await users.findOne({ email: email.trim().toLowerCase() });
+    if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
+
+    const mainOrderId = user.explodelyMainOrderId;
+    if (!mainOrderId) return res.status(400).json({ error: "Aucun order ID trouvé" });
+
+    // Appel API Explodely
+    const explodelyRes = await fetch(
+      `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${mainOrderId}`
+    );
+    const explodelyData = await explodelyRes.json();
+    console.log("📦 Réponse Explodely cancel:", explodelyData);
+
+    if (explodelyData.error) {
+      return res.status(400).json({ error: explodelyData.error });
+    }
+
+    // Enregistre la date d'expiration (J+30) en DB
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+    await users.updateOne(
+      { email: email.trim().toLowerCase() },
+      { $set: { premiumCancelledAt: new Date(), premiumExpiresAt: expiresAt } }
+    );
+
+    // Vide le cache premium
+    premiumCache.delete(email.trim().toLowerCase());
+
+    console.log(`⛔ Abonnement annulé pour ${email}, expire le ${expiresAt}`);
+    return res.status(200).json({ success: true, expiresAt });
+
+  } catch (error) {
+    console.error("❌ Erreur cancel-subscription:", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
 // ROUTE POUR ANNULER ABO STRIPE
 
@@ -4114,6 +4091,75 @@ app.post("/api/is-premium-db", async (req, res) => {
 
 
 
+app.post("/api/activate-premium-on-confirmation", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email manquant" });
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+
+    await users.updateOne(
+      { email: email.trim().toLowerCase() },
+      { 
+        $set: { explodelyPremium: true },
+        $unset: { premiumExpiresAt: "", premiumCancelledAt: "" } // 🧹 nettoyage
+      }
+    );
+
+    console.log(`✅ Premium activé + dates expiration nettoyées pour ${email}`);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("❌ Erreur activate-premium-on-confirmation:", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+
+app.post("/api/cancel-premium", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email manquant" });
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+    await users.updateOne(
+      { email: email.trim().toLowerCase() },
+      { $set: { premiumExpiresAt: expiresAt } } // ✅ même nom partout
+    );
+
+    return res.status(200).json({ success: true, expiresAt });
+  } catch (error) {
+    console.error("❌ Erreur cancel-premium:", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+app.post("/api/get-user-info", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email manquant" });
+
+    const database = client.db("MyAICrush");
+    const users = database.collection("users");
+    const user = await users.findOne(
+      { email: email.trim().toLowerCase() },
+      { projection: { premiumExpiresAt: 1 } } // on expose uniquement ce dont on a besoin
+    );
+
+    if (!user) return res.json({});
+    return res.json({ premiumExpiresAt: user.premiumExpiresAt || null });
+  } catch (error) {
+    console.error("❌ Erreur get-user-info:", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
 
 // Connecter à la base de données avant de démarrer le serveur

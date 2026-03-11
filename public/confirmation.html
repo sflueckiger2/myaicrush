@@ -526,7 +526,27 @@
     </div>
   </div>
 
+
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user?.email) return;
+
+    try {
+      await fetch("/api/activate-premium-on-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email })
+      });
+    } catch (err) {
+      console.error("Erreur activation premium confirmation:", err);
+    }
+  });
+</script>
+
   <script type="module" src="/scripts/i18n-confirmation.js"></script>
+
+
 
 </body>
 </html>

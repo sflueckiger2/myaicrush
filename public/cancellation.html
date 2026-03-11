@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription Cancelled</title>
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .cancel-container {
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 40px 30px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      text-align: center;
+    }
+    .cancel-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+    .cancel-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .cancel-subtitle {
+      color: #9ca3af;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .cancel-info-box {
+      background: rgba(244, 114, 182, 0.08);
+      border: 1px solid rgba(244, 114, 182, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      color: #f472b6;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .cancel-info-box strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+    .cancel-btn {
+      display: inline-block;
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      color: white;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin: 6px;
+      transition: opacity 0.2s;
+    }
+    .cancel-btn:hover { opacity: 0.85; }
+    .cancel-btn-ghost {
+      display: inline-block;
+      padding: 12px 28px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #9ca3af;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin: 6px;
+      transition: opacity 0.2s;
+    }
+    .cancel-btn-ghost:hover { opacity: 0.7; }
+    .expires-date {
+      color: #fff;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cancel-container">
+    <div class="cancel-icon">😔</div>
+    <h1 class="cancel-title">Your subscription has been cancelled</h1>
+    <p class="cancel-subtitle">
+      We're sorry to see you go. Your cancellation has been confirmed.
+    </p>
+
+    <div class="cancel-info-box">
+      <strong>📅 You still have access until:</strong>
+      <span id="expires-label" class="expires-date">Loading...</span><br><br>
+      Your Premium features will remain active until that date. After that, your account will revert to the free plan.
+    </div>
+
+    <a href="premium.html" class="cancel-btn">
+      🚀 Reactivate Premium
+    </a>
+    <a href="index.html" class="cancel-btn-ghost">
+      Back to home
+    </a>
+  </div>
+
+  <script type="module" src="/scripts/menu-loader.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user?.email) return;
+
+      try {
+        const res = await fetch("/api/cancel-premium", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+
+        const data = await res.json();
+
+        if (data.expiresAt) {
+          const date = new Date(data.expiresAt);
+          document.getElementById("expires-label").textContent =
+            date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+        }
+      } catch (err) {
+        console.error("Erreur cancel-premium:", err);
+      }
+    });
+  </script>
+
+</body>
+</html>

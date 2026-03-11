@@ -1,14 +1,12 @@
 import { characters } from './data.js';
 
 
-// Vérification du statut premium et affichage de la section "Jetons"
-// Vérification du statut premium (MongoDB: explodelyPremium uniquement)
 async function checkPremiumStatus() {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user?.email) return;
 
   try {
-    const response = await fetch("/api/is-premium-db", {
+    const response = await fetch("/api/is-premium", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: user.email })
@@ -19,39 +17,79 @@ async function checkPremiumStatus() {
     if (!statusEl) return;
 
     if (data.isPremium === true) {
+      let expiryHtml = "";
+      try {
+        const userRes = await fetch("/api/get-user-info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+        const userData = await userRes.json();
+        if (userData.premiumExpiresAt) {
+          const date = new Date(userData.premiumExpiresAt);
+          const formatted = date.toLocaleDateString("en-US", {
+            year: "numeric", month: "long", day: "numeric"
+          });
+          expiryHtml = `<p style="color:#9ca3af; font-size:0.85rem; margin-top:8px;">Access until: ${formatted}</p>`;
+        }
+      } catch (e) {}
+
       statusEl.innerHTML = `
         <div class="sub-ok">
           Premium ✅
+          ${expiryHtml}
+          <button id="cancel-sub-btn" style="display:inline-block; margin-top:12px; font-size:0.8rem; color:#6b7280; text-decoration:underline; background:none; border:none; cursor:pointer;">
+            Cancel subscription
+          </button>
         </div>
       `;
+
+      // ✅ ICI — le bouton existe dans le DOM
+      document.getElementById("cancel-sub-btn")?.addEventListener("click", async () => {
+        const confirmed = confirm("Are you sure you want to cancel your subscription? You'll keep access until the end of the current period.");
+        if (!confirmed) return;
+
+        try {
+          const res = await fetch("/api/cancel-subscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            window.location.href = "cancellation.html";
+          } else {
+            alert("Error: " + (data.error || "Something went wrong"));
+          }
+        } catch (err) {
+          console.error("Erreur annulation:", err);
+          alert("An error occurred. Please try again.");
+        }
+      });
+
     } else {
       statusEl.innerHTML = `
         <div class="sub-off">
-  <p style="margin-bottom: 12px;">
-    Your Premium is not active, expired, or pending renewal.
-  </p>
-
-  <div class="lifetime-box">
-    💎 Premium — Lifetime Access<br>
-    <span class="lifetime-price">$49 — one-time payment</span>
-  </div>
-
-  <a href="https://explodely.com/p/887584369"
-     target="_blank"
-     class="premium-cta-btn">
-     🚀 Activate Premium
-  </a>
-</div>
+          <p style="margin-bottom: 12px;">
+            Your Premium is not active, expired, or pending renewal.
+          </p>
+          <div class="lifetime-box">
+            💎 Premium — Lifetime Access<br>
+            <span class="lifetime-price">$49 — one-time payment</span>
+          </div>
+          <a href="https://explodely.com/p/887584369"
+             target="_blank"
+             class="premium-cta-btn">
+             🚀 Activate Premium
+          </a>
+        </div>
       `;
     }
   } catch (error) {
-    console.error("❌ Erreur vérification premium DB :", error);
+    console.error("❌ Erreur vérification premium :", error);
   }
 }
-
-
-
-
 
 // Fonction pour ouvrir la modal de profil du personnage
 export function openProfileModal(characterName) {
