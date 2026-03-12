@@ -4106,18 +4106,20 @@ app.post("/api/activate-premium-on-confirmation", async (req, res) => {
       { email: email.trim().toLowerCase() },
       { 
         $set: { explodelyPremium: true },
-        $unset: { premiumExpiresAt: "", premiumCancelledAt: "" } // 🧹 nettoyage
+        $unset: { premiumExpiresAt: "", premiumCancelledAt: "" }
       }
     );
 
-    console.log(`✅ Premium activé + dates expiration nettoyées pour ${email}`);
+    // 🧹 Vide le cache immédiatement
+    premiumCache.delete(email.trim().toLowerCase());
+
+    console.log(`✅ Premium activé + cache vidé pour ${email}`);
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error("❌ Erreur activate-premium-on-confirmation:", error);
     return res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
 
 
 app.post("/api/cancel-premium", async (req, res) => {

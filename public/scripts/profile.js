@@ -154,19 +154,19 @@ async function checkPremiumStatus() {
     } else {
       statusEl.innerHTML = `
         <div class="sub-off">
-          <p style="margin-bottom: 12px;">
-            Your Premium is not active, expired, or pending renewal.
-          </p>
-          <div class="lifetime-box">
-            💎 Premium — Lifetime Access<br>
-            <span class="lifetime-price">$49 — one-time payment</span>
-          </div>
-          <a href="https://explodely.com/p/887584369"
-             target="_blank"
-             class="premium-cta-btn">
-             🚀 Activate Premium
-          </a>
-        </div>
+  <p style="margin-bottom: 12px;">
+    Your Premium is not active, expired, or pending renewal.
+  </p>
+  <div class="lifetime-box">
+    💎 Premium — Monthly Access<br>
+    <span class="lifetime-price">$29/month</span>
+  </div>
+  <a href="https://myaicrush.ai/premium.html"
+     target="_blank"
+     class="premium-cta-btn">
+     🚀 Activate Premium
+  </a>
+</div>
       `;
     }
   } catch (error) {
