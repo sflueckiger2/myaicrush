@@ -1,6 +1,104 @@
 import { characters } from './data.js';
 
 
+
+
+async function tryCancelSubscription(email, orderId = null) {
+  try {
+    const r = await fetch("/api/cancel-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, orderId })
+    });
+    return await r.json();
+  } catch (err) {
+    return { success: false, error: "server_error" };
+  }
+}
+
+async function cancelWithFallback(primaryEmail) {
+  const result = await tryCancelSubscription(primaryEmail);
+
+  if (result.success) {
+    window.location.href = "cancellation.html";
+    return;
+  }
+
+  // Ouvre la modal pour TOUS les cas d'erreur sauf erreur serveur pure
+  if (result.error !== "explodely_error" && result.error !== "server_error") {
+    openCancelModal();
+  } else {
+    alert("Error: " + (result.message || "Unknown error"));
+  }
+}
+
+function openCancelModal() {
+  document.getElementById("cancel-modal")?.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "cancel-modal";
+  modal.style.cssText = `
+    position:fixed; inset:0; background:rgba(0,0,0,0.75);
+    display:flex; align-items:center; justify-content:center; z-index:9999;
+  `;
+  modal.innerHTML = `
+    <div style="background:#1a1a2e; border:1px solid rgba(255,255,255,0.1); border-radius:12px;
+                padding:24px; max-width:400px; width:90%; text-align:center;">
+      <h3 style="color:#f1f1f1; margin-bottom:10px;">We couldn't find your subscription</h3>
+      <p style="font-size:0.85rem; color:#9ca3af; margin-bottom:16px;">
+        Enter the email address you used to purchase, or your order number (found in your confirmation email).
+      </p>
+      <input id="modal-email-input" type="text" placeholder="Purchase email"
+        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+               background:rgba(255,255,255,0.05); color:#f1f1f1; margin-bottom:10px;
+               font-size:0.9rem; box-sizing:border-box;" />
+      <input id="modal-orderid-input" type="text" placeholder="Order number (optional)"
+        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+               background:rgba(255,255,255,0.05); color:#f1f1f1; margin-bottom:10px;
+               font-size:0.9rem; box-sizing:border-box;" />
+      <p id="modal-error" style="color:#f87171; font-size:0.8rem; min-height:18px; margin-bottom:10px;"></p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="modal-confirm-btn" style="padding:10px 16px; border-radius:8px; cursor:pointer;
+          background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); color:#f87171;">
+          <i class="fas fa-times-circle"></i> Cancel subscription
+        </button>
+        <button id="modal-close-btn" style="padding:10px 16px; border-radius:8px; cursor:pointer;
+          background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#9ca3af;">
+          Back
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById("modal-close-btn").addEventListener("click", () => modal.remove());
+
+  document.getElementById("modal-confirm-btn").addEventListener("click", async () => {
+    const inputEmail = document.getElementById("modal-email-input").value.trim().toLowerCase();
+    const inputOrderId = document.getElementById("modal-orderid-input").value.trim();
+    const errorEl = document.getElementById("modal-error");
+
+    if (!inputEmail && !inputOrderId) {
+      errorEl.textContent = "Please enter your purchase email or order number.";
+      return;
+    }
+
+    errorEl.textContent = "";
+    document.getElementById("cancel-loader-overlay")?.classList.remove("hidden");
+
+    const result = await tryCancelSubscription(inputEmail, inputOrderId || null);
+
+    document.getElementById("cancel-loader-overlay")?.classList.add("hidden");
+
+    if (result.success) {
+      modal.remove();
+      window.location.href = "cancellation.html";
+    } else {
+      errorEl.textContent = "Could not find a subscription with this information. Please check and try again.";
+    }
+  });
+}
+
 async function checkPremiumStatus() {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user?.email) return;
@@ -44,28 +142,13 @@ async function checkPremiumStatus() {
         </div>
       `;
 
-      // ✅ ICI — le bouton existe dans le DOM
       document.getElementById("cancel-sub-btn")?.addEventListener("click", async () => {
         const confirmed = confirm("Are you sure you want to cancel your subscription? You'll keep access until the end of the current period.");
         if (!confirmed) return;
 
-        try {
-          const res = await fetch("/api/cancel-subscription", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: user.email })
-          });
-          const data = await res.json();
-
-          if (data.success) {
-            window.location.href = "cancellation.html";
-          } else {
-            alert("Error: " + (data.error || "Something went wrong"));
-          }
-        } catch (err) {
-          console.error("Erreur annulation:", err);
-          alert("An error occurred. Please try again.");
-        }
+        document.getElementById("cancel-loader-overlay")?.classList.remove("hidden");
+        await cancelWithFallback(user.email);
+        document.getElementById("cancel-loader-overlay")?.classList.add("hidden");
       });
 
     } else {

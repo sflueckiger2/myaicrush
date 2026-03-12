@@ -1328,52 +1328,55 @@ app.post('/api/is-premium', async (req, res) => {
 
 
 
-// route annuler abo explodely
 app.post("/api/cancel-subscription", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email manquant" });
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const orderId = String(req.body.orderId || "").trim();
 
     const database = client.db("MyAICrush");
     const users = database.collection("users");
 
-    const user = await users.findOne({ email: email.trim().toLowerCase() });
-    if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
+    // Recherche par orderId direct OU par email
+    let user = null;
+    if (orderId) {
+      user = await users.findOne({ explodelyMainOrderId: orderId });
+    }
+    if (!user && email) {
+      user = await users.findOne({ email });
+    }
 
-    const mainOrderId = user.explodelyMainOrderId;
-    if (!mainOrderId) return res.status(400).json({ error: "Aucun order ID trouvé" });
+    if (!user) return res.status(404).json({ error: "no_account" });
+    if (!user.explodelyMainOrderId) return res.status(400).json({ error: "no_order_id" });
 
     // Appel API Explodely
     const explodelyRes = await fetch(
-      `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${mainOrderId}`
+      `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${user.explodelyMainOrderId}`
     );
     const explodelyData = await explodelyRes.json();
     console.log("📦 Réponse Explodely cancel:", explodelyData);
 
     if (explodelyData.error) {
-      return res.status(400).json({ error: explodelyData.error });
+      return res.status(400).json({ error: "explodely_error", message: explodelyData.error });
     }
 
-    // Enregistre la date d'expiration (J+30) en DB
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 1);
-
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await users.updateOne(
-      { email: email.trim().toLowerCase() },
-      { $set: { premiumCancelledAt: new Date(), premiumExpiresAt: expiresAt } }
+      { _id: user._id },
+      { $set: { premiumCancelledAt: new Date(), explodely_expiresAt: expiresAt } }
     );
 
-    // Vide le cache premium
-    premiumCache.delete(email.trim().toLowerCase());
+    premiumCache.delete(user.email);
 
-    console.log(`⛔ Abonnement annulé pour ${email}, expire le ${expiresAt}`);
-    return res.status(200).json({ success: true, expiresAt });
+    console.log(`⛔ Abonnement annulé pour ${user.email}, expire le ${expiresAt}`);
+    return res.status(200).json({ success: true, accessUntil: expiresAt });
 
   } catch (error) {
     console.error("❌ Erreur cancel-subscription:", error);
-    return res.status(500).json({ error: "Erreur serveur" });
+    return res.status(500).json({ error: "server_error" });
   }
 });
+
+
 
 // ROUTE POUR ANNULER ABO STRIPE
 
