@@ -137,7 +137,7 @@
             <div class="glass p-5 rounded-2xl flex items-center gap-4 border-l-4 border-pink-500 hover:bg-white/5 transition-colors">
                 <span class="text-2xl">🖼️</span> <span class="text-sm font-semibold">Unlimited images — on demand</span>
             </div>
-            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openModal()">
+            <div class="glass p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-pink-500 hover:bg-white/5 transition-colors cursor-pointer group row-span-2" onclick="openPremiumModal()">
                 <div class="flex items-center gap-4">
                     <span class="text-2xl">🔞</span> <span class="text-sm font-semibold">Uncensored photos &amp; videos</span>
                 </div>
@@ -313,9 +313,10 @@
       </div>
   </div>
 
+  <!-- ===== MODAL : Members-Only Content ===== -->
   <div id="premium-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
       <div class="glass p-8 rounded-3xl max-w-sm text-center transform scale-95 transition-transform duration-300 border border-pink-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
-          <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
+          <button onclick="closePremiumModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
           <div class="text-4xl mb-4">🚫🔞</div>
           <h3 class="text-2xl font-bold mb-2 text-white">Members-Only Content</h3>
           <p class="text-gray-300 mb-6 text-sm">$29/month — see everything, cancel anytime.</p>
@@ -323,47 +324,170 @@
       </div>
   </div>
 
+  <!-- ===== MODAL : Email Reminder ===== -->
+  <div id="email-reminder-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+    <div class="glass p-8 rounded-3xl max-w-sm w-full mx-4 text-center border border-pink-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
+      <button onclick="closeEmailReminder()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-lg">✕</button>
+      <div class="text-3xl mb-4">🔐</div>
+      <h3 class="text-xl font-bold mb-2 text-white">One last step for instant access</h3>
+      <p class="text-gray-300 text-sm mb-4">To activate Premium automatically, use this email on the checkout page:</p>
+
+      <div id="modal-email-box" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 mb-3 text-white font-bold text-sm break-all">
+        <!-- email injected here -->
+      </div>
+
+      <button id="copy-email-btn" onclick="copyEmail()" class="w-full py-2 rounded-xl text-sm font-semibold mb-3 transition-all" style="background: rgba(244,114,182,0.15); border: 1px solid rgba(244,114,182,0.4); color: #f472b6;">
+        📋 Copy email &amp; continue
+      </button>
+
+      <a id="modal-checkout-btn" href="#" target="_blank" rel="noopener" class="cta-button-premium w-full py-3 rounded-xl font-bold uppercase text-sm block mb-3">
+        ✅ OK, I got it — Continue
+      </a>
+
+      <p id="modal-no-account" class="text-gray-500 text-xs hidden">
+        Not logged in? <a href="profile.html" style="color:#f472b6; text-decoration:underline;">Sign in first</a> for automatic activation.
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
   <script>
-    function toggleDisclaimer() { document.getElementById('disclaimer-content').classList.toggle('open'); }
-    
+    // ── Disclaimer ──────────────────────────────────────────
+    function toggleDisclaimer() {
+      document.getElementById('disclaimer-content').classList.toggle('open');
+    }
+
+    // ── FAQ ──────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.faq-question').forEach(button => {
-        button.addEventListener('click', () => { button.nextElementSibling.classList.toggle('open'); });
+        button.addEventListener('click', () => {
+          button.nextElementSibling.classList.toggle('open');
+        });
       });
     });
 
+    // ── Reveal video ─────────────────────────────────────────
     function revealVideo(container) {
-        const video = container.querySelector('video');
-        const overlay = container.querySelector('.overlay-content');
-        if(video) { video.classList.remove('blur-md', 'scale-110'); video.classList.add('scale-100'); }
-        if(overlay) { overlay.classList.add('opacity-0', 'pointer-events-none'); }
+      const video = container.querySelector('video');
+      const overlay = container.querySelector('.overlay-content');
+      if (video) { video.classList.remove('blur-md', 'scale-110'); video.classList.add('scale-100'); }
+      if (overlay) { overlay.classList.add('opacity-0', 'pointer-events-none'); }
     }
-    const modal = document.getElementById('premium-modal');
-    function openModal() { modal.classList.remove('hidden'); setTimeout(() => modal.classList.remove('opacity-0'), 10); }
-    function closeModal() { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); }
-    
-    const sliderMedia = ["https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_d_boutonne_5722_0.mp4","https://img.myaicrush.ai/images/emilie/emilie3/emilie-shirt-assis.mp4","https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4","https://img.myaicrush.ai/images/alex/alex3/kling_20250915_Image_to_Video_se_penche__5870_0.mp4","https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4","https://img.myaicrush.ai/images/asha/asha1/kling_20251002_Image_to_Video_Elle_fait__6084_0.mp4","https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4","https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4","https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4","https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4","https://img.myaicrush.ai/images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4","https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4","https://img.myaicrush.ai/images/kala/kala1/bf4d04b94ca42dbb83e4af34cde8a3fa.mp4","https://img.myaicrush.ai/images/candy/candy3/candy-pic-profil-new.mp4","https://img.myaicrush.ai/images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4","https://img.myaicrush.ai/images/lea/lea1/Lea-photo-profil-vdef.mp4","https://img.myaicrush.ai/images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp","https://img.myaicrush.ai/images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp","https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp","https://img.myaicrush.ai/images/kat/kat1/bac3a1e4fa72577bee127e2d50912.webp","https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp","https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp","https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp","https://img.myaicrush.ai/images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp"];
+
+    // ── Premium modal (members-only content) ─────────────────
+    const premiumModal = document.getElementById('premium-modal');
+    function openPremiumModal() {
+      premiumModal.classList.remove('hidden');
+      setTimeout(() => premiumModal.classList.remove('opacity-0'), 10);
+    }
+    function closePremiumModal() {
+      premiumModal.classList.add('opacity-0');
+      setTimeout(() => premiumModal.classList.add('hidden'), 300);
+    }
+
+    // ── Email reminder modal ──────────────────────────────────
+    function openEmailReminder(url) {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const emailBox = document.getElementById("modal-email-box");
+      const noAccount = document.getElementById("modal-no-account");
+      const modal = document.getElementById("email-reminder-modal");
+      const btn = document.getElementById("modal-checkout-btn");
+
+      btn.href = url;
+
+      if (user?.email) {
+        emailBox.textContent = user.email;
+        noAccount.classList.add("hidden");
+      } else {
+        emailBox.textContent = "No account detected";
+        noAccount.classList.remove("hidden");
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    // ✅ Fermer la croix → redirige quand même vers le BDC
+    function closeEmailReminder() {
+      const checkoutBtn = document.getElementById("modal-checkout-btn");
+      document.getElementById("email-reminder-modal").classList.add("hidden");
+      window.open(checkoutBtn.href, "_blank");
+    }
+
+    // ✅ Copier l'email → copie + redirige vers le BDC après 800ms
+    function copyEmail() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user?.email) return;
+      navigator.clipboard.writeText(user.email).then(() => {
+        const btn = document.getElementById("copy-email-btn");
+        btn.textContent = "✅ Copied! Redirecting...";
+        setTimeout(() => {
+          const checkoutBtn = document.getElementById("modal-checkout-btn");
+          window.open(checkoutBtn.href, "_blank");
+        }, 800);
+      });
+    }
+
+    // ✅ Délégation sur document entier — intercepte TOUS les liens Explodely
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest('a[href*="explodely.com/p/22705532"]');
+      if (!link) return;
+      // Ne pas intercepter le bouton "Continue" de la modal email elle-même
+      if (link.id === "modal-checkout-btn") return;
+      e.preventDefault();
+      e.stopPropagation();
+      openEmailReminder(link.href);
+    });
+
+    // ── Character slider ──────────────────────────────────────
+    const sliderMedia = [
+      "https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_d_boutonne_5722_0.mp4",
+      "https://img.myaicrush.ai/images/emilie/emilie3/emilie-shirt-assis.mp4",
+      "https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4",
+      "https://img.myaicrush.ai/images/alex/alex3/kling_20250915_Image_to_Video_se_penche__5870_0.mp4",
+      "https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4",
+      "https://img.myaicrush.ai/images/asha/asha1/kling_20251002_Image_to_Video_Elle_fait__6084_0.mp4",
+      "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4",
+      "https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4",
+      "https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4",
+      "https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4",
+      "https://img.myaicrush.ai/images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4",
+      "https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4",
+      "https://img.myaicrush.ai/images/kala/kala1/bf4d04b94ca42dbb83e4af34cde8a3fa.mp4",
+      "https://img.myaicrush.ai/images/candy/candy3/candy-pic-profil-new.mp4",
+      "https://img.myaicrush.ai/images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4",
+      "https://img.myaicrush.ai/images/lea/lea1/Lea-photo-profil-vdef.mp4",
+      "https://img.myaicrush.ai/images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
+      "https://img.myaicrush.ai/images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
+      "https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
+      "https://img.myaicrush.ai/images/kat/kat1/bac3a1e4fa72577bee127e2d50912.webp",
+      "https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp",
+      "https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp",
+      "https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp",
+      "https://img.myaicrush.ai/images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp"
+    ];
 
     function initSlider() {
-        const container = document.getElementById('slider-content');
-        if(!container) return;
-        let index = 0;
-        function showSlide() {
-            container.style.opacity = '0';
-            setTimeout(() => {
-                if (index >= sliderMedia.length) {
-                    container.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4"><span class="text-4xl mb-2 animate-bounce">💖</span><span class="text-xl font-bold uppercase italic gradient-text">And many more...</span></div>`;
-                    index = 0; 
-                } else {
-                    const url = sliderMedia[index];
-                    container.innerHTML = url.endsWith('.mp4') ? `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>` : `<img src="${url}" class="w-full h-full object-cover">`;
-                    index++;
-                }
-                container.style.opacity = '1';
-            }, 300);
-        }
-        showSlide();
-        setInterval(showSlide, 2500);
+      const container = document.getElementById('slider-content');
+      if (!container) return;
+      let index = 0;
+      function showSlide() {
+        container.style.opacity = '0';
+        setTimeout(() => {
+          if (index >= sliderMedia.length) {
+            container.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4"><span class="text-4xl mb-2 animate-bounce">💖</span><span class="text-xl font-bold uppercase italic gradient-text">And many more...</span></div>`;
+            index = 0;
+          } else {
+            const url = sliderMedia[index];
+            container.innerHTML = url.endsWith('.mp4')
+              ? `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`
+              : `<img src="${url}" class="w-full h-full object-cover">`;
+            index++;
+          }
+          container.style.opacity = '1';
+        }, 300);
+      }
+      showSlide();
+      setInterval(showSlide, 2500);
     }
     document.addEventListener('DOMContentLoaded', initSlider);
   </script>

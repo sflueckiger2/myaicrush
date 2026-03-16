@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>29 $/mois — résilie quand tu veux.</u></b>`;
 
   // ===== BOUTONS CTA =====
+  // ⚠️ On exclut modal-checkout-btn pour ne pas écraser "OK j'ai compris"
   const ctaButtons = document.querySelectorAll("a.cta-button-premium");
   const ctaTexts = [
     "🔓 ACCÈS PREMIUM — 29 $/MOIS",
@@ -26,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "🚀 OUI, JE VEUX L'ACCÈS PREMIUM — 29 $/MOIS",
   ];
   ctaButtons.forEach((btn, i) => {
+    if (btn.id === "modal-checkout-btn") return;
     if (ctaTexts[i]) btn.textContent = ctaTexts[i];
   });
 
@@ -50,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const unlockTitle = document.querySelector("section h2");
   if (unlockTitle) unlockTitle.innerHTML = `Ce que tu <span class="gradient-text">débloques</span>`;
 
-  // Toutes les features (spans texte dans les cards glass)
   const featureMap = {
     "Unlimited conversations": "Conversations illimitées",
     "No blur — see everything": "Sans flou — tu vois tout",
@@ -71,11 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (featureMap[key]) span.textContent = featureMap[key];
   });
 
-  // Slider "Discover them"
   const sliderName = document.getElementById("slider-name");
   if (sliderName) sliderName.textContent = "Découvre-les";
 
-  // "And many more..." dans le slider (injecté dynamiquement)
   const sliderContent = document.getElementById("slider-content");
   if (sliderContent) {
     const sliderObserver = new MutationObserver(() => {
@@ -87,14 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
     sliderObserver.observe(sliderContent, { childList: true, subtree: true });
   }
 
-  // Bouton "Tap to remove blur"
   document.querySelectorAll(".overlay-content span").forEach(span => {
     if (span.textContent.includes("Tap to remove blur")) {
       span.textContent = "👆 Appuie pour enlever le flou";
     }
   });
 
-  // "Premium Required" sur la vidéo floutée
   document.querySelectorAll('span[class*="bg-pink"]').forEach(span => {
     if (span.textContent.trim() === "Premium Required") {
       span.textContent = "Réservé aux membres Premium";
@@ -224,6 +221,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
   if (modalCta) modalCta.textContent = "Accès premium — 29 $/mois";
+
+  // ===== MODALE EMAIL REMINDER =====
+  const reminderIcon = document.querySelector("#email-reminder-modal .text-3xl");
+  if (reminderIcon) reminderIcon.textContent = "🔐";
+
+  const reminderTitle = document.querySelector("#email-reminder-modal h3");
+  if (reminderTitle) reminderTitle.textContent = "Une dernière étape pour un accès immédiat";
+
+  const reminderDesc = document.querySelector("#email-reminder-modal p.text-gray-300");
+  if (reminderDesc) reminderDesc.textContent = "Pour que le Premium s'active automatiquement, utilise cet email sur la page de paiement :";
+
+  const copyBtn = document.getElementById("copy-email-btn");
+  if (copyBtn) {
+    copyBtn.textContent = "📋 Copier l'email & continuer";
+    // Patch copyEmail pour le feedback en français + redirect
+    window.copyEmail = function() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user?.email) return;
+      navigator.clipboard.writeText(user.email).then(() => {
+        copyBtn.textContent = "✅ Copié ! Redirection...";
+        setTimeout(() => {
+          const checkoutBtn = document.getElementById("modal-checkout-btn");
+          window.open(checkoutBtn.href, "_blank");
+        }, 800);
+      });
+    };
+  }
+
+  const continueBtn = document.getElementById("modal-checkout-btn");
+  if (continueBtn) continueBtn.textContent = "✅ OK, j'ai compris — Continuer";
+
+  const noAccountMsg = document.getElementById("modal-no-account");
+  if (noAccountMsg) noAccountMsg.innerHTML = `Pas de compte ? <a href="profile.html" style="color:#f472b6; text-decoration:underline;">Connecte-toi d'abord</a> pour l'activation automatique.`;
 
 }); // fin DOMContentLoaded
 
