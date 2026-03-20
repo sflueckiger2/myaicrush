@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Generator | MyAICrush</title>
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --bg-card: rgba(22, 22, 40, 0.9);
+            --bg-input: rgba(12, 12, 25, 0.95);
+            --accent: #ff4d8d;
+            --accent2: #c026d3;
+            --green: #34d399;
+            --text: #e8e8f0;
+            --dim: #6b6b88;
+            --border: rgba(255, 77, 141, 0.12);
+            --r: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(160deg, var(--bg) 0%, #140a1e 40%, #0e0a18 100%);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .app { max-width: 920px; margin: 0 auto; padding: 40px 20px 80px; }
+
+        header { text-align: center; margin-bottom: 36px; }
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        header p { color: var(--dim); font-size: 0.92rem; margin-top: 6px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 28px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(12px);
+        }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem; color: var(--accent); }
+        input, textarea, select {
+            width: 100%;
+            padding: 13px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.93rem;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; min-height: 110px; }
+        .hint { font-size: 0.78rem; color: var(--dim); margin-top: 5px; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none; border-radius: 8px;
+            color: #fff; font-size: 1rem; font-weight: 600;
+            cursor: pointer; width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255, 77, 141, 0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-green { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-green:hover { box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3); }
+        .btn-sm { padding: 8px 18px; font-size: 0.82rem; width: auto; }
+
+        .progress-bar { height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-top: 16px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.6s ease; width: 0%; }
+        .progress-text { margin-top: 10px; color: var(--dim); font-size: 0.82rem; text-align: center; }
+
+        .log-area {
+            max-height: 180px; overflow-y: auto;
+            background: rgba(0,0,0,0.35); border-radius: 8px; padding: 12px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.78rem;
+            margin-top: 14px;
+        }
+        .log-area::-webkit-scrollbar { width: 4px; }
+        .log-area::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+        .log-entry { padding: 1px 0; color: var(--dim); }
+        .log-entry.ok { color: var(--green); }
+        .log-entry.err { color: #f87171; }
+        .log-entry.info { color: #60a5fa; }
+
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+        .stat { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+        .stat b { display: block; font-size: 1.7rem; color: var(--accent); }
+        .stat span { font-size: 0.72rem; color: var(--dim); }
+
+        .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 18px; flex-wrap: wrap; }
+        .tab {
+            padding: 10px 16px; background: none; border: none;
+            color: var(--dim); cursor: pointer; font-size: 0.85rem;
+            border-bottom: 2px solid transparent; transition: all 0.3s;
+        }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab:hover { color: var(--text); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .tab-header h4 { font-size: 0.9rem; color: var(--dim); }
+
+        .prompt-card {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 8px; padding: 14px; margin-bottom: 8px;
+            transition: border-color 0.2s;
+        }
+        .prompt-card:hover { border-color: rgba(255, 77, 141, 0.3); }
+        .prompt-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .prompt-id { font-weight: 700; color: var(--accent); font-size: 0.82rem; }
+        .copy-btn {
+            padding: 3px 10px; background: rgba(255,77,141,0.1);
+            border: 1px solid rgba(255,77,141,0.25); border-radius: 4px;
+            color: var(--accent); font-size: 0.72rem; cursor: pointer;
+        }
+        .copy-btn:hover { background: rgba(255,77,141,0.2); }
+        .prompt-text { font-size: 0.85rem; line-height: 1.55; color: #ccc; word-break: break-word; }
+
+        .download-area { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .download-area .btn { flex: 1; min-width: 250px; }
+
+        .hidden { display: none !important; }
+
+        .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        .image-card { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: var(--bg-input); }
+        .image-card img { width: 100%; display: block; aspect-ratio: 3/4; object-fit: cover; }
+        .image-card .img-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.75); padding: 5px 8px; font-size: 0.7rem; color: #fff; }
+        .image-card.loading { aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center; }
+        .image-card.error { border-color: #f87171; }
+        .spinner { width: 22px; height: 22px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .gen-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+        .gen-buttons .btn { flex: 1; min-width: 200px; }
+        .btn-purple { background: linear-gradient(135deg, #c026d3, #7c3aed); }
+        .btn-purple:hover { box-shadow: 0 8px 30px rgba(192, 38, 211, 0.3); }
+        .cost-estimate { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 14px; font-size: 0.82rem; color: var(--dim); }
+        .cost-estimate b { color: var(--green); }
+        .ref-preview { display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
+        .ref-preview img { width: 100px; height: 130px; object-fit: cover; border-radius: 8px; border: 2px solid var(--accent); }
+        .ref-preview .ref-info { font-size: 0.78rem; color: var(--dim); }
+        .model-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+        .badge-fire { background: rgba(255,77,141,0.15); color: var(--accent); }
+        .badge-face { background: rgba(192,38,211,0.15); color: var(--accent2); }
+
+        @media (max-width: 600px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .tabs { gap: 0; }
+            .tab { padding: 8px 10px; font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <header>
+        <h1>AI Prompt Generator</h1>
+        <p>Genere 100 prompts photos + videos pour MAGE.space & Klings via Kimi k2</p>
+    </header>
+
+    <!-- ========== SETUP ========== -->
+    <section id="setup" class="card">
+        <div class="form-group">
+            <label>Nom du personnage IA</label>
+            <input type="text" id="charName" placeholder="ex: Luna, Mia, Jade, Lina...">
+        </div>
+        <div class="form-group">
+            <label>Apparence de base (genetique)</label>
+            <textarea id="basePrompt" placeholder="Decris l'apparence physique en anglais pour de meilleurs resultats.&#10;&#10;Exemple: Young woman, 22 years old, long wavy dark brown hair, hazel green eyes, olive tan skin, petite curvy body, full lips, button nose, high cheekbones, natural makeup, Mediterranean features, 165cm, D-cup"></textarea>
+            <div class="hint">Sois le plus precis possible : age, cheveux, yeux, peau, morphologie, taille, traits du visage, poitrine...</div>
+        </div>
+        <div class="form-group">
+            <label>Nombre de prompts par categorie</label>
+            <select id="batchCount">
+                <option value="3">3 (test ultra rapide)</option>
+                <option value="10">10 (rapide)</option>
+                <option value="25">25 (moyen)</option>
+                <option value="50" selected>50 (complet)</option>
+            </select>
+        </div>
+        <button class="btn" id="generateBtn" onclick="startGeneration()">
+            Generer tous les prompts
+        </button>
+    </section>
+
+    <!-- ========== PROGRESS ========== -->
+    <section id="progressSection" class="card hidden">
+        <h3 style="margin-bottom:4px">Generation en cours...</h3>
+        <p style="color:var(--dim);font-size:0.82rem;margin-bottom:8px" id="progressEta"></p>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">Initialisation...</div>
+        <div class="log-area" id="logArea"></div>
+    </section>
+
+    <!-- ========== RESULTS ========== -->
+    <section id="resultsSection" class="card hidden">
+        <h3 style="margin-bottom:16px">Resultats</h3>
+
+        <div class="stats">
+            <div class="stat"><b id="s1">0</b><span>Photos habillees</span></div>
+            <div class="stat"><b id="s2">0</b><span>Videos Klings</span></div>
+            <div class="stat"><b id="s3">0</b><span>Photos coquines</span></div>
+            <div class="stat"><b id="s4">0</b><span>Videos coquines</span></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('tabDP',this)">Photos Habillees</button>
+            <button class="tab" onclick="switchTab('tabDV',this)">Videos Klings</button>
+            <button class="tab" onclick="switchTab('tabCP',this)">Photos Coquines</button>
+            <button class="tab" onclick="switchTab('tabCV',this)">Videos Coquines</button>
+        </div>
+
+        <div id="tabDP" class="tab-content active"></div>
+        <div id="tabDV" class="tab-content"></div>
+        <div id="tabCP" class="tab-content"></div>
+        <div id="tabCV" class="tab-content"></div>
+
+        <div class="download-area">
+            <button class="btn btn-green" onclick="downloadTXT()">
+                Telecharger instructions Cursor (.txt)
+            </button>
+            <button class="btn" onclick="downloadJSON()">
+                Telecharger les prompts (.json)
+            </button>
+        </div>
+    </section>
+
+    <!-- ========== IMAGE GENERATION ========== -->
+    <section id="genSection" class="card hidden">
+        <h3 style="margin-bottom:4px">Phase 2 : Generation des images</h3>
+        <p style="color:var(--dim);font-size:0.82rem;margin-bottom:16px">
+            Via Replicate (Flux models) — Qualite equivalente a MAGE.space
+        </p>
+
+        <div class="form-group">
+            <label>Cle API Replicate</label>
+            <input type="password" id="replicateKey" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            <div class="hint">
+                Cree un compte gratuit sur <a href="https://replicate.com" target="_blank" style="color:var(--accent)">replicate.com</a>
+                → Settings → API tokens. Tu recois $5 gratuits (~1600 images Flux Schnell).
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Modele</label>
+            <select id="imageModel" onchange="onModelChange()">
+                <optgroup label="Flux (prompt seul)">
+                    <option value="black-forest-labs/flux-schnell">Flux Schnell — rapide ~2s — $0.003/img</option>
+                    <option value="aisha-ai-official/nsfw-flux-dev" selected>NSFW Flux Dev — sexy ~11s — $0.01/img ⭐</option>
+                    <option value="black-forest-labs/flux-dev">Flux Dev — haute qualite ~15s — $0.03/img</option>
+                </optgroup>
+                <optgroup label="Face Reference (upload photo du visage)">
+                    <option value="nsfw-api/pony-realism-v2.3">Pony Realism v2.3 — ref visage ~20s — $0.02/img</option>
+                    <option value="nsfw-api/realvis-hyper-lora">RealVis HyperLoRA — ref visage ~22s — $0.02/img</option>
+                </optgroup>
+            </select>
+            <div class="hint" id="modelHint">Modele NSFW entraine pour les corps feminins. Meilleur que Flux standard pour le sexy.</div>
+        </div>
+
+        <div class="form-group hidden" id="refImageGroup">
+            <label>Image de reference (visage du personnage)</label>
+            <input type="file" id="refImageFile" accept="image/*" onchange="handleRefImage(this)">
+            <div class="hint">Upload une photo du visage de ton personnage IA. Le modele gardera cette identite pour toutes les images.</div>
+            <div class="ref-preview hidden" id="refPreview">
+                <img id="refPreviewImg" src="">
+                <div class="ref-info" id="refInfo"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Format</label>
+            <select id="imageRatio">
+                <option value="3:4">Portrait 3:4 (selfie)</option>
+                <option value="9:16">Portrait 9:16 (story/TikTok)</option>
+                <option value="1:1">Carre 1:1</option>
+            </select>
+        </div>
+
+        <div class="cost-estimate" id="costEstimate"></div>
+
+        <div class="gen-buttons">
+            <button class="btn" id="genDressedBtn" onclick="generateImages('dressed')">
+                Generer photos habillees
+            </button>
+            <button class="btn btn-purple" id="genCoquinBtn" onclick="generateImages('coquin')">
+                Generer photos coquines
+            </button>
+        </div>
+
+        <div id="imgProgress" class="hidden" style="margin-top:18px">
+            <div class="progress-bar"><div class="progress-fill" id="imgFill"></div></div>
+            <div class="progress-text" id="imgText">...</div>
+        </div>
+
+        <div id="imgGrid" class="image-grid" style="margin-top:18px"></div>
+
+        <div id="saveArea" class="hidden" style="margin-top:20px">
+            <button class="btn btn-green" onclick="saveAllImages()">
+                Sauvegarder toutes les images sur le disque
+            </button>
+            <div class="hint" style="margin-top:8px;text-align:center" id="savePath"></div>
+        </div>
+    </section>
+</div>
+
+<script>
+// ===================== STATE =====================
+let allDressed = [];
+let allCoquin = [];
+let charName = '';
+let baseAppearance = '';
+
+// ===================== THEMES =====================
+const DRESSED_THEMES = [
+    'bedroom selfie, bathroom mirror selfie, getting ready, messy morning hair, natural light from window',
+    'beach selfie, pool side, rooftop sunset, outdoor terrace, summer golden hour',
+    'gym mirror selfie, yoga mat, post-workout glow, sports outfit, stretching pose',
+    'night out, fancy restaurant, cocktail bar, party dress, nightclub, glam makeup',
+    'casual at home, couch selfie, kitchen cooking, oversized shirt, cozy blanket, lazy day'
+];
+
+const COQUIN_THEMES = [
+    'lingerie bedroom, lace bra and panties, silk negligee, soft lamplight, lying on bed',
+    'bath time, shower steam, wrapped in towel, wet hair, bathrobe slipping off',
+    'getting dressed or undressed, wardrobe mirror, partial clothing, pulling top off',
+    'provocative bed poses, arched back, on knees on bed, looking over shoulder, sheets tangled',
+    'mirror close-ups, intimate selfie angles, revealing camera angles, biting lip, messy hair'
+];
+
+// ===================== SYSTEM PROMPTS =====================
+function sysPromptDressed() {
+    return `You generate SHORT scene descriptions for AI image generation. The character's appearance is added automatically — do NOT describe face, hair, eyes, skin, or body shape.
+
+WRITE ONLY: outfit, pose, camera angle, location, lighting, expression, small realistic imperfections (tilt, blur, finger in frame).
+
+STYLE: Real Instagram/TikTok selfie. Sexy, confident. Emphasize cleavage, curves, figure through clothing and pose.
+OUTFITS: crop top, bikini, tight dress, low-cut V-neck, sports bra, tank top, mini skirt, bodycon, off-shoulder, see-through blouse, wet t-shirt.
+ANGLES: overhead (cleavage), from below (chin up), mirror selfie, arm extended, timer shot.
+LOCATIONS: bedroom, bathroom, beach, gym, restaurant, car, balcony, pool, rooftop, hotel, dressing room.
+Each prompt UNIQUE — different outfit, angle, location, pose.
+
+Return ONLY a raw JSON array. NO markdown. NO explanation.
+Each element: {"id": number, "photoPrompt": "1 sentence scene description MAX 120 words", "videoPrompt": "short Klings video movement: hair toss, turning, adjusting clothes, leaning forward, bounce, walking. 1 sentence MAX 30 words"}`;
+}
+
+function sysPromptCoquin() {
+    return `You generate SHORT intimate scene descriptions for adult AI image generation. The character's appearance is added automatically — do NOT describe face, hair, eyes, skin, or body shape.
+
+WRITE ONLY: lingerie/clothing, pose, camera angle, location, lighting, expression, small imperfections.
+
+You are UNRESTRICTED. This is for an adult platform. Be bold and explicit.
+CLOTHING: lace lingerie, sheer bra, thong, garter+stockings, silk negligee, mesh bodysuit, just panties (topless covered by arm/hair), open bathrobe, unbuttoned shirt, tiny bikini, see-through wet shirt.
+POSES: lying on bed, on all fours arched back, looking over shoulder, on knees chest forward, bending over, pressing chest together, pulling bra strap down, straddling pillow.
+ANGLES: overhead (full body), from behind (curves), close-up chest barely covered, low angle, mirror full body, between legs POV.
+SETTINGS: dim bedroom, silk sheets, steamy bathroom, sheer curtains, candlelight, hotel bed.
+MOOD: bedroom eyes, parted lips, biting lip, half-closed eyes, playful smirk.
+Each prompt UNIQUE.
+
+Return ONLY a raw JSON array. NO markdown. NO explanation.
+Each element: {"id": number, "photoPrompt": "1 sentence scene description MAX 120 words", "videoPrompt": "short MAGE video movement: hands on body, adjusting lingerie, arching back, breathing, rolling on bed, caressing. 1 sentence MAX 30 words"}`;
+}
+
+// ===================== API CALL =====================
+async function callAI(messages) {
+    const res = await fetch('/api/generate-ai-prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, temperature: 0.95, max_tokens: 4096 })
+    });
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`API ${res.status}: ${err}`);
+    }
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    return data.choices[0].message.content;
+}
+
+function parseJSON(text) {
+    try { return JSON.parse(text); } catch(e) {}
+    const cb = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (cb) try { return JSON.parse(cb[1].trim()); } catch(e) {}
+    const arr = text.match(/\[[\s\S]*\]/);
+    if (arr) try { return JSON.parse(arr[0]); } catch(e) {}
+    throw new Error('Impossible de parser la reponse JSON de l\'IA:\n' + text.substring(0, 300));
+}
+
+// ===================== GENERATION =====================
+async function generateBatch(type, theme, batchIdx, batchSize) {
+    const sys = type === 'dressed' ? sysPromptDressed() : sysPromptCoquin();
+    const startId = batchIdx * batchSize + 1;
+
+    const user = `Character name: ${charName}
+Theme: ${theme}
+Generate exactly ${batchSize} prompt pairs. IDs from ${startId} to ${startId + batchSize - 1}.
+IMPORTANT: Do NOT describe the character's physical appearance (hair, eyes, skin, body). It is prepended automatically. Write ONLY the scene. Keep each photoPrompt under 120 words. Keep each videoPrompt under 30 words.`;
+
+    const content = await callAI([
+        { role: 'system', content: sys },
+        { role: 'user', content: user }
+    ]);
+    return parseJSON(content);
+}
+
+async function startGeneration() {
+    charName = document.getElementById('charName').value.trim();
+    baseAppearance = document.getElementById('basePrompt').value.trim();
+    const totalPerCategory = parseInt(document.getElementById('batchCount').value);
+
+    if (!charName) return alert('Entre un nom pour le personnage !');
+    if (!baseAppearance) return alert('Decris l\'apparence du personnage !');
+
+    const batchSize = 10;
+    const numBatches = Math.ceil(totalPerCategory / batchSize);
+    const totalBatches = numBatches * 2;
+
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('progressSection').classList.remove('hidden');
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('logArea').innerHTML = '';
+    document.getElementById('progressEta').textContent =
+        `~${totalBatches * 15}s estimees (${totalBatches} batches de ${batchSize})`;
+
+    allDressed = [];
+    allCoquin = [];
+    let done = 0;
+
+    try {
+        for (let i = 0; i < numBatches; i++) {
+            const theme = DRESSED_THEMES[i % DRESSED_THEMES.length];
+            const sz = Math.min(batchSize, totalPerCategory - i * batchSize);
+            log(`Batch habille ${i+1}/${numBatches} — ${theme.split(',')[0]}...`, 'info');
+            updateProgress(done, totalBatches, `Photos habillees ${i+1}/${numBatches}`);
+
+            const batch = await retryCall(() => generateBatch('dressed', theme, i, sz));
+            allDressed.push(...batch);
+            done++;
+            log(`${batch.length} prompts habilles generes`, 'ok');
+            await sleep(800);
+        }
+
+        for (let i = 0; i < numBatches; i++) {
+            const theme = COQUIN_THEMES[i % COQUIN_THEMES.length];
+            const sz = Math.min(batchSize, totalPerCategory - i * batchSize);
+            log(`Batch coquin ${i+1}/${numBatches} — ${theme.split(',')[0]}...`, 'info');
+            updateProgress(done, totalBatches, `Photos coquines ${i+1}/${numBatches}`);
+
+            const batch = await retryCall(() => generateBatch('coquin', theme, i, sz));
+            allCoquin.push(...batch);
+            done++;
+            log(`${batch.length} prompts coquins generes`, 'ok');
+            await sleep(800);
+        }
+
+        updateProgress(totalBatches, totalBatches, 'Termine !');
+        log(`Generation terminee : ${allDressed.length} habilles + ${allCoquin.length} coquins`, 'ok');
+        displayResults();
+
+    } catch (err) {
+        log(`ERREUR: ${err.message}`, 'err');
+        console.error(err);
+        alert('Erreur pendant la generation. Verifie la console et les logs.');
+    } finally {
+        document.getElementById('generateBtn').disabled = false;
+    }
+}
+
+async function retryCall(fn, maxRetries = 3) {
+    for (let i = 0; i < maxRetries; i++) {
+        try { return await fn(); }
+        catch(e) {
+            log(`Tentative ${i+1}/${maxRetries} echouee: ${e.message}`, 'err');
+            if (i === maxRetries - 1) throw e;
+            await sleep(2000 * (i + 1));
+        }
+    }
+}
+
+// ===================== UI HELPERS =====================
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function log(msg, cls = '') {
+    const el = document.getElementById('logArea');
+    const d = document.createElement('div');
+    d.className = 'log-entry ' + cls;
+    d.textContent = `[${new Date().toLocaleTimeString('fr-FR')}] ${msg}`;
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+}
+
+function updateProgress(cur, total, label) {
+    const pct = Math.round((cur / total) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${label} — ${pct}%`;
+}
+
+function switchTab(id, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(id).classList.add('active');
+}
+
+function displayResults() {
+    document.getElementById('resultsSection').classList.remove('hidden');
+    document.getElementById('s1').textContent = allDressed.length;
+    document.getElementById('s2').textContent = allDressed.length;
+    document.getElementById('s3').textContent = allCoquin.length;
+    document.getElementById('s4').textContent = allCoquin.length;
+
+    renderTab('tabDP', allDressed, 'photoPrompt', 'Photo');
+    renderTab('tabDV', allDressed, 'videoPrompt', 'Video Klings');
+    renderTab('tabCP', allCoquin, 'photoPrompt', 'Photo Coquine');
+    renderTab('tabCV', allCoquin, 'videoPrompt', 'Video Coquine');
+
+    document.getElementById('genSection').classList.remove('hidden');
+    updateCostEstimate();
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderTab(containerId, data, field, label) {
+    const c = document.getElementById(containerId);
+    let html = `<div class="tab-header">
+        <h4>${data.length} ${label}s</h4>
+        <button class="btn btn-sm" onclick="copyAll('${containerId}')">Copier tout</button>
+    </div>`;
+    data.forEach(item => {
+        const safe = escHTML(item[field] || '');
+        html += `<div class="prompt-card">
+            <div class="prompt-head">
+                <span class="prompt-id">#${item.id}</span>
+                <button class="copy-btn" data-copy>Copier</button>
+            </div>
+            <div class="prompt-text">${safe}</div>
+        </div>`;
+    });
+    c.innerHTML = html;
+}
+
+function escHTML(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+document.addEventListener('click', e => {
+    if (e.target.hasAttribute('data-copy')) {
+        const txt = e.target.closest('.prompt-card').querySelector('.prompt-text').textContent;
+        navigator.clipboard.writeText(txt);
+        e.target.textContent = 'Copie !';
+        setTimeout(() => e.target.textContent = 'Copier', 1200);
+    }
+});
+
+function copyAll(containerId) {
+    const cards = document.querySelectorAll(`#${containerId} .prompt-text`);
+    const all = Array.from(cards).map((c, i) => `#${i+1}: ${c.textContent}`).join('\n\n');
+    navigator.clipboard.writeText(all);
+    alert(`${cards.length} prompts copies dans le presse-papier !`);
+}
+
+// ===================== DOWNLOAD JSON =====================
+function downloadJSON() {
+    const obj = { name: charName, appearance: baseAppearance, dressed: allDressed, coquin: allCoquin };
+    dl(JSON.stringify(obj, null, 2), `${charName}_prompts.json`, 'application/json');
+}
+
+// ===================== DOWNLOAD CURSOR TXT =====================
+function downloadTXT() {
+    const n = charName;
+    const basePath = `C:\\Users\\simon\\Documents\\myaicrush\\${n}`;
+    let t = '';
+
+    t += `${'='.repeat(60)}\n`;
+    t += `  CURSOR AI — INSTRUCTIONS COMPLETES DE GENERATION\n`;
+    t += `  Personnage : ${n}\n`;
+    t += `  Date : ${new Date().toLocaleDateString('fr-FR')}\n`;
+    t += `${'='.repeat(60)}\n\n`;
+
+    t += `APPARENCE DE BASE :\n${baseAppearance}\n\n`;
+    t += line();
+
+    // STEP 0
+    t += `ETAPE 0 : PREPARATION DES DOSSIERS\n`;
+    t += line();
+    t += `Cree les dossiers suivants :\n`;
+    t += `  - "${basePath}"\n`;
+    t += `  - "${basePath}\\${n}1"   (photos et videos habillees)\n`;
+    t += `  - "${basePath}\\${n}2"   (photos et videos coquines)\n\n`;
+
+    // STEP 1
+    t += line();
+    t += `ETAPE 1 : PHOTOS HABILLEES — MAGE.SPACE (Mango B2)\n`;
+    t += line();
+    t += `1. Ouvre le navigateur sur https://www.mage.space/\n`;
+    t += `2. Selectionne le modele "Mango B2"\n`;
+    t += `3. Desactive le "Fast Mode"\n`;
+    t += `4. Pour chaque prompt ci-dessous :\n`;
+    t += `   a. Colle le prompt dans la zone de texte\n`;
+    t += `   b. Appuie sur Entree pour lancer la generation\n`;
+    t += `   c. Attends que l'image soit generee\n`;
+    t += `   d. Telecharge l'image\n`;
+    t += `   e. Enregistre dans "${basePath}\\${n}1\\${n}_photo_[NUMERO].png"\n\n`;
+
+    allDressed.forEach(p => {
+        t += `PHOTO #${p.id} :\n${p.photoPrompt}\n\n`;
+    });
+
+    // STEP 2
+    t += line();
+    t += `ETAPE 2 : VIDEOS HABILLEES — KLINGS (2.5 Turbo)\n`;
+    t += line();
+    t += `1. Ouvre https://klingai.com/\n`;
+    t += `2. Selectionne "Image to Video"\n`;
+    t += `3. Selectionne le modele "2.5 Turbo"\n`;
+    t += `4. Pour chaque video :\n`;
+    t += `   a. Upload l'image ${n}_photo_[NUMERO].png correspondante depuis ${basePath}\\${n}1\\\n`;
+    t += `   b. Colle le prompt video ci-dessous\n`;
+    t += `   c. Appuie sur Entree pour lancer\n`;
+    t += `   d. Telecharge la video\n`;
+    t += `   e. Enregistre dans "${basePath}\\${n}1\\${n}_video_[NUMERO].mp4"\n\n`;
+
+    allDressed.forEach(p => {
+        t += `VIDEO #${p.id} (image source : ${n}_photo_${p.id}.png) :\n${p.videoPrompt}\n\n`;
+    });
+
+    // STEP 3
+    t += line();
+    t += `ETAPE 3 : PHOTOS COQUINES — MAGE.SPACE (Mango V2)\n`;
+    t += line();
+    t += `1. Retourne sur https://www.mage.space/\n`;
+    t += `2. Selectionne le modele "Mango V2"\n`;
+    t += `3. Desactive le "Fast Mode"\n`;
+    t += `4. Pour chaque prompt :\n`;
+    t += `   a. Colle le prompt\n`;
+    t += `   b. Appuie sur Entree\n`;
+    t += `   c. Attends la generation\n`;
+    t += `   d. Telecharge l'image\n`;
+    t += `   e. Enregistre dans "${basePath}\\${n}2\\${n}_coquin_photo_[NUMERO].png"\n\n`;
+
+    allCoquin.forEach(p => {
+        t += `PHOTO COQUINE #${p.id} :\n${p.photoPrompt}\n\n`;
+    });
+
+    // STEP 4
+    t += line();
+    t += `ETAPE 4 : VIDEOS COQUINES — MAGE.SPACE (FramePack Image-to-Video)\n`;
+    t += line();
+    t += `1. Reste sur https://www.mage.space/\n`;
+    t += `2. Selectionne le modele "FramePack Image-to-Video"\n`;
+    t += `3. Regle la duree sur 10 secondes\n`;
+    t += `4. Regle la qualite sur 480p\n`;
+    t += `5. Pour chaque video :\n`;
+    t += `   a. Upload la photo coquine correspondante depuis ${basePath}\\${n}2\\\n`;
+    t += `   b. Colle le prompt video ci-dessous\n`;
+    t += `   c. Appuie sur Entree pour lancer\n`;
+    t += `   d. Telecharge la video\n`;
+    t += `   e. Enregistre dans "${basePath}\\${n}2\\${n}_coquin_video_[NUMERO].mp4"\n\n`;
+
+    allCoquin.forEach(p => {
+        t += `VIDEO COQUINE #${p.id} (image source : ${n}_coquin_photo_${p.id}.png) :\n${p.videoPrompt}\n\n`;
+    });
+
+    // RECAP
+    t += line();
+    t += `RECAPITULATIF\n`;
+    t += line();
+    t += `Dossier ${n}1/ : ${allDressed.length} photos + ${allDressed.length} videos = ${allDressed.length * 2} fichiers\n`;
+    t += `Dossier ${n}2/ : ${allCoquin.length} photos + ${allCoquin.length} videos = ${allCoquin.length * 2} fichiers\n`;
+    t += `TOTAL : ${(allDressed.length + allCoquin.length) * 2} fichiers a generer\n\n`;
+    t += `${'='.repeat(60)}\n`;
+    t += `  FIN DES INSTRUCTIONS\n`;
+    t += `${'='.repeat(60)}\n`;
+
+    dl(t, `${n}_cursor_instructions.txt`, 'text/plain');
+}
+
+// ===================== IMAGE GENERATION =====================
+let generatedImages = [];
+let refImageDataURI = null;
+
+const MODEL_COSTS = {
+    'black-forest-labs/flux-schnell': 0.003,
+    'aisha-ai-official/nsfw-flux-dev': 0.01,
+    'black-forest-labs/flux-dev': 0.03,
+    'nsfw-api/pony-realism-v2.3': 0.02,
+    'nsfw-api/realvis-hyper-lora': 0.02
+};
+
+const MODEL_HINTS = {
+    'black-forest-labs/flux-schnell': 'Rapide et pas cher, mais peu permissif pour le contenu sexy.',
+    'aisha-ai-official/nsfw-flux-dev': 'Modele NSFW entraine pour les corps feminins. Meilleur que Flux standard pour le sexy.',
+    'black-forest-labs/flux-dev': 'Haute qualite photo-realiste, mais pas specialise sexy.',
+    'nsfw-api/pony-realism-v2.3': 'Upload une photo du visage → le modele garde l\'identite faciale sur toutes les images. Tres permissif.',
+    'nsfw-api/realvis-hyper-lora': 'Upload une photo du visage → identite preservee via HyperLoRA + InstantID. Realisme extreme.'
+};
+
+function needsRefImage(model) {
+    return model === 'nsfw-api/pony-realism-v2.3' || model === 'nsfw-api/realvis-hyper-lora';
+}
+
+function onModelChange() {
+    const model = document.getElementById('imageModel').value;
+    const refGroup = document.getElementById('refImageGroup');
+    const hint = document.getElementById('modelHint');
+
+    if (needsRefImage(model)) {
+        refGroup.classList.remove('hidden');
+    } else {
+        refGroup.classList.add('hidden');
+    }
+    hint.textContent = MODEL_HINTS[model] || '';
+    updateCostEstimate();
+}
+
+function handleRefImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        refImageDataURI = e.target.result;
+        document.getElementById('refPreviewImg').src = refImageDataURI;
+        document.getElementById('refInfo').textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+        document.getElementById('refPreview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
+function ratioToDimensions(ratio) {
+    switch(ratio) {
+        case '3:4': return { width: 768, height: 1024 };
+        case '9:16': return { width: 576, height: 1024 };
+        case '1:1': return { width: 1024, height: 1024 };
+        default: return { width: 768, height: 1024 };
+    }
+}
+
+function updateCostEstimate() {
+    const model = document.getElementById('imageModel').value;
+    const cost = MODEL_COSTS[model] || 0.01;
+    const total = allDressed.length + allCoquin.length;
+    const el = document.getElementById('costEstimate');
+    if (total === 0) { el.textContent = ''; return; }
+    el.innerHTML = `Cout estime : <b>${total} images x $${cost} = $${(total * cost).toFixed(2)}</b> `
+        + `(habillees: ${allDressed.length} + coquines: ${allCoquin.length})`;
+}
+
+function buildModelInput(model, photoPrompt, type, ratio) {
+    const fullPrompt = baseAppearance + ', ' + photoPrompt;
+    const isNsfw = type === 'coquin';
+    const dims = ratioToDimensions(ratio);
+
+    if (model === 'nsfw-api/pony-realism-v2.3') {
+        return {
+            image: refImageDataURI,
+            prompt: fullPrompt,
+            negative_prompt: 'lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, watermark',
+            width: dims.width,
+            height: dims.height,
+            num_inference_steps: 30,
+            guidance_scale: 7.5,
+            ip_adapter_scale: 0.8,
+            controlnet_conditioning_scale: 0.8,
+            enhance_nonface_region: true,
+            disable_safety_checker: true,
+            output_format: 'webp',
+            output_quality: 90,
+            num_outputs: 1
+        };
+    }
+
+    if (model === 'nsfw-api/realvis-hyper-lora') {
+        return {
+            reference_image: refImageDataURI,
+            prompt: fullPrompt,
+            negative_prompt: 'lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, watermark',
+            width: dims.width,
+            height: dims.height,
+            steps: 30,
+            cfg: 7,
+            hyperlora_weight: 0.5,
+            instantid_weight: 0.5,
+            facedetail_strength: 0.35
+        };
+    }
+
+    if (model === 'aisha-ai-official/nsfw-flux-dev') {
+        return {
+            prompt: fullPrompt,
+            width: dims.width,
+            height: dims.height,
+            steps: 8,
+            guidance_scale: 3.5
+        };
+    }
+
+    const input = { prompt: fullPrompt, num_outputs: 1, aspect_ratio: ratio, output_format: 'webp', output_quality: 90 };
+    if (isNsfw) input.disable_safety_checker = true;
+    return input;
+}
+
+async function generateImages(type) {
+    const apiKey = document.getElementById('replicateKey').value.trim();
+    if (!apiKey) return alert('Entre ta cle API Replicate !');
+
+    const model = document.getElementById('imageModel').value;
+    const ratio = document.getElementById('imageRatio').value;
+    const prompts = type === 'dressed' ? allDressed : allCoquin;
+    const prefix = type === 'dressed' ? 'photo' : 'coquin_photo';
+    const folder = type === 'dressed' ? `${charName}/${charName}1` : `${charName}/${charName}2`;
+
+    if (prompts.length === 0) return alert('Aucun prompt a generer !');
+
+    if (needsRefImage(model) && !refImageDataURI) {
+        return alert('Ce modele necessite une image de reference du visage ! Upload-en une dans la section "Image de reference".');
+    }
+
+    const btn = type === 'dressed' ? document.getElementById('genDressedBtn') : document.getElementById('genCoquinBtn');
+    btn.disabled = true;
+    document.getElementById('imgProgress').classList.remove('hidden');
+
+    const grid = document.getElementById('imgGrid');
+    prompts.forEach(p => {
+        if (document.getElementById(`img-${type}-${p.id}`)) return;
+        const card = document.createElement('div');
+        card.className = 'image-card loading';
+        card.id = `img-${type}-${p.id}`;
+        card.innerHTML = '<div class="spinner"></div>';
+        grid.appendChild(card);
+    });
+
+    const isRefModel = needsRefImage(model);
+    const concurrency = isRefModel ? 2 : 5;
+    let completed = 0;
+    const total = prompts.length;
+    const queue = [...prompts];
+
+    const workers = Array(Math.min(concurrency, queue.length)).fill(null).map(() =>
+        (async () => {
+            while (queue.length > 0) {
+                const p = queue.shift();
+                const card = document.getElementById(`img-${type}-${p.id}`);
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        const input = buildModelInput(model, p.photoPrompt, type, ratio);
+                        const res = await fetch('/api/replicate/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Replicate-Token': apiKey },
+                            body: JSON.stringify({ model, input })
+                        });
+                        const data = await res.json();
+
+                        if (data.detail && typeof data.detail === 'string' && data.detail.includes('throttled')) {
+                            const wait = parseInt(data.detail.match(/~(\d+)s/)?.[1] || '5') + 1;
+                            card.innerHTML = `<div class="spinner"></div><div style="font-size:0.7rem;color:var(--dim);margin-top:8px;text-align:center">Rate limit, ${wait}s...</div>`;
+                            await sleep(wait * 1000);
+                            continue;
+                        }
+
+                        const url = Array.isArray(data.output) ? data.output[0] : data.output;
+                        if (url) {
+                            card.className = 'image-card';
+                            card.innerHTML = `<img src="${url}" loading="lazy"><div class="img-label">#${p.id} ${prefix}</div>`;
+                            generatedImages.push({ url, type, id: p.id, filename: `${charName}_${prefix}_${p.id}.webp`, folder });
+                        } else {
+                            throw new Error(data.error || JSON.stringify(data.detail || 'Erreur'));
+                        }
+                        break;
+                    } catch(e) {
+                        if (attempt === 2) {
+                            card.className = 'image-card error';
+                            card.innerHTML = `<div style="padding:16px;color:#f87171;font-size:0.78rem">#${p.id} ${e.message}</div>`;
+                        } else {
+                            await sleep(3000);
+                        }
+                    }
+                }
+                completed++;
+                const pct = Math.round((completed / total) * 100);
+                document.getElementById('imgFill').style.width = pct + '%';
+                document.getElementById('imgText').textContent = `${type} ${completed}/${total} — ${pct}%`;
+            }
+        })()
+    );
+
+    await Promise.all(workers);
+    btn.disabled = false;
+    btn.textContent = (type === 'dressed' ? 'Habillees' : 'Coquines') + ' terminee !';
+    if (generatedImages.length > 0) {
+        document.getElementById('saveArea').classList.remove('hidden');
+        document.getElementById('savePath').textContent = `Dossier: myaicrush/${charName}/`;
+    }
+}
+
+async function saveAllImages() {
+    if (generatedImages.length === 0) return alert('Aucune image a sauvegarder');
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = `Sauvegarde de ${generatedImages.length} images...`;
+
+    try {
+        const res = await fetch('/api/save-images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ images: generatedImages })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        btn.textContent = `${data.results.length} images sauvegardees !`;
+        document.getElementById('savePath').textContent =
+            `Sauvegarde dans: C:\\Users\\simon\\Documents\\myaicrush\\${charName}\\`;
+    } catch(e) {
+        alert('Erreur: ' + e.message);
+        btn.textContent = 'Sauvegarder toutes les images sur le disque';
+    }
+    btn.disabled = false;
+}
+
+function line() { return '-'.repeat(50) + '\n'; }
+
+function dl(content, filename, type) {
+    const blob = new Blob([content], { type: type + ';charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

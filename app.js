@@ -121,9 +121,9 @@ const userLastImageDescriptions = new Map(); // Stocke la dernière description 
 
 
 
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true })); // ✅ important pour IPN
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 
 
@@ -4163,6 +4163,89 @@ app.post("/api/get-user-info", async (req, res) => {
   } catch (error) {
     console.error("❌ Erreur get-user-info:", error);
     return res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+// === REPLICATE IMAGE GENERATION ===
+app.post('/api/replicate/generate', async (req, res) => {
+  try {
+    const { model = 'black-forest-labs/flux-schnell', input = {} } = req.body;
+    const token = process.env.REPLICATE_API_TOKEN || req.headers['x-replicate-token'];
+    if (!token) return res.status(400).json({ error: 'REPLICATE_API_TOKEN manquant.' });
+
+    const response = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'wait'
+      },
+      body: JSON.stringify({ input })
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Replicate error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/save-images', async (req, res) => {
+  try {
+    const { images } = req.body;
+    const results = [];
+    for (const img of images) {
+      const dir = path.join(__dirname, img.folder);
+      await fsp.mkdir(dir, { recursive: true });
+      const filepath = path.join(dir, img.filename);
+      const r = await fetch(img.url);
+      const ab = await r.arrayBuffer();
+      await fsp.writeFile(filepath, Buffer.from(ab));
+      results.push({ filename: img.filename, saved: true });
+    }
+    res.json({ results });
+  } catch (error) {
+    console.error('Save images error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// === PROXY FIREWORKS API (Kimi k2) avec streaming pour éviter la limite 4096 ===
+app.post('/api/generate-ai-prompts', async (req, res) => {
+  try {
+    const { messages, temperature = 0.95, max_tokens = 8000 } = req.body;
+    const response = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.FIREWORKS_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'accounts/fireworks/models/kimi-k2-instruct-0905',
+        messages,
+        temperature,
+        max_tokens,
+        stream: true
+      })
+    });
+
+    let content = '';
+    const text = await response.text();
+    for (const line of text.split('\n')) {
+      if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+        try {
+          const chunk = JSON.parse(line.slice(6));
+          const delta = chunk.choices?.[0]?.delta?.content;
+          if (delta) content += delta;
+        } catch(e) {}
+      }
+    }
+    res.json({ choices: [{ message: { content } }] });
+  } catch (error) {
+    console.error('Fireworks API error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
