@@ -95,6 +95,63 @@ const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
 
+const nodemailer = require("nodemailer");
+const smtpTransporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: parseInt(process.env.SMTP_PORT || "465"),
+  secure: (process.env.SMTP_SECURE || "true") === "true",
+  auth: {
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+  },
+});
+
+async function sendResetEmail(toEmail, resetUrl, lang = "en") {
+  const isFr = String(lang).toLowerCase().startsWith("fr");
+
+  const subject = isFr
+    ? "Réinitialisation de ton mot de passe MyAiCrush 💗"
+    : "Reset your MyAiCrush password 💗";
+
+  const html = isFr
+    ? `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:20px;background:#070814;color:#fff;border-radius:12px;">
+        <h2 style="color:#ff4fa3;text-align:center;">MyAiCrush 💗</h2>
+        <p>Bonjour,</p>
+        <p>Tu as demandé à réinitialiser ton mot de passe sur <strong>MyAiCrush</strong>.</p>
+        <p>Clique sur le bouton ci-dessous pour choisir un nouveau mot de passe (valable 24h) :</p>
+        <p style="text-align:center;margin:24px 0;">
+          <a href="${resetUrl}" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#ff4fa3,#ff7ac5);color:white;text-decoration:none;border-radius:999px;font-weight:600;">Réinitialiser mon mot de passe</a>
+        </p>
+        <p style="font-size:12px;color:#c3c4d9;">Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.</p>
+        <p style="font-size:11px;color:#666;margin-top:20px;">Lien direct : <a href="${resetUrl}" style="color:#ff4fa3;">${resetUrl}</a></p>
+      </div>`
+    : `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:20px;background:#070814;color:#fff;border-radius:12px;">
+        <h2 style="color:#ff4fa3;text-align:center;">MyAiCrush 💗</h2>
+        <p>Hello,</p>
+        <p>You requested a password reset for your <strong>MyAiCrush</strong> account.</p>
+        <p>Click the button below to choose a new password (valid for 24 hours):</p>
+        <p style="text-align:center;margin:24px 0;">
+          <a href="${resetUrl}" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#ff4fa3,#ff7ac5);color:white;text-decoration:none;border-radius:999px;font-weight:600;">Reset my password</a>
+        </p>
+        <p style="font-size:12px;color:#c3c4d9;">If you didn't request this, you can safely ignore this email.</p>
+        <p style="font-size:11px;color:#666;margin-top:20px;">Direct link: <a href="${resetUrl}" style="color:#ff4fa3;">${resetUrl}</a></p>
+      </div>`;
+
+  const text = isFr
+    ? `Bonjour,\n\nTu as demandé à réinitialiser ton mot de passe sur MyAiCrush.\n\nVoici le lien (valable 24h) :\n${resetUrl}\n\nSi tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.`
+    : `Hello,\n\nYou requested a password reset for your MyAiCrush account.\n\nHere is your reset link (valid for 24 hours):\n${resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`;
+
+  await smtpTransporter.sendMail({
+    from: `"${process.env.SMTP_FROM_NAME || "MyAiCrush"}" <${process.env.SMTP_USER || "contact@myaicrush.ai"}>`,
+    to: toEmail,
+    subject,
+    text,
+    html,
+  });
+
+  console.log(`📧 Password reset email sent to ${toEmail} (${isFr ? "FR" : "EN"})`);
+}
+
 //Cookie Pour les AB TEST 
 const cookieParser = require('cookie-parser');
 
@@ -271,7 +328,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
     }
 
     try {
-        const userEmail = req.body.email;
+        const userEmail = String(req.body.email || "").trim().toLowerCase();
         if (!userEmail) {
             return res.status(400).json({ message: "Email requis" });
         }
@@ -279,8 +336,10 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         const database = client.db('MyAICrush');
         const users = database.collection('users');
 
-        // 🔥 Récupérer l'utilisateur depuis MongoDB
-        const user = await users.findOne({ email: userEmail });
+        let user = await users.findOne({ email: userEmail });
+        if (!user) {
+          user = await users.findOne({ email: { $regex: `^${userEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
+        }
 
         if (!user) {
             return res.status(403).json({ error: "Utilisateur introuvable." });
@@ -294,18 +353,17 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         if (imagesUploaded >= maxFreeImages) {
             if (creditsAvailable > 0) {
                 // 🔥 Déduire 1 crédit pour uploader l’image
-                await users.updateOne({ email: userEmail }, { $inc: { creditsPurchased: -1 } });
-                console.log(`💳 1 crédit utilisé par ${userEmail} pour uploader une image.`);
+                await users.updateOne({ _id: user._id }, { $inc: { creditsPurchased: -1 } });
+                console.log(`💳 1 crédit utilisé par ${user.email} pour uploader une image.`);
             } else {
-                console.log(`🚨 ${userEmail} a dépassé la limite d'images et n'a plus de jetons ! Redirection vers /jetons.html.`);
+                console.log(`🚨 ${user.email} a dépassé la limite d'images et n'a plus de jetons ! Redirection vers /jetons.html.`);
                 return res.status(403).json({ 
                     message: "Limite atteinte. Achetez des crédits pour envoyer plus d'images.",
-                    redirect: "/jetons.html" // 🔥 Rediriger vers l'achat de jetons
+                    redirect: "/jetons.html"
                 });
             }
         } else {
-            // 🔥 L'utilisateur peut encore envoyer des images gratuites ce mois-ci
-            await users.updateOne({ email: userEmail }, { $inc: { imagesUploaded: 1 } });
+            await users.updateOne({ _id: user._id }, { $inc: { imagesUploaded: 1 } });
             console.log(`📸 Image ${imagesUploaded + 1}/${maxFreeImages} envoyée par ${userEmail}`);
         }
 
@@ -397,11 +455,14 @@ app.post('/api/check-upload-limit', async (req, res) => {
             return res.status(400).json({ message: "Email requis." });
         }
 
+        const normalizedUlEmail = String(email).trim().toLowerCase();
         const database = client.db('MyAICrush');
         const users = database.collection('users');
 
-        // 🔥 Récupérer l'utilisateur
-        const user = await users.findOne({ email });
+        let user = await users.findOne({ email: normalizedUlEmail });
+        if (!user) {
+          user = await users.findOne({ email: { $regex: `^${normalizedUlEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
+        }
 
         if (!user) {
             return res.status(404).json({ message: "Utilisateur non trouvé." });
@@ -506,12 +567,16 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
   }
 
+  const normalizedLoginEmail = String(email).trim().toLowerCase();
+
   try {
       const database = client.db('MyAICrush');
       const users = database.collection('users');
 
-      // Rechercher l'utilisateur par email
-      const user = await users.findOne({ email });
+      let user = await users.findOne({ email: normalizedLoginEmail });
+      if (!user) {
+        user = await users.findOne({ email: { $regex: `^${normalizedLoginEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
+      }
       if (!user) {
           return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
@@ -548,12 +613,16 @@ app.post('/api/change-password', async (req, res) => {
         return res.status(400).json({ message: 'All fields are required' });
     }
 
+    const normalizedCpEmail = String(email).trim().toLowerCase();
+
     try {
         const database = client.db('MyAICrush');
         const users = database.collection('users');
 
-        // Rechercher l'utilisateur par email
-        const user = await users.findOne({ email });
+        let user = await users.findOne({ email: normalizedCpEmail });
+        if (!user) {
+          user = await users.findOne({ email: { $regex: `^${normalizedCpEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
+        }
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -568,8 +637,7 @@ app.post('/api/change-password', async (req, res) => {
         const saltRounds = 10;
         const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-        // Mettre à jour le mot de passe dans la base de données
-        await users.updateOne({ email }, { $set: { password: hashedNewPassword } });
+        await users.updateOne({ _id: user._id }, { $set: { password: hashedNewPassword } });
 
         res.status(200).json({ message: 'Password changed successfully!' });
     } catch (error) {
@@ -586,11 +654,16 @@ app.post('/api/reset-password', async (req, res) => {
         return res.status(400).json({ message: "Données manquantes." });
     }
 
+    const normalizedRpEmail = String(email).trim().toLowerCase();
+
     try {
         const db = client.db('MyAICrush');
         const users = db.collection('users');
 
-        const user = await users.findOne({ email, resetToken: token });
+        let user = await users.findOne({ email: normalizedRpEmail, resetToken: token });
+        if (!user) {
+          user = await users.findOne({ email: { $regex: `^${normalizedRpEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" }, resetToken: token });
+        }
 
         if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
             return res.status(400).json({ message: "Lien expiré ou invalide." });
@@ -599,7 +672,7 @@ app.post('/api/reset-password', async (req, res) => {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await users.updateOne(
-            { email },
+            { _id: user._id },
             {
                 $set: { password: hashedPassword },
                 $unset: { resetToken: "", resetTokenExpires: "" }
@@ -620,11 +693,16 @@ app.post('/api/generate-reset-token', async (req, res) => {
         return res.status(400).json({ message: "Email requis." });
     }
 
+    const normalizedGrtEmail = String(email).trim().toLowerCase();
+
     try {
         const db = client.db('MyAICrush');
         const users = db.collection('users');
 
-        const user = await users.findOne({ email });
+        let user = await users.findOne({ email: normalizedGrtEmail });
+        if (!user) {
+          user = await users.findOne({ email: { $regex: `^${normalizedGrtEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
+        }
 
         // On ne révèle pas si le compte existe ou non
         if (!user) {
@@ -639,7 +717,7 @@ app.post('/api/generate-reset-token', async (req, res) => {
         const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
         await users.updateOne(
-            { email },
+            { _id: user._id },
             {
                 $set: {
                     resetToken: token,
@@ -648,72 +726,28 @@ app.post('/api/generate-reset-token', async (req, res) => {
             }
         );
 
-        const resetUrl = `${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(email)}&token=${token}`;
+        const resetUrl = `${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(user.email)}&token=${token}`;
 
         console.log(`🔗 Lien de reset généré : ${resetUrl}`);
-        console.log("ELASTICEMAIL_API_KEY chargée ?", !!process.env.ELASTICEMAIL_API_KEY);
 
-        // 📧 Envoi email via ELASTIC EMAIL (API v2)
-        const fromEmail = process.env.RESET_FROM_EMAIL || "contact@myaicrush.ai";
-        const fromName  = process.env.RESET_FROM_NAME || "MyAiCrush";
+        const lang = req.body.lang || req.headers["accept-language"] || "en";
+        await sendResetEmail(user.email, resetUrl, lang);
 
-        const subject = "Réinitialisation de ton mot de passe MyAiCrush 💗";
-
-        const bodyHtml = `
-            <p>Bonjour,</p>
-            <p>Tu as demandé à réinitialiser ton mot de passe sur <strong>MyAiCrush</strong>.</p>
-            <p>Clique sur ce lien pour choisir un nouveau mot de passe (valable 24h) :</p>
-            <p><a href="${resetUrl}">${resetUrl}</a></p>
-            <p>Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.</p>
-        `;
-
-        const bodyText = `
-Bonjour,
-
-Tu as demandé à réinitialiser ton mot de passe sur MyAiCrush.
-
-Voici le lien (valable 24h) :
-${resetUrl}
-
-Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.
-        `.trim();
-
-        // Elastic Email attend du x-www-form-urlencoded
-        const params = new URLSearchParams();
-        params.append('apikey', process.env.ELASTICEMAIL_API_KEY);
-        params.append('from', fromEmail);
-        params.append('fromName', fromName);
-        params.append('to', email);
-        params.append('subject', subject);
-        params.append('bodyHtml', bodyHtml);
-        params.append('bodyText', bodyText);
-        params.append('isTransactional', 'true');
-
-        console.log("📤 Envoi à Elastic Email avec ces params (sans le bodyHtml complet) :", {
-            from: fromEmail,
-            fromName,
-            to: email,
-            subject,
-            isTransactional: 'true'
-        });
-
-        const elasticResponse = await axios.post(
-            'https://api.elasticemail.com/v2/email/send',
-            params
-        );
-
-        console.log("✅ Réponse Elastic Email :", elasticResponse.data);
-
+        const isFr = String(lang).toLowerCase().startsWith("fr");
         return res.json({
-            message: "Si un compte existe avec cette adresse e-mail, un lien de réinitialisation t’a été envoyé par email. Il peut parfois mettre quelques minutes à arriver."
+            message: isFr
+              ? "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé. Ça peut prendre quelques minutes."
+              : "If an account exists with this email, a reset link has been sent. It may take a few minutes to arrive."
         });
 
     } catch (err) {
-        console.error("❌ Erreur génération token / envoi Elastic Email :", err.response?.data || err.message);
+        console.error("❌ Erreur envoi email de reset :", err.message);
 
+        const isFr2 = String(req.body.lang || req.headers["accept-language"] || "en").toLowerCase().startsWith("fr");
         return res.status(500).json({
-            message: "Erreur lors de l'envoi de l'email de réinitialisation.",
-            elasticError: err.response?.data || null
+            message: isFr2
+              ? "Erreur lors de l'envoi. Réessaie dans un instant."
+              : "Error sending the reset email. Please try again."
         });
     }
 });
@@ -1489,9 +1523,8 @@ app.get('/auth/google/callback', async (req, res) => {
       });
       const payload = ticket.getPayload();
 
-      const userEmail = payload.email;
+      const userEmail = String(payload.email || "").trim().toLowerCase();
 
-      // Vérifier si l'utilisateur existe déjà dans la base de données
       const database = client.db('MyAICrush');
       const usersCollection = database.collection('users');
 
@@ -4468,10 +4501,12 @@ async function supportLookupUser(email) {
   const database = client.db("MyAICrush");
   const users = database.collection("users");
 
-  let user = await users.findOne(
-    { email: normalizedEmail },
-    { projection: { password: 0 } }
-  );
+  const allCaseVariants = await users
+    .find({ email: { $regex: `^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } }, { projection: { password: 0 } })
+    .toArray();
+
+  let user = allCaseVariants.find((u) => u.email === normalizedEmail) || allCaseVariants[0] || null;
+  const duplicateAccounts = allCaseVariants.length > 1 ? allCaseVariants.map((u) => ({ email: u.email, createdAt: u.createdAt, isPremium: u.explodelyPremium === true, tokens: u.creditsPurchased || 0 })) : null;
 
   if (!user) {
     const localPart = normalizedEmail.split("@")[0];
@@ -4489,6 +4524,15 @@ async function supportLookupUser(email) {
       };
     }
     return { found: false, message: `No account found for "${normalizedEmail}"`, suggestions: [] };
+  }
+
+  if (duplicateAccounts) {
+    const bestAccount = allCaseVariants.reduce((best, curr) => {
+      const bestScore = (best.explodelyPremium ? 10 : 0) + (best.creditsPurchased || 0) + (Array.isArray(best.unlockedContents) ? best.unlockedContents.length : 0);
+      const currScore = (curr.explodelyPremium ? 10 : 0) + (curr.creditsPurchased || 0) + (Array.isArray(curr.unlockedContents) ? curr.unlockedContents.length : 0);
+      return currScore > bestScore ? curr : best;
+    });
+    user = bestAccount;
   }
 
   const isPremiumInDb = user.explodelyPremium === true;
@@ -4538,6 +4582,7 @@ async function supportLookupUser(email) {
     stripeInfo,
     hasPassword: !!user.password,
     accountSource: user.accountSource || "signup",
+    duplicateAccounts,
     premiumUsageEvidence: {
       unlockedContentsCount: unlockedContents.length,
       nymphoUnlockedCharacters: nymphoUnlocked,
@@ -5155,6 +5200,55 @@ async function supportCreditTokens(email, amount, reason) {
   };
 }
 
+async function supportSendPasswordReset(email, lang) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const detectedLang = String(lang || "en").toLowerCase();
+
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  const allCaseVariants = await users
+    .find({ email: { $regex: `^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } }, { projection: { email: 1, password: 1 } })
+    .toArray();
+
+  if (allCaseVariants.length === 0) {
+    return { success: false, error: `No account found for ${normalizedEmail}. Cannot send password reset.` };
+  }
+
+  const user = allCaseVariants.find((u) => !!u.password) || allCaseVariants[0];
+
+  if (!user.password) {
+    return { success: false, error: `Account ${user.email} was created via Google login (no password set). The user should log in with Google instead. No reset email needed.` };
+  }
+
+  const token = require("crypto").randomBytes(20).toString("hex");
+  const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  await users.updateOne({ _id: user._id }, { $set: { resetToken: token, resetTokenExpires: expiration } });
+
+  const resetUrl = `${BASE_URL}/reset-password-oneshot.html?email=${encodeURIComponent(user.email)}&token=${token}`;
+
+  try {
+    await sendResetEmail(user.email, resetUrl, detectedLang);
+  } catch (smtpErr) {
+    console.error("SMTP error in supportSendPasswordReset:", smtpErr.message);
+    return {
+      success: false,
+      error: `Email could not be sent (SMTP error). Tell the user to go to ${BASE_URL}/forgot-password.html to request a password reset manually, or contact contact@myaicrush.ai.`,
+      fallbackUrl: `${BASE_URL}/forgot-password.html`,
+    };
+  }
+
+  const supportLogs = database.collection("support_logs");
+  await supportLogs.insertOne({ action: "password_reset_sent", email: user.email, sentBy: "juliette", sentAt: new Date() });
+
+  return {
+    success: true,
+    emailSentTo: user.email,
+    message: `Password reset email sent to ${user.email} (${detectedLang.startsWith("fr") ? "FR" : "EN"} version). The link is valid for 24 hours.`,
+  };
+}
+
 async function supportSearchCustomer(query) {
   const q = String(query).trim().toLowerCase();
   const database = client.db("MyAICrush");
@@ -5349,6 +5443,21 @@ const SUPPORT_TOOLS = [
           query: { type: "string", description: "Email (even with typos), partial email (e.g. 'jacques.maio'), or order number (e.g. '46281643')" },
         },
         required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_password_reset",
+      description: "Send a password reset email to the user. The email contains a secure link valid for 24 hours. Detects if account uses Google login (no password) and warns accordingly. Use when a user says they forgot their password or can't log in.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "User email to send reset link to" },
+          lang: { type: "string", description: "Language for the email: 'fr' for French, 'en' for English. Detect from user's message language." },
+        },
+        required: ["email"],
       },
     },
   },
@@ -5586,6 +5695,16 @@ TOKENS:
 - If user wants a token REFUND → follow the REFUND POLICY RETENTION FLOW above.
 - If user's name is known but not their email, try search_customer with their name — it searches email addresses containing parts of their name.
 
+DUPLICATE ACCOUNTS (same email, different letter case) — ALWAYS MENTION IF DETECTED:
+The lookup_user tool detects when multiple accounts exist with the same email but different letter casing (e.g. "CamSlut@gmx.com" and "camslut@gmx.com"). When duplicateAccounts is NOT null in the result, this is VERY LIKELY the cause of the user's problem (blurry images, missing tokens, premium not working). You MUST ALWAYS mention this in your reply when detected. The tool returns data from the BEST account (the one with premium/tokens/activity).
+MANDATORY when duplicateAccounts is detected:
+1. FIRST explain the duplicate situation clearly: "I found that you have two accounts with slightly different email formats: [email1] and [email2]."
+2. Tell them which account has their premium and tokens, and that they should LOG IN using that specific email.
+3. The other account is empty — that's why they see blurry images or missing features.
+4. Steps: log out → log back in using the correct email (the one with premium/tokens).
+5. Keep it reassuring: their data is safe, they just need to use the right email.
+6. Do NOT skip this even if the "best" account looks fine — the user is probably logged into the WRONG one, which is why they contacted support!
+
 MISSING TOKENS — DIG DEEPER BEFORE GIVING UP:
 When a user says they bought tokens but check_tokens shows 0 balance and no purchases:
 1. Check the hasPassword field from lookup_user. If hasPassword=false, the account was created automatically by a payment webhook — the user likely logs in with a DIFFERENT email. Tell them: "It looks like this account was created automatically when you made a purchase. Do you perhaps log in with a different email address?"
@@ -5600,7 +5719,10 @@ INFORMATIONAL ANSWERS (no tools needed):
 - No native mobile app, but website is fully mobile-optimized.
 - Audio calls are currently unavailable.
 - Privacy: no data sold, conversations stored for moderation only.
-- Forgot password: go to myaicrush.ai/profile.html → "Forgot password" link.`;
+- Forgot password: You can DIRECTLY send a password reset email using the send_password_reset tool. No need to redirect the user to any page. Just ask for their email, detect their language (fr/en), and send the reset. The user will receive an email with a secure link valid for 24 hours.
+  - If the account was created via Google login (no password), the tool will tell you — in that case, instruct the user to log in with Google instead.
+  - If the user has duplicate accounts (different case), the tool picks the one with a password.
+  - Always confirm to the user that the email was sent and ask them to check their inbox (and spam folder).`;
 
 // --- Support chat security: only act on identities the customer has tied to this thread ---
 
@@ -5729,6 +5851,7 @@ async function executeSupportTool(name, args, securityCtx) {
     case "check_tokens": return await supportCheckTokens(args.email);
     case "credit_tokens": return await supportCreditTokens(args.email, args.amount, args.reason);
     case "search_customer": return await supportSearchCustomer(args.query);
+    case "send_password_reset": return await supportSendPasswordReset(args.email, args.lang);
     default: return { error: `Unknown tool: ${name}` };
   }
 }
