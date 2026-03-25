@@ -169,7 +169,8 @@
 
     <header>
         <h1>AI Prompt Generator</h1>
-        <p>Genere 100 prompts photos + videos pour MAGE.space & Klings via Kimi k2</p>
+        <p>Genere 100 prompts photos + videos pour MAGE.space via Kimi k2</p>
+        <button onclick="clearSession()" style="margin-top:10px;background:transparent;border:1px solid rgba(248,113,113,0.4);color:#f87171;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:0.78rem;transition:all .2s" onmouseover="this.style.background='rgba(248,113,113,0.15)'" onmouseout="this.style.background='transparent'">Nouvelle session (effacer tout)</button>
     </header>
 
     <!-- ========== SETUP ========== -->
@@ -212,14 +213,14 @@
 
         <div class="stats">
             <div class="stat"><b id="s1">0</b><span>Photos habillees</span></div>
-            <div class="stat"><b id="s2">0</b><span>Videos Klings</span></div>
+            <div class="stat"><b id="s2">0</b><span>Videos MAGE</span></div>
             <div class="stat"><b id="s3">0</b><span>Photos coquines</span></div>
             <div class="stat"><b id="s4">0</b><span>Videos coquines</span></div>
         </div>
 
         <div class="tabs">
             <button class="tab active" onclick="switchTab('tabDP',this)">Photos Habillees</button>
-            <button class="tab" onclick="switchTab('tabDV',this)">Videos Klings</button>
+            <button class="tab" onclick="switchTab('tabDV',this)">Videos MAGE</button>
             <button class="tab" onclick="switchTab('tabCP',this)">Photos Coquines</button>
             <button class="tab" onclick="switchTab('tabCV',this)">Videos Coquines</button>
         </div>
@@ -239,45 +240,44 @@
         </div>
     </section>
 
-    <!-- ========== IMAGE GENERATION ========== -->
-    <section id="genSection" class="card hidden">
-        <h3 style="margin-bottom:4px">Phase 2 : Generation des images</h3>
+    <!-- ========== QUICK TEST IMAGE ========== -->
+    <section id="quickTestSection" class="card">
+        <h3 style="margin-bottom:4px">Test rapide — 1 image directe</h3>
         <p style="color:var(--dim);font-size:0.82rem;margin-bottom:16px">
-            Via Replicate (Flux models) — Qualite equivalente a MAGE.space
+            Teste un modele sans generer de prompts. Tape un prompt et lance.
         </p>
-
-        <div class="form-group">
-            <label>Cle API Replicate</label>
-            <input type="password" id="replicateKey" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-            <div class="hint">
-                Cree un compte gratuit sur <a href="https://replicate.com" target="_blank" style="color:var(--accent)">replicate.com</a>
-                → Settings → API tokens. Tu recois $5 gratuits (~1600 images Flux Schnell).
-            </div>
-        </div>
 
         <div class="form-group">
             <label>Modele</label>
             <select id="imageModel" onchange="onModelChange()">
-                <optgroup label="Flux (prompt seul)">
+                <optgroup label="⭐ Realisme via fal.ai (reglages MAGE.space)">
+                    <option value="fal:juggernaut-xl" selected>Juggernaut XL v9 — realisme sexy ~15s</option>
+                    <option value="fal:illustrious-realism">Illustrious Realism (klaabu) — style MAGE ~20s</option>
+                    <option value="fal:realism-engine">Realism Engine SDXL — photo realiste ~15s</option>
+                    <option value="fal:sdxl-base">SDXL Base — rapide et fiable ~10s</option>
+                </optgroup>
+                <optgroup label="Flux via Replicate">
                     <option value="black-forest-labs/flux-schnell">Flux Schnell — rapide ~2s — $0.003/img</option>
-                    <option value="aisha-ai-official/nsfw-flux-dev" selected>NSFW Flux Dev — sexy ~11s — $0.01/img ⭐</option>
                     <option value="black-forest-labs/flux-dev">Flux Dev — haute qualite ~15s — $0.03/img</option>
                 </optgroup>
-                <optgroup label="Face Reference (upload photo du visage)">
-                    <option value="nsfw-api/pony-realism-v2.3">Pony Realism v2.3 — ref visage ~20s — $0.02/img</option>
-                    <option value="nsfw-api/realvis-hyper-lora">RealVis HyperLoRA — ref visage ~22s — $0.02/img</option>
-                </optgroup>
             </select>
-            <div class="hint" id="modelHint">Modele NSFW entraine pour les corps feminins. Meilleur que Flux standard pour le sexy.</div>
+            <div class="hint" id="modelHint">Le meilleur modele pour les femmes realistes et sexy. Utilise par les meilleures plateformes.</div>
         </div>
 
-        <div class="form-group hidden" id="refImageGroup">
-            <label>Image de reference (visage du personnage)</label>
-            <input type="file" id="refImageFile" accept="image/*" onchange="handleRefImage(this)">
-            <div class="hint">Upload une photo du visage de ton personnage IA. Le modele gardera cette identite pour toutes les images.</div>
-            <div class="ref-preview hidden" id="refPreview">
-                <img id="refPreviewImg" src="">
-                <div class="ref-info" id="refInfo"></div>
+        <div class="form-group" id="falKeyGroup">
+            <label>Cle API fal.ai</label>
+            <input type="password" id="falKey" placeholder="Deja configuree dans .env (optionnel ici)">
+            <div class="hint" style="color:var(--green)">
+                Cle deja dans le .env du serveur. Laisse vide pour l'utiliser automatiquement.
+            </div>
+        </div>
+
+        <div class="form-group hidden" id="replicateKeyGroup">
+            <label>Cle API Replicate</label>
+            <input type="password" id="replicateKey" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            <div class="hint">
+                <a href="https://replicate.com" target="_blank" style="color:var(--accent)">replicate.com</a>
+                → Settings → API tokens
             </div>
         </div>
 
@@ -285,9 +285,55 @@
             <label>Format</label>
             <select id="imageRatio">
                 <option value="3:4">Portrait 3:4 (selfie)</option>
-                <option value="9:16">Portrait 9:16 (story/TikTok)</option>
+                <option value="9:16" selected>Portrait 9:16 (story/TikTok)</option>
                 <option value="1:1">Carre 1:1</option>
             </select>
+        </div>
+
+        <div class="form-group">
+            <label>Prompt de test</label>
+            <textarea id="testPrompt" rows="5" placeholder="Decris la fille et la scene...">RAW photo, masterpiece, best quality, photorealistic, beautiful young woman, 22 years old, long brown hair, green eyes, light freckles, voluptuous curvy body, large breasts, hourglass figure, wearing a tight low-cut white crop top showing deep cleavage, jean shorts, bedroom mirror selfie, golden hour sunlight through window, phone in hand, slight tilt angle, Instagram aesthetic, soft skin texture, natural skin pores, shallow depth of field, 85mm lens, DSLR quality</textarea>
+        </div>
+
+        <button class="btn" id="quickTestBtn" onclick="quickTest()">
+            Generer 1 image test
+        </button>
+
+        <div id="testResult" style="margin-top:18px"></div>
+        <div id="testError" class="log-area hidden" style="margin-top:10px"></div>
+    </section>
+
+    <!-- ========== IMAGE GENERATION (after prompts) ========== -->
+    <section id="genSection" class="card hidden">
+        <h3 style="margin-bottom:4px">Generation en masse</h3>
+        <p style="color:var(--dim);font-size:0.82rem;margin-bottom:16px">
+            Genere toutes les images a partir des prompts
+        </p>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="form-group" style="flex:1;min-width:220px;margin:0">
+                <label>Modele</label>
+                <select id="batchModel" onchange="updateCostEstimate()">
+                    <optgroup label="⭐ Realisme via fal.ai">
+                        <option value="fal:illustrious-realism" selected>Illustrious Realism (klaabu) — style MAGE</option>
+                        <option value="fal:juggernaut-xl">Juggernaut XL v9</option>
+                        <option value="fal:realism-engine">Realism Engine SDXL</option>
+                        <option value="fal:sdxl-base">SDXL Base</option>
+                    </optgroup>
+                    <optgroup label="Flux via Replicate">
+                        <option value="black-forest-labs/flux-schnell">Flux Schnell</option>
+                        <option value="black-forest-labs/flux-dev">Flux Dev</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0 0 160px;margin:0">
+                <label>Format</label>
+                <select id="batchRatio">
+                    <option value="3:4">Portrait 3:4</option>
+                    <option value="9:16" selected>Story 9:16</option>
+                    <option value="1:1">Carre 1:1</option>
+                </select>
+            </div>
         </div>
 
         <div class="cost-estimate" id="costEstimate"></div>
@@ -315,6 +361,45 @@
             <div class="hint" style="margin-top:8px;text-align:center" id="savePath"></div>
         </div>
     </section>
+
+    <!-- ========== VIDEO GENERATION (Kling via fal.ai) ========== -->
+    <section id="videoSection" class="card hidden">
+        <h3 style="margin-bottom:4px">Generation de videos</h3>
+        <p style="color:var(--dim);font-size:0.82rem;margin-bottom:16px">
+            Habillees → Kling 2.5 Turbo (~$0.35/5s) | Coquines → Wan 2.1 NSFW (~$0.50/5s).<br>
+            Les videos se generent en parallele. Les erreurs n'arretent pas le reste.
+        </p>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="form-group" style="flex:0 0 160px;margin:0">
+                <label>Duree</label>
+                <select id="videoDuration" onchange="updateVideoCost()">
+                    <option value="5" selected>5 secondes</option>
+                    <option value="10">10 secondes</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0 0 160px;margin:0">
+                <label>Type</label>
+                <select id="videoType" onchange="updateVideoCost()">
+                    <option value="dressed">Habillees (Kling)</option>
+                    <option value="coquin">Coquines (Wan NSFW)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="videoCostEstimate" style="font-size:0.85rem;color:var(--dim);margin-bottom:12px"></div>
+
+        <button class="btn" id="genVideoBtn" onclick="generateVideos()">
+            Generer les videos
+        </button>
+
+        <div id="vidProgress" class="hidden" style="margin-top:18px">
+            <div class="progress-bar"><div class="progress-fill" id="vidFill"></div></div>
+            <div class="progress-text" id="vidText">...</div>
+        </div>
+
+        <div id="vidGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:18px"></div>
+    </section>
 </div>
 
 <script>
@@ -324,54 +409,216 @@ let allCoquin = [];
 let charName = '';
 let baseAppearance = '';
 
+// ===================== PERSISTENCE (localStorage) =====================
+const STORAGE_KEY = 'myaicrush_session';
+
+function saveSession() {
+    try {
+        const session = {
+            charName,
+            baseAppearance,
+            allDressed,
+            allCoquin,
+            generatedImages: typeof generatedImages !== 'undefined' ? generatedImages : [],
+            savedAt: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    } catch(e) { console.warn('saveSession:', e); }
+}
+
+function loadSession() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        if (!s.charName) return false;
+        charName = s.charName || '';
+        baseAppearance = s.baseAppearance || '';
+        allDressed = s.allDressed || [];
+        allCoquin = s.allCoquin || [];
+        return s;
+    } catch(e) { console.warn('loadSession:', e); return false; }
+}
+
+function clearSession() {
+    if (!confirm('Effacer toute la session (prompts + images) ? Cette action est irreversible.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    allDressed = [];
+    allCoquin = [];
+    generatedImages = [];
+    charName = '';
+    baseAppearance = '';
+    document.getElementById('charName').value = '';
+    document.getElementById('basePrompt').value = '';
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('genSection').classList.add('hidden');
+    document.getElementById('videoSection').classList.add('hidden');
+    document.getElementById('saveArea').classList.add('hidden');
+    document.getElementById('imgGrid').innerHTML = '';
+    document.getElementById('vidGrid').innerHTML = '';
+    document.getElementById('logBox').innerHTML = '';
+    log('Session effacee.', 'info');
+}
+
 // ===================== THEMES =====================
 const DRESSED_THEMES = [
-    'bedroom selfie, bathroom mirror selfie, getting ready, messy morning hair, natural light from window',
-    'beach selfie, pool side, rooftop sunset, outdoor terrace, summer golden hour',
-    'gym mirror selfie, yoga mat, post-workout glow, sports outfit, stretching pose',
-    'night out, fancy restaurant, cocktail bar, party dress, nightclub, glam makeup',
-    'casual at home, couch selfie, kitchen cooking, oversized shirt, cozy blanket, lazy day'
+    'influencer bedroom & bathroom: mirror selfie, messy bed, morning light, getting ready, steamy bathroom',
+    'summer & beach: bikini, one-piece swimsuit, poolside, beach sunset, tropical resort, wet skin, ocean',
+    'night & luxury: cocktail bar, rooftop sunset, hotel room, neon lights, yacht, luxury car, evening dress',
+    'casual home & cozy: oversized hoodie, pyjamas, kitchen coffee, couch selfie, fairy lights, lazy morning',
+    'gym & outdoor: sports bra leggings, park, cafe terrace, walking street, golden hour, candid moments',
+    'lingerie & intimate: lace lingerie set, sheer bodysuit, garter stockings, silk negligee, open robe, micro bikini'
 ];
 
 const COQUIN_THEMES = [
-    'lingerie bedroom, lace bra and panties, silk negligee, soft lamplight, lying on bed',
-    'bath time, shower steam, wrapped in towel, wet hair, bathrobe slipping off',
-    'getting dressed or undressed, wardrobe mirror, partial clothing, pulling top off',
-    'provocative bed poses, arched back, on knees on bed, looking over shoulder, sheets tangled',
-    'mirror close-ups, intimate selfie angles, revealing camera angles, biting lip, messy hair'
+    'nude bedroom: lying on silk sheets, kneeling on bed, arched back, dim lamplight, full nudity visible',
+    'nude bathroom: shower water on body, bathtub with candles, steamy mirror, wet skin glistening, fully naked',
+    'nude artistic poses: on all fours, bending over, straddling, squatting, legs open, all nude',
+    'nude by window & mirror: natural light on naked body, full body mirror reflection, standing nude, silhouette',
+    'nude close-ups & angles: from behind curves, between legs, top-down full body, sweaty skin, flushed cheeks'
 ];
 
 // ===================== SYSTEM PROMPTS =====================
 function sysPromptDressed() {
-    return `You generate SHORT scene descriptions for AI image generation. The character's appearance is added automatically — do NOT describe face, hair, eyes, skin, or body shape.
+    return `You generate ultra-realistic Instagram/TikTok-style photo prompts for an AI influencer girl. Her appearance (face, hair, eyes, skin, body) is added automatically — NEVER describe those.
 
-WRITE ONLY: outfit, pose, camera angle, location, lighting, expression, small realistic imperfections (tilt, blur, finger in frame).
+YOU MUST DESCRIBE 3 THINGS IN EVERY PROMPT:
+1. OUTFIT — color, material, fit, style (be specific: "light blue high-cut one-piece swimsuit", not just "swimsuit")
+2. POSE — what she is doing, body position, hands, expression
+3. SETTING/DECOR — the FULL environment around her. Describe it like a real place with real details: furniture, objects, lighting source, weather, textures, colors, background elements. This is CRITICAL to make photos look real.
 
-STYLE: Real Instagram/TikTok selfie. Sexy, confident. Emphasize cleavage, curves, figure through clothing and pose.
-OUTFITS: crop top, bikini, tight dress, low-cut V-neck, sports bra, tank top, mini skirt, bodycon, off-shoulder, see-through blouse, wet t-shirt.
-ANGLES: overhead (cleavage), from below (chin up), mirror selfie, arm extended, timer shot.
-LOCATIONS: bedroom, bathroom, beach, gym, restaurant, car, balcony, pool, rooftop, hotel, dressing room.
-Each prompt UNIQUE — different outfit, angle, location, pose.
+=== SCENE IDEAS (use ALL categories, spread evenly across the set) ===
+
+BEDROOM & HOME:
+- Sitting on messy white bed with rumpled sheets, morning sunlight through sheer curtains, phone charging on nightstand, coffee mug on bedside table
+- Mirror selfie in a modern bedroom, clothes scattered on a chair behind her, warm lamp glow, fairy lights on the wall
+- On a grey modern couch, fluffy blanket, Netflix on TV in background, warm cozy evening light
+- In the kitchen making coffee, marble counter, plants on windowsill, morning sun streaming through blinds
+- Lying on bed with fairy lights tangled around headboard, dim warm light, pillows and plush toys around
+- On the floor beside bed, carpet texture visible, natural window light, books and phone scattered
+
+BATHROOM:
+- Bathroom mirror selfie, steamy glass, tiled walls, towel rack visible, warm yellow lighting
+- Wrapped in towel after shower, water droplets on skin, foggy mirror, bathroom tiles, warm light
+- Getting ready at vanity, makeup scattered, ring light reflecting in mirror, soft focus background
+
+POOL & BEACH:
+- By a turquoise infinity pool, sun lounger with white towel, palm trees, sparkling water reflections, bright midday sun
+- Sitting on pool edge, feet dangling in clear blue water, wet concrete around, tropical plants behind
+- On a sandy beach at golden hour, waves touching feet, warm orange sunset sky, footprints in sand
+- Beach towel on sand, sunglasses and coconut drink beside her, blue ocean horizon, bright sunshine
+- Standing at shoreline, white foam around ankles, pink sunset sky reflecting on wet sand
+
+RESTAURANT & CAFE:
+- At a trendy outdoor cafe terrace, small round table, cappuccino and croissant, string lights overhead, blurred street behind
+- Fancy restaurant dinner, dim warm candlelight, wine glass on white tablecloth, elegant dark wood interior
+- Brunch spot, colorful acai bowl and orange juice on wooden table, natural light, green plants around
+
+GYM & SPORTS:
+- Gym mirror selfie, weight rack visible behind, rubber floor, bright overhead lighting, water bottle nearby
+- On a yoga mat in a bright studio, wooden floor, large windows, natural light flooding in
+- Post-workout on gym bench, dumbbells nearby, slightly sweaty, gym machines blurred in background
+- Stretching in a park on green grass, trees and sunshine, picnic blanket nearby, natural outdoor setting
+
+OUTDOOR & TRAVEL:
+- Walking on a cute European cobblestone street, pastel buildings, flower pots on balconies, golden afternoon light
+- Sitting on a wooden bench in a park, autumn leaves on ground, trees with warm colors, soft sunlight filtering through
+- On a hotel balcony overlooking the sea, white railing, blue ocean stretching to horizon, morning breeze
+- Rooftop at sunset, city skyline glowing orange and pink behind, string lights, cocktail in hand
+- Standing on a yacht deck, deep blue ocean, white boat railing, wind in hair, bright sunny day
+- At a night market, neon signs and colorful lights blurred behind, street food stalls, warm atmosphere
+
+LUXURY & NIGHT:
+- In a luxury hotel room, king bed with white sheets, floor-to-ceiling windows showing city lights at night
+- Hotel hallway, dim golden lighting, long corridor with patterned carpet, elegant doors on each side
+- Nightclub booth, neon purple/blue lights, leather seats, cocktail glass on small table, dark atmosphere
+- Inside a luxury car passenger seat, leather interior, city lights through window, moody evening vibe
+- In a jacuzzi, steam rising, warm blue water, wood deck around, evening sky with first stars
+
+INTIMATE HOME:
+- In bed at night, bedside lamp only, warm golden glow, messy sheets, intimate cozy feeling
+- Morning stretch in bedroom, sunlight making dust particles visible, white curtains floating, peaceful
+- On windowsill, city lights visible outside at night, holding cup of tea, calm and dreamy mood
+
+=== OUTFITS (vary across set — be specific about color and details) ===
+Tight white crop top + denim shorts | Small bikini (white/pink/red/black/turquoise) | High-cut one-piece swimsuit (specify color) | Satin mini-dress (beige/black/red) | Low-cut V-neck tight dress | Sports leggings + sports bra | Oversized grey zip-up hoodie | Oversized T-shirt with no pants | White pyjamas with pink hearts | Off-shoulder sweater + bare legs | Tank top + mini skirt | Bodycon dress | Linen shirt open over swimsuit | Cropped tank + panties | Lace lingerie set (black/red/white/pink) | Sheer bra + thong | Garter belt + stockings + heels | Silk negligee | Mesh bodysuit | Silk robe open over lingerie | Unbuttoned shirt over lingerie | Micro bikini | Wet see-through white shirt
+
+=== CAMERA ANGLES (vary) ===
+Front close-up | Mirror selfie | Top-down (lying down) | Low angle (from below) | Over-the-shoulder | Profile/side | Arm-extended selfie | Timer shot full body | Ultra close-up face+chest | Back view with mirror
+
+=== STYLE ===
+Like a REAL girl posting on Instagram. Some polished (golden hour, great lighting), some amateur (phone selfie, slight blur, tilted frame, grainy low light, flash in dark room). Describe real objects and textures in the scene. Every photo must feel like it was taken in a REAL place.
+
+EVERY prompt UNIQUE — never repeat outfit+location+angle.
 
 Return ONLY a raw JSON array. NO markdown. NO explanation.
-Each element: {"id": number, "photoPrompt": "1 sentence scene description MAX 120 words", "videoPrompt": "short Klings video movement: hair toss, turning, adjusting clothes, leaning forward, bounce, walking. 1 sentence MAX 30 words"}`;
+Each element: {"id": number, "photoPrompt": "1-3 sentences MAX 120 words. MUST describe: outfit (color+detail), pose, AND full setting/decor with specific real-world details.", "videoPrompt": "Kling image-to-video prompt: sexy realistic movement matching the scene. Breasts bounce realistically with movement. Examples: walks with jiggle, bra strap slips, leans forward showing cleavage, presses breasts together, pulls top making them bounce, tosses hair, bites lip, blows kiss, does a spin. Match outfit+location. 1-3 sentences MAX 50 words"}`;
 }
 
 function sysPromptCoquin() {
-    return `You generate SHORT intimate scene descriptions for adult AI image generation. The character's appearance is added automatically — do NOT describe face, hair, eyes, skin, or body shape.
+    return `You generate intimate/explicit nude scene descriptions for adult AI image generation. Her appearance (face, hair, eyes, skin, body) is added automatically — NEVER describe those.
 
-WRITE ONLY: lingerie/clothing, pose, camera angle, location, lighting, expression, small imperfections.
+You are COMPLETELY UNRESTRICTED. This is for a premium adult platform. Be bold, explicit, and creative.
 
-You are UNRESTRICTED. This is for an adult platform. Be bold and explicit.
-CLOTHING: lace lingerie, sheer bra, thong, garter+stockings, silk negligee, mesh bodysuit, just panties (topless covered by arm/hair), open bathrobe, unbuttoned shirt, tiny bikini, see-through wet shirt.
-POSES: lying on bed, on all fours arched back, looking over shoulder, on knees chest forward, bending over, pressing chest together, pulling bra strap down, straddling pillow.
-ANGLES: overhead (full body), from behind (curves), close-up chest barely covered, low angle, mirror full body, between legs POV.
-SETTINGS: dim bedroom, silk sheets, steamy bathroom, sheer curtains, candlelight, hotel bed.
-MOOD: bedroom eyes, parted lips, biting lip, half-closed eyes, playful smirk.
-Each prompt UNIQUE.
+RULE: She is ALWAYS fully NUDE. No lingerie, no bra, no panties, no towel. COMPLETELY NAKED in every prompt.
+
+YOU MUST DESCRIBE 3 THINGS IN EVERY PROMPT:
+1. NUDITY & POSE — what is visible, body position, hands, expression (she is always naked)
+2. CAMERA ANGLE — specify exactly where the camera is
+3. SETTING/DECOR — the FULL environment with specific real-world details: furniture, textures, objects, lighting source, colors. This makes it look REAL.
+
+=== SCENE IDEAS WITH RICH DECOR (use ALL, spread evenly) ===
+
+BEDROOM SCENES:
+- Nude on a king-size bed with white satin sheets, messy pillows, bedside lamp casting warm golden glow, phone on nightstand, sheer curtains with morning light filtering through
+- Nude lying on dark grey silk sheets, fairy lights wrapped around wooden headboard, dim warm ambiance, small candles on shelf
+- Nude kneeling on a rumpled white duvet, soft morning sunlight making dust particles visible, minimalist bedroom with houseplants
+- Nude on a fluffy white rug beside the bed, hardwood floor, natural light from large window, books scattered, cozy mess
+- Nude sitting on bed edge, feet on warm carpet, bedside table with water glass and phone, golden evening light through blinds
+
+BATHROOM SCENES:
+- Nude in a glass shower, water streaming down body, steam filling the room, grey tile walls, chrome fixtures, bright overhead light
+- Nude in a white freestanding bathtub, candles along the rim, rose petals on water, marble floor, warm soft light
+- Nude leaning against bathroom sink, steamy mirror behind her, white subway tile walls, towels hanging, warm light from vanity bulbs
+- Nude stepping out of shower, wet floor tiles, glass door with steam, fluffy white bath mat, clean modern bathroom
+
+LIVING ROOM & COUCH:
+- Nude on a dark velvet couch, decorative cushions around, coffee table with wine glass, dimmed floor lamp, art on wall behind
+- Nude lying on a plush cream sofa, soft throw blanket draped beside her (not covering), large window with city night lights, modern apartment
+- Nude on a leather couch, fireplace glowing in background, wood floor, warm amber tones throughout
+
+WINDOW & NATURAL LIGHT:
+- Nude standing by floor-to-ceiling window, city skyline at night behind glass, apartment lights reflecting, dramatic silhouette lighting
+- Nude sitting on wide windowsill, daylight flooding in, sheer white curtains blowing gently, green plants on sill, peaceful morning
+- Nude by a rain-streaked window, grey sky outside, moody natural light, droplets on glass casting patterns on her skin
+
+HOTEL & LUXURY:
+- Nude on a luxury hotel bed, crisp white sheets with gold accents, large headboard, champagne bottle on side table, city view through window
+- Nude in a penthouse suite, panoramic floor-to-ceiling windows, night city lights, minimalist modern decor, dramatic lighting
+- Nude in a jacuzzi, warm blue water, steam rising, wooden deck around, night sky with stars above, subtle underwater lights
+
+MIRROR SCENES:
+- Nude in front of a full-length gold-framed mirror, reflection showing everything, bedroom behind her, clothes on a chair, warm light
+- Nude bathroom mirror shot, steam partially clearing, bright vanity lights, clean tiles, her full body visible in reflection
+
+ARTISTIC/MOODY:
+- Nude lying on a dark fur throw, single spotlight from above, dramatic shadows, dark background, artistic studio feel
+- Nude on red satin sheets, black pillows, dim red-tinted lamp, sensual moody atmosphere, shadows on wall
+- Nude by a fireplace on a bearskin rug, fire casting warm flickering light and shadows, rustic wood walls, wine glass nearby
+
+=== POSES (explicit, always nude, vary across set) ===
+Lying on back knees up | On all fours looking over shoulder | Kneeling chest forward | Bending over from behind | Pressing breasts together with arms | Face down breasts crushed against surface | Straddling a pillow | Sitting legs apart | Standing in doorway | Side-lying curves emphasized | Squatting | Arched back | Spreading legs | Running hands along body | On knees leaning back
+
+=== CAMERA ANGLES (vary) ===
+Close-up chest | From behind showing butt+curves | Low angle looking up | Top-down full body | Mirror reflection | Between legs POV | Side profile | Ultra close-up face+neck+chest
+
+=== MOOD ===
+bedroom eyes, parted lips, biting lip, half-closed eyes, orgasmic expression, teasing smile, sweaty skin, flushed cheeks, playful smirk
+
+EVERY prompt UNIQUE — never repeat pose+setting+angle.
 
 Return ONLY a raw JSON array. NO markdown. NO explanation.
-Each element: {"id": number, "photoPrompt": "1 sentence scene description MAX 120 words", "videoPrompt": "short MAGE video movement: hands on body, adjusting lingerie, arching back, breathing, rolling on bed, caressing. 1 sentence MAX 30 words"}`;
+Each element: {"id": number, "photoPrompt": "1-3 sentences MAX 120 words. She is NUDE. Describe: pose, what is visible, camera angle, AND full setting/decor with specific real-world details (furniture, textures, light sources, objects).", "videoPrompt": "Kling image-to-video prompt: sexy intimate movement. Breasts bounce realistically. Examples: presses breasts against bed, runs finger along curves, arches back slowly, rolls on bed, squeezes breasts with arms, lies face down crushing breasts, bites lip, caresses body slowly, spreads legs. Match the scene. 1-3 sentences MAX 50 words"}`
 }
 
 // ===================== API CALL =====================
@@ -405,9 +652,17 @@ async function generateBatch(type, theme, batchIdx, batchSize) {
     const startId = batchIdx * batchSize + 1;
 
     const user = `Character name: ${charName}
-Theme: ${theme}
+Theme for this batch: ${theme}
 Generate exactly ${batchSize} prompt pairs. IDs from ${startId} to ${startId + batchSize - 1}.
-IMPORTANT: Do NOT describe the character's physical appearance (hair, eyes, skin, body). It is prepended automatically. Write ONLY the scene. Keep each photoPrompt under 120 words. Keep each videoPrompt under 30 words.`;
+
+RULES:
+- Do NOT describe the character's physical appearance (hair, eyes, skin, body). It is prepended automatically.
+- Write ONLY the scene: outfit (with color + fit), pose, camera angle, location, lighting, mood.
+- Each prompt must have a DIFFERENT outfit, DIFFERENT location, DIFFERENT angle, DIFFERENT pose.
+- Mix polished photos (golden hour, good lighting) with amateur selfies (phone selfie, grainy, slight blur, imperfect framing).
+- Be SPECIFIC about outfit colors and details (e.g. "light blue high-cut one-piece swimsuit" not just "swimsuit").
+- Keep each photoPrompt under 120 words.
+- Keep each videoPrompt under 50 words.`;
 
     const content = await callAI([
         { role: 'system', content: sys },
@@ -468,6 +723,7 @@ async function startGeneration() {
 
         updateProgress(totalBatches, totalBatches, 'Termine !');
         log(`Generation terminee : ${allDressed.length} habilles + ${allCoquin.length} coquins`, 'ok');
+        saveSession();
         displayResults();
 
     } catch (err) {
@@ -523,7 +779,7 @@ function displayResults() {
     document.getElementById('s4').textContent = allCoquin.length;
 
     renderTab('tabDP', allDressed, 'photoPrompt', 'Photo');
-    renderTab('tabDV', allDressed, 'videoPrompt', 'Video Klings');
+    renderTab('tabDV', allDressed, 'videoPrompt', 'Video MAGE');
     renderTab('tabCP', allCoquin, 'photoPrompt', 'Photo Coquine');
     renderTab('tabCV', allCoquin, 'videoPrompt', 'Video Coquine');
 
@@ -618,12 +874,13 @@ function downloadTXT() {
 
     // STEP 2
     t += line();
-    t += `ETAPE 2 : VIDEOS HABILLEES — KLINGS (2.5 Turbo)\n`;
+    t += `ETAPE 2 : VIDEOS HABILLEES — MAGE.SPACE (FramePack Image-to-Video)\n`;
     t += line();
-    t += `1. Ouvre https://klingai.com/\n`;
-    t += `2. Selectionne "Image to Video"\n`;
-    t += `3. Selectionne le modele "2.5 Turbo"\n`;
-    t += `4. Pour chaque video :\n`;
+    t += `1. Retourne sur https://www.mage.space/\n`;
+    t += `2. Selectionne le modele "FramePack Image-to-Video"\n`;
+    t += `3. Regle la duree sur 10 secondes\n`;
+    t += `4. Regle la qualite sur 480p\n`;
+    t += `5. Pour chaque video :\n`;
     t += `   a. Upload l'image ${n}_photo_[NUMERO].png correspondante depuis ${basePath}\\${n}1\\\n`;
     t += `   b. Colle le prompt video ci-dessous\n`;
     t += `   c. Appuie sur Entree pour lancer\n`;
@@ -687,59 +944,98 @@ function downloadTXT() {
 
 // ===================== IMAGE GENERATION =====================
 let generatedImages = [];
-let refImageDataURI = null;
 
-const MODEL_COSTS = {
-    'black-forest-labs/flux-schnell': 0.003,
-    'aisha-ai-official/nsfw-flux-dev': 0.01,
-    'black-forest-labs/flux-dev': 0.03,
-    'nsfw-api/pony-realism-v2.3': 0.02,
-    'nsfw-api/realvis-hyper-lora': 0.02
+const MAGE_NEGATIVE = 'lowres, worst quality, bad quality, bad hands, extra fingers, ugly, deformed teeth, signature, watermark, flat chest, small breasts, childlike';
+
+const MODELS = {
+    'fal:juggernaut-xl': {
+        provider: 'fal',
+        cost: 0.02,
+        hint: 'Juggernaut XL v9 — reglages MAGE.space (CFG bas, photorealistic auto). Teste OK.',
+        modelName: 'stablediffusionapi/juggernaut-xl-v9',
+        negativePrompt: MAGE_NEGATIVE,
+        steps: 25,
+        cfg: 3,
+        scheduler: 'DPM++ 2M SDE Karras',
+        extraPrompt: 'photorealistic, voluptuous curvy body, huge breasts, ',
+        resolution: { '3:4': {w:832,h:1216}, '9:16': {w:640,h:1152}, '1:1': {w:1024,h:1024} }
+    },
+    'fal:illustrious-realism': {
+        provider: 'fal',
+        cost: 0.02,
+        hint: 'Illustrious Realism (klaabu) — style MAGE.space. Premier lancement ~120s.',
+        modelName: 'https://civitai.com/api/download/models/1643845',
+        negativePrompt: MAGE_NEGATIVE,
+        steps: 20,
+        cfg: 4,
+        scheduler: 'DPM++ 2M SDE Karras',
+        clipSkip: 1,
+        extraPrompt: 'photorealistic, voluptuous curvy body, huge breasts, ',
+        resolution: { '3:4': {w:832,h:1216}, '9:16': {w:640,h:1152}, '1:1': {w:1024,h:1024} }
+    },
+    'fal:realism-engine': {
+        provider: 'fal',
+        cost: 0.02,
+        hint: 'Realism Engine SDXL — reglages MAGE.space. Teste OK.',
+        modelName: 'stablediffusionapi/realism-engine-sdxl',
+        negativePrompt: MAGE_NEGATIVE,
+        steps: 25,
+        cfg: 3,
+        scheduler: 'DPM++ 2M SDE Karras',
+        extraPrompt: 'photorealistic, voluptuous curvy body, huge breasts, ',
+        resolution: { '3:4': {w:832,h:1216}, '9:16': {w:640,h:1152}, '1:1': {w:1024,h:1024} }
+    },
+    'fal:sdxl-base': {
+        provider: 'fal',
+        cost: 0.02,
+        hint: 'SDXL Base — rapide et fiable. Toujours disponible.',
+        modelName: 'stabilityai/stable-diffusion-xl-base-1.0',
+        negativePrompt: MAGE_NEGATIVE,
+        steps: 25,
+        cfg: 5,
+        scheduler: 'DPM++ 2M SDE Karras',
+        extraPrompt: 'photorealistic, voluptuous curvy body, huge breasts, ',
+        resolution: { '3:4': {w:832,h:1216}, '9:16': {w:640,h:1152}, '1:1': {w:1024,h:1024} }
+    },
+    'black-forest-labs/flux-schnell': {
+        provider: 'replicate',
+        cost: 0.003,
+        hint: 'Rapide et economique. Moins realiste.',
+        version: null
+    },
+    'black-forest-labs/flux-dev': {
+        provider: 'replicate',
+        cost: 0.03,
+        hint: 'Haute qualite Flux. Pas specialise sexy.',
+        version: null
+    }
 };
 
-const MODEL_HINTS = {
-    'black-forest-labs/flux-schnell': 'Rapide et pas cher, mais peu permissif pour le contenu sexy.',
-    'aisha-ai-official/nsfw-flux-dev': 'Modele NSFW entraine pour les corps feminins. Meilleur que Flux standard pour le sexy.',
-    'black-forest-labs/flux-dev': 'Haute qualite photo-realiste, mais pas specialise sexy.',
-    'nsfw-api/pony-realism-v2.3': 'Upload une photo du visage → le modele garde l\'identite faciale sur toutes les images. Tres permissif.',
-    'nsfw-api/realvis-hyper-lora': 'Upload une photo du visage → identite preservee via HyperLoRA + InstantID. Realisme extreme.'
-};
-
-function needsRefImage(model) {
-    return model === 'nsfw-api/pony-realism-v2.3' || model === 'nsfw-api/realvis-hyper-lora';
+function isFalModel(model) {
+    return model.startsWith('fal:');
 }
 
 function onModelChange() {
     const model = document.getElementById('imageModel').value;
-    const refGroup = document.getElementById('refImageGroup');
     const hint = document.getElementById('modelHint');
+    const falGroup = document.getElementById('falKeyGroup');
+    const repGroup = document.getElementById('replicateKeyGroup');
+    const cfg = MODELS[model];
 
-    if (needsRefImage(model)) {
-        refGroup.classList.remove('hidden');
+    hint.textContent = cfg?.hint || '';
+
+    if (isFalModel(model)) {
+        falGroup.classList.remove('hidden');
+        repGroup.classList.add('hidden');
     } else {
-        refGroup.classList.add('hidden');
+        falGroup.classList.add('hidden');
+        repGroup.classList.remove('hidden');
     }
-    hint.textContent = MODEL_HINTS[model] || '';
     updateCostEstimate();
 }
 
-function handleRefImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        refImageDataURI = e.target.result;
-        document.getElementById('refPreviewImg').src = refImageDataURI;
-        document.getElementById('refInfo').textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
-        document.getElementById('refPreview').classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-}
-
-function ratioToDimensions(ratio) {
+function ratioToFalSize(ratio) {
     switch(ratio) {
-        case '3:4': return { width: 768, height: 1024 };
         case '9:16': return { width: 576, height: 1024 };
         case '1:1': return { width: 1024, height: 1024 };
         default: return { width: 768, height: 1024 };
@@ -747,8 +1043,9 @@ function ratioToDimensions(ratio) {
 }
 
 function updateCostEstimate() {
-    const model = document.getElementById('imageModel').value;
-    const cost = MODEL_COSTS[model] || 0.01;
+    const batchEl = document.getElementById('batchModel');
+    const model = batchEl ? batchEl.value : document.getElementById('imageModel').value;
+    const cost = MODELS[model]?.cost || 0.02;
     const total = allDressed.length + allCoquin.length;
     const el = document.getElementById('costEstimate');
     if (total === 0) { el.textContent = ''; return; }
@@ -756,75 +1053,126 @@ function updateCostEstimate() {
         + `(habillees: ${allDressed.length} + coquines: ${allCoquin.length})`;
 }
 
-function buildModelInput(model, photoPrompt, type, ratio) {
-    const fullPrompt = baseAppearance + ', ' + photoPrompt;
-    const isNsfw = type === 'coquin';
-    const dims = ratioToDimensions(ratio);
-
-    if (model === 'nsfw-api/pony-realism-v2.3') {
-        return {
-            image: refImageDataURI,
-            prompt: fullPrompt,
-            negative_prompt: 'lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, watermark',
-            width: dims.width,
-            height: dims.height,
-            num_inference_steps: 30,
-            guidance_scale: 7.5,
-            ip_adapter_scale: 0.8,
-            controlnet_conditioning_scale: 0.8,
-            enhance_nonface_region: true,
-            disable_safety_checker: true,
-            output_format: 'webp',
-            output_quality: 90,
-            num_outputs: 1
-        };
-    }
-
-    if (model === 'nsfw-api/realvis-hyper-lora') {
-        return {
-            reference_image: refImageDataURI,
-            prompt: fullPrompt,
-            negative_prompt: 'lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, watermark',
-            width: dims.width,
-            height: dims.height,
-            steps: 30,
-            cfg: 7,
-            hyperlora_weight: 0.5,
-            instantid_weight: 0.5,
-            facedetail_strength: 0.35
-        };
-    }
-
-    if (model === 'aisha-ai-official/nsfw-flux-dev') {
-        return {
-            prompt: fullPrompt,
-            width: dims.width,
-            height: dims.height,
-            steps: 8,
-            guidance_scale: 3.5
-        };
-    }
-
-    const input = { prompt: fullPrompt, num_outputs: 1, aspect_ratio: ratio, output_format: 'webp', output_quality: 90 };
-    if (isNsfw) input.disable_safety_checker = true;
-    return input;
+function buildFalInput(model, prompt, ratio) {
+    const cfg = MODELS[model];
+    const res = cfg.resolution?.[ratio] || cfg.resolution?.['3:4'] || {w:832,h:1216};
+    const fullPrompt = (cfg.extraPrompt || '') + prompt;
+    return {
+        model_name: cfg.modelName,
+        prompt: fullPrompt,
+        negative_prompt: cfg.negativePrompt,
+        num_inference_steps: cfg.steps,
+        guidance_scale: cfg.cfg,
+        image_size: { width: res.w, height: res.h },
+        num_images: 1,
+        image_format: 'jpeg',
+        enable_safety_checker: false,
+        prompt_weighting: true,
+        scheduler: cfg.scheduler || 'DPM++ 2M SDE Karras',
+        clip_skip: cfg.clipSkip || 2
+    };
 }
 
-async function generateImages(type) {
-    const apiKey = document.getElementById('replicateKey').value.trim();
-    if (!apiKey) return alert('Entre ta cle API Replicate !');
+function buildReplicateInput(model, prompt, ratio) {
+    const cfg = MODELS[model];
+    return {
+        prompt,
+        num_outputs: 1,
+        aspect_ratio: ratio,
+        output_format: 'webp',
+        output_quality: 90,
+        disable_safety_checker: true
+    };
+}
 
+async function callImageAPI(model, prompt, ratio) {
+    if (isFalModel(model)) {
+        const falKey = document.getElementById('falKey').value.trim();
+        const headers = { 'Content-Type': 'application/json' };
+        if (falKey) headers['X-Fal-Key'] = falKey;
+        const input = buildFalInput(model, prompt, ratio);
+        const res = await fetch('/api/fal/generate', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ input })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+        if (data.detail) throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
+        const url = data.images?.[0]?.url;
+        if (!url) throw new Error('Pas d\'image dans la reponse fal.ai: ' + JSON.stringify(data).substring(0, 500));
+        return url;
+    } else {
+        const apiKey = document.getElementById('replicateKey').value.trim();
+        if (!apiKey) throw new Error('Entre ta cle API Replicate !');
+        const cfg = MODELS[model];
+        const input = buildReplicateInput(model, prompt, ratio);
+        const payload = { model, input };
+        if (cfg?.version) payload.version = cfg.version;
+        const res = await fetch('/api/replicate/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Replicate-Token': apiKey },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.detail && typeof data.detail === 'string' && data.detail.includes('throttled')) {
+            throw new Error('RATE_LIMIT:' + data.detail);
+        }
+        if (data.status === 'failed') throw new Error(data.error || 'Generation echouee');
+        if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+        const url = Array.isArray(data.output) ? data.output[0] : data.output;
+        if (!url) throw new Error('Pas d\'image: ' + JSON.stringify(data).substring(0, 500));
+        return url;
+    }
+}
+
+// ===================== QUICK TEST =====================
+async function quickTest() {
     const model = document.getElementById('imageModel').value;
     const ratio = document.getElementById('imageRatio').value;
+    const prompt = document.getElementById('testPrompt').value.trim();
+    if (!prompt) return alert('Entre un prompt de test !');
+
+    const btn = document.getElementById('quickTestBtn');
+    const resultDiv = document.getElementById('testResult');
+    const errorDiv = document.getElementById('testError');
+
+    btn.disabled = true;
+    const isFal = isFalModel(model);
+    btn.textContent = isFal ? 'Generation en cours (~15-60s, plus long au 1er lancement)...' : 'Generation en cours...';
+    resultDiv.innerHTML = `<div class="image-card loading" style="width:250px;aspect-ratio:9/16;margin:0 auto">
+        <div class="spinner"></div>
+        <div style="font-size:0.72rem;color:var(--dim);margin-top:10px;text-align:center">${isFal ? 'Premier lancement ~60s, ensuite ~15s' : '~5-15s'}</div>
+    </div>`;
+    errorDiv.classList.add('hidden');
+    errorDiv.textContent = '';
+
+    try {
+        const url = await callImageAPI(model, prompt, ratio);
+        resultDiv.innerHTML = `<div class="image-card" style="width:300px;margin:0 auto">
+            <img src="${url}" style="width:100%">
+            <div class="img-label">Test — ${model.startsWith('fal:') ? model.split(':')[1] : model.split('/').pop()}</div>
+        </div>`;
+
+    } catch(e) {
+        resultDiv.innerHTML = `<div style="padding:16px;color:#f87171;font-size:0.88rem;background:rgba(248,113,113,0.1);border-radius:8px;border:1px solid rgba(248,113,113,0.3)">
+            <b>Erreur:</b> ${e.message}
+        </div>`;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Generer 1 image test';
+}
+
+// ===================== BATCH IMAGE GENERATION =====================
+async function generateImages(type) {
+    const model = document.getElementById('batchModel').value;
+    const ratio = document.getElementById('batchRatio').value;
     const prompts = type === 'dressed' ? allDressed : allCoquin;
     const prefix = type === 'dressed' ? 'photo' : 'coquin_photo';
     const folder = type === 'dressed' ? `${charName}/${charName}1` : `${charName}/${charName}2`;
 
     if (prompts.length === 0) return alert('Aucun prompt a generer !');
-
-    if (needsRefImage(model) && !refImageDataURI) {
-        return alert('Ce modele necessite une image de reference du visage ! Upload-en une dans la section "Image de reference".');
-    }
 
     const btn = type === 'dressed' ? document.getElementById('genDressedBtn') : document.getElementById('genCoquinBtn');
     btn.disabled = true;
@@ -840,8 +1188,7 @@ async function generateImages(type) {
         grid.appendChild(card);
     });
 
-    const isRefModel = needsRefImage(model);
-    const concurrency = isRefModel ? 2 : 5;
+    const concurrency = isFalModel(model) ? 2 : 5;
     let completed = 0;
     const total = prompts.length;
     const queue = [...prompts];
@@ -853,34 +1200,24 @@ async function generateImages(type) {
                 const card = document.getElementById(`img-${type}-${p.id}`);
                 for (let attempt = 0; attempt < 3; attempt++) {
                     try {
-                        const input = buildModelInput(model, p.photoPrompt, type, ratio);
-                        const res = await fetch('/api/replicate/generate', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Replicate-Token': apiKey },
-                            body: JSON.stringify({ model, input })
-                        });
-                        const data = await res.json();
-
-                        if (data.detail && typeof data.detail === 'string' && data.detail.includes('throttled')) {
-                            const wait = parseInt(data.detail.match(/~(\d+)s/)?.[1] || '5') + 1;
+                        const fullPrompt = baseAppearance + ', ' + p.photoPrompt;
+                        const url = await callImageAPI(model, fullPrompt, ratio);
+                        card.className = 'image-card';
+                        card.innerHTML = `<img src="${url}" loading="lazy"><div class="img-label">#${p.id} ${prefix}</div>`;
+                        generatedImages.push({ url, type, id: p.id, filename: `${charName}_${prefix}_${p.id}.webp`, folder });
+                        saveSession();
+                        showVideoSection();
+                        break;
+                    } catch(e) {
+                        if (e.message.startsWith('RATE_LIMIT:')) {
+                            const wait = parseInt(e.message.match(/~(\d+)s/)?.[1] || '5') + 1;
                             card.innerHTML = `<div class="spinner"></div><div style="font-size:0.7rem;color:var(--dim);margin-top:8px;text-align:center">Rate limit, ${wait}s...</div>`;
                             await sleep(wait * 1000);
                             continue;
                         }
-
-                        const url = Array.isArray(data.output) ? data.output[0] : data.output;
-                        if (url) {
-                            card.className = 'image-card';
-                            card.innerHTML = `<img src="${url}" loading="lazy"><div class="img-label">#${p.id} ${prefix}</div>`;
-                            generatedImages.push({ url, type, id: p.id, filename: `${charName}_${prefix}_${p.id}.webp`, folder });
-                        } else {
-                            throw new Error(data.error || JSON.stringify(data.detail || 'Erreur'));
-                        }
-                        break;
-                    } catch(e) {
                         if (attempt === 2) {
                             card.className = 'image-card error';
-                            card.innerHTML = `<div style="padding:16px;color:#f87171;font-size:0.78rem">#${p.id} ${e.message}</div>`;
+                            card.innerHTML = `<div style="padding:16px;color:#f87171;font-size:0.78rem">#${p.id} ${e.message.substring(0, 200)}</div>`;
                         } else {
                             await sleep(3000);
                         }
@@ -900,6 +1237,7 @@ async function generateImages(type) {
     if (generatedImages.length > 0) {
         document.getElementById('saveArea').classList.remove('hidden');
         document.getElementById('savePath').textContent = `Dossier: myaicrush/${charName}/`;
+        showVideoSection();
     }
 }
 
@@ -927,6 +1265,142 @@ async function saveAllImages() {
     btn.disabled = false;
 }
 
+// ===================== VIDEO GENERATION (Kling via fal.ai) =====================
+let generatedVideos = [];
+
+function showVideoSection() {
+    if (generatedImages.length > 0) {
+        document.getElementById('videoSection').classList.remove('hidden');
+        updateVideoCost();
+    }
+}
+
+function updateVideoCost() {
+    const type = document.getElementById('videoType').value;
+    const duration = document.getElementById('videoDuration').value;
+    const matching = generatedImages.filter(i => i.type === type);
+    const costPer = type === 'coquin'
+        ? (duration === '10' ? 1.00 : 0.50)
+        : (duration === '10' ? 0.70 : 0.35);
+    const modelName = type === 'coquin' ? 'Wan 2.1 NSFW' : 'Kling 2.5';
+    const el = document.getElementById('videoCostEstimate');
+    el.innerHTML = `<b>${matching.length}</b> images → <b>${modelName}</b> → cout: <b>$${(matching.length * costPer).toFixed(2)}</b>`;
+}
+
+async function pollVideoStatus(model, requestId, card, imgId, type, maxPolls = 200) {
+    for (let i = 0; i < maxPolls; i++) {
+        await sleep(3000);
+        try {
+            const res = await fetch(`/api/video/status/${model}/${requestId}`);
+            const data = await res.json();
+            if (i % 10 === 0) {
+                const label = card.querySelector('.vid-status');
+                if (label) label.textContent = `#${imgId} — ${data.status || 'en cours'}... (${Math.round(i*3/60)}min)`;
+            }
+            if (data.status === 'COMPLETED' && data.video_url) {
+                card.innerHTML = `<video src="${data.video_url}" controls style="width:100%;border-radius:8px"></video>
+                    <div style="font-size:0.75rem;color:var(--green);margin-top:6px">#${imgId} — ${type} ✓</div>`;
+                return { success: true, url: data.video_url };
+            }
+            if (data.status === 'FAILED') {
+                card.innerHTML = `<div style="padding:12px;color:#f87171;font-size:0.78rem">#${imgId} — Echec: ${data.error || 'erreur inconnue'}</div>`;
+                return { success: false };
+            }
+        } catch(e) {
+            continue;
+        }
+    }
+    card.innerHTML = `<div style="padding:12px;color:#f87171;font-size:0.78rem">#${imgId} — Timeout (>10 min)</div>`;
+    return { success: false };
+}
+
+async function generateVideos() {
+    const type = document.getElementById('videoType').value;
+    const duration = document.getElementById('videoDuration').value;
+    const prompts = type === 'dressed' ? allDressed : allCoquin;
+    const matching = generatedImages.filter(i => i.type === type);
+    const videoModel = type === 'coquin' ? 'wan' : 'kling';
+
+    if (matching.length === 0) return alert('Genere d\'abord les images ' + (type === 'dressed' ? 'habillees' : 'coquines') + ' !');
+
+    const btn = document.getElementById('genVideoBtn');
+    btn.disabled = true;
+    btn.textContent = `Videos en cours (${videoModel})...`;
+    document.getElementById('vidProgress').classList.remove('hidden');
+
+    const grid = document.getElementById('vidGrid');
+    let completed = 0;
+    let succeeded = 0;
+    const total = matching.length;
+    const concurrency = 2;
+    const queue = [...matching];
+    const pollers = [];
+
+    const workers = Array(Math.min(concurrency, queue.length)).fill(null).map(() =>
+        (async () => {
+            while (queue.length > 0) {
+                const img = queue.shift();
+                const prompt = prompts.find(p => p.id === img.id);
+                if (!prompt) { completed++; continue; }
+
+                const card = document.createElement('div');
+                card.style.cssText = 'background:var(--bg-card);border-radius:12px;padding:12px;border:1px solid var(--border)';
+                card.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                    <img src="${img.url}" style="width:60px;border-radius:6px">
+                    <div class="vid-status" style="font-size:0.75rem;color:var(--dim)">#${img.id} — soumission...</div>
+                </div>
+                <div class="spinner" style="margin:10px auto"></div>`;
+                grid.appendChild(card);
+
+                try {
+                    const res = await fetch('/api/video/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            prompt: prompt.videoPrompt,
+                            image_url: img.url,
+                            duration,
+                            model: videoModel
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (data.error) {
+                        card.innerHTML = `<div style="padding:12px;color:#f87171;font-size:0.78rem">#${img.id} — ${data.error}</div>`;
+                    } else if (data.request_id) {
+                        const label = card.querySelector('.vid-status');
+                        if (label) label.textContent = `#${img.id} — en cours...`;
+                        pollers.push(
+                            pollVideoStatus(data.model, data.request_id, card, img.id, type).then(r => {
+                                if (r.success) {
+                                    succeeded++;
+                                    generatedVideos.push({ url: r.url, type, id: img.id });
+                                }
+                            })
+                        );
+                    }
+                } catch(e) {
+                    card.innerHTML = `<div style="padding:12px;color:#f87171;font-size:0.78rem">#${img.id} — ${e.message}</div>`;
+                }
+
+                completed++;
+                const pct = Math.round((completed / total) * 100);
+                document.getElementById('vidFill').style.width = pct + '%';
+                document.getElementById('vidText').textContent = `Soumis ${completed}/${total} — en attente des resultats...`;
+            }
+        })()
+    );
+
+    await Promise.all(workers);
+    document.getElementById('vidText').textContent = `${completed} soumis — attente des resultats...`;
+    await Promise.all(pollers);
+
+    btn.disabled = false;
+    btn.textContent = `${succeeded}/${total} videos terminees !`;
+    document.getElementById('vidFill').style.width = '100%';
+    document.getElementById('vidText').textContent = `Termine : ${succeeded} reussies / ${total} total`;
+}
+
 function line() { return '-'.repeat(50) + '\n'; }
 
 function dl(content, filename, type) {
@@ -937,6 +1411,46 @@ function dl(content, filename, type) {
     a.click();
     URL.revokeObjectURL(a.href);
 }
+
+// ===================== RESTORE SESSION ON LOAD =====================
+(function restoreSession() {
+    const s = loadSession();
+    if (!s) return;
+
+    document.getElementById('charName').value = charName;
+    document.getElementById('basePrompt').value = baseAppearance;
+
+    generatedImages = s.generatedImages || [];
+
+    const hasSavedImages = generatedImages.length > 0;
+    const hasPrompts = allDressed.length > 0 || allCoquin.length > 0;
+
+    if (!hasPrompts && !hasSavedImages) return;
+
+    const when = s.savedAt ? new Date(s.savedAt).toLocaleString('fr-FR') : '';
+    log(`Session restauree (${when}) : ${allDressed.length} prompts habilles, ${allCoquin.length} prompts coquins, ${generatedImages.length} images.`, 'ok');
+
+    if (hasPrompts) {
+        displayResults();
+    }
+
+    if (hasSavedImages) {
+        const grid = document.getElementById('imgGrid');
+        grid.innerHTML = '';
+        generatedImages.forEach(img => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.id = `img-${img.type}-${img.id}`;
+            const label = img.type === 'dressed' ? 'photo' : 'coquin_photo';
+            card.innerHTML = `<img src="${img.url}" loading="lazy"><div class="img-label">#${img.id} ${label}</div>`;
+            grid.appendChild(card);
+        });
+        document.getElementById('genSection').classList.remove('hidden');
+        document.getElementById('saveArea').classList.remove('hidden');
+        document.getElementById('savePath').textContent = `Dossier: myaicrush/${charName}/`;
+        showVideoSection();
+    }
+})();
 </script>
 </body>
 </html>

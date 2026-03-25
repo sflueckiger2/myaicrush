@@ -4170,25 +4170,217 @@ app.post("/api/get-user-info", async (req, res) => {
 // === REPLICATE IMAGE GENERATION ===
 app.post('/api/replicate/generate', async (req, res) => {
   try {
-    const { model = 'black-forest-labs/flux-schnell', input = {} } = req.body;
+    const { model, version, input = {} } = req.body;
     const token = process.env.REPLICATE_API_TOKEN || req.headers['x-replicate-token'];
     if (!token) return res.status(400).json({ error: 'REPLICATE_API_TOKEN manquant.' });
 
-    const response = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+    let apiUrl, body;
+    if (version) {
+      apiUrl = 'https://api.replicate.com/v1/predictions';
+      body = { version, input };
+    } else {
+      apiUrl = `https://api.replicate.com/v1/models/${model}/predictions`;
+      body = { input };
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Prefer': 'wait'
+        'Prefer': 'wait=60'
       },
-      body: JSON.stringify({ input })
+      body: JSON.stringify(body)
     });
 
-    const data = await response.json();
+    let data = await response.json();
+
+    // Poll if prediction is still running (Prefer:wait may not work on /v1/predictions)
+    if (data.status === 'starting' || data.status === 'processing') {
+      const getUrl = data.urls?.get;
+      if (getUrl) {
+        for (let i = 0; i < 60; i++) {
+          await new Promise(r => setTimeout(r, 3000));
+          const pollRes = await fetch(getUrl, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          data = await pollRes.json();
+          if (data.status === 'succeeded' || data.status === 'failed' || data.status === 'canceled') {
+            break;
+          }
+        }
+      }
+    }
+
     res.json(data);
   } catch (error) {
     console.error('Replicate error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// === FAL.AI IMAGE GENERATION (Juggernaut XL, RealVisXL, etc.) ===
+app.post('/api/fal/generate', async (req, res) => {
+  try {
+    const { input = {} } = req.body;
+    const token = process.env.FAL_KEY || req.headers['x-fal-key'];
+    if (!token) return res.status(400).json({ error: 'FAL_KEY manquant. Ajoute-le dans .env ou dans la page.' });
+
+    console.log('[FAL] Submitting with model:', input.model_name);
+
+    const submitRes = await fetch('https://queue.fal.run/fal-ai/lora', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(input)
+    });
+    const submitData = await submitRes.json();
+    console.log('[FAL] Submit response:', JSON.stringify(submitData).substring(0, 500));
+
+    if (submitData.detail || submitData.error) {
+      return res.json(submitData);
+    }
+
+    const requestId = submitData.request_id;
+    if (!requestId) {
+      return res.json({ error: 'Pas de request_id: ' + JSON.stringify(submitData).substring(0, 300) });
+    }
+
+    for (let i = 0; i < 150; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      const statusRes = await fetch(`https://queue.fal.run/fal-ai/lora/requests/${requestId}/status`, {
+        headers: { 'Authorization': `Key ${token}` }
+      });
+      const statusData = await statusRes.json();
+      if (i % 5 === 0) console.log('[FAL] Poll', i, ':', statusData.status);
+
+      if (statusData.status === 'COMPLETED') {
+        const resultRes = await fetch(`https://queue.fal.run/fal-ai/lora/requests/${requestId}`, {
+          headers: { 'Authorization': `Key ${token}` }
+        });
+        const result = await resultRes.json();
+        const keys = Object.keys(result || {});
+        console.log('[FAL] Result keys:', keys);
+        console.log('[FAL] Result preview:', JSON.stringify(result).substring(0, 800));
+        return res.json(result);
+      }
+      if (statusData.status === 'FAILED') {
+        console.log('[FAL] FAILED:', JSON.stringify(statusData).substring(0, 500));
+        return res.json({ error: statusData.error || JSON.stringify(statusData) });
+      }
+    }
+
+    res.json({ error: 'Timeout: la generation a pris trop de temps' });
+  } catch (error) {
+    console.error('[FAL] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// === KLING VIDEO GENERATION (Image-to-Video via fal.ai) ===
+// === VIDEO MODELS CONFIG ===
+const VIDEO_MODELS = {
+  kling: {
+    submitUrl: 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
+    statusBase: 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video/requests',
+    buildPayload: (prompt, image_url, duration) => ({
+      prompt, image_url, duration: String(duration),
+      negative_prompt: 'blur, distort, and low quality',
+      cfg_scale: 0.5
+    }),
+    extractVideo: (result) => result.video?.url,
+    cost5s: 0.35, cost10s: 0.70
+  },
+  wan: {
+    submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
+    statusBase: 'https://queue.fal.run/fal-ai/wan-i2v/requests',
+    buildPayload: (prompt, image_url, duration) => ({
+      prompt, image_url,
+      num_frames: duration === '10' ? 81 : 41,
+      enable_safety_checker: false,
+      enable_output_safety_checker: false,
+      negative_prompt: 'blur, distort, low quality'
+    }),
+    extractVideo: (result) => result.video?.url,
+    cost5s: 0.50, cost10s: 1.00
+  }
+};
+
+// Step 1: Submit video generation — returns request_id immediately
+app.post('/api/video/submit', async (req, res) => {
+  try {
+    const { prompt, image_url, duration = '5', model = 'kling' } = req.body;
+    const token = process.env.FAL_KEY || req.headers['x-fal-key'];
+    if (!token) return res.status(400).json({ error: 'FAL_KEY manquant.' });
+    if (!prompt || !image_url) return res.status(400).json({ error: 'prompt et image_url requis.' });
+
+    const vm = VIDEO_MODELS[model];
+    if (!vm) return res.status(400).json({ error: 'Modele video inconnu: ' + model });
+
+    console.log(`[VIDEO:${model}] Submitting, duration: ${duration}`);
+
+    const submitRes = await fetch(vm.submitUrl, {
+      method: 'POST',
+      headers: { 'Authorization': `Key ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(vm.buildPayload(prompt, image_url, duration))
+    });
+    const raw = await submitRes.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      console.log(`[VIDEO:${model}] Non-JSON submit response:`, raw.substring(0, 300));
+      return res.json({ error: 'Reponse invalide: ' + raw.substring(0, 200) });
+    }
+    console.log(`[VIDEO:${model}] Submit OK:`, JSON.stringify(data).substring(0, 200));
+
+    if (data.detail || data.error) return res.json({ error: data.detail || data.error });
+    if (!data.request_id) return res.json({ error: 'Pas de request_id: ' + JSON.stringify(data).substring(0, 200) });
+
+    res.json({ request_id: data.request_id, model });
+  } catch (error) {
+    console.error('[VIDEO] Submit error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Step 2: Poll status — lightweight, called repeatedly by frontend
+app.get('/api/video/status/:model/:requestId', async (req, res) => {
+  try {
+    const { model, requestId } = req.params;
+    const token = process.env.FAL_KEY || req.headers['x-fal-key'];
+    const vm = VIDEO_MODELS[model];
+    if (!vm) return res.status(400).json({ error: 'Modele inconnu' });
+
+    const statusRes = await fetch(`${vm.statusBase}/${requestId}/status`, {
+      headers: { 'Authorization': `Key ${token}` }
+    });
+    const raw = await statusRes.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      return res.json({ status: 'IN_PROGRESS' });
+    }
+
+    if (data.status === 'COMPLETED') {
+      const resultRes = await fetch(`${vm.statusBase}/${requestId}`, {
+        headers: { 'Authorization': `Key ${token}` }
+      });
+      const resultRaw = await resultRes.text();
+      try {
+        const result = JSON.parse(resultRaw);
+        const videoUrl = vm.extractVideo(result);
+        console.log(`[VIDEO:${model}] Done! URL:`, videoUrl?.substring(0, 80));
+        return res.json({ status: 'COMPLETED', video_url: videoUrl });
+      } catch (e) {
+        return res.json({ status: 'IN_PROGRESS' });
+      }
+    }
+    if (data.status === 'FAILED') {
+      return res.json({ status: 'FAILED', error: data.error || 'Generation echouee' });
+    }
+    res.json({ status: data.status || 'IN_PROGRESS' });
+  } catch (error) {
+    res.json({ status: 'IN_PROGRESS' });
   }
 });
 
@@ -4249,6 +4441,1206 @@ app.post('/api/generate-ai-prompts', async (req, res) => {
   }
 });
 
+
+// =====================================================
+// 🤖 AI SUPPORT AGENT — Juliette v2 (Automated Support)
+// =====================================================
+
+// --- Rate limiter (per IP, 20 messages / 5 min) ---
+const supportRateLimit = new Map();
+function checkSupportRateLimit(ip) {
+  const now = Date.now();
+  const window = 5 * 60 * 1000;
+  const max = 20;
+  let entry = supportRateLimit.get(ip);
+  if (!entry || entry.resetAt < now) {
+    entry = { count: 0, resetAt: now + window };
+    supportRateLimit.set(ip, entry);
+  }
+  entry.count++;
+  return entry.count <= max;
+}
+
+// --- Support Action Functions ---
+
+async function supportLookupUser(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  let user = await users.findOne(
+    { email: normalizedEmail },
+    { projection: { password: 0 } }
+  );
+
+  if (!user) {
+    const localPart = normalizedEmail.split("@")[0];
+    const escaped = localPart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const candidates = await users
+      .find({ email: { $regex: escaped, $options: "i" } }, { projection: { email: 1 } })
+      .limit(5)
+      .toArray();
+
+    if (candidates.length > 0) {
+      return {
+        found: false,
+        message: `No exact match for "${normalizedEmail}". Similar accounts: ${candidates.map((c) => c.email).join(", ")}`,
+        suggestions: candidates.map((c) => c.email),
+      };
+    }
+    return { found: false, message: `No account found for "${normalizedEmail}"`, suggestions: [] };
+  }
+
+  const isPremiumInDb = user.explodelyPremium === true;
+  const hasExpired = user.premiumExpiresAt && new Date() >= new Date(user.premiumExpiresAt);
+
+  // Check Explodely active subscription (primary)
+  const explodelyStatus = await supportCheckExplodelyActive(normalizedEmail);
+
+  // Check Stripe (secondary — legacy, non-renewal)
+  let stripeInfo = null;
+  try {
+    const customers = await stripe.customers.search({ query: `email:"${normalizedEmail}"` });
+    for (const customer of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: customer.id, status: "all", limit: 5 });
+      for (const sub of subs.data) {
+        if (sub.status === "active" || sub.status === "canceled") {
+          const endDate = new Date(sub.current_period_end * 1000);
+          stripeInfo = {
+            status: sub.status,
+            cancel_at_period_end: sub.cancel_at_period_end,
+            currentPeriodEnd: endDate.toISOString().split("T")[0],
+            isStillWithinPeriod: endDate > new Date(),
+            note: "Stripe is legacy — all contracts are non-renewal",
+          };
+          break;
+        }
+      }
+      if (stripeInfo) break;
+    }
+  } catch (_) {}
+
+  return {
+    found: true,
+    email: user.email,
+    createdAt: user.createdAt,
+    isPremiumInDb,
+    premiumExpired: hasExpired,
+    premiumExpiresAt: user.premiumExpiresAt || null,
+    explodelyMainOrderId: user.explodelyMainOrderId || null,
+    explodelySubscriptionActive: explodelyStatus.active,
+    explodelyStatus,
+    tokens: user.creditsPurchased || 0,
+    nonRefundableGift: user.nonRefundableGift === true,
+    stripeInfo,
+    hasPassword: !!user.password,
+    accountSource: user.accountSource || "signup",
+  };
+}
+
+async function supportCheckExplodelyActive(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const explodelyEvents = database.collection("explodely_events");
+  const users = database.collection("users");
+
+  // 1) Check ALL events for this email (not just premium_on/premium_off)
+  const allEvents = await explodelyEvents
+    .find({ email: normalizedEmail })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .toArray();
+
+  if (allEvents.length === 0) {
+    return { active: false, reason: "no_events_found", events: [] };
+  }
+
+  // 2) Find the most recent SALE event (premium_on, unknown_product_sale, or eventType "sale")
+  const lastSale = allEvents.find(
+    (e) => e.action === "premium_on" || e.action === "unknown_product_sale" || e.eventType === "sale"
+  );
+
+  // 3) Find any REFUND event (regardless of whether sale is present)
+  const refundEvent = allEvents.find(
+    (e) =>
+      e.action === "premium_off" ||
+      e.action === "unknown_product_refund" ||
+      e.eventType === "refund" ||
+      e.eventType === "refunded" ||
+      e.eventType === "chargeback" ||
+      e.eventType === "reversal"
+  );
+
+  // If no sale but there IS a refund → user was refunded (sale webhook may have been missed)
+  if (!lastSale && refundEvent) {
+    return {
+      active: false,
+      reason: "refunded",
+      note: "No sale event recorded, but a refund event exists — user was refunded.",
+      refund: { date: refundEvent.createdAt, orderId: refundEvent.orderId, action: refundEvent.action },
+      events: allEvents.map((e) => ({ action: e.action, eventType: e.eventType, orderId: e.orderId, date: e.createdAt })),
+    };
+  }
+
+  if (!lastSale) {
+    return {
+      active: false,
+      reason: "no_sale_found",
+      events: allEvents.map((e) => ({ action: e.action, eventType: e.eventType, orderId: e.orderId, date: e.createdAt })),
+    };
+  }
+
+  // 4) Check if refund happened after the last sale
+  if (refundEvent && refundEvent.createdAt > lastSale.createdAt) {
+    return {
+      active: false,
+      reason: "refunded",
+      lastSale: { date: lastSale.createdAt, orderId: lastSale.orderId, action: lastSale.action },
+      refund: { date: refundEvent.createdAt, orderId: refundEvent.orderId, action: refundEvent.action },
+    };
+  }
+
+  // 5) Check if there's a cancel event (subscription cancelled but not refunded)
+  const cancelAfterSale = allEvents.find(
+    (e) => (e.eventType === "cancel" || e.eventType === "canceled") && e.createdAt > lastSale.createdAt
+  );
+
+  // 5) Also check user record for explodelyMainOrderId and cancellation info
+  const user = await users.findOne({ email: normalizedEmail }, { projection: { explodelyMainOrderId: 1, premiumCancelledAt: 1 } });
+
+  return {
+    active: true,
+    reason: cancelAfterSale ? "sale_found_but_subscription_cancelled" : "sale_found_no_refund",
+    cancelled: !!cancelAfterSale,
+    lastSale: { date: lastSale.createdAt, orderId: lastSale.orderId, productId: lastSale.productId, action: lastSale.action },
+    explodelyMainOrderId: user?.explodelyMainOrderId || lastSale.orderId,
+  };
+}
+
+async function supportCheckPremiumDiagnosis(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  const user = await users.findOne({ email: normalizedEmail });
+  if (!user) return { found: false, message: "User not found" };
+
+  const issues = [];
+  const fixes = [];
+
+  const isExplodelyPremiumInDb = user.explodelyPremium === true;
+  const expired = user.premiumExpiresAt && new Date() >= new Date(user.premiumExpiresAt);
+
+  // 1) CHECK EXPLODELY FIRST (primary payment processor)
+  const explodelyStatus = await supportCheckExplodelyActive(normalizedEmail);
+
+  if (explodelyStatus.active && !isExplodelyPremiumInDb) {
+    issues.push("User has an ACTIVE Explodely subscription but premium is NOT active in database — needs fixing");
+    fixes.push("activate_premium");
+  } else if (explodelyStatus.active && isExplodelyPremiumInDb && !expired) {
+    issues.push("Premium is active via Explodely and working correctly");
+  } else if (!explodelyStatus.active && isExplodelyPremiumInDb && !expired && explodelyStatus.reason === "refunded") {
+    issues.push(`INCONSISTENCY: Premium is active in the database BUT a REFUND was processed (${explodelyStatus.refund?.date}). The user was refunded — premium should NOT be active. Do NOT tell them to clear cache. Tell them a refund was processed for their order.`);
+  } else if (!explodelyStatus.active && isExplodelyPremiumInDb && !expired) {
+    issues.push("Premium IS ACTIVE in the database (manually set or via webhook). The user's premium should be working. If they say photos are blurred, it's likely a cache/session issue — tell them to log out and back in, clear cache, or try another browser.");
+  } else if (isExplodelyPremiumInDb && expired) {
+    issues.push(`Premium marked active but EXPIRED on ${user.premiumExpiresAt}`);
+  }
+
+  // 2) CHECK STRIPE (secondary — all contracts are non-renewal since Stripe ban)
+  let stripeInfo = null;
+  try {
+    const customers = await stripe.customers.search({ query: `email:"${normalizedEmail}"` });
+    for (const cust of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: cust.id, status: "all", limit: 5 });
+      for (const sub of subs.data) {
+        if (sub.status === "active" || sub.status === "canceled") {
+          const endDate = new Date(sub.current_period_end * 1000);
+          stripeInfo = {
+            id: sub.id,
+            status: sub.status,
+            cancel_at_period_end: sub.cancel_at_period_end,
+            currentPeriodEnd: endDate.toISOString().split("T")[0],
+            isStillWithinPeriod: endDate > new Date(),
+          };
+          break;
+        }
+      }
+      if (stripeInfo) break;
+    }
+  } catch (_) {}
+
+  if (stripeInfo) {
+    if (stripeInfo.isStillWithinPeriod) {
+      issues.push(`Stripe subscription found (non-renewal) — active until ${stripeInfo.currentPeriodEnd}. Will NOT renew after that.`);
+    } else {
+      issues.push(`Old Stripe subscription found — expired on ${stripeInfo.currentPeriodEnd}.`);
+    }
+  }
+
+  if (!explodelyStatus.active && !stripeInfo && !isExplodelyPremiumInDb) {
+    if (explodelyStatus.reason === "no_events_found" || explodelyStatus.reason === "no_sale_found") {
+      issues.push("No payment events found in our records for this email. User may have used a different email for payment.");
+    } else if (explodelyStatus.reason === "refunded") {
+      issues.push(`User was REFUNDED. Sale on ${explodelyStatus.lastSale?.date}, refund on ${explodelyStatus.refund?.date}. Premium is correctly inactive.`);
+    } else {
+      issues.push("Payment data unclear. " + (explodelyStatus.reason || ""));
+    }
+  }
+
+  return {
+    found: true,
+    email: normalizedEmail,
+    isPremiumInDb: isExplodelyPremiumInDb,
+    explodelyStatus,
+    stripeInfo,
+    expired,
+    premiumExpiresAt: user.premiumExpiresAt,
+    explodelyMainOrderId: user.explodelyMainOrderId || null,
+    issues,
+    availableFixes: fixes,
+  };
+}
+
+async function supportFixPremium(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  // SAFETY: verify payment exists before activating
+  const explodelyStatus = await supportCheckExplodelyActive(normalizedEmail);
+
+  if (!explodelyStatus.active) {
+    if (explodelyStatus.reason === "refunded") {
+      return {
+        success: false,
+        message: `Cannot activate premium: this user was REFUNDED (sale: ${explodelyStatus.lastSale?.date}, refund: ${explodelyStatus.refund?.date}). Premium should stay inactive.`,
+      };
+    }
+
+    // No Explodely sale found — check Stripe as fallback
+    let stripeActive = false;
+    try {
+      const customers = await stripe.customers.search({ query: `email:"${normalizedEmail}"` });
+      for (const cust of customers.data) {
+        const subs = await stripe.subscriptions.list({ customer: cust.id, status: "active" });
+        if (subs.data.length > 0) stripeActive = true;
+      }
+    } catch (_) {}
+
+    if (!stripeActive) {
+      return {
+        success: false,
+        reactivationNotPossible: true,
+        message: `Cannot sync premium: no active payment entitlement for ${normalizedEmail} in our records (no qualifying sale/subscription). This is not something chat can fix. Tell the customer clearly they need a new subscription via the website — you cannot reactivate billing here.`,
+      };
+    }
+  }
+
+  await users.updateOne(
+    { email: normalizedEmail },
+    { $set: { explodelyPremium: true }, $unset: { premiumExpiresAt: "", premiumCancelledAt: "" } }
+  );
+  premiumCache.delete(normalizedEmail);
+
+  const supportLogs = database.collection("support_logs");
+  await supportLogs.insertOne({
+    action: "premium_fixed",
+    email: normalizedEmail,
+    source: explodelyStatus.active ? "explodely_verified" : "stripe_fallback",
+    fixedAt: new Date(),
+  });
+
+  return {
+    success: true,
+    message: `Premium access synced for ${normalizedEmail} (database flag updated to match active payment record). This does NOT create a new subscription or restart billing — wording for customer: access should match what they already paid for; they may need to log out/in if the app still looks wrong.`,
+  };
+}
+
+async function supportCancelSubscription(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  const user = await users.findOne({ email: normalizedEmail });
+  if (!user) return { success: false, error: "User not found" };
+
+  let cancelledExplodely = false;
+  let cancelledStripe = false;
+  const errors = [];
+  /** YYYY-MM-DD when known — for bot to tell customer access continues through paid period */
+  let accessContinuesUntil = null;
+
+  if (user.explodelyMainOrderId) {
+    try {
+      const r = await fetch(
+        `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${user.explodelyMainOrderId}`
+      );
+      const d = await r.json();
+      if (!d.error) {
+        cancelledExplodely = true;
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        accessContinuesUntil = expiresAt.toISOString().split("T")[0];
+        await users.updateOne({ _id: user._id }, { $set: { premiumCancelledAt: new Date(), explodely_expiresAt: expiresAt } });
+      } else {
+        errors.push(`Explodely: ${d.error}`);
+      }
+    } catch (e) {
+      errors.push(`Explodely: ${e.message}`);
+    }
+  }
+
+  try {
+    const customers = await stripe.customers.search({ query: `email:"${normalizedEmail}"` });
+    for (const cust of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: cust.id, status: "active" });
+      for (const sub of subs.data) {
+        await stripe.subscriptions.update(sub.id, { cancel_at_period_end: true });
+        cancelledStripe = true;
+        if (sub.current_period_end) {
+          const end = new Date(sub.current_period_end * 1000);
+          const ymd = end.toISOString().split("T")[0];
+          if (!accessContinuesUntil) {
+            accessContinuesUntil = ymd;
+          } else {
+            const prevEnd = new Date(accessContinuesUntil + "T12:00:00.000Z");
+            if (end > prevEnd) accessContinuesUntil = ymd;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    errors.push(`Stripe: ${e.message}`);
+  }
+
+  // Check Stripe info (non-renewal, just for info)
+  let stripeEndDate = null;
+  try {
+    const customers = await stripe.customers.search({ query: `email:"${normalizedEmail}"` });
+    for (const cust of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: cust.id, status: "all", limit: 5 });
+      for (const sub of subs.data) {
+        if ((sub.status === "active" || sub.status === "canceled") && sub.current_period_end) {
+          const end = new Date(sub.current_period_end * 1000);
+          if (end > new Date()) {
+            stripeEndDate = end.toISOString().split("T")[0];
+            if (!accessContinuesUntil) accessContinuesUntil = stripeEndDate;
+            if (!sub.cancel_at_period_end) {
+              await stripe.subscriptions.update(sub.id, { cancel_at_period_end: true });
+              cancelledStripe = true;
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    errors.push(`Stripe: ${e.message}`);
+  }
+
+  premiumCache.delete(normalizedEmail);
+
+  let message = "";
+  if (cancelledExplodely) {
+    message = `Explodely subscription cancelled for ${normalizedEmail}. Premium access continues until ${accessContinuesUntil} (end of the period already paid / billing cycle). No further renewals.`;
+  } else if (cancelledStripe) {
+    const until = accessContinuesUntil || stripeEndDate || "end of period";
+    message = `Stripe subscription set to non-renewal for ${normalizedEmail}. Premium access continues until ${until} (period already paid). No further renewals.`;
+  } else if (stripeEndDate) {
+    message = `No Explodely subscription found. User has a legacy Stripe subscription (already non-renewal) active until ${stripeEndDate}. It will NOT renew.`;
+  } else {
+    message = `Could not find any active subscription to cancel. ${errors.join("; ")}`;
+  }
+
+  return {
+    success: cancelledExplodely || cancelledStripe,
+    cancelledExplodely,
+    cancelledStripe,
+    stripeEndDate,
+    accessContinuesUntil,
+    errors: errors.length > 0 ? errors : undefined,
+    message,
+  };
+}
+
+async function supportDeleteAccount(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  const user = await users.findOne({ email: normalizedEmail });
+  if (!user) return { success: false, error: "User not found" };
+
+  const cancelResult = await supportCancelSubscription(normalizedEmail);
+  await users.deleteOne({ email: normalizedEmail });
+  premiumCache.delete(normalizedEmail);
+
+  const supportLogs = database.collection("support_logs");
+  await supportLogs.insertOne({
+    action: "account_deleted",
+    email: normalizedEmail,
+    subscriptionCancelled: cancelResult.success,
+    deletedAt: new Date(),
+  });
+
+  return {
+    success: true,
+    message: `Account and data for ${normalizedEmail} permanently deleted. ${cancelResult.success ? "Subscription also cancelled." : ""}`,
+  };
+}
+
+async function supportProcessRefund(email, product) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const productType = String(product || "auto").toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+  const explodelyEvents = database.collection("explodely_events");
+  const supportLogs = database.collection("support_logs");
+
+  const user = await users.findOne({ email: normalizedEmail });
+  if (!user) return { success: false, error: "User not found" };
+
+  const isNonRefundable = user.nonRefundableGift === true;
+  if (isNonRefundable) {
+    return {
+      success: false,
+      error: "NON-REFUNDABLE: This user previously accepted a free token gift as compensation. Refund is no longer available. Direct them to contact@myaicrush.ai if they have concerns.",
+    };
+  }
+
+  // --- TOKEN REFUND INFO (no tokens are removed — refund is manual) ---
+  if (productType === "tokens" || productType === "credits") {
+    const tokenPurchases = await explodelyEvents
+      .find({ email: normalizedEmail, action: "tokens_add" })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .toArray();
+
+    const currentBalance = user.creditsPurchased || 0;
+    const totalPurchased = tokenPurchases.reduce((sum, e) => sum + (e.tokens || 0), 0);
+    const tokensUsed = totalPurchased - currentBalance;
+
+    if (tokenPurchases.length === 0) {
+      return { success: false, error: `No token purchases found for ${normalizedEmail}. Current balance: ${currentBalance} tokens.` };
+    }
+
+    await supportLogs.insertOne({
+      action: "token_refund_requested",
+      email: normalizedEmail,
+      currentBalance,
+      totalPurchased,
+      tokensUsed,
+      purchases: tokenPurchases.map((e) => ({ tokens: e.tokens, orderId: e.orderId, date: e.createdAt })),
+      requestedAt: new Date(),
+    });
+
+    return {
+      success: true,
+      requiresManualAction: true,
+      refundableTokens: currentBalance,
+      totalPurchased,
+      tokensUsed,
+      currentBalance,
+      purchases: tokenPurchases.map((e) => ({ tokens: e.tokens, orderId: e.orderId, date: e.createdAt })),
+      message: `Token refund info for ${normalizedEmail}: Purchased ${totalPurchased} tokens total, used ${tokensUsed}, remaining ${currentBalance}. Only the ${currentBalance} unused tokens are eligible for refund. Refund request logged — the team will process it manually. DO NOT remove tokens from the user's balance.`,
+    };
+  }
+
+  // --- PREMIUM REFUND INFO (no cancellation done — refund is manual) ---
+  const isPremium = user.explodelyPremium === true;
+  const explodelyStatus = await supportCheckExplodelyActive(normalizedEmail);
+
+  let stripeInfo = null;
+  try {
+    const customers = await stripe.customers.search({ query: `email:"${normalizedEmail}"` });
+    for (const cust of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: cust.id, status: "all", limit: 5 });
+      for (const sub of subs.data) {
+        if (sub.status === "active" || sub.status === "canceled") {
+          const endDate = new Date(sub.current_period_end * 1000);
+          stripeInfo = { id: sub.id, status: sub.status, currentPeriodEnd: endDate.toISOString().split("T")[0], isStillWithinPeriod: endDate > new Date() };
+          break;
+        }
+      }
+      if (stripeInfo) break;
+    }
+  } catch (_) {}
+
+  await supportLogs.insertOne({
+    action: "premium_refund_requested",
+    email: normalizedEmail,
+    isPremium,
+    explodelyStatus: explodelyStatus.reason,
+    stripeInfo,
+    requestedAt: new Date(),
+  });
+
+  return {
+    success: true,
+    requiresManualAction: true,
+    isPremium,
+    explodelyStatus,
+    stripeInfo,
+    message: `Premium refund info for ${normalizedEmail}: Premium active in DB: ${isPremium}. Refund request has been logged — the team will process it manually. DO NOT cancel subscription or deactivate premium — only the admin can do this.`,
+  };
+}
+
+async function supportCheckTokens(email) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+  const explodelyEvents = database.collection("explodely_events");
+
+  const user = await users.findOne({ email: normalizedEmail });
+  if (!user) return { found: false, message: "User not found" };
+
+  const recentTokenEvents = await explodelyEvents
+    .find({ email: normalizedEmail, action: "tokens_add" })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .toArray();
+
+  return {
+    found: true,
+    currentBalance: user.creditsPurchased || 0,
+    nonRefundableGift: user.nonRefundableGift === true,
+    recentPurchases: recentTokenEvents.map((e) => ({ tokens: e.tokens, date: e.createdAt, orderId: e.orderId })),
+  };
+}
+
+async function supportCreditTokens(email, amount, reason) {
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const toAdd = Number(amount);
+  if (!Number.isFinite(toAdd) || toAdd <= 0 || toAdd > 1000) {
+    return { success: false, error: "Invalid token amount (must be 1-1000)" };
+  }
+
+  const database = client.db("MyAICrush");
+  const users = database.collection("users");
+
+  const isRetentionGift = String(reason || "").toLowerCase().includes("retention");
+  const updateFields = { $inc: { creditsPurchased: toAdd } };
+  if (isRetentionGift) {
+    updateFields.$set = { nonRefundableGift: true, nonRefundableGiftDate: new Date(), nonRefundableGiftTokens: toAdd };
+  }
+
+  const result = await users.updateOne({ email: normalizedEmail }, updateFields);
+  if (result.matchedCount === 0) return { success: false, error: "User not found" };
+
+  const supportLogs = database.collection("support_logs");
+  await supportLogs.insertOne({
+    action: isRetentionGift ? "retention_gift_tokens" : "tokens_credited_by_support",
+    email: normalizedEmail,
+    tokensAdded: toAdd,
+    reason: reason || "support_credit",
+    nonRefundable: isRetentionGift,
+    creditedAt: new Date(),
+  });
+
+  return {
+    success: true,
+    nonRefundable: isRetentionGift,
+    message: isRetentionGift
+      ? `${toAdd} FREE tokens gifted to ${normalizedEmail} as retention offer. Account is now marked as NON-REFUNDABLE.`
+      : `${toAdd} tokens credited to ${normalizedEmail}`,
+  };
+}
+
+async function supportSearchCustomer(query) {
+  const q = String(query).trim().toLowerCase();
+  const database = client.db("MyAICrush");
+  const explodelyEvents = database.collection("explodely_events");
+  const users = database.collection("users");
+  const results = { byOrderId: null, byFuzzyEmail: [], byUserFuzzy: [] };
+
+  // 1) Search by order ID (exact match)
+  if (/^\d{5,}$/.test(q)) {
+    const event = await explodelyEvents.findOne({ orderId: q });
+    if (event) {
+      results.byOrderId = { email: event.email, orderId: event.orderId, productId: event.productId, eventType: event.eventType, action: event.action, date: event.createdAt };
+    }
+  }
+
+  // 2) Fuzzy email search in explodely_events
+  if (q.includes("@")) {
+    const [localPart, domain] = q.split("@");
+    // Escape special regex chars but allow 1 char flexibility
+    const escaped = localPart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Build a regex that allows minor variations: each char can be optional or have an extra char
+    const fuzzyChars = escaped.split("").map((c) => `${c}?`).join(".?");
+    const fuzzyRegex = new RegExp(`^${fuzzyChars}@.*${domain.replace(/\./g, "\\.")}$`, "i");
+
+    const events = await explodelyEvents
+      .find({ email: { $regex: fuzzyRegex } })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .toArray();
+
+    const uniqueEmails = [...new Set(events.map((e) => e.email))];
+    results.byFuzzyEmail = uniqueEmails.map((em) => {
+      const ev = events.find((e) => e.email === em);
+      return { email: em, orderId: ev.orderId, action: ev.action, eventType: ev.eventType, date: ev.createdAt };
+    });
+
+    // 3) Also fuzzy search in users collection
+    const userMatches = await users
+      .find({ email: { $regex: fuzzyRegex } }, { projection: { email: 1, explodelyPremium: 1 } })
+      .limit(5)
+      .toArray();
+    results.byUserFuzzy = userMatches.map((u) => ({ email: u.email, isPremium: u.explodelyPremium === true }));
+  }
+
+  // 4) If query is not an email and not a pure number, try as partial email or name search
+  if (!q.includes("@") && !/^\d+$/.test(q) && q.length >= 3) {
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // Search in explodely_events by partial email match
+    const events = await explodelyEvents
+      .find({ email: { $regex: escaped, $options: "i" } })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .toArray();
+    const uniqueEmails = [...new Set(events.map((e) => e.email))];
+    results.byFuzzyEmail = uniqueEmails.map((em) => {
+      const ev = events.find((e) => e.email === em);
+      return { email: em, orderId: ev.orderId, action: ev.action, eventType: ev.eventType, date: ev.createdAt };
+    });
+
+    // Also search in users collection by partial email match
+    const userMatches = await users
+      .find({ email: { $regex: escaped, $options: "i" } }, { projection: { email: 1, explodelyPremium: 1, creditsPurchased: 1, createdAt: 1 } })
+      .limit(5)
+      .toArray();
+    results.byUserFuzzy = userMatches.map((u) => ({
+      email: u.email, isPremium: u.explodelyPremium === true, tokens: u.creditsPurchased || 0, createdAt: u.createdAt,
+    }));
+
+    // Try searching by splitting into parts (e.g. "nate britton" → search "nate" and "britton" in emails)
+    const words = q.split(/[\s._\-+]+/).filter((w) => w.length >= 3);
+    if (words.length > 1 && results.byFuzzyEmail.length === 0 && results.byUserFuzzy.length === 0) {
+      for (const word of words) {
+        const wordEscaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const wordUsers = await users
+          .find({ email: { $regex: wordEscaped, $options: "i" } }, { projection: { email: 1, explodelyPremium: 1, creditsPurchased: 1 } })
+          .limit(3)
+          .toArray();
+        for (const u of wordUsers) {
+          if (!results.byUserFuzzy.find((r) => r.email === u.email)) {
+            results.byUserFuzzy.push({ email: u.email, isPremium: u.explodelyPremium === true, tokens: u.creditsPurchased || 0 });
+          }
+        }
+        const wordEvents = await explodelyEvents
+          .find({ email: { $regex: wordEscaped, $options: "i" } })
+          .sort({ createdAt: -1 })
+          .limit(3)
+          .toArray();
+        for (const ev of wordEvents) {
+          if (!results.byFuzzyEmail.find((r) => r.email === ev.email)) {
+            results.byFuzzyEmail.push({ email: ev.email, orderId: ev.orderId, action: ev.action, eventType: ev.eventType, date: ev.createdAt });
+          }
+        }
+      }
+    }
+  }
+
+  const totalFound = (results.byOrderId ? 1 : 0) + results.byFuzzyEmail.length + results.byUserFuzzy.length;
+  return { query: q, totalFound, ...results };
+}
+
+// --- OpenAI Tool Definitions ---
+
+const SUPPORT_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "lookup_user",
+      description: "Search for a user account by email address. Returns account status, premium info, token balance, subscription details.",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_premium_diagnosis",
+      description: "Diagnose why premium might not be working. Checks Stripe, Explodely, and purchase history.",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "fix_premium",
+      description: "Sync premium flag in our database ONLY when payment records show an active entitlement (Explodely sale without refund, or active Stripe sub) but the account wrongly shows non-premium. NOT for subscription reactivation after cancel/expiry — user must buy again on the site. NOT if user only asks to reactivate without a matching entitlement. Always run check_premium_diagnosis first. Will REFUSE if no valid payment/subscription.",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_subscription",
+      description: "Cancel active subscription. Checks Explodely FIRST (primary), then Stripe (legacy). Response includes accessContinuesUntil (YYYY-MM-DD) when known — tell the customer they keep premium until that date (period already paid). Before calling this tool, you must have asked confirmation and explained access-through-end-of-paid-period (see system prompt).",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_account",
+      description: "Permanently delete account and all data (GDPR). Also cancels subscription. IRREVERSIBLE — always confirm with user first.",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "process_refund",
+      description: "Process refund for premium OR tokens. For tokens: removes tokens from balance and logs manual refund. For premium: cancels subscription, deactivates premium, logs refund. Always confirm with user first.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "User email" },
+          product: { type: "string", enum: ["premium", "tokens"], description: "What to refund: 'premium' for subscription, 'tokens' for token purchase" },
+        },
+        required: ["email", "product"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_tokens",
+      description: "Check user's current token balance and recent token purchase history.",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "credit_tokens",
+      description: "Credit tokens to a user account. Use for missing tokens OR for the 300 free token retention gift. When used as retention gift, set reason to 'retention' — this marks the account as non-refundable.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string", description: "User email" },
+          amount: { type: "number", description: "Number of tokens to credit" },
+          reason: { type: "string", enum: ["missing_tokens", "retention"], description: "'missing_tokens' for tokens not received, 'retention' for the free gift offer (marks account as non-refundable)" },
+        },
+        required: ["email", "amount", "reason"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_customer",
+      description: "Fuzzy search for a customer by approximate email, partial email, or order number. Use this when an exact email lookup fails — the customer may have a typo in their email. Can also search by order ID from their receipt.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Email (even with typos), partial email (e.g. 'jacques.maio'), or order number (e.g. '46281643')" },
+        },
+        required: ["query"],
+      },
+    },
+  },
+];
+
+// --- System Prompt ---
+
+const SUPPORT_SYSTEM_PROMPT = `You are Juliette, the AI support assistant for MyAiCrush (an adult AI companion chat platform).
+
+YOUR CAPABILITIES — you can execute REAL actions on user accounts (only when tools succeed):
+- Look up accounts by email
+- Diagnose premium issues; SYNC the premium flag in our system ONLY when payment records prove an active entitlement but the account shows wrong (technical mismatch) — this is NOT "reactivating" a subscription
+- Cancel subscriptions (stops renewal; access until end of paid period)
+- Log refund requests (refunds are processed manually by admin)
+- Delete accounts and data (GDPR compliance)
+- Check token balance and credit missing tokens
+- Offer 300 free retention tokens ($129 value) as alternative to refunds
+
+WHAT YOU CANNOT DO (be honest with customers):
+- You CANNOT "reactivate" a subscription or restart billing. There is NO tool for that. A cancelled or expired plan requires a NEW purchase on the website — say so clearly.
+- You CANNOT charge cards, create checkout sessions, or place orders for the user. Direct them to the site to subscribe again.
+- You CANNOT promise or describe outcomes unless the relevant tool just returned success in this same reply (see ANTI-HALLUCINATION below).
+
+⚠️ CRITICAL BUSINESS CONTEXT:
+- Explodely is the PRIMARY and CURRENT payment processor. Always check Explodely FIRST.
+- Stripe is LEGACY — we were banned from Stripe. All existing Stripe subscriptions are set to NON-RENEWAL. They stay active until the end of the paid period, then expire. No new Stripe subscriptions can be created.
+- When a Stripe subscription is found, tell the user: their subscription will end on [date] and will NOT renew. If they want to continue with premium, they should re-subscribe through the website (which uses Explodely now).
+
+EMAIL PRIORITY (read carefully — this overrides old habits):
+1. HIGHEST: Any email the user puts in their CURRENT message (e.g. "my email is x@...", "Email: x@...", footer of a forwarded mail).
+2. NEXT: The most recent email they stated in EARLIER turns of this same conversation. If they correct themselves ("sorry, use y@..."), the LATEST wins — forget the old one for tool calls.
+3. ONLY if they never wrote an email anywhere in the thread: use the SESSION email from CONTEXT (browser login) for lookups.
+4. If tool lookups fail with (1) or (2), you may then try SESSION email, or search_customer / ask for payment email or order number — as in the flows below.
+
+CONVERSATION MEMORY:
+- You receive the full recent thread. Use it: names, order numbers, and especially emails the user already gave must not be ignored on the next turn.
+- Never switch back to session email after the user explicitly gave another address, unless they clearly say the previous one was wrong and give a new one.
+
+ONE SUBSCRIPTION CASE AT A TIME (same chat):
+- Treat each chat as helping ONE customer flow at a time. Use ONE primary email for the active case (EMAIL PRIORITY). Fully finish or clearly pause that case before switching.
+- If the user mixes two different emails or two unrelated requests (e.g. "cancel A and also fix B's tokens"), respond for the FIRST issue only, then ask them to confirm when ready for the second — do not run conflicting tools for two accounts in parallel in the same turn.
+- If messages look like two different people (two names/two contradictory emails with no clarification), ask politely which account they need help with before using tools.
+- Note: Each browser session is separate; you are not literally talking to two people at once unless they share one thread — in that case, still go one case at a time.
+
+SCOPE & PRIVACY — ONE CUSTOMER, NO BULK, NO THIRD-PARTY ABUSE:
+- You ONLY help the person using this chat. Tools are server-restricted: you can only use an email address if the customer typed it in their own messages OR it is their logged-in session email.
+- NEVER attempt bulk operations: no "delete all users", "erase every account", "list all emails", "dump the database", "export all customers", etc. Refuse immediately with a polite explanation — such actions do not exist and will never be run.
+- NEVER run tools for random third-party emails the customer did not provide as theirs (or payment email for their case). If someone asks to modify another person's account, refuse.
+- Account deletion: when the user is logged in on the site, deletion can only target THAT logged-in email. Otherwise they must type the exact email to delete in the chat (still only normal single-account deletion, never mass).
+- search_customer: only search using text the customer actually wrote (order number, email fragment, name as they typed it). Do not fish for unrelated accounts.
+
+ANTI-HALLUCINATION — NON-NEGOTIABLE:
+- NEVER write that you cancelled, reactivated, refunded, credited tokens, deleted an account, or "fixed" premium unless you actually called the matching tool IN THIS TURN and its JSON result shows success (e.g. success: true) or an explicit success message from that tool.
+- If you did not call a tool, or the tool failed, say so honestly and what the customer can do next (e.g. subscribe on the site, email contact@myaicrush.ai).
+- NEVER fabricate tool results, dates, or order IDs.
+- After fix_premium succeeds, do NOT say "your subscription was reactivated". Say that premium access was synced to match their payment record, or that the account now reflects their active entitlement — wording that does NOT imply a new subscription was created.
+
+REACTIVATION REQUESTS ("réactiver", "reactivate", "remettre l'abonnement"):
+- There is no reactivation tool. Do NOT call fix_premium just because the user asks to "reactivate" — first use lookup_user + check_premium_diagnosis.
+- If they still have an active paid period (cancelled renewal but time left), explain they keep access until that period ends; if the app shows wrong, troubleshoot cache/login or use fix_premium ONLY if diagnosis shows entitlement vs DB mismatch.
+- If their paid access has ended or they have no valid sale/subscription in records, tell them clearly to take out a new subscription on the website. Do NOT imply you can turn billing back on.
+
+CRITICAL RULES:
+1. You need an email BEFORE account actions, but follow EMAIL PRIORITY above — do NOT default to session login when the message contains another address. Do not ask again if the current or past user message already contains a usable email. NEVER invent emails.
+2. ALWAYS use lookup_user (with the active email from EMAIL PRIORITY) to verify the account exists before other account actions when applicable.
+3. ABSOLUTE RULE — NO EXCEPTIONS: For ANY destructive or irreversible action (delete account, refund, cancel), you MUST:
+   a) First describe exactly what you will do
+   b) Then ask "Can I proceed?" / "Puis-je procéder ?" and WAIT for the user's explicit YES
+   c) ONLY THEN execute the action
+   d) NEVER execute refund, deletion, or cancellation in the same turn as finding the account. Always wait for user confirmation in a SEPARATE message.
+   e) SUBSCRIPTION CANCELLATION (before you call cancel_subscription): In your confirmation message, ALWAYS clearly state that cancelling stops future renewals/charges but the customer KEEPS full premium access until the end of the billing period they have already paid for (not instant cut-off). If lookup_user / check_premium_diagnosis shows a concrete end date (e.g. Stripe currentPeriodEnd, premiumExpiresAt), include that date. If you do not have a date, use this wording without inventing one. French example: « L'annulation coupe les futurs prélèvements ; vous gardez l'accès premium jusqu'à la fin de la période déjà payée. » English: "Cancellation stops future billing; you keep premium access through the end of the period you've already paid for."
+4. When search_customer returns a fuzzy match (not exact), ALWAYS confirm with the user: "I found an account with [email]. Is this yours?" BEFORE doing anything else.
+5. Respond in the SAME LANGUAGE the user writes in. If French → French. If English → English.
+6. Be empathetic, professional, concise. Use 🩷 occasionally.
+7. NEVER reveal internal details (database fields, API names, system architecture, payment processor names). Say "our payment system" not "Explodely" or "Stripe".
+8. If a user asks for a human agent the FIRST time, say you can handle most requests directly and ask what they need.
+   If they insist a SECOND time, provide: contact@myaicrush.ai
+
+PREMIUM TROUBLESHOOTING — FOLLOW THIS EXACT FLOW:
+1. Pick the email using EMAIL PRIORITY (message > prior turns > session). If the user only cares about payment records, use the payment email they gave; if they need the login account fixed, use the account email they gave — often they are the same, sometimes not.
+2. Use lookup_user with that email.
+3. Use check_premium_diagnosis with that email.
+4. FIRST CHECK: Is isPremiumInDb already TRUE?
+   - YES and user says it doesn't work (blurred photos, etc.) → Tell them: "Your premium is active in our system. Please try: 1) Log out and log back in. 2) Clear your browser cache. 3) If it still doesn't work, try a different browser." This is usually a cache/session issue. Do NOT ask for payment email.
+   - YES and user just wants to check their status → Confirm their premium is active.
+5. If isPremiumInDb is FALSE:
+   a. If the diagnosis shows a sale with NO refund → the user paid and should be premium. Use fix_premium ONLY to sync the DB flag with that entitlement (not "reactivation" wording). If the user only asked to "reactivate" but diagnosis shows no active entitlement, do NOT use fix_premium — send them to the website to subscribe again.
+   b. If the diagnosis shows reason "refunded" → the user was REFUNDED. Tell them clearly: "Our records show a refund was processed for your order. That is why your premium access is inactive. If you believe this is an error, please contact us at contact@myaicrush.ai." Do NOT ask for another email.
+   c. If NO events found for that email → ask the user: "What email did you use to make the payment? Do you have your order number from the receipt?" (it might be different from their account email).
+   d. If they give a different email → use check_premium_diagnosis with the PAYMENT email. If nothing found, use search_customer with the email to find fuzzy matches. If a valid sale without refund is found → use fix_premium with the ACCOUNT email (not payment email) only as a sync fix, not as subscription reactivation.
+   e. If the user gives an order number → use search_customer with the order number. This is very reliable.
+   f. If search_customer finds a similar email → confirm with the user, then proceed.
+   g. If still nothing found → check Stripe. If Stripe subscription found, tell user it's active until [end date] but won't renew.
+6. NEVER set someone as premium without first verifying they have a sale without refund (unless premium is already manually set in database).
+
+IMPORTANT — ONE-SHOT vs SUBSCRIPTION PAYMENTS:
+- Some users pay a ONE-TIME payment for premium (not a subscription). If there's a sale event and no refund → they are premium. Period. No need to check for "active subscription".
+- For subscriptions: if the subscription was cancelled but NOT refunded, the user should still have access until the end of their billing period.
+- Only if a REFUND event exists after the sale should premium be considered inactive.
+
+EMAIL TYPOS & FUZZY SEARCH — IMPORTANT:
+Customers often misspell their email (e.g. "maiorna" instead of "maiorana"). When a payment email lookup returns no results:
+1. FIRST: Use search_customer with the email they gave — it does fuzzy matching and may find close matches.
+2. If the customer gave their name, try searching with their name (e.g. "jacques.maio" as partial search).
+3. If the customer has an order number/receipt, use search_customer with the order number — this is the most reliable way to find them.
+4. If search_customer finds a close match, confirm with the customer: "I found an account with [correct email]. Is that yours?"
+5. ONLY if nothing works, ask the customer to double-check their payment email for typos, and to provide their order number from the receipt if possible.
+
+NOTE: The bot checks payment data from our webhook records in the database. It does NOT have direct access to query the payment provider's dashboard.
+
+SUBSCRIPTION CANCELLATION:
+- ALWAYS cancel on Explodely first (this is where current subscriptions are).
+- The cancel_subscription tool handles both Explodely and Stripe. Its result may include accessContinuesUntil — always mention that date in your reply after a successful cancel.
+- BEFORE calling cancel_subscription: your confirmation step (rule 3e) must already have explained access until end of paid period. AFTER success: repeat reassurance + date if the tool returned accessContinuesUntil.
+- Most common issue: user can't cancel from the website because their account email ≠ payment email. You can cancel it directly.
+- If only a Stripe subscription is found (legacy), tell the user it's already set to non-renewal, give them the end date, and confirm it will NOT renew.
+
+REFUND POLICY — RETENTION FLOW (VERY IMPORTANT):
+When a user requests a refund (for tokens OR for premium), you MUST follow this retention flow BEFORE anything else:
+
+STEP 0: Check non-refundable flag FIRST
+- check_tokens and lookup_user both return a "nonRefundableGift" field. If it is TRUE, the user already accepted a free token offer previously. Skip to STEP 3C immediately — do NOT propose the retention offer again.
+
+STEP 1: Gather info
+- For token refunds: use check_tokens to see their balance, how many they purchased, and how many they used.
+- For premium refunds: use check_premium_diagnosis to see their subscription status.
+- Tell the user: tokens already used are NOT refundable. Only their remaining unused tokens can be considered for a refund.
+
+STEP 2: Propose the retention offer
+- Say something like: "Before processing your refund, I'd like to offer you something special: we can add 300 free tokens to your account (a $129 value!) as a gesture of goodwill. This way you can keep your current tokens AND get 300 extra ones to explore more of the platform. Would you prefer the 300 free tokens, or would you still like to proceed with the refund?"
+- In French: "Avant de traiter votre remboursement, j'aimerais vous proposer quelque chose de spécial : nous pouvons ajouter 300 jetons gratuits à votre compte (d'une valeur de 129$ !) en geste de bonne volonté. Ainsi, vous conservez vos jetons actuels ET vous recevez 300 jetons supplémentaires pour explorer la plateforme. Préférez-vous les 300 jetons gratuits, ou souhaitez-vous toujours procéder au remboursement ?"
+
+STEP 3A: If user ACCEPTS the 300 tokens:
+- Use credit_tokens with amount=300 and reason="retention"
+- This automatically marks the account as non-refundable in our system
+- Tell them: "300 tokens have been added to your account! Please note that since you accepted this offer, refunds will no longer be available for this account. Enjoy your tokens! 🩷"
+
+STEP 3B: If user REFUSES and still wants the refund:
+- Use process_refund to LOG the refund request (this does NOT process the refund itself — it only gathers info and creates a log)
+- Tell them: "I've noted your refund request. Our team will review it and process it manually. You can expect to hear back within 24-48 hours. If you need further assistance, you can reach us at contact@myaicrush.ai."
+- Do NOT cancel their subscription, remove tokens, or change anything in their account. The admin handles that.
+
+STEP 3C: If user already has nonRefundableGift=true (process_refund will tell you):
+- The user previously accepted the free token offer. Refund is no longer available.
+- Tell them politely: "I see that you previously accepted a complimentary token offer on your account, which means refunds are no longer available. If you have any concerns, please contact our team at contact@myaicrush.ai."
+
+IMPORTANT REFUND RULES:
+- NEVER remove tokens from a user's balance. You cannot process refunds — only the admin can.
+- NEVER cancel a subscription as part of a refund. Only the admin does this.
+- process_refund only LOGS the request and gathers info. It does not modify the account.
+- ALWAYS propose the 300 token retention offer FIRST before logging a refund request.
+- For premium refund requests: the retention flow is the same — offer 300 free tokens first.
+
+ACCOUNT DELETION:
+- GDPR right. Confirm once, then delete immediately.
+- Cancels subscription + deletes all user data.
+
+TOKENS:
+- If tokens were paid but not received, check balance and recent purchases with check_tokens.
+- Common cause: email mismatch (user paid with different email than login email).
+- You can credit tokens directly if purchase evidence exists in the system (use reason="missing_tokens").
+- If user wants a token REFUND → follow the REFUND POLICY RETENTION FLOW above.
+- If user's name is known but not their email, try search_customer with their name — it searches email addresses containing parts of their name.
+
+INFORMATIONAL ANSWERS (no tools needed):
+- Premium = unlimited chat + all characters. Tokens = extras (nympho mode, private content).
+- No native mobile app, but website is fully mobile-optimized.
+- Audio calls are currently unavailable.
+- Privacy: no data sold, conversations stored for moderation only.
+- Forgot password: go to myaicrush.ai/profile.html → "Forgot password" link.`;
+
+// --- Support chat security: only act on identities the customer has tied to this thread ---
+
+function supportExtractEmails(text) {
+  if (!text || typeof text !== "string") return [];
+  const re = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    out.push(m[0].trim().toLowerCase());
+  }
+  return out;
+}
+
+function supportBuildUserStatedEmails(message, priorTurns) {
+  const set = new Set();
+  for (const e of supportExtractEmails(message)) set.add(e);
+  for (const turn of priorTurns || []) {
+    if (turn.role === "user" && turn.content) {
+      for (const e of supportExtractEmails(turn.content)) set.add(e);
+    }
+  }
+  return set;
+}
+
+function supportBuildFullAllowlist(sessionEmail, userStated) {
+  const set = new Set(userStated);
+  if (sessionEmail) set.add(sessionEmail.trim().toLowerCase());
+  return set;
+}
+
+function supportUserMessagesBlob(message, priorTurns) {
+  const parts = [message];
+  for (const turn of priorTurns || []) {
+    if (turn.role === "user" && turn.content) parts.push(turn.content);
+  }
+  return parts.join("\n").toLowerCase();
+}
+
+function supportRejectTool(reason) {
+  return {
+    success: false,
+    error: "action_blocked",
+    securityMessage: reason,
+  };
+}
+
+function supportValidateToolCall(name, args, ctx) {
+  const { sessionEmail, fullAllowlist, userStatedEmails, userBlob } = ctx;
+  const norm = (e) => String(e || "").trim().toLowerCase();
+
+  const emailInScope = (email) => {
+    const n = norm(email);
+    if (!n) return false;
+    if (fullAllowlist.has(n)) return true;
+    return false;
+  };
+
+  if (name === "search_customer") {
+    const q = String(args.query || "").trim();
+    if (!q) return supportRejectTool("Missing search query.");
+    const qLower = q.toLowerCase();
+    if (userBlob.includes(qLower)) return null;
+    if (/^\d{5,}$/.test(q) && userBlob.includes(q)) return null;
+    const qEmails = supportExtractEmails(q);
+    if (qEmails.length && qEmails.every((em) => fullAllowlist.has(em))) return null;
+    return supportRejectTool(
+      "Search refused: only use details the customer actually typed in this chat (email fragment, order number, or exact phrase). No broad or third-party searches."
+    );
+  }
+
+  const emailArg = args.email;
+  if (
+    name === "lookup_user" ||
+    name === "check_premium_diagnosis" ||
+    name === "check_tokens" ||
+    name === "fix_premium" ||
+    name === "cancel_subscription" ||
+    name === "delete_account" ||
+    name === "process_refund" ||
+    name === "credit_tokens"
+  ) {
+    const n = norm(emailArg);
+    if (!n) return supportRejectTool("Missing email for this action.");
+
+    if (name === "delete_account") {
+      if (sessionEmail) {
+        if (n !== norm(sessionEmail)) {
+          return supportRejectTool(
+            "Account deletion can only be requested for the account you are logged in with. Log in with that account on the site, or use the email link flow from your profile if applicable."
+          );
+        }
+      } else if (!userStatedEmails.has(n)) {
+        return supportRejectTool(
+          "For security, you must type the exact account email you want deleted in this chat before deletion can proceed."
+        );
+      }
+      return null;
+    }
+
+    if (!emailInScope(n)) {
+      return supportRejectTool(
+        "This email is not in scope for this conversation. Only help with addresses the customer has written in their own messages (or their logged-in session). Refuse bulk, database-wide, or third-party requests."
+      );
+    }
+  }
+
+  return null;
+}
+
+// --- Tool Executor ---
+
+async function executeSupportTool(name, args, securityCtx) {
+  if (securityCtx) {
+    const block = supportValidateToolCall(name, args, securityCtx);
+    if (block) return block;
+  }
+
+  switch (name) {
+    case "lookup_user": return await supportLookupUser(args.email);
+    case "check_premium_diagnosis": return await supportCheckPremiumDiagnosis(args.email);
+    case "fix_premium": return await supportFixPremium(args.email);
+    case "cancel_subscription": return await supportCancelSubscription(args.email);
+    case "delete_account": return await supportDeleteAccount(args.email);
+    case "process_refund": return await supportProcessRefund(args.email, args.product);
+    case "check_tokens": return await supportCheckTokens(args.email);
+    case "credit_tokens": return await supportCreditTokens(args.email, args.amount, args.reason);
+    case "search_customer": return await supportSearchCustomer(args.query);
+    default: return { error: `Unknown tool: ${name}` };
+  }
+}
+
+// --- Main AI Support Chat Endpoint ---
+
+app.post("/api/support-chat", async (req, res) => {
+  try {
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+    if (!checkSupportRateLimit(ip)) {
+      return res.status(429).json({ reply: "Too many messages. Please wait a few minutes before trying again. 🩷" });
+    }
+
+    const { message, history = [], userEmail } = req.body;
+    if (!message || typeof message !== "string" || message.length > 2000) {
+      return res.status(400).json({ error: "Invalid message" });
+    }
+
+    if (
+      /delete\s+all|effa(c|s)er\s+tout|supprim(er|ez)?\s+tout|toute\s+la\s+base|tous\s+les\s+(comptes|emails|utilisateurs)|all\s+(users|accounts|emails)\s+in\s+the\s+database|dump\s+(the\s+)?(whole\s+)?database|reset\s+the\s+entire/i.test(
+        message
+      )
+    ) {
+      return res.json({
+        reply:
+          "Je ne peux pas effectuer ce type d’action — aucun accès en masse à la base de données n’existe depuis ce chat. Chaque demande est traitée uniquement pour le compte concerné, avec les vérifications de sécurité habituelles. Pour une question précise sur votre compte, indiquez l’adresse e-mail associée. 🩷\n\nI can’t do that — there is no bulk or database-wide access from this chat. Each request is handled only for one customer account with normal security checks. For help with your own account, please share the email address involved. 🩷",
+      });
+    }
+
+    let systemPrompt = SUPPORT_SYSTEM_PROMPT;
+    const sessionEmail = userEmail && typeof userEmail === "string" ? userEmail.trim().toLowerCase() : null;
+    if (sessionEmail) {
+      systemPrompt += `\n\nCONTEXT — BROWSER SESSION (fallback only): This page is opened while logged in as: ${sessionEmail}.
+This is NOT the primary email for support. Use it ONLY when the user never gave any email in this chat, or after lookups with the email they provided fail and you need a second try.
+If the user writes a different email in any message (account or payment), always prefer THAT address for tools — including the latest one if they correct themselves.`;
+    }
+
+    const rawHistory = Array.isArray(history) ? history : [];
+    const normalized = rawHistory
+      .filter((m) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"))
+      .map((m) => ({ role: m.role, content: m.content }));
+    let priorTurns = normalized.slice(-24);
+    const last = priorTurns[priorTurns.length - 1];
+    if (last && last.role === "user" && last.content === message) {
+      priorTurns = priorTurns.slice(0, -1);
+    }
+
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...priorTurns,
+      { role: "user", content: message },
+    ];
+
+    const userStatedEmails = supportBuildUserStatedEmails(message, priorTurns);
+    const fullAllowlist = supportBuildFullAllowlist(sessionEmail, userStatedEmails);
+    const userBlob = supportUserMessagesBlob(message, priorTurns);
+    const supportSecurityCtx = { sessionEmail, fullAllowlist, userStatedEmails, userBlob };
+
+    const callOpenAI = async (msgs) => {
+      const r = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        { model: "gpt-4o-mini", messages: msgs, tools: SUPPORT_TOOLS, tool_choice: "auto", max_tokens: 800, temperature: 0.3 },
+        { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" }, timeout: 30000 }
+      );
+      return r.data.choices[0].message;
+    };
+
+    let assistantMessage = await callOpenAI(messages);
+    let rounds = 0;
+
+    while (assistantMessage.tool_calls && rounds < 5) {
+      rounds++;
+      messages.push(assistantMessage);
+
+      for (const tc of assistantMessage.tool_calls) {
+        let args;
+        try { args = JSON.parse(tc.function.arguments); } catch { args = {}; }
+        console.log(`🤖 Support tool: ${tc.function.name}`, args);
+
+        const result = await executeSupportTool(tc.function.name, args, supportSecurityCtx);
+        console.log(`🤖 Result: ${JSON.stringify(result).substring(0, 300)}`);
+
+        messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
+      }
+
+      assistantMessage = await callOpenAI(messages);
+    }
+
+    const reply = assistantMessage.content || "I couldn't process your request. Please try again.";
+
+    try {
+      const database = client.db("MyAICrush");
+      const supportLogs = database.collection("support_logs");
+      await supportLogs.insertOne({ action: "chat", userMessage: message, botReply: reply, toolRounds: rounds, createdAt: new Date(), ip });
+    } catch (_) {}
+
+    return res.json({ reply });
+  } catch (error) {
+    console.error("❌ Support chat error:", error.message || error);
+    return res.status(500).json({
+      reply: "I'm having a technical issue right now. Please try again in a moment, or contact contact@myaicrush.ai 🩷",
+    });
+  }
+});
 
 // Connecter à la base de données avant de démarrer le serveur
 connectToDb().then(() => {

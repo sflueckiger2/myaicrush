@@ -10,9 +10,7 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
-    }
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-FJ5S0H9B1R');
   </script>
@@ -39,18 +37,15 @@
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
-      /* subtle noise texture */
       background-image: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(244,114,182,0.12) 0%, transparent 60%);
     }
 
-    /* ─── Page wrapper ─── */
     .page {
       max-width: 740px;
       margin: 0 auto;
       padding: 3rem 1.25rem 4rem;
     }
 
-    /* ─── Header ─── */
     .page-header {
       text-align: center;
       margin-bottom: 2.5rem;
@@ -74,16 +69,17 @@
       line-height: 1.65;
     }
 
-    /* ─── Chat card ─── */
     .chat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(244,114,182,0.06);
+      display: flex;
+      flex-direction: column;
+      max-height: 80vh;
     }
 
-    /* ─── Chat top bar ─── */
     .chat-topbar {
       display: flex;
       align-items: center;
@@ -91,6 +87,7 @@
       padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border-muted);
       background: rgba(255,255,255,0.02);
+      flex-shrink: 0;
     }
     .chat-avatar {
       width: 42px; height: 42px;
@@ -120,14 +117,13 @@
       box-shadow: 0 0 6px #4ade80;
     }
 
-    /* ─── Message area ─── */
     .chat-messages {
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
-      min-height: 120px;
-      max-height: 55vh;
+      flex: 1;
+      min-height: 200px;
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -163,42 +159,80 @@
       color: #fce7f3;
       text-align: right;
     }
-    .msg.escalation {
-      border-left: 3px solid var(--pink);
-      padding-left: 0.85rem;
-    }
-
-    /* ─── Contact email highlight inside message ─── */
     .msg a {
       color: var(--pink);
       text-decoration: underline dotted;
     }
 
-    /* ─── Quick questions ─── */
-    .chat-footer {
-      padding: 1rem 1.25rem 1.25rem;
-      border-top: 1px solid var(--border-muted);
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 0.65rem 0.95rem;
+      align-self: flex-start;
     }
-    .qqt {
+    .typing-indicator span {
+      width: 7px; height: 7px;
+      background: var(--muted);
+      border-radius: 50%;
+      animation: typingBounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* Quick suggestions */
+    .chat-suggestions {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border-muted);
+      flex-shrink: 0;
+    }
+    .suggestions-toggle {
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
-      margin-bottom: 0.65rem;
       font-weight: 600;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+      padding: 0;
     }
+    .suggestions-toggle:hover { color: var(--pink); }
+    .suggestions-toggle i {
+      font-size: 0.6rem;
+      transition: transform 0.3s;
+    }
+    .suggestions-toggle.open i { transform: rotate(180deg); }
     .qq-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, margin 0.3s ease;
+    }
+    .qq-grid.open {
+      max-height: 300px;
+      margin-top: 0.6rem;
     }
     .qq-btn {
       background: var(--surface2);
       border: 1px solid var(--border-muted);
       color: #cbd5e1;
       border-radius: 999px;
-      padding: 0.38rem 0.85rem;
-      font-size: 0.78rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.74rem;
       font-family: 'DM Sans', sans-serif;
       cursor: pointer;
       transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.1s;
@@ -211,21 +245,50 @@
       transform: translateY(-1px);
     }
     .qq-btn:active { transform: translateY(0); }
-    .qq-btn.active {
-      background: var(--pink-dim);
-      border-color: rgba(244,114,182,0.6);
-      color: var(--pink);
-    }
 
-    .chat-hint {
-      font-size: 0.68rem;
-      color: #4b5563;
-      margin-top: 0.65rem;
-      line-height: 1.5;
+    /* Chat input */
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.85rem 1.25rem;
+      border-top: 1px solid var(--border-muted);
+      background: rgba(255,255,255,0.015);
+      flex-shrink: 0;
     }
-    .chat-hint i { color: var(--pink); opacity: 0.7; margin-right: 3px; }
+    #chat-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border-muted);
+      border-radius: 999px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #chat-input::placeholder { color: #4b5563; }
+    #chat-input:focus { border-color: rgba(244,114,182,0.5); }
+    #send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      border: none;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    #send-btn:hover { opacity: 0.85; }
+    #send-btn:active { transform: scale(0.95); }
+    #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ─── Footer / Legal ─── */
+    /* Footer / Legal */
     .legal-section {
       margin-top: 3rem;
       border-top: 1px solid var(--border-muted);
@@ -282,8 +345,9 @@
 
     @media (max-width: 560px) {
       .page { padding: 2rem 0.75rem 3rem; }
-      .qq-btn { font-size: 0.74rem; }
+      .qq-btn { font-size: 0.72rem; }
       .msg { max-width: 92%; }
+      .chat-card { max-height: 85vh; }
     }
   </style>
 </head>
@@ -292,58 +356,61 @@
 <div class="page">
 
   <div class="page-header">
-    <h1>Contact & Support 🩷</h1>
-    <p>Talk with Juliette, our virtual support assistant. Tap a question — she'll guide you instantly. If your case needs a manual action, she'll give you the right email.</p>
+    <h1 id="page-title">Contact & Support 🩷</h1>
+    <p id="page-desc">Chat with Juliette, our AI support assistant. She can check your account, fix issues, cancel subscriptions, process refunds, and more — all directly from this chat.</p>
   </div>
 
   <div class="chat-card">
 
-    <!-- Top bar -->
     <div class="chat-topbar">
       <div class="chat-avatar"><i class="fas fa-comment-dots" style="color:#fce7f3"></i></div>
       <div class="chat-topbar-info">
-        <strong>Juliette – MyAiCrush Support</strong>
-        <span><span class="online-dot"></span>Online · Please don't share card details here 💳🚫</span>
+        <strong id="topbar-name">Juliette – MyAiCrush Support</strong>
+        <span id="topbar-status"><span class="online-dot"></span>Online · I can handle most requests directly</span>
       </div>
     </div>
 
-    <!-- Messages -->
     <div class="chat-messages" id="chat-messages">
-      <div class="msg bot">
-        Hi 🩷 I'm Juliette, your virtual support assistant.<br><br>
-        Tap on one of the questions below and I'll explain how things work step by step.<br><br>
-        If your case really needs a manual action (refund, billing correction, account deletion…), I'll give you the correct email to contact the human team.
+      <div class="msg bot" id="welcome-msg">
+Hi 🩷 I'm Juliette, your support assistant.
+
+I can directly help you with:
+• Fix premium issues
+• Cancel your subscription
+• Process refunds
+• Delete your account
+• Check your tokens
+• And more…
+
+Just type your message below, or tap a quick shortcut!</div>
+    </div>
+
+    <div class="chat-suggestions">
+      <button class="suggestions-toggle open" id="suggestions-toggle">
+        <i class="fas fa-chevron-down"></i> <span id="suggestions-label">Quick shortcuts</span>
+      </button>
+      <div class="qq-grid open" id="qq-grid">
+        <button class="qq-btn" data-msg="My premium isn't working after payment">Premium not working</button>
+        <button class="qq-btn" data-msg="I want to cancel my subscription">Cancel subscription</button>
+        <button class="qq-btn" data-msg="I want a refund">Refund</button>
+        <button class="qq-btn" data-msg="I want to delete my account and all my data">Delete account</button>
+        <button class="qq-btn" data-msg="I bought tokens but didn't receive them">Missing tokens</button>
+        <button class="qq-btn" data-msg="I can't log in to my account">Can't log in</button>
+        <button class="qq-btn" data-msg="I forgot my password">Forgot password</button>
+        <button class="qq-btn" data-msg="What's the difference between premium and tokens?">Premium vs tokens</button>
+        <button class="qq-btn" data-msg="I was charged twice">Charged twice</button>
+        <button class="qq-btn" data-msg="Is MyAiCrush private and secure?">Privacy & security</button>
+        <button class="qq-btn" data-msg="My issue isn't listed here">Other issue</button>
       </div>
     </div>
 
-    <!-- Quick questions -->
-    <div class="chat-footer">
-      <div class="qqt">Quick questions — tap to get an answer</div>
-      <div class="qq-grid" id="qq-grid">
-        <button class="qq-btn" data-key="premium_not_active">Premium not active after payment</button>
-        <button class="qq-btn" data-key="premium_vs_tokens">Premium vs tokens — what's the difference?</button>
-        <button class="qq-btn" data-key="tokens_not_received">I bought tokens but didn't receive them</button>
-        <button class="qq-btn" data-key="tokens_refund">Refund for tokens</button>
-        <button class="qq-btn" data-key="forgot_password">Forgot my password</button>
-        <button class="qq-btn" data-key="cant_login">I can't log in</button>
-        <button class="qq-btn" data-key="refund_request">I want a refund</button>
-        <button class="qq-btn" data-key="double_charge">Charged twice</button>
-        <button class="qq-btn" data-key="delete_account">Delete my account</button>
-        <button class="qq-btn" data-key="nympho_mode">Nymphomaniac mode</button>
-        <button class="qq-btn" data-key="audio_calls">Audio calls</button>
-        <button class="qq-btn" data-key="mobile_app">Mobile app</button>
-        <button class="qq-btn" data-key="privacy_security">Privacy & security</button>
-        <button class="qq-btn" data-key="other_issue">My issue isn't listed</button>
-      </div>
-      <div class="chat-hint">
-        <i class="fas fa-circle-info"></i>
-        For refunds, double charges or account deletion, Juliette will give you the right email after her explanation.
-      </div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Type your message..." maxlength="2000" autocomplete="off" />
+      <button id="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
     </div>
 
   </div>
 
-  <!-- Legal / Footer -->
   <div class="legal-section">
     <div class="footer-links">
       <p style="margin-bottom:0.5rem">© 2026 MyAICrush – All rights reserved</p>
@@ -367,7 +434,7 @@
       <section>
         <strong>vii) Billing Support & Refunds</strong>
         <div class="billing-box">
-          For payment questions or to exercise your 15-day money-back guarantee:<br>
+          For payment questions or to exercise your 60-day money-back guarantee:<br>
           <a href="mailto:contact@myaicrush.ai">contact@myaicrush.ai</a><br>
           <a href="https://shorturl.at/bzQUX" target="_blank">Explodely Billing Support ↗</a>
         </div>
@@ -379,262 +446,137 @@
 
 <script>
   const HUMAN_EMAIL = "contact@myaicrush.ai";
+  const conversationHistory = [];
+  let isSending = false;
 
-  const FAQ = {
-    premium_not_active: {
-      question: "My Premium isn't working / not active after payment",
-      answer: `I understand, it's annoying when you pay and Premium doesn't show up 💗
+  const chatMessages = document.getElementById("chat-messages");
+  const chatInput = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("send-btn");
 
-In most cases, it's simply an email mismatch – Premium is linked to the email used for the payment.
-
-Here's how you can fix it yourself in 2 minutes:
-
-1️⃣ Go to your profile page:
-https://myaicrush.ai/profile.html
-
-2️⃣ Look at the email shown there (the one you're currently logged in with).
-
-3️⃣ Open your inbox and find the payment confirmation email you received. The email that received this confirmation is the one linked to Premium.
-
-4️⃣ If the two emails are different, you have two options:
-- Log out and log in again using the payment email
-- Or, from the profile page, create a new account using the payment email
-
-Once you're logged in with the payment email, Premium will be recognized automatically.
-
-If after these steps Premium still doesn't appear, contact us at:
-${HUMAN_EMAIL}
-
-🌸`
-    },
-    premium_vs_tokens: {
-      question: "What's the difference between Premium and tokens?",
-      answer: `Quick recap:
-
-• Premium = unlimited chat with the AIs + access to all characters + better overall experience.
-• Tokens = used for extras:
-  – nymphomaniac mode
-  – private content (hotter photos/videos)
-  – some audio features and special options
-
-So even with Premium, certain very "hot" features still consume tokens.
-
-🌸`
-    },
-    tokens_not_received: {
-      question: "I bought tokens but didn't receive them",
-      answer: `Tokens are usually credited instantly after payment.
-
-Please check:
-
-1️⃣ Go to your profile page:
-https://myaicrush.ai/profile.html
-
-2️⃣ Make sure you're logged in with the same email you used for the token payment.
-
-If the balance still doesn't look right, please email:
-${HUMAN_EMAIL}
-
-Include:
-• the email of your MyAiCrush account
-• a screenshot or details of the token payment
-
-🌸`
-    },
-    tokens_refund: {
-      question: "Can I get a refund for tokens?",
-      answer: `In general, tokens that have already been used cannot be refunded.
-
-If you think there was a bug (for example a big deduction you don't understand), you can contact:
-${HUMAN_EMAIL}
-
-Please include:
-• your email
-• the date of the token purchase
-• what looked wrong to you
-
-The team can check your case and may offer a commercial gesture (like some free tokens).
-
-🌸`
-    },
-    forgot_password: {
-      question: "I forgot my password",
-      answer: `No worries, it happens 😌
-
-1️⃣ Go to:
-https://myaicrush.ai/profile.html
-
-2️⃣ Click on "Forgot password"
-
-3️⃣ Follow the instructions in the email you receive (check spam/promotions if needed).
-
-If you still don't receive anything, send an email to:
-${HUMAN_EMAIL}
-
-🌸`
-    },
-    cant_login: {
-      question: "I can't log in",
-      answer: `First, try this:
-
-1️⃣ Go to:
-https://myaicrush.ai/profile.html
-
-2️⃣ Make sure you're using the correct email (the same one used for payments and previous logins).
-
-3️⃣ If you forgot your password, click on "Forgot password" and follow the reset process.
-
-If you still can't log in, please write to:
-${HUMAN_EMAIL}
-
-🌸`
-    },
-    refund_request: {
-      question: "I want a refund",
-      answer: `I'm sorry the experience didn't meet your expectations 💗
-
-Refunds need to be handled manually by the billing team.
-
-Please send an email to:
-${HUMAN_EMAIL}
-
-Include:
-• the email you use on MyAiCrush
-• which purchase you want a refund for (Premium, tokens, etc.)
-• the approximate date of purchase
-• a short explanation (it helps us improve)
-
-The team will review your request and get back to you.
-
-🌸`
-    },
-    double_charge: {
-      question: "I was charged twice",
-      answer: `That definitely needs a manual check, and I'm really sorry for the stress 😕
-
-Please email:
-${HUMAN_EMAIL}
-
-With:
-• your MyAiCrush email
-• a screenshot showing the two charges (amount + dates)
-
-The team will verify and refund any duplicate charge if confirmed.
-
-🌸`
-    },
-    delete_account: {
-      question: "I want to delete my account",
-      answer: `Account deletion must be done manually for security reasons.
-
-Please write to:
-${HUMAN_EMAIL}
-
-And clearly state: "I want the complete deletion of my account and data".
-
-The team will process the deletion as soon as possible.
-
-🌸`
-    },
-    nympho_mode: {
-      question: "What is the nymphomaniac mode?",
-      answer: `The nymphomaniac mode is a special extra that makes the AI:
-
-• much spicier and more direct
-• more explicit in its replies (within legal and safety limits)
-• able to unlock more explicit content, depending on the character
-
-This mode is paid with tokens and is not included in Premium, because it unlocks a higher level of intensity and uses more resources.
-
-🌸`
-    },
-    audio_calls: {
-      question: "How do audio calls work?",
-      answer: `Audio calls are designed to let you interact with the AI by voice.
-
-However, audio calls are currently unavailable on MyAiCrush, even if you still see mentions of them in some places.
-
-We're working on bringing a new, more stable version in the future. In the meantime, you can still enjoy chat and all other features.
-
-🌸`
-    },
-    mobile_app: {
-      question: "Do you have a mobile app?",
-      answer: `There's no native mobile app (App Store / Google Play) yet.
-
-But the MyAiCrush website is fully mobile-optimized, and you can add it to your home screen to use it almost like an app.
-
-🌸`
-    },
-    privacy_security: {
-      question: "Is it private and secure?",
-      answer: `The platform is designed to be as private and secure as possible:
-
-• we don't sell your personal data
-• conversations may be stored for moderation and quality
-• the content is strictly adult and filtered
-
-Full details here:
-Privacy Policy: https://myaicrush.ai/privacy-policy.html
-
-🌸`
-    },
-    other_issue: {
-      question: "My issue is not listed",
-      answer: `Thanks for your message 💌
-
-This page covers the most frequent questions: Premium, tokens, login, refunds, nymphomaniac mode, audio calls, etc.
-
-If your situation is more specific or complex, the best way is to contact the human support team:
-
-${HUMAN_EMAIL}
-
-Please include:
-• your MyAiCrush email
-• a short description of the issue
-• a screenshot if it helps
-
-🌸`
-    }
-  };
+  // --- Message rendering ---
 
   function addMsg(text, role) {
-    const container = document.getElementById('chat-messages');
-    const div = document.createElement('div');
-    const isEscalation = role === 'bot' && text.includes(HUMAN_EMAIL);
-    div.className = ['msg', role, isEscalation ? 'escalation' : ''].filter(Boolean).join(' ');
-    // Linkify email
-    div.innerHTML = text
-  .replace(/https:\/\/myaicrush\.ai\/profile\.html/g, `<a href="https://myaicrush.ai/profile.html" target="_blank" style="color:#f472b6;text-decoration:underline dotted;">myaicrush.ai/profile.html</a>`)
-  .replace(HUMAN_EMAIL, `<a href="mailto:${HUMAN_EMAIL}">${HUMAN_EMAIL}</a>`);
-    container.appendChild(div);
-    setTimeout(() => container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }), 30);
+    removeTypingIndicator();
+    const div = document.createElement("div");
+    div.className = `msg ${role}`;
+    div.innerHTML = formatMessage(text);
+    chatMessages.appendChild(div);
+    scrollToBottom();
   }
 
-  document.getElementById('qq-grid').addEventListener('click', e => {
-    const btn = e.target.closest('.qq-btn');
+  function formatMessage(text) {
+    return text
+      .replace(/https:\/\/myaicrush\.ai\/[^\s)]+/g, (url) => `<a href="${url}" target="_blank">${url.replace("https://myaicrush.ai/", "myaicrush.ai/")}</a>`)
+      .replace(/contact@myaicrush\.ai/g, `<a href="mailto:${HUMAN_EMAIL}">${HUMAN_EMAIL}</a>`)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+  }
+
+  function showTypingIndicator() {
+    removeTypingIndicator();
+    const div = document.createElement("div");
+    div.className = "typing-indicator";
+    div.id = "typing";
+    div.innerHTML = "<span></span><span></span><span></span>";
+    chatMessages.appendChild(div);
+    scrollToBottom();
+  }
+
+  function removeTypingIndicator() {
+    document.getElementById("typing")?.remove();
+  }
+
+  function scrollToBottom() {
+    setTimeout(() => chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" }), 30);
+  }
+
+  // --- Send message ---
+
+  async function sendMessage(text) {
+    if (!text.trim() || isSending) return;
+
+    isSending = true;
+    sendBtn.disabled = true;
+    chatInput.value = "";
+
+    addMsg(text, "user");
+    conversationHistory.push({ role: "user", content: text });
+
+    showTypingIndicator();
+
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+      const userEmail = storedUser?.email || null;
+
+      // history must NOT include the current user message: the API appends `message` itself.
+      // Including both duplicates the last turn and hurts memory / tool consistency.
+      const priorHistory = conversationHistory.slice(0, -1);
+
+      const res = await fetch("/api/support-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: priorHistory, userEmail }),
+      });
+
+      const data = await res.json();
+      const reply = data.reply || "Sorry, something went wrong. Please try again.";
+
+      addMsg(reply, "bot");
+      conversationHistory.push({ role: "assistant", content: reply });
+
+      // Auto-collapse suggestions after first message
+      const grid = document.getElementById("qq-grid");
+      const toggle = document.getElementById("suggestions-toggle");
+      if (grid.classList.contains("open") && conversationHistory.length > 2) {
+        grid.classList.remove("open");
+        toggle.classList.remove("open");
+      }
+    } catch (err) {
+      removeTypingIndicator();
+      addMsg("Connection error. Please check your internet and try again, or email " + HUMAN_EMAIL + " 🩷", "bot");
+    }
+
+    isSending = false;
+    sendBtn.disabled = false;
+    chatInput.focus();
+  }
+
+  // --- Event listeners ---
+
+  sendBtn.addEventListener("click", () => sendMessage(chatInput.value));
+
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(chatInput.value);
+    }
+  });
+
+  document.getElementById("qq-grid").addEventListener("click", (e) => {
+    const btn = e.target.closest(".qq-btn");
     if (!btn) return;
-    const data = (window.FAQ || FAQ)[btn.dataset.key];
-    if (!data) return;
-    // Highlight active
-    document.querySelectorAll('.qq-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    addMsg(data.question, 'user');
-    setTimeout(() => addMsg(data.answer, 'bot'), 220);
+    const msg = btn.dataset.msg;
+    if (msg) sendMessage(msg);
+  });
+
+  document.getElementById("suggestions-toggle").addEventListener("click", () => {
+    const grid = document.getElementById("qq-grid");
+    const toggle = document.getElementById("suggestions-toggle");
+    grid.classList.toggle("open");
+    toggle.classList.toggle("open");
   });
 
   function toggleLegal() {
-    const el = document.getElementById('legal-body');
-    el.classList.toggle('open');
-    if (el.classList.contains('open')) {
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'end' }), 320);
+    const el = document.getElementById("legal-body");
+    el.classList.toggle("open");
+    if (el.classList.contains("open")) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "end" }), 320);
     }
   }
 </script>
 
-
-  <script type="module" src="/scripts/i18n-contact.js"></script>
-  <script type="module" src="/scripts/i18n-menu.js"></script>
+<script type="module" src="/scripts/i18n-contact.js"></script>
+<script type="module" src="/scripts/i18n-menu.js"></script>
 
 </body>
 </html>
