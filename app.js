@@ -4520,6 +4520,9 @@ async function supportLookupUser(email) {
     }
   } catch (_) {}
 
+  const unlockedContents = Array.isArray(user.unlockedContents) ? user.unlockedContents : [];
+  const nymphoUnlocked = user.nymphoUnlocked && typeof user.nymphoUnlocked === "object" ? Object.keys(user.nymphoUnlocked) : [];
+
   return {
     found: true,
     email: user.email,
@@ -4535,6 +4538,11 @@ async function supportLookupUser(email) {
     stripeInfo,
     hasPassword: !!user.password,
     accountSource: user.accountSource || "signup",
+    premiumUsageEvidence: {
+      unlockedContentsCount: unlockedContents.length,
+      nymphoUnlockedCharacters: nymphoUnlocked,
+      hasPremiumActivity: unlockedContents.length > 0 || nymphoUnlocked.length > 0,
+    },
   };
 }
 
@@ -4678,14 +4686,28 @@ async function supportCheckPremiumDiagnosis(email) {
     }
   }
 
+  const accountCreatedBefore2026 = user.createdAt && new Date(user.createdAt) < new Date("2026-01-01");
+
   if (!explodelyStatus.active && !stripeInfo && !isExplodelyPremiumInDb) {
     if (explodelyStatus.reason === "no_events_found" || explodelyStatus.reason === "no_sale_found") {
-      issues.push("No payment events found in our records for this email. User may have used a different email for payment.");
+      if (accountCreatedBefore2026 || hasPremiumActivity) {
+        issues.push("EXPIRED STRIPE CUSTOMER DETECTED: Account created before 2026 with no current payment records. This is a returning customer whose old subscription expired. Follow the EXPIRED STRIPE CUSTOMER flow: go to sales mode (reassure + offer 300 tokens + re-subscribe link). Do NOT ask for another email.");
+      } else {
+        issues.push("No payment events found in our records for this email. User may have used a different email for payment.");
+      }
     } else if (explodelyStatus.reason === "refunded") {
       issues.push(`User was REFUNDED. Sale on ${explodelyStatus.lastSale?.date}, refund on ${explodelyStatus.refund?.date}. Premium is correctly inactive.`);
     } else {
       issues.push("Payment data unclear. " + (explodelyStatus.reason || ""));
     }
+  }
+
+  const unlockedContents = Array.isArray(user.unlockedContents) ? user.unlockedContents : [];
+  const nymphoUnlocked = user.nymphoUnlocked && typeof user.nymphoUnlocked === "object" ? Object.keys(user.nymphoUnlocked) : [];
+  const hasPremiumActivity = unlockedContents.length > 0 || nymphoUnlocked.length > 0;
+
+  if (hasPremiumActivity && isExplodelyPremiumInDb) {
+    issues.push(`PREMIUM USAGE CONFIRMED: The user has unlocked ${unlockedContents.length} private content(s) and used nympho mode with ${nymphoUnlocked.length} character(s) (${nymphoUnlocked.join(", ") || "none"}). This PROVES premium is working on their account. Blurry images = cache/session issue, NOT a premium problem.`);
   }
 
   return {
@@ -4699,6 +4721,11 @@ async function supportCheckPremiumDiagnosis(email) {
     explodelyMainOrderId: user.explodelyMainOrderId || null,
     issues,
     availableFixes: fixes,
+    premiumUsageEvidence: {
+      unlockedContentsCount: unlockedContents.length,
+      nymphoUnlockedCharacters: nymphoUnlocked,
+      hasPremiumActivity,
+    },
   };
 }
 
@@ -4768,13 +4795,25 @@ async function supportCancelSubscription(email) {
   let cancelledExplodely = false;
   let cancelledStripe = false;
   const errors = [];
-  /** YYYY-MM-DD when known — for bot to tell customer access continues through paid period */
   let accessContinuesUntil = null;
 
-  if (user.explodelyMainOrderId) {
+  let mainOrderId = user.explodelyMainOrderId || null;
+  if (!mainOrderId) {
+    const explodelyEvents = database.collection("explodely_events");
+    const saleEvent = await explodelyEvents.findOne(
+      { email: normalizedEmail, eventType: "sale" },
+      { sort: { date: -1 } }
+    );
+    if (saleEvent && saleEvent.orderId) {
+      mainOrderId = saleEvent.orderId;
+      await users.updateOne({ _id: user._id }, { $set: { explodelyMainOrderId: mainOrderId } });
+    }
+  }
+
+  if (mainOrderId) {
     try {
       const r = await fetch(
-        `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${user.explodelyMainOrderId}`
+        `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${mainOrderId}`
       );
       const d = await r.json();
       if (!d.error) {
@@ -4862,30 +4901,101 @@ async function supportCancelSubscription(email) {
   };
 }
 
+async function removeUserFromSystemeIo(email) {
+  try {
+    const SYSTEME_API_KEY = process.env.SYSTEME_API_KEY;
+    const SYSTEME_API_BASE_URL = process.env.SYSTEME_API_BASE_URL || "https://api.systeme.io";
+    if (!SYSTEME_API_KEY) return { deleted: false, reason: "no_api_key" };
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const headers = { "Accept": "application/json", "X-API-Key": SYSTEME_API_KEY };
+
+    const listRes = await fetch(
+      `${SYSTEME_API_BASE_URL}/api/contacts?email=${encodeURIComponent(normalizedEmail)}&limit=10`,
+      { method: "GET", headers }
+    );
+    if (!listRes.ok) return { deleted: false, reason: `list_error_${listRes.status}` };
+
+    const listData = await listRes.json();
+    const contacts = (listData.items || []).filter((c) => c.email && c.email.toLowerCase() === normalizedEmail);
+    if (contacts.length === 0) return { deleted: false, reason: "not_found_in_systemeio" };
+
+    const results = [];
+    for (const contact of contacts) {
+      const delRes = await fetch(`${SYSTEME_API_BASE_URL}/api/contacts/${contact.id}`, {
+        method: "DELETE",
+        headers,
+      });
+      results.push({ id: contact.id, status: delRes.status, ok: delRes.status === 204 || delRes.status === 200 });
+      console.log(`🗑️ Systeme.io contact ${contact.id} (${normalizedEmail}): DELETE → ${delRes.status}`);
+    }
+
+    const allOk = results.every((r) => r.ok);
+    return { deleted: allOk, contactsProcessed: results.length, results };
+  } catch (err) {
+    console.error("❌ removeUserFromSystemeIo error:", err.message);
+    return { deleted: false, reason: err.message };
+  }
+}
+
 async function supportDeleteAccount(email) {
   const normalizedEmail = String(email).trim().toLowerCase();
   const database = client.db("MyAICrush");
   const users = database.collection("users");
+  const supportLogs = database.collection("support_logs");
 
   const user = await users.findOne({ email: normalizedEmail });
-  if (!user) return { success: false, error: "User not found" };
+
+  // Always check Systeme.io regardless of MongoDB presence (GDPR: remove from mailing list too)
+  const systemeResult = await removeUserFromSystemeIo(normalizedEmail);
+
+  if (!user) {
+    // No MongoDB account, but may have been on mailing list
+    await supportLogs.insertOne({
+      action: "account_delete_attempt",
+      email: normalizedEmail,
+      mongoFound: false,
+      systemeIoDeleted: systemeResult.deleted,
+      deletedAt: new Date(),
+    });
+
+    if (systemeResult.deleted) {
+      return {
+        success: true,
+        mongoDeleted: false,
+        systemeIoDeleted: true,
+        message: `No account found in our app database for ${normalizedEmail}, but the email WAS found and removed from our mailing list — they will no longer receive any emails from us. GDPR deletion is complete.`,
+      };
+    }
+    return {
+      success: false,
+      mongoDeleted: false,
+      systemeIoDeleted: false,
+      error: `No account found for ${normalizedEmail} in our app database, and no entry found in our mailing list either. Nothing to delete.`,
+    };
+  }
 
   const cancelResult = await supportCancelSubscription(normalizedEmail);
+
   await users.deleteOne({ email: normalizedEmail });
   premiumCache.delete(normalizedEmail);
 
-  const supportLogs = database.collection("support_logs");
   await supportLogs.insertOne({
     action: "account_deleted",
     email: normalizedEmail,
+    mongoDeleted: true,
     subscriptionCancelled: cancelResult.success,
+    systemeIoDeleted: systemeResult.deleted,
     deletedAt: new Date(),
   });
 
-  return {
-    success: true,
-    message: `Account and data for ${normalizedEmail} permanently deleted. ${cancelResult.success ? "Subscription also cancelled." : ""}`,
-  };
+  const parts = [`Account and all data for ${normalizedEmail} permanently deleted (GDPR).`];
+  if (cancelResult.success) parts.push("Subscription cancelled.");
+  if (systemeResult.deleted) parts.push("Email list contact removed (no more marketing emails).");
+  else if (systemeResult.reason === "not_found_in_systemeio") parts.push("No mailing list entry found (already clean).");
+  else parts.push(`Mailing list removal attempted but uncertain (${systemeResult.reason}). Manual check may be needed.`);
+
+  return { success: true, mongoDeleted: true, systemeIoDeleted: systemeResult.deleted, message: parts.join(" ") };
 }
 
 async function supportProcessRefund(email, product) {
@@ -5185,7 +5295,7 @@ const SUPPORT_TOOLS = [
     type: "function",
     function: {
       name: "delete_account",
-      description: "Permanently delete account and all data (GDPR). Also cancels subscription. IRREVERSIBLE — always confirm with user first.",
+      description: "Permanently delete account and all data (GDPR). Cancels subscription + removes contact from mailing list (Systeme.io) so they stop receiving emails. IRREVERSIBLE — always confirm with user first.",
       parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
     },
   },
@@ -5284,11 +5394,10 @@ ONE SUBSCRIPTION CASE AT A TIME (same chat):
 - Note: Each browser session is separate; you are not literally talking to two people at once unless they share one thread — in that case, still go one case at a time.
 
 SCOPE & PRIVACY — ONE CUSTOMER, NO BULK, NO THIRD-PARTY ABUSE:
-- You ONLY help the person using this chat. Tools are server-restricted: you can only use an email address if the customer typed it in their own messages OR it is their logged-in session email.
+- You ONLY help the person using this chat. Tools are server-restricted: an email is in scope if (1) the customer typed it, (2) it is their logged-in session email, OR (3) YOU showed them that email in your recent messages after finding their order/account and they confirmed it is theirs (e.g. "Oui"). Same scope for cancel, delete, refunds, and lookups — still one case at a time, never mass actions.
 - NEVER attempt bulk operations: no "delete all users", "erase every account", "list all emails", "dump the database", "export all customers", etc. Refuse immediately with a polite explanation — such actions do not exist and will never be run.
-- NEVER run tools for random third-party emails the customer did not provide as theirs (or payment email for their case). If someone asks to modify another person's account, refuse.
-- Account deletion: when the user is logged in on the site, deletion can only target THAT logged-in email. Otherwise they must type the exact email to delete in the chat (still only normal single-account deletion, never mass).
-- search_customer: only search using text the customer actually wrote (order number, email fragment, name as they typed it). Do not fish for unrelated accounts.
+- NEVER run tools for random third-party emails that the customer never tied to this conversation. If someone asks to modify another person's account without establishing it is theirs, refuse.
+- search_customer: only search using text that appears in this conversation (customer input or prior messages). Do not fish for unrelated accounts.
 
 ANTI-HALLUCINATION — NON-NEGOTIABLE:
 - NEVER write that you cancelled, reactivated, refunded, credited tokens, deleted an account, or "fixed" premium unless you actually called the matching tool IN THIS TURN and its JSON result shows success (e.g. success: true) or an explicit success message from that tool.
@@ -5296,12 +5405,23 @@ ANTI-HALLUCINATION — NON-NEGOTIABLE:
 - NEVER fabricate tool results, dates, or order IDs.
 - After fix_premium succeeds, do NOT say "your subscription was reactivated". Say that premium access was synced to match their payment record, or that the account now reflects their active entitlement — wording that does NOT imply a new subscription was created.
 
+CANCEL vs DELETE — CRITICAL DISTINCTION (especially in French):
+- These words mean CANCEL SUBSCRIPTION (stop charges): "résilier", "annuler", "cancel", "unsubscribe", "stop my subscription", "résilier mon compte", "résilier mon abonnement", "je veux annuler", "arrêter l'abonnement", "ne plus être prélevé"
+- These words mean DELETE ACCOUNT (GDPR): "supprimer mon compte", "suppression complète", "suppression de mes données", "delete my account", "delete my data", "effacer mes données", "je veux la suppression"
+- ABSOLUTE RULE: "résilier" = CANCEL, NEVER delete. Even "résilier mon compte" means cancel the subscription on that account, NOT delete the account.
+- NEVER offer or suggest account deletion unless the user explicitly uses words like "supprimer", "suppression", "delete", "effacer". Do NOT say "supprimer votre compte" or "effacer vos données" in your reply if the user did not ask for that.
+- When a user asks to "résilier" and their subscription is already inactive/expired:
+  → Do NOT propose deletion. Do NOT mention deletion. Do NOT ask "voulez-vous supprimer votre compte?"
+  → Instead: (1) Confirm their subscription is already ended. (2) Reassure them: no more charges will occur. (3) Follow the EXPIRED STRIPE CUSTOMER flow: offer 300 free tokens + link to re-subscribe at https://myaicrush.ai/premium.html.
+  → Your reply should END with the token offer, not with a deletion proposal.
+
 REACTIVATION REQUESTS ("réactiver", "reactivate", "remettre l'abonnement"):
 - There is no reactivation tool. Do NOT call fix_premium just because the user asks to "reactivate" — first use lookup_user + check_premium_diagnosis.
 - If they still have an active paid period (cancelled renewal but time left), explain they keep access until that period ends; if the app shows wrong, troubleshoot cache/login or use fix_premium ONLY if diagnosis shows entitlement vs DB mismatch.
 - If their paid access has ended or they have no valid sale/subscription in records, tell them clearly to take out a new subscription on the website. Do NOT imply you can turn billing back on.
 
 CRITICAL RULES:
+0. EXPIRED CUSTOMER DETECTION (CHECK THIS FIRST — BEFORE ALL OTHER RULES): If lookup_user shows the account was created BEFORE 2026, OR the user mentions they HAD a previous subscription/premium, AND there are no active payment records → this is an EXPIRED STRIPE CUSTOMER. IMMEDIATELY follow the "EXPIRED / INACTIVE STRIPE CUSTOMERS" flow (sales mode: reassure no charges + offer 300 tokens + re-subscribe link). Do NOT ask for another email. Do NOT ask for an order number. Do NOT troubleshoot. Go straight to sales mode.
 1. You need an email BEFORE account actions, but follow EMAIL PRIORITY above — do NOT default to session login when the message contains another address. Do not ask again if the current or past user message already contains a usable email. NEVER invent emails.
 2. ALWAYS use lookup_user (with the active email from EMAIL PRIORITY) to verify the account exists before other account actions when applicable.
 3. ABSOLUTE RULE — NO EXCEPTIONS: For ANY destructive or irreversible action (delete account, refund, cancel), you MUST:
@@ -5310,24 +5430,38 @@ CRITICAL RULES:
    c) ONLY THEN execute the action
    d) NEVER execute refund, deletion, or cancellation in the same turn as finding the account. Always wait for user confirmation in a SEPARATE message.
    e) SUBSCRIPTION CANCELLATION (before you call cancel_subscription): In your confirmation message, ALWAYS clearly state that cancelling stops future renewals/charges but the customer KEEPS full premium access until the end of the billing period they have already paid for (not instant cut-off). If lookup_user / check_premium_diagnosis shows a concrete end date (e.g. Stripe currentPeriodEnd, premiumExpiresAt), include that date. If you do not have a date, use this wording without inventing one. French example: « L'annulation coupe les futurs prélèvements ; vous gardez l'accès premium jusqu'à la fin de la période déjà payée. » English: "Cancellation stops future billing; you keep premium access through the end of the period you've already paid for."
-4. When search_customer returns a fuzzy match (not exact), ALWAYS confirm with the user: "I found an account with [email]. Is this yours?" BEFORE doing anything else.
-5. Respond in the SAME LANGUAGE the user writes in. If French → French. If English → English.
-6. Be empathetic, professional, concise. Use 🩷 occasionally.
-7. NEVER reveal internal details (database fields, API names, system architecture, payment processor names). Say "our payment system" not "Explodely" or "Stripe".
-8. If a user asks for a human agent the FIRST time, say you can handle most requests directly and ask what they need.
+4. MULTI-REQUEST PRIORITY: If a user asks for MULTIPLE things (e.g. "refund + cancel", "refund + delete"), handle them in this strict order:
+   a) REFUND first → run the full RETENTION FLOW (gather info, propose 300 tokens). Only after the retention flow is completed (accepted or refused) do you move on.
+   b) CANCEL / DELETE second → only after the refund/retention flow is fully resolved.
+   Never combine or skip the retention offer just because the user also wants to cancel.
+5. When search_customer returns a fuzzy match (not exact), ALWAYS confirm with the user: "I found an account with [email]. Is this yours?" BEFORE doing anything else.
+6. Respond in the SAME LANGUAGE the user writes in. If French → French. If English → English.
+7. Be empathetic, professional, concise. Use 🩷 occasionally.
+8. NEVER reveal internal details (database fields, API names, system architecture, payment processor names). Say "our payment system" not "Explodely" or "Stripe".
+9. If a user asks for a human agent the FIRST time, say you can handle most requests directly and ask what they need.
    If they insist a SECOND time, provide: contact@myaicrush.ai
+
+SUBSCRIPTION / PREMIUM STATUS ("est-ce actif ?", "is my subscription active?", "mon abo est-il actif ?"):
+- Once you know which account email this case is about, you CAN and MUST answer from our records. Call lookup_user AND check_premium_diagnosis for that email (same turn if needed).
+- Explain in plain language: whether premium shows as active on the account, what payment records indicate (active entitlement, cancelled renewal but time left, refunded, no purchase found, etc.). Use the tool outputs — do not guess from order dates alone.
+- FORBIDDEN: saying you "cannot verify", "cannot check the subscription right now", or "I don't have access to that information" when you have not called these tools. If you already have fresh tool results in the thread, use them. If a tool returns an error, say there was a technical error checking the account and suggest contact@myaicrush.ai.
 
 PREMIUM TROUBLESHOOTING — FOLLOW THIS EXACT FLOW:
 1. Pick the email using EMAIL PRIORITY (message > prior turns > session). If the user only cares about payment records, use the payment email they gave; if they need the login account fixed, use the account email they gave — often they are the same, sometimes not.
 2. Use lookup_user with that email.
 3. Use check_premium_diagnosis with that email.
 4. FIRST CHECK: Is isPremiumInDb already TRUE?
-   - YES and user says it doesn't work (blurred photos, etc.) → Tell them: "Your premium is active in our system. Please try: 1) Log out and log back in. 2) Clear your browser cache. 3) If it still doesn't work, try a different browser." This is usually a cache/session issue. Do NOT ask for payment email.
+   - YES and user says it doesn't work (blurred photos, etc.) → Check premiumUsageEvidence from the tool results. If hasPremiumActivity is true (unlockedContents > 0 or nymphoUnlockedCharacters > 0), mention it as PROOF that their premium is working: e.g. "I can see in your account that you have already unlocked private content and/or used nympho mode with [character names], which confirms your premium access is working correctly." Then explain the blurry images are a cache/session issue and give the fix steps: 1) Log out and log back in. 2) Clear your browser cache. 3) Try a different browser. Do NOT ask for payment email.
    - YES and user just wants to check their status → Confirm their premium is active.
 5. If isPremiumInDb is FALSE:
    a. If the diagnosis shows a sale with NO refund → the user paid and should be premium. Use fix_premium ONLY to sync the DB flag with that entitlement (not "reactivation" wording). If the user only asked to "reactivate" but diagnosis shows no active entitlement, do NOT use fix_premium — send them to the website to subscribe again.
    b. If the diagnosis shows reason "refunded" → the user was REFUNDED. Tell them clearly: "Our records show a refund was processed for your order. That is why your premium access is inactive. If you believe this is an error, please contact us at contact@myaicrush.ai." Do NOT ask for another email.
-   c. If NO events found for that email → ask the user: "What email did you use to make the payment? Do you have your order number from the receipt?" (it might be different from their account email).
+   c. If NO events found for that email → CHECK THESE CONDITIONS (in order):
+      - Is the account created BEFORE 2026? → EXPIRED STRIPE CUSTOMER. Go to that flow. STOP HERE.
+      - Does the user SAY they had a previous subscription ("j'avais un abo", "I paid before", "I had premium", etc.)? → EXPIRED STRIPE CUSTOMER. Go to that flow. STOP HERE.
+      - Does premiumUsageEvidence.hasPremiumActivity = true? → EXPIRED STRIPE CUSTOMER. Go to that flow. STOP HERE.
+      - If NONE of the above → this is a NEW customer (2026+) who may have used a different email. ONLY THEN ask: "What email did you use to make the payment? Do you have your order number?"
+      CRITICAL: For expired Stripe customers, do NOT ask for another email, do NOT ask for an order number. Go DIRECTLY to sales mode (reassure + 300 tokens + re-subscribe link).
    d. If they give a different email → use check_premium_diagnosis with the PAYMENT email. If nothing found, use search_customer with the email to find fuzzy matches. If a valid sale without refund is found → use fix_premium with the ACCOUNT email (not payment email) only as a sync fix, not as subscription reactivation.
    e. If the user gives an order number → use search_customer with the order number. This is very reliable.
    f. If search_customer finds a similar email → confirm with the user, then proceed.
@@ -5356,20 +5490,62 @@ SUBSCRIPTION CANCELLATION:
 - Most common issue: user can't cancel from the website because their account email ≠ payment email. You can cancel it directly.
 - If only a Stripe subscription is found (legacy), tell the user it's already set to non-renewal, give them the end date, and confirm it will NOT renew.
 
-REFUND POLICY — RETENTION FLOW (VERY IMPORTANT):
-When a user requests a refund (for tokens OR for premium), you MUST follow this retention flow BEFORE anything else:
+EXPIRED / INACTIVE STRIPE CUSTOMERS (VERY COMMON with French-speaking users):
+Many French-speaking customers created their account before 2026 and had a Stripe subscription that has since expired or been set to non-renewal. Detect this situation when ANY of these patterns appear:
+- No Explodely events + Stripe subscription expired/cancelled + isPremiumInDb=false
+- No Explodely events + no Stripe info found + isPremiumInDb=false + BUT premiumUsageEvidence.hasPremiumActivity=true (they unlocked content or used nympho mode — this PROVES they were premium before, so their old subscription must have expired)
+- Account created before 2026 + isPremiumInDb=false + no active payment anywhere
+- The user SAYS they had a previous subscription (e.g. "j'avais un abonnement", "I had premium before", "I paid months ago", "my premium expired", "I lost my premium") — trust them, they are a returning customer
+In ALL these cases, do NOT offer to "cancel" — there is NOTHING active to cancel. Do NOT ask for another payment email — we already know they are an old customer whose subscription expired. Instead, go straight into SALES MODE:
+1. Briefly reassure: their old subscription has ended, no more charges.
+2. Do NOT ask for another email or order number — skip straight to the re-subscription pitch.
+3. Be warm, playful and slightly flirty/sexy in tone (you are Juliette after all 😏). Make the offer sound irresistible and fun — not corporate. The goal is to make them WANT to come back.
+4. ALWAYS offer the RE-SUBSCRIPTION INCENTIVE in your FIRST reply — this is MANDATORY:
+   - Propose 300 free tokens (a $129 value) credited IMMEDIATELY to their account as a welcome-back gift.
+   - Tell them to re-subscribe at https://myaicrush.ai/premium.html for $29/month, cancel anytime.
+   - IMPORTANT: Specify they must re-subscribe using the SAME email where the tokens are credited (their current account email).
+   - The tokens will already be on their account when they re-subscribe — ready to use right away!
+5. If they accept the tokens: credit them immediately with credit_tokens (amount=300, reason="retention").
+6. If they decline: that's fine, just confirm their subscription is inactive and wish them well.
+7. IMPORTANT: ALWAYS include both the reassurance AND the token offer in the SAME message.
+8. French example (adapt naturally, be playful): "Votre ancien abonnement est terminé, plus aucun prélèvement — vous pouvez souffler ! 🩷 Mais avouez que nos filles vous manquent un peu, non ? 😏 J'ai une offre spéciale pour vous : je peux ajouter 300 jetons gratuits (valeur 129$ !) directement sur votre compte, tout de suite. Il vous suffit de reprendre un abonnement premium sur https://myaicrush.ai/premium.html (29$/mois, résiliable quand vous voulez) avec votre email actuel, et vos 300 jetons seront prêts à l'emploi dès votre retour. Alors, on se retrouve ? Souhaitez-vous que j'ajoute les jetons ? 😘"
+9. English example (adapt naturally, be playful): "Your previous subscription has ended — no more charges, nothing to worry about! 🩷 But I bet you miss the girls a little, don't you? 😏 I've got a special welcome-back offer: I can add 300 free tokens ($129 value!) to your account right now. Just re-subscribe at https://myaicrush.ai/premium.html ($29/month, cancel anytime) using your current email, and your 300 tokens will be waiting for you the moment you're back. So... ready to come back? Want me to add the tokens? 😘"
+
+REFUND POLICY — RETENTION FLOW (HIGHEST PRIORITY — OVERRIDES ALL OTHER ACTIONS):
+When a user mentions "refund" (for tokens OR for premium), the RETENTION FLOW below is your FIRST and MANDATORY action — even if the user also asks to cancel or delete in the same message. Handle the refund/retention flow COMPLETELY before moving on to any cancellation or other request. Do NOT skip straight to cancellation or account deletion when a refund is also requested.
 
 STEP 0: Check non-refundable flag FIRST
 - check_tokens and lookup_user both return a "nonRefundableGift" field. If it is TRUE, the user already accepted a free token offer previously. Skip to STEP 3C immediately — do NOT propose the retention offer again.
 
-STEP 1: Gather info
-- For token refunds: use check_tokens to see their balance, how many they purchased, and how many they used.
-- For premium refunds: use check_premium_diagnosis to see their subscription status.
-- Tell the user: tokens already used are NOT refundable. Only their remaining unused tokens can be considered for a refund.
+STEP 1: Gather info (ALWAYS do this before anything else)
+- Use lookup_user to see the full picture (premium status, tokens, nonRefundableGift flag).
+- For token refunds: also use check_tokens to see their balance, how many they purchased, and how many they used.
+- For premium refunds: also use check_premium_diagnosis to see their subscription status.
+- Tell the user CLEARLY: what they paid for, what they've used. Tokens already used are NOT refundable. Only remaining unused tokens can be considered for a refund.
+- If the user says "I paid 2 times" or mentions multiple purchases, investigate BOTH token and premium purchases and explain each one.
 
-STEP 2: Propose the retention offer
-- Say something like: "Before processing your refund, I'd like to offer you something special: we can add 300 free tokens to your account (a $129 value!) as a gesture of goodwill. This way you can keep your current tokens AND get 300 extra ones to explore more of the platform. Would you prefer the 300 free tokens, or would you still like to proceed with the refund?"
-- In French: "Avant de traiter votre remboursement, j'aimerais vous proposer quelque chose de spécial : nous pouvons ajouter 300 jetons gratuits à votre compte (d'une valeur de 129$ !) en geste de bonne volonté. Ainsi, vous conservez vos jetons actuels ET vous recevez 300 jetons supplémentaires pour explorer la plateforme. Préférez-vous les 300 jetons gratuits, ou souhaitez-vous toujours procéder au remboursement ?"
+STEP 1B: EDUCATE about premium vs tokens (MANDATORY — do this BEFORE the retention offer)
+- Trigger this step whenever the user complains about ANY of these: "paywall", "have to pay more", "not what I agreed to", "behind a paywall", "need tokens", "why do I need tokens if I'm premium?", "everything isn't unlocked", "still have to buy", "not what was advertised", etc.
+- You MUST explain clearly and reassuringly:
+  • "Your premium subscription gives you FULL access: unlimited conversations, all characters, unlimited uncensored photos and videos — everything is included, no extra cost."
+  • "Tokens are ONLY for an optional bonus feature called 'nympho mode' which offers more explicit content. This is an extra for users who want to go even further — it is NOT required to enjoy the platform."
+  • "So your premium is complete and working — you are NOT behind a paywall for the main experience. The vast majority of content is already unlocked for you!"
+- This is critical because many users think premium is incomplete when they see the token prompt for nympho mode. Reassure them.
+- AFTER this explanation, THEN propose the retention offer (STEP 2) — the 300 free tokens will let them try the nympho mode for free, which often convinces them to stay.
+
+STEP 2: Propose the retention offer (combine education + offer in ONE message when user complains about paywall/tokens)
+- When the user's complaint is about "paywall" / "have to pay more" / "not what I agreed to", your reply MUST follow this structure:
+  1) FIRST: Acknowledge their frustration empathetically.
+  2) THEN: Explain what premium ACTUALLY includes — be specific: "Your premium gives you unlimited uncensored photos and videos, unlimited conversations, all characters, voice messages — all included, no extra cost."
+  3) THEN: Clarify the token confusion: "The only feature that requires tokens is an optional bonus called 'nympho mode' for even more explicit content. This is an extra — the main experience is fully unlocked for you."
+  4) THEN: Offer the 300 tokens as a way to try nympho mode for free: "To make it up to you, I can add 300 free tokens ($129 value!) to your account right now so you can try those bonus features at no cost."
+  5) Ask if they want the tokens or still want a refund.
+
+- Example English (adapt naturally, don't copy verbatim): "I totally understand your frustration — let me clarify what's included. Your premium subscription actually gives you full access to unlimited uncensored photos and videos, unlimited conversations with all characters, and voice messages — all of that is already unlocked for you, no extra cost! The feature you may have encountered that asks for tokens is an optional bonus called 'nympho mode', which offers even more explicit content. It's an extra for users who want to go further, but it's absolutely not required to enjoy the platform. That said, I'd love to help you try it! I can add 300 free tokens ($129 value!) to your account right now so you can explore those bonus features at no cost. Would you like me to add them, or would you still prefer a refund?"
+
+- Example French: "Je comprends tout à fait votre frustration — laissez-moi vous expliquer ce qui est inclus. Votre abonnement premium vous donne un accès complet : photos et vidéos non censurées illimitées, conversations illimitées avec tous les personnages, et messages vocaux — tout est déjà débloqué, sans frais supplémentaires ! La fonctionnalité qui demande des jetons s'appelle le 'mode nympho', c'est un bonus optionnel pour du contenu encore plus explicite. Ce n'est pas du tout nécessaire pour profiter de la plateforme. Cela dit, j'aimerais vous aider à l'essayer ! Je peux ajouter 300 jetons gratuits (valeur 129$ !) à votre compte pour que vous puissiez explorer ces bonus sans frais. Souhaitez-vous que je les ajoute, ou préférez-vous toujours un remboursement ?"
+
+- For simple refund requests WITHOUT a paywall complaint, a shorter version is fine: "Before processing your refund, I can offer you 300 free tokens ($129 value!) as a gesture of goodwill..."
 
 STEP 3A: If user ACCEPTS the 300 tokens:
 - Use credit_tokens with amount=300 and reason="retention"
@@ -5377,24 +5553,31 @@ STEP 3A: If user ACCEPTS the 300 tokens:
 - Tell them: "300 tokens have been added to your account! Please note that since you accepted this offer, refunds will no longer be available for this account. Enjoy your tokens! 🩷"
 
 STEP 3B: If user REFUSES and still wants the refund:
-- Use process_refund to LOG the refund request (this does NOT process the refund itself — it only gathers info and creates a log)
-- Tell them: "I've noted your refund request. Our team will review it and process it manually. You can expect to hear back within 24-48 hours. If you need further assistance, you can reach us at contact@myaicrush.ai."
-- Do NOT cancel their subscription, remove tokens, or change anything in their account. The admin handles that.
+- Do NOT use process_refund. Do NOT log anything. Do NOT remove tokens.
+- Tell them you cannot process refunds directly — they need to email contact@myaicrush.ai for that.
+- BUT ALSO proactively offer to cancel their subscription right now so they won't be charged again. This is something you CAN do immediately.
+- English: "I understand. Unfortunately, I'm not able to process refunds directly — for that, you would need to send an email to contact@myaicrush.ai with your account email and details of your request. However, what I can do right now is cancel your subscription so you won't be charged again going forward. You'll keep your premium access until the end of the period you've already paid for. Would you like me to cancel it for you? 🩷"
+- French: "Je comprends. Malheureusement, je ne suis pas en mesure de traiter les remboursements directement — pour cela, il faudrait envoyer un email à contact@myaicrush.ai avec l'adresse de votre compte et les détails de votre demande. Par contre, ce que je peux faire tout de suite, c'est annuler votre abonnement pour que vous ne soyez plus prélevé. Vous garderez votre accès premium jusqu'à la fin de la période déjà payée. Souhaitez-vous que je l'annule ? 🩷"
+- If they say yes to cancellation → follow the normal SUBSCRIPTION CANCELLATION flow (confirm, cancel, give end date).
+- If they only purchased tokens (no subscription), skip the cancellation offer and just redirect to contact@myaicrush.ai.
 
-STEP 3C: If user already has nonRefundableGift=true (process_refund will tell you):
+STEP 3C: If user already has nonRefundableGift=true:
 - The user previously accepted the free token offer. Refund is no longer available.
 - Tell them politely: "I see that you previously accepted a complimentary token offer on your account, which means refunds are no longer available. If you have any concerns, please contact our team at contact@myaicrush.ai."
 
 IMPORTANT REFUND RULES:
-- NEVER remove tokens from a user's balance. You cannot process refunds — only the admin can.
-- NEVER cancel a subscription as part of a refund. Only the admin does this.
-- process_refund only LOGS the request and gathers info. It does not modify the account.
-- ALWAYS propose the 300 token retention offer FIRST before logging a refund request.
+- You CANNOT process refunds. Only the admin can, via email.
+- NEVER remove tokens from a user's balance.
+- NEVER cancel a subscription as part of a refund.
+- ALWAYS propose the 300 token retention offer FIRST. Only redirect to contact@myaicrush.ai if they refuse.
 - For premium refund requests: the retention flow is the same — offer 300 free tokens first.
 
 ACCOUNT DELETION:
-- GDPR right. Confirm once, then delete immediately.
-- Cancels subscription + deletes all user data.
+- GDPR right. Confirm once, then execute delete_account.
+- The tool checks BOTH our app database AND our mailing list (email marketing). Even if the account does not exist in our database, it may still exist in our mailing list — and the tool handles both.
+- So when a user asks to delete and you get their email, ALWAYS call delete_account — even if lookup_user said "not found". The tool will still clean up the mailing list if they are on it.
+- After success, tell the customer: all their data has been deleted, their subscription (if any) was cancelled, and they have been removed from our mailing list so they will no longer receive any emails from us.
+- If the tool reports mongoDeleted=false but systemeIoDeleted=true, tell the customer: we did not find an account in our app, but we found and removed their email from our mailing list — they will no longer receive emails from us.
 
 TOKENS:
 - If tokens were paid but not received, check balance and recent purchases with check_tokens.
@@ -5403,8 +5586,17 @@ TOKENS:
 - If user wants a token REFUND → follow the REFUND POLICY RETENTION FLOW above.
 - If user's name is known but not their email, try search_customer with their name — it searches email addresses containing parts of their name.
 
+MISSING TOKENS — DIG DEEPER BEFORE GIVING UP:
+When a user says they bought tokens but check_tokens shows 0 balance and no purchases:
+1. Check the hasPassword field from lookup_user. If hasPassword=false, the account was created automatically by a payment webhook — the user likely logs in with a DIFFERENT email. Tell them: "It looks like this account was created automatically when you made a purchase. Do you perhaps log in with a different email address?"
+2. If the user is logged in (session email available), check BOTH the session email AND the email they gave — the tokens might be on the other account.
+3. Use search_customer with the user's name (if known) or partial email to look for token purchases on other emails.
+4. Ask for their order number or payment receipt — use search_customer with the order number to find the matching purchase.
+5. If you find a token purchase on a different email, you CAN credit the tokens to their main account using credit_tokens with reason="missing_tokens".
+6. ONLY after exhausting these steps, redirect to contact@myaicrush.ai.
+
 INFORMATIONAL ANSWERS (no tools needed):
-- Premium = unlimited chat + all characters. Tokens = extras (nympho mode, private content).
+- Premium = unlimited chat + all characters + unlimited photos and videos (outside nympho mode). Everything is unlocked with premium, no extra cost. Tokens = optional extras only (nympho mode for more explicit content, private/exclusive content). A user does NOT need tokens to enjoy the full premium experience — tokens are a bonus for those who want to go further.
 - No native mobile app, but website is fully mobile-optimized.
 - Audio calls are currently unavailable.
 - Privacy: no data sold, conversations stored for moderation only.
@@ -5434,16 +5626,31 @@ function supportBuildUserStatedEmails(message, priorTurns) {
   return set;
 }
 
-function supportBuildFullAllowlist(sessionEmail, userStated) {
-  const set = new Set(userStated);
+/** Emails Juliette mentioned in her N most recent assistant turns — in scope after customer confirms ("yes", "c'est moi", etc.) */
+function supportCollectAssistantOfferedEmails(priorTurns, maxAssistantTurns = 6) {
+  const set = new Set();
+  let seen = 0;
+  for (let i = (priorTurns || []).length - 1; i >= 0 && seen < maxAssistantTurns; i--) {
+    const t = priorTurns[i];
+    if (t.role === "assistant" && t.content) {
+      seen++;
+      for (const e of supportExtractEmails(t.content)) set.add(e);
+    }
+  }
+  return set;
+}
+
+function supportBuildFullAllowlist(sessionEmail, combinedStatedAndOffered) {
+  const set = new Set(combinedStatedAndOffered);
   if (sessionEmail) set.add(sessionEmail.trim().toLowerCase());
   return set;
 }
 
-function supportUserMessagesBlob(message, priorTurns) {
+/** User + assistant text (for search substring checks — order numbers / phrases repeated by the bot) */
+function supportConversationBlob(message, priorTurns) {
   const parts = [message];
   for (const turn of priorTurns || []) {
-    if (turn.role === "user" && turn.content) parts.push(turn.content);
+    if (turn.content) parts.push(turn.content);
   }
   return parts.join("\n").toLowerCase();
 }
@@ -5457,7 +5664,7 @@ function supportRejectTool(reason) {
 }
 
 function supportValidateToolCall(name, args, ctx) {
-  const { sessionEmail, fullAllowlist, userStatedEmails, userBlob } = ctx;
+  const { sessionEmail, fullAllowlist, userStatedEmails, conversationBlob } = ctx;
   const norm = (e) => String(e || "").trim().toLowerCase();
 
   const emailInScope = (email) => {
@@ -5471,12 +5678,12 @@ function supportValidateToolCall(name, args, ctx) {
     const q = String(args.query || "").trim();
     if (!q) return supportRejectTool("Missing search query.");
     const qLower = q.toLowerCase();
-    if (userBlob.includes(qLower)) return null;
-    if (/^\d{5,}$/.test(q) && userBlob.includes(q)) return null;
+    if (conversationBlob.includes(qLower)) return null;
+    if (/^\d{5,}$/.test(q) && conversationBlob.includes(q)) return null;
     const qEmails = supportExtractEmails(q);
     if (qEmails.length && qEmails.every((em) => fullAllowlist.has(em))) return null;
     return supportRejectTool(
-      "Search refused: only use details the customer actually typed in this chat (email fragment, order number, or exact phrase). No broad or third-party searches."
+      "Search refused: only use details that appear in this conversation (what the customer typed or what was shown in prior messages). No broad or third-party searches."
     );
   }
 
@@ -5494,24 +5701,9 @@ function supportValidateToolCall(name, args, ctx) {
     const n = norm(emailArg);
     if (!n) return supportRejectTool("Missing email for this action.");
 
-    if (name === "delete_account") {
-      if (sessionEmail) {
-        if (n !== norm(sessionEmail)) {
-          return supportRejectTool(
-            "Account deletion can only be requested for the account you are logged in with. Log in with that account on the site, or use the email link flow from your profile if applicable."
-          );
-        }
-      } else if (!userStatedEmails.has(n)) {
-        return supportRejectTool(
-          "For security, you must type the exact account email you want deleted in this chat before deletion can proceed."
-        );
-      }
-      return null;
-    }
-
     if (!emailInScope(n)) {
       return supportRejectTool(
-        "This email is not in scope for this conversation. Only help with addresses the customer has written in their own messages (or their logged-in session). Refuse bulk, database-wide, or third-party requests."
+        "This email is not in scope for this conversation. Use only addresses the customer typed, their logged-in session, or an email you showed them in this chat after they confirmed it is their account. Refuse bulk or third-party requests."
       );
     }
   }
@@ -5556,7 +5748,7 @@ app.post("/api/support-chat", async (req, res) => {
     }
 
     if (
-      /delete\s+all|effa(c|s)er\s+tout|supprim(er|ez)?\s+tout|toute\s+la\s+base|tous\s+les\s+(comptes|emails|utilisateurs)|all\s+(users|accounts|emails)\s+in\s+the\s+database|dump\s+(the\s+)?(whole\s+)?database|reset\s+the\s+entire/i.test(
+      /delete\s+all\s+(users|accounts|emails|customers|data\s+in\s+the\s+database)|effa(c|s)er\s+tous\s+les|supprim(er|ez)?\s+tous\s+les|toute\s+la\s+base|tous\s+les\s+(comptes|emails|utilisateurs)|all\s+(users|accounts|emails)\s+in\s+the\s+database|dump\s+(the\s+)?(whole\s+)?database|reset\s+the\s+entire/i.test(
         message
       )
     ) {
@@ -5591,9 +5783,11 @@ If the user writes a different email in any message (account or payment), always
     ];
 
     const userStatedEmails = supportBuildUserStatedEmails(message, priorTurns);
-    const fullAllowlist = supportBuildFullAllowlist(sessionEmail, userStatedEmails);
-    const userBlob = supportUserMessagesBlob(message, priorTurns);
-    const supportSecurityCtx = { sessionEmail, fullAllowlist, userStatedEmails, userBlob };
+    const assistantOfferedEmails = supportCollectAssistantOfferedEmails(priorTurns);
+    const combinedScopeEmails = new Set([...userStatedEmails, ...assistantOfferedEmails]);
+    const fullAllowlist = supportBuildFullAllowlist(sessionEmail, combinedScopeEmails);
+    const conversationBlob = supportConversationBlob(message, priorTurns);
+    const supportSecurityCtx = { sessionEmail, fullAllowlist, conversationBlob };
 
     const callOpenAI = async (msgs) => {
       const r = await axios.post(
