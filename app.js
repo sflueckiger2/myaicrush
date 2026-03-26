@@ -3484,6 +3484,149 @@ schedule.scheduleJob('0 0 1 * *', async () => {
 });
 
 
+// ============================================================
+// DAILY EMAIL — envoie 1 email/jour avec une image aleatoire
+// ============================================================
+const DAILY_EMAIL_CHARACTERS = (() => {
+  const imagesDir = path.join(__dirname, 'public', 'images');
+  const exclude = ['market', 'banners', 'test'];
+  try {
+    return fs.readdirSync(imagesDir)
+      .filter(d => {
+        if (exclude.includes(d)) return false;
+        const sub = path.join(imagesDir, d, d + '1');
+        return fs.existsSync(sub) && fs.statSync(sub).isDirectory();
+      });
+  } catch (e) { return []; }
+})();
+
+function getRandomDailyImage() {
+  if (DAILY_EMAIL_CHARACTERS.length === 0) return null;
+  const char = DAILY_EMAIL_CHARACTERS[Math.floor(Math.random() * DAILY_EMAIL_CHARACTERS.length)];
+  const folder = path.join(__dirname, 'public', 'images', char, char + '1');
+  const images = fs.readdirSync(folder).filter(f => f.endsWith('.webp'));
+  if (images.length === 0) return null;
+  const file = images[Math.floor(Math.random() * images.length)];
+  const mapKey = `${char}\\${char}1\\${file}`;
+  const cdnUrl = cloudflareMap[mapKey];
+  const displayName = char.charAt(0).toUpperCase() + char.slice(1);
+  return { char, displayName, file, cdnUrl, localPath: `/images/${char}/${char}1/${file}` };
+}
+
+function buildDailyEmailHtml(img, lang) {
+  const isFr = lang === 'fr';
+  const siteUrl = 'https://myaicrush.com';
+  const subject = isFr
+    ? `${img.displayName} t'a envoye une photo`
+    : `${img.displayName} sent you a photo`;
+  const imageUrl = img.cdnUrl || (siteUrl + img.localPath);
+  const ctaText = isFr ? 'Voir plus de photos' : 'See more photos';
+  const footerText = isFr ? 'Se desinscrire' : 'Unsubscribe';
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0a14;font-family:Arial,sans-serif">
+<div style="max-width:600px;margin:0 auto;padding:20px">
+  <div style="text-align:center;padding:20px 0">
+    <span style="color:#ff4d8d;font-size:24px;font-weight:bold">MyAiCrush</span>
+  </div>
+  <div style="background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(255,77,141,0.2)">
+    <div style="padding:20px 24px">
+      <p style="color:#e8e8f0;font-size:16px;margin:0 0 4px">${isFr ? `${img.displayName} t'a envoye une nouvelle photo` : `${img.displayName} sent you a new photo`}</p>
+      <p style="color:#6b6b88;font-size:13px;margin:0">${isFr ? 'Elle attend ta reponse...' : 'She is waiting for your reply...'}</p>
+    </div>
+    <div style="text-align:center">
+      <img src="${imageUrl}" alt="${img.displayName}" style="width:100%;max-width:500px;display:block;margin:0 auto">
+    </div>
+    <div style="padding:24px;text-align:center">
+      <a href="${siteUrl}" style="display:inline-block;background:linear-gradient(135deg,#ff4d8d,#c026d3);color:#fff;text-decoration:none;padding:14px 40px;border-radius:30px;font-size:16px;font-weight:bold">${ctaText}</a>
+    </div>
+  </div>
+  <div style="text-align:center;padding:20px 0">
+    <p style="color:#6b6b88;font-size:11px;margin:0">MyAiCrush &copy; ${new Date().getFullYear()}</p>
+  </div>
+</div>
+</body></html>`;
+
+  return { subject, html };
+}
+
+async function getSystemeContacts(tagId) {
+  const apiKey = process.env.SYSTEME_API_KEY;
+  const base = process.env.SYSTEME_API_BASE_URL || 'https://api.systeme.io';
+  if (!apiKey) return [];
+  const contacts = [];
+  let startingAfter = null;
+  for (let page = 0; page < 50; page++) {
+    let url = `${base}/api/contacts?limit=100&tagId=${tagId}`;
+    if (startingAfter) url += `&startingAfter=${startingAfter}`;
+    try {
+      const res = await fetch(url, { headers: { 'X-API-Key': apiKey } });
+      if (!res.ok) break;
+      const data = await res.json();
+      if (!data.items || data.items.length === 0) break;
+      contacts.push(...data.items.map(c => c.email).filter(Boolean));
+      if (!data.hasMore) break;
+      startingAfter = data.items[data.items.length - 1].id;
+    } catch (e) { break; }
+  }
+  return contacts;
+}
+
+async function sendDailyEmails() {
+  console.log('[DAILY-EMAIL] Starting daily email job...');
+  const img = getRandomDailyImage();
+  if (!img) { console.log('[DAILY-EMAIL] No image found, skipping.'); return; }
+  console.log(`[DAILY-EMAIL] Character: ${img.displayName}, Image: ${img.file}`);
+
+  const tagFr = process.env.SYSTEME_TAG_FR;
+  const tagEn = process.env.SYSTEME_TAG_EN;
+
+  const [contactsFr, contactsEn] = await Promise.all([
+    tagFr ? getSystemeContacts(tagFr) : [],
+    tagEn ? getSystemeContacts(tagEn) : []
+  ]);
+  console.log(`[DAILY-EMAIL] ${contactsFr.length} FR contacts, ${contactsEn.length} EN contacts`);
+
+  const allContacts = [
+    ...contactsFr.map(email => ({ email, lang: 'fr' })),
+    ...contactsEn.map(email => ({ email, lang: 'en' }))
+  ];
+  const unique = [...new Map(allContacts.map(c => [c.email, c])).values()];
+
+  let sent = 0, errors = 0;
+  for (const contact of unique) {
+    const { subject, html } = buildDailyEmailHtml(img, contact.lang);
+    try {
+      await smtpTransporter.sendMail({
+        from: `"${img.displayName} — MyAiCrush" <${process.env.SMTP_USER}>`,
+        to: contact.email,
+        subject,
+        html
+      });
+      sent++;
+    } catch (e) {
+      errors++;
+      if (errors <= 3) console.log(`[DAILY-EMAIL] Error sending to ${contact.email}:`, e.message);
+    }
+    if (unique.length > 10) await new Promise(r => setTimeout(r, 200));
+  }
+  console.log(`[DAILY-EMAIL] Done! Sent: ${sent}, Errors: ${errors}`);
+}
+
+schedule.scheduleJob('0 10 * * *', () => {
+  sendDailyEmails().catch(e => console.error('[DAILY-EMAIL] Fatal error:', e));
+});
+
+app.post('/api/admin/send-daily-email', async (req, res) => {
+  try {
+    await sendDailyEmails();
+    res.json({ ok: true, message: 'Daily email sent' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 //ROUTE POUR AB TEST
 
@@ -5714,8 +5857,14 @@ When a user says they bought tokens but check_tokens shows 0 balance and no purc
 5. If you find a token purchase on a different email, you CAN credit the tokens to their main account using credit_tokens with reason="missing_tokens".
 6. ONLY after exhausting these steps, redirect to contact@myaicrush.ai.
 
+HOW TO SUBSCRIBE / SUBSCRIPTION LINK:
+Whenever a user wants to subscribe, re-subscribe, or asks how to get premium, ALWAYS give them the direct link: https://myaicrush.ai/premium.html
+- Premium costs $29/month, cancel anytime.
+- Premium = unlimited chat + all characters + unlimited photos and videos (outside nympho mode). Everything is unlocked with premium, no extra cost.
+- Tokens = optional extras only (nympho mode for more explicit content, private/exclusive content). A user does NOT need tokens to enjoy the full premium experience — tokens are a bonus for those who want to go further.
+- Make sure they use the correct email (the one with their account data) when subscribing.
+
 INFORMATIONAL ANSWERS (no tools needed):
-- Premium = unlimited chat + all characters + unlimited photos and videos (outside nympho mode). Everything is unlocked with premium, no extra cost. Tokens = optional extras only (nympho mode for more explicit content, private/exclusive content). A user does NOT need tokens to enjoy the full premium experience — tokens are a bonus for those who want to go further.
 - No native mobile app, but website is fully mobile-optimized.
 - Audio calls are currently unavailable.
 - Privacy: no data sold, conversations stored for moderation only.
