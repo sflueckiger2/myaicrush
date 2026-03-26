@@ -3501,26 +3501,33 @@ const DAILY_EMAIL_CHARACTERS = (() => {
 
 function getRandomDailyImage() {
   if (DAILY_EMAIL_CHARACTERS.length === 0) return null;
-  const char = DAILY_EMAIL_CHARACTERS[Math.floor(Math.random() * DAILY_EMAIL_CHARACTERS.length)];
-  const folder = path.join(__dirname, 'public', 'images', char, char + '1');
-  const images = fs.readdirSync(folder).filter(f => f.endsWith('.webp'));
-  if (images.length === 0) return null;
-  const file = images[Math.floor(Math.random() * images.length)];
-  const mapKey = `${char}\\${char}1\\${file}`;
-  const cdnUrl = cloudflareMap[mapKey];
-  const displayName = char.charAt(0).toUpperCase() + char.slice(1);
-  return { char, displayName, file, cdnUrl, localPath: `/images/${char}/${char}1/${file}` };
+  const shuffled = [...DAILY_EMAIL_CHARACTERS].sort(() => Math.random() - 0.5);
+  for (const char of shuffled) {
+    const folder = path.join(__dirname, 'public', 'images', char, char + '1');
+    const images = fs.readdirSync(folder).filter(f => f.endsWith('.webp'));
+    const withCdn = images.filter(f => cloudflareMap[`${char}\\${char}1\\${f}`]);
+    if (withCdn.length === 0) continue;
+    const file = withCdn[Math.floor(Math.random() * withCdn.length)];
+    const cdnUrl = cloudflareMap[`${char}\\${char}1\\${file}`];
+    const displayName = char.charAt(0).toUpperCase() + char.slice(1);
+    return { char, displayName, file, cdnUrl, localPath: `/images/${char}/${char}1/${file}` };
+  }
+  return null;
 }
 
-function buildDailyEmailHtml(img, lang) {
+function buildDailyEmailHtml(img, lang, customSubject, customMessage) {
   const isFr = lang === 'fr';
   const siteUrl = 'https://myaicrush.com';
-  const subject = isFr
-    ? `${img.displayName} t'a envoye une photo`
-    : `${img.displayName} sent you a photo`;
-  const imageUrl = img.cdnUrl || (siteUrl + img.localPath);
+  const subject = customSubject
+    ? customSubject.replace('{name}', img.displayName)
+    : (isFr ? `${img.displayName} t'a envoye une photo` : `${img.displayName} sent you a photo`);
+  const imageUrl = `https://img.myaicrush.ai/images/${img.char}/${img.char}1/${img.file}`;
   const ctaText = isFr ? 'Voir plus de photos' : 'See more photos';
-  const footerText = isFr ? 'Se desinscrire' : 'Unsubscribe';
+
+  const mainText = customMessage
+    ? customMessage.replace('{name}', img.displayName)
+    : (isFr ? `${img.displayName} t'a envoye une nouvelle photo` : `${img.displayName} sent you a new photo`);
+  const subText = isFr ? 'Elle attend ta reponse...' : 'She is waiting for your reply...';
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -3531,8 +3538,8 @@ function buildDailyEmailHtml(img, lang) {
   </div>
   <div style="background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(255,77,141,0.2)">
     <div style="padding:20px 24px">
-      <p style="color:#e8e8f0;font-size:16px;margin:0 0 4px">${isFr ? `${img.displayName} t'a envoye une nouvelle photo` : `${img.displayName} sent you a new photo`}</p>
-      <p style="color:#6b6b88;font-size:13px;margin:0">${isFr ? 'Elle attend ta reponse...' : 'She is waiting for your reply...'}</p>
+      <p style="color:#e8e8f0;font-size:16px;margin:0 0 4px">${mainText}</p>
+      <p style="color:#6b6b88;font-size:13px;margin:0">${subText}</p>
     </div>
     <div style="text-align:center">
       <img src="${imageUrl}" alt="${img.displayName}" style="width:100%;max-width:500px;display:block;margin:0 auto">
@@ -3556,19 +3563,30 @@ async function getSystemeContacts(tagId) {
   if (!apiKey) return [];
   const contacts = [];
   let startingAfter = null;
-  for (let page = 0; page < 50; page++) {
+  for (let page = 0; page < 200; page++) {
     let url = `${base}/api/contacts?limit=100&tagId=${tagId}`;
     if (startingAfter) url += `&startingAfter=${startingAfter}`;
     try {
       const res = await fetch(url, { headers: { 'X-API-Key': apiKey } });
-      if (!res.ok) break;
+      if (!res.ok) {
+        console.log(`[SYSTEME] Page ${page} error: ${res.status}`);
+        break;
+      }
       const data = await res.json();
       if (!data.items || data.items.length === 0) break;
-      contacts.push(...data.items.map(c => c.email).filter(Boolean));
+      for (const c of data.items) {
+        if (c.email && !c.unsubscribed && !c.bounced) {
+          contacts.push({ email: c.email, locale: c.locale || 'fr' });
+        }
+      }
       if (!data.hasMore) break;
       startingAfter = data.items[data.items.length - 1].id;
-    } catch (e) { break; }
+    } catch (e) {
+      console.log(`[SYSTEME] Page ${page} fetch error:`, e.message);
+      break;
+    }
   }
+  console.log(`[SYSTEME] Tag ${tagId}: ${contacts.length} active contacts`);
   return contacts;
 }
 
@@ -3581,21 +3599,15 @@ async function sendDailyEmails() {
   const tagFr = process.env.SYSTEME_TAG_FR;
   const tagEn = process.env.SYSTEME_TAG_EN;
 
-  const [contactsFr, contactsEn] = await Promise.all([
-    tagFr ? getSystemeContacts(tagFr) : [],
-    tagEn ? getSystemeContacts(tagEn) : []
-  ]);
-  console.log(`[DAILY-EMAIL] ${contactsFr.length} FR contacts, ${contactsEn.length} EN contacts`);
-
-  const allContacts = [
-    ...contactsFr.map(email => ({ email, lang: 'fr' })),
-    ...contactsEn.map(email => ({ email, lang: 'en' }))
-  ];
+  const tagId = tagFr || tagEn;
+  const allContacts = tagId ? await getSystemeContacts(tagId) : [];
+  console.log(`[DAILY-EMAIL] ${allContacts.length} active contacts`);
   const unique = [...new Map(allContacts.map(c => [c.email, c])).values()];
 
   let sent = 0, errors = 0;
   for (const contact of unique) {
-    const { subject, html } = buildDailyEmailHtml(img, contact.lang);
+    const lang = (contact.locale || 'fr').startsWith('fr') ? 'fr' : 'en';
+    const { subject, html } = buildDailyEmailHtml(img, lang);
     try {
       await smtpTransporter.sendMail({
         from: `"${img.displayName} — MyAiCrush" <${process.env.SMTP_USER}>`,
@@ -3621,6 +3633,149 @@ app.post('/api/admin/send-daily-email', async (req, res) => {
   try {
     await sendDailyEmails();
     res.json({ ok: true, message: 'Daily email sent' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/admin/email-characters', (req, res) => {
+  res.json({ characters: DAILY_EMAIL_CHARACTERS });
+});
+
+app.get('/api/admin/email-tags', async (req, res) => {
+  try {
+    const apiKey = process.env.SYSTEME_API_KEY;
+    const base = process.env.SYSTEME_API_BASE_URL || 'https://api.systeme.io';
+    if (!apiKey) return res.json({ tags: [] });
+    const allTags = [];
+    let after = null;
+    for (let p = 0; p < 20; p++) {
+      let url = `${base}/api/tags?limit=100`;
+      if (after) url += `&startingAfter=${after}`;
+      const r = await fetch(url, { headers: { 'X-API-Key': apiKey } });
+      if (!r.ok) break;
+      const data = await r.json();
+      if (!data.items || data.items.length === 0) break;
+      allTags.push(...data.items.map(t => ({ id: String(t.id), name: t.name })));
+      if (!data.hasMore) break;
+      after = data.items[data.items.length - 1].id;
+    }
+    res.json({ tags: allTags });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+function getSpecificCharacterImage(charName) {
+  const folder = path.join(__dirname, 'public', 'images', charName, charName + '1');
+  if (!fs.existsSync(folder)) return null;
+  const images = fs.readdirSync(folder).filter(f => f.endsWith('.webp'));
+  const withCdn = images.filter(f => cloudflareMap[`${charName}\\${charName}1\\${f}`]);
+  const pool = withCdn.length > 0 ? withCdn : images;
+  if (pool.length === 0) return null;
+  const file = pool[Math.floor(Math.random() * pool.length)];
+  const cdnUrl = cloudflareMap[`${charName}\\${charName}1\\${file}`];
+  const displayName = charName.charAt(0).toUpperCase() + charName.slice(1);
+  return { char: charName, displayName, file, cdnUrl, localPath: `/images/${charName}/${charName}1/${file}` };
+}
+
+async function countSystemeContacts(tagId) {
+  const apiKey = process.env.SYSTEME_API_KEY;
+  const base = process.env.SYSTEME_API_BASE_URL || 'https://api.systeme.io';
+  if (!apiKey || !tagId) return 0;
+  let active = 0;
+  let startingAfter = null;
+  for (let page = 0; page < 200; page++) {
+    let url = `${base}/api/contacts?limit=100&tagId=${tagId}`;
+    if (startingAfter) url += `&startingAfter=${startingAfter}`;
+    try {
+      const res = await fetch(url, { headers: { 'X-API-Key': apiKey } });
+      if (!res.ok) break;
+      const data = await res.json();
+      if (!data.items || data.items.length === 0) break;
+      for (const c of data.items) {
+        if (!c.unsubscribed && !c.bounced) active++;
+      }
+      if (!data.hasMore) break;
+      startingAfter = data.items[data.items.length - 1].id;
+    } catch (e) { break; }
+  }
+  return active;
+}
+
+app.post('/api/admin/email-preview', async (req, res) => {
+  try {
+    const { character, lang, customSubject, customMessage } = req.body;
+    let img;
+    if (character && character !== 'random') {
+      img = getSpecificCharacterImage(character);
+    } else {
+      img = getRandomDailyImage();
+    }
+    if (!img) return res.json({ error: 'Aucune image trouvee' });
+
+    console.log(`[EMAIL-PREVIEW] Char: ${img.displayName}, Image: ${img.file}, CDN: ${img.cdnUrl ? 'yes' : 'NO'}`);
+
+    const tagId = req.body.tagId || process.env.SYSTEME_TAG_FR || process.env.SYSTEME_TAG_EN;
+    const totalActive = await countSystemeContacts(tagId);
+
+    const emailFr = buildDailyEmailHtml(img, 'fr', customSubject, customMessage);
+    const emailEn = buildDailyEmailHtml(img, 'en', customSubject, customMessage);
+
+    res.json({
+      characterId: img.char,
+      characterName: img.displayName,
+      imageFile: img.file,
+      imageUrl: `https://img.myaicrush.ai/images/${img.char}/${img.char}1/${img.file}`,
+      subject: emailFr.subject,
+      subjectEn: emailEn.subject,
+      htmlFr: emailFr.html,
+      htmlEn: emailEn.html,
+      totalActive
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/admin/email-send', async (req, res) => {
+  try {
+    const { character, imageFile, lang, customSubject, customMessage } = req.body;
+    const charName = character || 'lila';
+    const displayName = charName.charAt(0).toUpperCase() + charName.slice(1);
+    const img = { char: charName, displayName, file: imageFile };
+
+    const tagId = req.body.tagId || process.env.SYSTEME_TAG_FR || process.env.SYSTEME_TAG_EN;
+    const allContacts = tagId ? await getSystemeContacts(tagId) : [];
+    const unique = [...new Map(allContacts.map(c => [c.email, c])).values()];
+
+    let filtered = unique;
+    if (lang === 'fr') filtered = unique.filter(c => (c.locale || 'fr').startsWith('fr'));
+    else if (lang === 'en') filtered = unique.filter(c => !(c.locale || 'fr').startsWith('fr'));
+
+    console.log(`[EMAIL-SEND] Sending to ${filtered.length} contacts, char: ${displayName}`);
+
+    let sent = 0, errors = 0;
+    for (const contact of filtered) {
+      const contactLang = (contact.locale || 'fr').startsWith('fr') ? 'fr' : 'en';
+      const { subject, html } = buildDailyEmailHtml(img, contactLang, customSubject, customMessage);
+      try {
+        await smtpTransporter.sendMail({
+          from: `"${displayName} — MyAiCrush" <${process.env.SMTP_USER}>`,
+          to: contact.email,
+          subject,
+          html
+        });
+        sent++;
+      } catch (e) {
+        errors++;
+        if (errors <= 5) console.log(`[EMAIL-SEND] Error for ${contact.email}:`, e.message);
+      }
+      if (filtered.length > 10) await new Promise(r => setTimeout(r, 200));
+    }
+
+    console.log(`[EMAIL-SEND] Done: ${sent} sent, ${errors} errors`);
+    res.json({ sent, errors, total: filtered.length });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
