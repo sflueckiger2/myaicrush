@@ -3517,7 +3517,7 @@ function getRandomDailyImage() {
 
 function buildDailyEmailHtml(img, lang, customSubject, customMessage) {
   const isFr = lang === 'fr';
-  const siteUrl = 'https://myaicrush.com';
+  const siteUrl = 'https://myaicrush.ai';
   const subject = customSubject
     ? customSubject.replace('{name}', img.displayName)
     : (isFr ? `${img.displayName} t'a envoye une photo` : `${img.displayName} sent you a photo`);
@@ -3625,9 +3625,10 @@ async function sendDailyEmails() {
   console.log(`[DAILY-EMAIL] Done! Sent: ${sent}, Errors: ${errors}`);
 }
 
-schedule.scheduleJob('0 10 * * *', () => {
-  sendDailyEmails().catch(e => console.error('[DAILY-EMAIL] Fatal error:', e));
-});
+// DESACTIVE — ne pas envoyer via SMTP Gmail, utiliser un vrai service d'envoi
+// schedule.scheduleJob('0 10 * * *', () => {
+//   sendDailyEmails().catch(e => console.error('[DAILY-EMAIL] Fatal error:', e));
+// });
 
 app.post('/api/admin/send-daily-email', async (req, res) => {
   try {

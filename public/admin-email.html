@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Email — Admin</title>
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --card: rgba(22, 22, 40, 0.9);
+            --accent: #ff4d8d;
+            --accent2: #c026d3;
+            --green: #34d399;
+            --text: #e8e8f0;
+            --dim: #6b6b88;
+            --border: rgba(255, 77, 141, 0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(160deg, var(--bg) 0%, #140a1e 40%, #0e0a18 100%);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .app { max-width: 800px; margin: 0 auto; padding: 40px 20px 80px; }
+        h1 { text-align: center; margin-bottom: 8px; font-size: 1.8rem; }
+        .subtitle { text-align: center; color: var(--dim); margin-bottom: 30px; font-size: 0.9rem; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        label { display: block; color: var(--dim); font-size: 0.82rem; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input, textarea {
+            width: 100%;
+            background: rgba(12, 12, 25, 0.95);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        textarea { min-height: 80px; resize: vertical; }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        .btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .2s, transform .1s;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-green { background: linear-gradient(135deg, #34d399, #059669); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .row > * { flex: 1; min-width: 150px; }
+        .preview-frame {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 600px;
+            margin: 16px auto 0;
+        }
+        .preview-frame iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+        }
+        .status {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 16px;
+            font-size: 0.88rem;
+            display: none;
+        }
+        .status.ok { display: block; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); color: var(--green); }
+        .status.err { display: block; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: #f87171; }
+        .status.info { display: block; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.3); color: #60a5fa; }
+        .stats { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+        .stat-box {
+            background: rgba(12, 12, 25, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        .stat-box .num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+        .stat-box .label { font-size: 0.75rem; color: var(--dim); margin-top: 2px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <h1>Daily Email</h1>
+    <p class="subtitle">Genere et envoie un email quotidien a tes contacts Systeme.io</p>
+
+    <!-- STEP 1: Config -->
+    <section class="card">
+        <h3 style="margin-bottom: 16px">1. Configurer l'email</h3>
+        <div class="row">
+            <div>
+                <label>Personnage</label>
+                <select id="charSelect">
+                    <option value="random">Aleatoire</option>
+                </select>
+            </div>
+            <div>
+                <label>Tag Systeme.io</label>
+                <select id="tagSelect">
+                    <option value="">Chargement...</option>
+                </select>
+            </div>
+            <div>
+                <label>Langue</label>
+                <select id="langSelect">
+                    <option value="auto">Auto (selon locale)</option>
+                    <option value="fr">Francais uniquement</option>
+                    <option value="en">English only</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-bottom: 16px">
+            <label>Sujet de l'email (laisse vide = auto)</label>
+            <input id="customSubject" type="text" placeholder="Ex: Lila t'a envoye une surprise...">
+        </div>
+        <div style="margin-bottom: 16px">
+            <label>Message (laisse vide = auto)</label>
+            <textarea id="customMessage" placeholder="Ex: Elle attend ta reponse... Clique pour voir sa photo"></textarea>
+        </div>
+        <button class="btn" id="previewBtn" onclick="generatePreview()">Generer la preview</button>
+    </section>
+
+    <!-- STEP 2: Preview -->
+    <section class="card hidden" id="previewSection">
+        <h3 style="margin-bottom: 4px">2. Preview de l'email</h3>
+        <p style="color:var(--dim);font-size:0.82rem;margin-bottom: 12px">
+            Sujet : <strong id="previewSubject"></strong>
+        </p>
+        <div class="row">
+            <button class="btn-outline" onclick="generatePreview()">Regenerer</button>
+            <button class="btn-outline" onclick="changeImage()">Changer l'image</button>
+        </div>
+        <div class="preview-frame">
+            <iframe id="previewIframe"></iframe>
+        </div>
+
+        <div class="stats" id="contactStats" style="margin-top:16px">
+            <div class="stat-box"><div class="num" id="statTotal">-</div><div class="label">Contacts actifs</div></div>
+        </div>
+
+        <div style="margin-top:20px; text-align:center; display:flex; gap:12px; justify-content:center; flex-wrap:wrap">
+            <button class="btn btn-green" onclick="copyHtml()" style="font-size:1rem;padding:12px 30px">
+                Copier le HTML
+            </button>
+            <button class="btn" onclick="copySubject()" style="font-size:1rem;padding:12px 30px">
+                Copier le sujet
+            </button>
+        </div>
+        <p style="color:var(--dim);font-size:0.8rem;margin-top:10px;text-align:center">
+            Colle le HTML dans l'editeur de newsletter Systeme.io pour envoyer
+        </p>
+
+        <div class="status" id="statusBox"></div>
+    </section>
+</div>
+
+<script>
+let currentPreview = null;
+
+async function loadCharacters() {
+    try {
+        const res = await fetch('/api/admin/email-characters');
+        const data = await res.json();
+        const sel = document.getElementById('charSelect');
+        (data.characters || []).forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+            sel.appendChild(opt);
+        });
+    } catch(e) {}
+}
+
+async function loadTags() {
+    try {
+        const res = await fetch('/api/admin/email-tags');
+        const data = await res.json();
+        const sel = document.getElementById('tagSelect');
+        sel.innerHTML = '';
+        (data.tags || []).forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            sel.appendChild(opt);
+        });
+    } catch(e) {
+        document.getElementById('tagSelect').innerHTML = '<option value="">Erreur chargement tags</option>';
+    }
+}
+
+async function generatePreview() {
+    const btn = document.getElementById('previewBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generation...';
+    setStatus('info', 'Generation de la preview et comptage des contacts...');
+
+    try {
+        const res = await fetch('/api/admin/email-preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                character: document.getElementById('charSelect').value,
+                tagId: document.getElementById('tagSelect').value,
+                lang: document.getElementById('langSelect').value,
+                customSubject: document.getElementById('customSubject').value.trim(),
+                customMessage: document.getElementById('customMessage').value.trim()
+            })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        currentPreview = data;
+        document.getElementById('previewSubject').textContent = data.subject;
+        document.getElementById('statTotal').textContent = data.totalActive;
+
+        const iframe = document.getElementById('previewIframe');
+        iframe.srcdoc = data.htmlFr;
+
+        document.getElementById('previewSection').classList.remove('hidden');
+        setStatus('ok', `Preview generee — ${data.characterName}, image: ${data.imageFile}`);
+    } catch(e) {
+        setStatus('err', 'Erreur: ' + e.message);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Generer la preview';
+}
+
+async function changeImage() {
+    if (!currentPreview) return;
+    document.getElementById('charSelect').value = currentPreview.characterId;
+    await generatePreview();
+}
+
+function copyHtml() {
+    if (!currentPreview) return alert('Genere une preview d\'abord');
+    navigator.clipboard.writeText(currentPreview.htmlFr).then(() => {
+        setStatus('ok', 'HTML copie ! Colle-le dans l\'editeur HTML de ta newsletter Systeme.io');
+    }).catch(() => {
+        const w = window.open('', '_blank');
+        w.document.write('<pre>' + currentPreview.htmlFr.replace(/</g, '&lt;') + '</pre>');
+    });
+}
+
+function copySubject() {
+    if (!currentPreview) return alert('Genere une preview d\'abord');
+    navigator.clipboard.writeText(currentPreview.subject).then(() => {
+        setStatus('ok', 'Sujet copie : "' + currentPreview.subject + '"');
+    });
+}
+
+function setStatus(type, msg) {
+    const box = document.getElementById('statusBox');
+    box.className = 'status ' + type;
+    box.textContent = msg;
+}
+
+loadCharacters();
+loadTags();
+</script>
+</body>
+</html>
