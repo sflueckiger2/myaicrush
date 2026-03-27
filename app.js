@@ -4610,39 +4610,38 @@ app.post('/api/fal/generate', async (req, res) => {
   }
 });
 
-// === KLING VIDEO GENERATION (Image-to-Video via fal.ai) ===
-// === VIDEO MODELS CONFIG ===
+// === VIDEO GENERATION (Image-to-Video via fal.ai) ===
 const VIDEO_MODELS = {
-  kling: {
-    submitUrl: 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
-    statusBase: 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video/requests',
-    buildPayload: (prompt, image_url, duration) => ({
-      prompt, image_url, duration: String(duration),
-      negative_prompt: 'blur, distort, and low quality',
-      cfg_scale: 0.5
-    }),
-    extractVideo: (result) => result.video?.url,
-    cost5s: 0.35, cost10s: 0.70
-  },
-  wan: {
-    submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
-    statusBase: 'https://queue.fal.run/fal-ai/wan-i2v/requests',
+  wan26: {
+    submitUrl: 'https://queue.fal.run/wan/v2.6/image-to-video',
     buildPayload: (prompt, image_url, duration) => ({
       prompt, image_url,
-      num_frames: duration === '10' ? 81 : 41,
+      duration: String(duration),
+      resolution: '720p',
+      negative_prompt: 'blur, distort, low quality, deformed',
       enable_safety_checker: false,
-      enable_output_safety_checker: false,
+      enable_prompt_expansion: false
+    }),
+    cost5s: 0.50, cost10s: 1.00, cost15s: 1.50
+  },
+  wan21: {
+    submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
+    buildPayload: (prompt, image_url, duration) => ({
+      prompt, image_url,
+      num_frames: duration === '10' ? 161 : 81,
+      enable_safety_checker: false,
       negative_prompt: 'blur, distort, low quality'
     }),
-    extractVideo: (result) => result.video?.url,
     cost5s: 0.50, cost10s: 1.00
   }
 };
 
+const videoRequestUrls = new Map();
+
 // Step 1: Submit video generation — returns request_id immediately
 app.post('/api/video/submit', async (req, res) => {
   try {
-    const { prompt, image_url, duration = '5', model = 'kling' } = req.body;
+    const { prompt, image_url, duration = '5', model = 'wan26' } = req.body;
     const token = process.env.FAL_KEY || req.headers['x-fal-key'];
     if (!token) return res.status(400).json({ error: 'FAL_KEY manquant.' });
     if (!prompt || !image_url) return res.status(400).json({ error: 'prompt et image_url requis.' });
@@ -4668,6 +4667,13 @@ app.post('/api/video/submit', async (req, res) => {
     if (data.detail || data.error) return res.json({ error: data.detail || data.error });
     if (!data.request_id) return res.json({ error: 'Pas de request_id: ' + JSON.stringify(data).substring(0, 200) });
 
+    videoRequestUrls.set(data.request_id, {
+      statusUrl: data.status_url,
+      responseUrl: data.response_url,
+      model
+    });
+    console.log(`[VIDEO:${model}] Stored URLs — status: ${data.status_url}`);
+
     res.json({ request_id: data.request_id, model });
   } catch (error) {
     console.error('[VIDEO] Submit error:', error);
@@ -4683,30 +4689,44 @@ app.get('/api/video/status/:model/:requestId', async (req, res) => {
     const vm = VIDEO_MODELS[model];
     if (!vm) return res.status(400).json({ error: 'Modele inconnu' });
 
-    const statusRes = await fetch(`${vm.statusBase}/${requestId}/status`, {
+    const stored = videoRequestUrls.get(requestId);
+    if (!stored) return res.json({ status: 'IN_PROGRESS' });
+
+    const statusRes = await fetch(stored.statusUrl, {
       headers: { 'Authorization': `Key ${token}` }
     });
     const raw = await statusRes.text();
     let data;
     try { data = JSON.parse(raw); } catch (e) {
+      console.log(`[VIDEO:${model}] Poll parse error, raw:`, raw.substring(0, 200));
       return res.json({ status: 'IN_PROGRESS' });
     }
 
+    console.log(`[VIDEO:${model}] Poll ${requestId.substring(0,8)}... → ${data.status}`);
+
     if (data.status === 'COMPLETED') {
-      const resultRes = await fetch(`${vm.statusBase}/${requestId}`, {
+      const resultRes = await fetch(stored.responseUrl, {
         headers: { 'Authorization': `Key ${token}` }
       });
       const resultRaw = await resultRes.text();
       try {
         const result = JSON.parse(resultRaw);
-        const videoUrl = vm.extractVideo(result);
+        if (result.detail) {
+          const msg = Array.isArray(result.detail) ? result.detail[0]?.msg : result.detail;
+          console.log(`[VIDEO:${model}] Content policy error:`, msg);
+          videoRequestUrls.delete(requestId);
+          return res.json({ status: 'FAILED', error: msg || 'Content policy violation' });
+        }
+        const videoUrl = result.video?.url;
         console.log(`[VIDEO:${model}] Done! URL:`, videoUrl?.substring(0, 80));
+        videoRequestUrls.delete(requestId);
         return res.json({ status: 'COMPLETED', video_url: videoUrl });
       } catch (e) {
         return res.json({ status: 'IN_PROGRESS' });
       }
     }
     if (data.status === 'FAILED') {
+      videoRequestUrls.delete(requestId);
       return res.json({ status: 'FAILED', error: data.error || 'Generation echouee' });
     }
     res.json({ status: data.status || 'IN_PROGRESS' });
