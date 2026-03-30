@@ -522,6 +522,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
     const _fr = navigator.language?.startsWith("fr");
     const _de = navigator.language?.startsWith("de");
 
+    if (!audioCallBtn) return;
     audioCallBtn.addEventListener("click", async () => {
       const characterName = document.getElementById("chat-name")?.textContent?.trim();
       const character = characters.find(c => c.name === characterName);
@@ -648,17 +649,13 @@ setTimeout(() => {
   import { characters } from './scripts/data.js';
   import { startChat } from './scripts/chat.js';
 
-  const CDN_BASE =
-    location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-      ? ''
-      : 'https://img.myaicrush.ai';
+  const STORY_CDN = 'https://img.myaicrush.ai';
 
   function resolveStoryMedia(url) {
     if (!url) return url;
     if (url.startsWith('http')) return url;
-    if (url.startsWith('images/')) {
-      return `${CDN_BASE}/${url}`;
-    }
+    if (url.startsWith('/images/')) return `${STORY_CDN}${url}`;
+    if (url.startsWith('images/')) return `${STORY_CDN}/${url}`;
     return url;
   }
 
@@ -679,17 +676,6 @@ setTimeout(() => {
       await sleep(50);
     }
     return characters;
-  }
-
-  function getCharacterStoryFolder(character) {
-    const base = character.photo;
-    if (!base) return null;
-
-    const parts = base.split('/');
-    if (parts.length < 3) return null;
-
-    const girl = parts[1];
-    return `images/${girl}/${girl}1`;
   }
 
   function renderProgressBar(total) {
@@ -881,10 +867,9 @@ setTimeout(() => {
     if (cachedRaw) {
       try {
         const cached = JSON.parse(cachedRaw);
-        if (cached.timestamp && Date.now() - cached.timestamp < STORY_CACHE_TTL_MS && Array.isArray(cached.groups)) {
+        if (cached.timestamp && Date.now() - cached.timestamp < STORY_CACHE_TTL_MS && Array.isArray(cached.groups) && cached.groups.length > 0) {
           storyGroups = cached.groups;
           renderStoryThumbnails(container);
-          console.log("📦 Stories chargées depuis le cache :", storyGroups);
           return;
         }
       } catch (e) {
@@ -894,37 +879,33 @@ setTimeout(() => {
 
     storyGroups = [];
 
-    const subset = characters.slice(0, characters.length);
+    for (const char of characters) {
+      const pool = [];
+      if (char.backgroundPhoto) pool.push(resolveStoryMedia(char.backgroundPhoto));
+      if (char.introVideo) pool.push(resolveStoryMedia(char.introVideo));
+      if (char.photo) pool.push(resolveStoryMedia(char.photo));
 
-    for (const char of subset) {
-      const folder = getCharacterStoryFolder(char);
-      if (!folder) continue;
+      if (!pool.length) continue;
 
-      try {
-        const res = await fetch(`/api/story-media?folder=${encodeURIComponent(folder)}`);
-        const data = await res.json();
+      let avatarUrl = pool.find(u => !/\.(mp4|webm|mov)$/i.test(u)) || pool[0];
 
-        let mediaList = Array.isArray(data.media) ? data.media : [];
-        if (!mediaList.length) continue;
+      const dayHash = Math.floor(Date.now() / 86400000);
+      let s = dayHash;
+      for (let i = 0; i < char.name.length; i++) s = (s * 31 + char.name.charCodeAt(i)) | 0;
 
-        mediaList = mediaList.map(resolveStoryMedia);
+      const shuffled = [...pool].sort((a, b) => {
+        s = (s * 9301 + 49297) % 233280;
+        return s / 233280 - 0.5;
+      });
+      const pick = Math.min(shuffled.length, 2);
 
-        let avatarUrl = resolveStoryMedia(char.photo);
-        if (avatarUrl && /\.(mp4|webm|mov)$/i.test(avatarUrl)) {
-          avatarUrl = resolveStoryMedia(char.backgroundPhoto) || mediaList[0];
-        }
-
-        storyGroups.push({
-          characterName: char.name,
-          avatar: avatarUrl,
-          media: mediaList,
-        });
-
-        console.log(`✅ Stories chargées pour ${char.name} :`, mediaList);
-      } catch (err) {
-        console.error('❌ Erreur story pour', char.name, err);
-      }
+      storyGroups.push({
+        characterName: char.name,
+        avatar: avatarUrl,
+        media: shuffled.slice(0, pick),
+      });
     }
+
 
     try {
       localStorage.setItem(
@@ -938,6 +919,7 @@ setTimeout(() => {
       console.warn('⚠️ Impossible de cacher les stories :', e);
     }
 
+    console.log('🎬 storyGroups built:', storyGroups.length);
     renderStoryThumbnails(container);
   }
 
