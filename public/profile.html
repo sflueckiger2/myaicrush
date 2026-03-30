@@ -67,9 +67,6 @@
       <form id="signup-form">
         <label for="signup-email">Email:</label>
         <input type="email" id="signup-email" name="email" placeholder="Enter your email" required /><br>
-<p id="email-hint" style="display:none; font-size:0.75rem; color:#f472b6; margin: 6px 0 10px 0; line-height:1.4;">
-  💌 Use a real email — we'll send you unblurred AI photos there
-</p>
 <br>
         <label for="signup-password">Password:</label>
         <input type="password" id="signup-password" name="password" placeholder="Enter your password" required />
@@ -354,16 +351,6 @@
 <script type="module" src="/scripts/i18n-profile.js"></script>
 
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const emailInput = document.getElementById("signup-email");
-    const hint = document.getElementById("email-hint");
-    if (!emailInput || !hint) return;
-
-    emailInput.addEventListener("focus", () => hint.style.display = "block");
-    emailInput.addEventListener("blur", () => hint.style.display = "none");
-  });
-</script>
 
 </body>
 </html>

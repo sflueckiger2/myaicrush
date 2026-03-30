@@ -325,32 +325,6 @@
       </div>
   </div>
 
-  <!-- ===== MODAL : Email Reminder ===== -->
-  <div id="email-reminder-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
-    <div class="glass p-8 rounded-3xl max-w-sm w-full mx-4 text-center border border-pink-500/50 shadow-xl relative" style="background-color:#1e1e1e;">
-      <button onclick="closeEmailReminder()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-lg">✕</button>
-      <div class="text-3xl mb-4">🔐</div>
-      <h3 class="text-xl font-bold mb-2 text-white">One last step for instant access</h3>
-      <p class="text-gray-300 text-sm mb-4">To activate Premium automatically, use this email on the checkout page:</p>
-
-      <div id="modal-email-box" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 mb-3 text-white font-bold text-sm break-all">
-        <!-- email injected here -->
-      </div>
-
-      <button id="copy-email-btn" onclick="copyEmail()" class="w-full py-2 rounded-xl text-sm font-semibold mb-3 transition-all" style="background: rgba(244,114,182,0.15); border: 1px solid rgba(244,114,182,0.4); color: #f472b6;">
-        📋 Copy email &amp; continue
-      </button>
-
-      <a id="modal-checkout-btn" href="#" target="_blank" rel="noopener" class="cta-button-premium w-full py-3 rounded-xl font-bold uppercase text-sm block mb-3">
-        ✅ OK, I got it — Continue
-      </a>
-
-      <p id="modal-no-account" class="text-gray-500 text-xs hidden">
-        Not logged in? <a href="profile.html" style="color:#f472b6; text-decoration:underline;">Sign in first</a> for automatic activation.
-      </p>
-    </div>
-  </div>
-
   <!-- ===== SCRIPTS ===== -->
   <script>
     // ── Disclaimer ──────────────────────────────────────────
@@ -385,59 +359,6 @@
       premiumModal.classList.add('opacity-0');
       setTimeout(() => premiumModal.classList.add('hidden'), 300);
     }
-
-    // ── Email reminder modal ──────────────────────────────────
-    function openEmailReminder(url) {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const emailBox = document.getElementById("modal-email-box");
-      const noAccount = document.getElementById("modal-no-account");
-      const modal = document.getElementById("email-reminder-modal");
-      const btn = document.getElementById("modal-checkout-btn");
-
-      btn.href = url;
-
-      if (user?.email) {
-        emailBox.textContent = user.email;
-        noAccount.classList.add("hidden");
-      } else {
-        emailBox.textContent = "No account detected";
-        noAccount.classList.remove("hidden");
-      }
-
-      modal.classList.remove("hidden");
-    }
-
-    // ✅ Fermer la croix → redirige quand même vers le BDC
-    function closeEmailReminder() {
-      const checkoutBtn = document.getElementById("modal-checkout-btn");
-      document.getElementById("email-reminder-modal").classList.add("hidden");
-      window.open(checkoutBtn.href, "_blank");
-    }
-
-    // ✅ Copier l'email → copie + redirige vers le BDC après 800ms
-    function copyEmail() {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user?.email) return;
-      navigator.clipboard.writeText(user.email).then(() => {
-        const btn = document.getElementById("copy-email-btn");
-        btn.textContent = "✅ Copied! Redirecting...";
-        setTimeout(() => {
-          const checkoutBtn = document.getElementById("modal-checkout-btn");
-          window.open(checkoutBtn.href, "_blank");
-        }, 800);
-      });
-    }
-
-    // ✅ Délégation sur document entier — intercepte TOUS les liens Explodely
-    document.addEventListener("click", (e) => {
-      const link = e.target.closest('a[href*="explodely.com/p/22705532"]');
-      if (!link) return;
-      // Ne pas intercepter le bouton "Continue" de la modal email elle-même
-      if (link.id === "modal-checkout-btn") return;
-      e.preventDefault();
-      e.stopPropagation();
-      openEmailReminder(link.href);
-    });
 
     // ── Character slider ──────────────────────────────────────
     const sliderMedia = [

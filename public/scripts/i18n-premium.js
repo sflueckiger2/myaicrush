@@ -222,39 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
   if (modalCta) modalCta.textContent = "Accès premium — 29 $/mois";
 
-  // ===== MODALE EMAIL REMINDER =====
-  const reminderIcon = document.querySelector("#email-reminder-modal .text-3xl");
-  if (reminderIcon) reminderIcon.textContent = "🔐";
-
-  const reminderTitle = document.querySelector("#email-reminder-modal h3");
-  if (reminderTitle) reminderTitle.textContent = "Une dernière étape pour un accès immédiat";
-
-  const reminderDesc = document.querySelector("#email-reminder-modal p.text-gray-300");
-  if (reminderDesc) reminderDesc.textContent = "Pour que le Premium s'active automatiquement, utilise cet email sur la page de paiement :";
-
-  const copyBtn = document.getElementById("copy-email-btn");
-  if (copyBtn) {
-    copyBtn.textContent = "📋 Copier l'email & continuer";
-    // Patch copyEmail pour le feedback en français + redirect
-    window.copyEmail = function() {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user?.email) return;
-      navigator.clipboard.writeText(user.email).then(() => {
-        copyBtn.textContent = "✅ Copié ! Redirection...";
-        setTimeout(() => {
-          const checkoutBtn = document.getElementById("modal-checkout-btn");
-          window.open(checkoutBtn.href, "_blank");
-        }, 800);
-      });
-    };
-  }
-
-  const continueBtn = document.getElementById("modal-checkout-btn");
-  if (continueBtn) continueBtn.textContent = "✅ OK, j'ai compris — Continuer";
-
-  const noAccountMsg = document.getElementById("modal-no-account");
-  if (noAccountMsg) noAccountMsg.innerHTML = `Pas de compte ? <a href="profile.html" style="color:#f472b6; text-decoration:underline;">Connecte-toi d'abord</a> pour l'activation automatique.`;
-
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
