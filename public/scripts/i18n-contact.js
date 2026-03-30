@@ -106,6 +106,17 @@ if (isFrench) {
       if (strong) strong.textContent = "vii) Support paiement & Remboursements";
       const explodelyLink = billingBox.querySelector('a[href*="shorturl"]');
       if (explodelyLink) explodelyLink.textContent = "Support paiement Explodely ↗";
+      const boxTextNodes = [...billingBox.childNodes].filter(n => n.nodeType === Node.TEXT_NODE);
+      boxTextNodes.forEach(n => {
+        if (n.textContent.includes("payment questions") || n.textContent.includes("money-back")) {
+          n.textContent = n.textContent.replace(/For payment questions.*guarantee:/, "Pour toute question de paiement ou pour exercer votre garantie remboursement 60 jours :");
+        }
+      });
     }
+
+    document.title = "Contact & Support 🩷";
+
+    const sendBtn = document.getElementById("send-btn");
+    if (sendBtn) sendBtn.title = "Envoyer";
   });
 }

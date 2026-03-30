@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Mot de passe oublié – MyAiCrush";
+
   // ===== SUBTITLE =====
   const subtitle = document.querySelector(".subtitle");
   if (subtitle) subtitle.innerHTML = "Mot de passe oublié ?<br>Entre ton email et on t'envoie un lien de réinitialisation.";

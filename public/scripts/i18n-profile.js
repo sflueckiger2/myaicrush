@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Profil – MyAiCrush";
+
   // ===== TITRE =====
   const title = document.querySelector("h1.p-title");
   if (title) title.textContent = "Mon profil";
@@ -145,6 +147,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== SECTION ABONNEMENT =====
   const subscriptionTitle = document.querySelector(".profile-sectionv2 h2");
   if (subscriptionTitle) subscriptionTitle.textContent = "Mon abonnement";
+
+  const cancelSubLink = document.querySelector('a[href="cancellation.html"]');
+  if (cancelSubLink) {
+    const icon = cancelSubLink.querySelector("i");
+    cancelSubLink.textContent = " Annuler mon abonnement";
+    if (icon) cancelSubLink.prepend(icon);
+  }
 
   // ===== LOADER ANNULATION =====
   const cancelLoader = document.querySelector("#cancel-loader-overlay .loader-text");

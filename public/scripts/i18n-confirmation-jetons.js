@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Jetons achetés – MyAiCrush";
+
   // ===== TITRE =====
   const title = document.querySelector("h1.p-title");
   if (title) title.textContent = "Tokens ajoutés ! 🎉";

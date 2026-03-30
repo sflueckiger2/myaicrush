@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Premium – MyAiCrush";
+
   // ===== TITRE & DESCRIPTION =====
   const title = document.querySelector("h1.p-title");
   if (title) title.textContent = "Tout débloquer. Chaque mois.";

@@ -4,6 +4,8 @@
 
 function applyFrenchTranslations() {
 
+  document.title = "Débloquer du contenu exclusif";
+
   // ===== BANNIÈRE DE CONFIRMATION =====
   const bannerB = document.querySelector(".confirm-banner-text b");
   if (bannerB) bannerB.textContent = "Jetons ajoutés ! 🪙";

@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Contenu Privé – MyAICrush";
+
   // ===== HEADER =====
   const headerTitle = document.querySelector(".header h1");
   if (headerTitle) headerTitle.textContent = "🔒 Contenu Privé 🔥";

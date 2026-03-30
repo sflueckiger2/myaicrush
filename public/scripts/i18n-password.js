@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Mot de passe – MyAiCrush";
+
   // ===== TITRE =====
   const title = document.querySelector("h1.p-title");
   if (title) title.textContent = "Changer ton mot de passe";

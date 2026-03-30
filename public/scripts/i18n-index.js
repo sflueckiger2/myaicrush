@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "MyAICrush – Les meilleures compagnes IA";
+
   // ===== LOADER — SOUS-TITRE =====
   const loaderSubtitle = document.querySelector(".loader-subtitle");
   if (loaderSubtitle) loaderSubtitle.textContent = "Les meilleures compagnes IA";

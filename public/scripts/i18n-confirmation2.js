@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Débloquer le Mode Nympho";
+
   // ===== BANNIÈRE DE CONFIRMATION =====
   const bannerText = document.querySelector(".confirm-banner-text");
   if (bannerText) {

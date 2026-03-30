@@ -8,6 +8,8 @@ if (isFrench) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.title = "Jetons – MyAiCrush";
+
   // ===== TITRE & SOUS-TITRE =====
   const title = document.querySelector("h1.p-title");
   if (title) title.textContent = "Besoin de plus de tokens ?";
@@ -53,6 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace("Save 52% 🔥", "−52% 🔥")
       .replace("Save 60%", "−60%")
       .replace("Save 66%", "−66%");
+  });
+
+  document.querySelectorAll(".token-title").forEach(el => {
+    el.textContent = el.textContent.replace(/Tokens/g, "Jetons").replace(/Token/g, "Jeton");
   });
 
   const bestDeal = document.querySelector(".best-deal");
