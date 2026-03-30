@@ -1,4 +1,5 @@
 console.log("🔐 Chargement du module Private Content");
+const _fr = navigator.language?.startsWith("fr");
 
 function openJetonsPopup() {
   const popup = document.getElementById("jetons-popup");
@@ -51,7 +52,7 @@ async function handlePrivateUnlock(price, folder) {
   const user = JSON.parse(localStorage.getItem("user"));
 
   if (!user || !user.email) {
-    alert('Please log in to unlock this content.');
+    alert(_fr ? "Connecte-toi pour débloquer ce contenu." : "Please log in to unlock this content.");
     window.location.href = 'profile.html';
     return false;
   }
@@ -67,7 +68,7 @@ async function handlePrivateUnlock(price, folder) {
     const { isPremium } = await premiumRes.json();
 
     if (!isPremium) {
-      alert('Premium only.');
+      alert(_fr ? "Réservé aux membres Premium." : "Premium only.");
       window.location.href = '/premium.html';
       return false;
     }
@@ -150,7 +151,7 @@ async function handlePrivateUnlock(price, folder) {
   } catch (error) {
     console.error('❌ Erreur lors du déblocage :', error);
     document.getElementById("loader-overlay")?.classList.add("hidden");
-    alert("Failed to unlock this content.");
+    alert(_fr ? "Échec du déblocage de ce contenu." : "Failed to unlock this content.");
     return false;
   }
 }
@@ -191,10 +192,10 @@ function createPrivateContentCards(character, unlockedContents) {
         </div>
         <h3>${content.title}</h3>
         <p class="description">${content.description}</p>
-        <div class="token-info"><i class="fas fa-coins"></i> ${content.price} Token</div>
-        <div class="pack-info" style="font-size: 0.9em; color: #d1d1e0;">Loading…</div>
+        <div class="token-info"><i class="fas fa-coins"></i> ${content.price} ${_fr ? "Jeton" : "Token"}</div>
+        <div class="pack-info" style="font-size: 0.9em; color: #d1d1e0;">${_fr ? "Chargement…" : "Loading…"}</div>
         <button class="unlock-btn" data-folder="${content.folder}" data-price="${content.price}" style="background-color: ${isUnlocked ? '#4CAF50' : '#dd4d9d'};">
-          ${isUnlocked ? '✅ View content' : `Unlock`}
+          ${isUnlocked ? (_fr ? '✅ Voir le contenu' : '✅ View content') : (_fr ? 'Débloquer' : 'Unlock')}
         </button>
       </div>
     `;
@@ -233,7 +234,7 @@ async function renderPrivateContents(characters) {
       const folder = e.target.dataset.folder;
       const price = e.target.dataset.price;
       const previewImg = card.querySelector('.preview-image');
-      const isUnlocked = e.target.innerText.includes("Voir le contenu");
+      const isUnlocked = e.target.innerText.includes("Voir le contenu") || e.target.innerText.includes("View content");
 
       if (isUnlocked) {
         openPackModal(folder);
@@ -244,7 +245,7 @@ async function renderPrivateContents(characters) {
 
       if (success) {
         previewImg.style.filter = 'none';
-        e.target.innerHTML = "✅ Voir le contenu";
+        e.target.innerHTML = _fr ? "✅ Voir le contenu" : "✅ View content";
         e.target.style.backgroundColor = "#4CAF50";
 
         const lockIcon = card.querySelector('.lock-icon');

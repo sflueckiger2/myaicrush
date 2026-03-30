@@ -1,4 +1,5 @@
 import { scrollToBottom } from './utils.js';
+const _fr = navigator.language?.startsWith("fr");
 import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 import { openProfileModal } from './profile.js';
@@ -116,7 +117,7 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
         const { isPremium } = await premiumCheck.json();
 
         if (!isPremium) {
-            alert("🎥 Premium members only. ");
+            alert(_fr ? "🎥 Réservé aux membres Premium." : "🎥 Premium members only.");
             toggleMode.checked = false;
             window.location.href = "/premium.html";
             return;
@@ -166,7 +167,7 @@ if (nymphoToggle) {
     const { isPremium } = await premiumCheck.json();
 
     if (!isPremium) {
-      alert("Premium members only. 😈");
+      alert(_fr ? "Réservé aux membres Premium 😈" : "Premium members only 😈");
       window.location.href = "/premium.html";
       nymphoToggle.checked = false;
       return;

@@ -217,7 +217,7 @@ async function startCheckout(priceId, email, planType) {
         }
     } catch (error) {
         console.error('❌ Erreur Stripe:', error.message);
-        alert(error.message || 'An error occurred while creating the Stripe session. Please try again.');
+        alert(error.message || (navigator.language?.startsWith("fr") ? "Une erreur est survenue. Veuillez réessayer." : "An error occurred. Please try again."));
     }
 }
 

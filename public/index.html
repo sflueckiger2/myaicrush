@@ -111,7 +111,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
           <input type="checkbox" id="toggleMode">
           <span class="slider"></span>
       </label>
-      <span>🎥 Videos</span>
+      <span id="mode-video-label">🎥 Videos</span>
     </div>
 
     <div id="nympho-mode-toggle-wrapper" style="display: none; justify-content: center; align-items: center; gap: 10px; margin: 10px 0;">
@@ -516,16 +516,17 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
   document.addEventListener("DOMContentLoaded", () => {
     const audioCallBtn = document.getElementById("audio-call-btn");
     let widgetInjected = false;
+    const _fr = navigator.language?.startsWith("fr");
 
     audioCallBtn.addEventListener("click", async () => {
       const characterName = document.getElementById("chat-name")?.textContent?.trim();
       const character = characters.find(c => c.name === characterName);
-      if (!character || !character.agent?.id) return alert("Error: character not found.");
+      if (!character || !character.agent?.id) return alert(_fr ? "Erreur : personnage introuvable." : "Error: character not found.");
       const assistantId = character.agent.id;
 
       const user = JSON.parse(localStorage.getItem("user"));
       const email = user?.email;
-      if (!email) return alert("Please log in.");
+      if (!email) return alert(_fr ? "Connecte-toi d'abord." : "Please log in.");
 
       try {
         const resPremium = await fetch("/api/is-premium", {
@@ -535,7 +536,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         });
         const { isPremium } = await resPremium.json();
         if (!isPremium) {
-          alert("🔒 Audio calls are for Premium members only.");
+          alert(_fr ? "🔒 Les appels audio sont réservés aux membres Premium." : "🔒 Audio calls are for Premium members only.");
           return window.location.href = "/premium.html";
         }
       } catch (err) {
@@ -543,7 +544,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         return;
       }
 
-      if (!confirm("An audio call costs 20 tokens for 10 minutes. Continue?")) return;
+      if (!confirm(_fr ? "Un appel audio coûte 20 jetons pour 10 minutes. Continuer ?" : "An audio call costs 20 tokens for 10 minutes. Continue?")) return;
 
       try {
         const resCall = await fetch("/api/start-call", {
@@ -572,14 +573,14 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
             }
           }
 
-          alert(result.message || "Error starting the call.");
+          alert(result.message || (_fr ? "Erreur lors du démarrage de l'appel." : "Error starting the call."));
           return;
         }
 
         console.log("✅ Appel démarré :", result.message);
       } catch (err) {
         console.error("❌ Erreur backend /start-call :", err);
-        return alert("Server error while starting the call.");
+        return alert(_fr ? "Erreur serveur lors du démarrage de l'appel." : "Server error while starting the call.");
       }
 
       if (widgetInjected) return;
@@ -611,7 +612,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         ></vapi-widget>
       `;
 
-      alert("🎧 Your audio call is about to start...\nA small pink bubble will appear at the bottom of your screen.");
+      alert(_fr ? "🎧 Ton appel audio va démarrer...\nUne petite bulle rose apparaîtra en bas de ton écran." : "🎧 Your audio call is about to start...\nA small pink bubble will appear at the bottom of your screen.");
 
       document.body.insertAdjacentHTML("beforeend", widgetHTML);
 

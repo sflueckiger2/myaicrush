@@ -28,7 +28,7 @@ async function cancelWithFallback(primaryEmail) {
   if (result.error !== "explodely_error" && result.error !== "server_error") {
     openCancelModal();
   } else {
-    alert("Error: " + (result.message || "Unknown error"));
+    alert((navigator.language?.startsWith("fr") ? "Erreur : " : "Error: ") + (result.message || (navigator.language?.startsWith("fr") ? "Erreur inconnue" : "Unknown error")));
   }
 }
 

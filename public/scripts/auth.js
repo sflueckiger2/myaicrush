@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeSignupModal();
             } catch (error) {
                 console.error('Error during signup:', error);
-                alert('Signup failed. Please try again.');
+                alert(navigator.language?.startsWith("fr") ? "L'inscription a échoué. Merci de réessayer." : "Signup failed. Please try again.");
             }
         });
     } else {

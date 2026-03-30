@@ -99,6 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (userInput) userInput.placeholder = "Écris ton message…";
 
   
+  // ===== MODE TOGGLE =====
+  const videoLabel = document.getElementById("mode-video-label");
+  if (videoLabel) videoLabel.textContent = "🎥 Vidéos";
+
   // ===== NYMPHO MODE TOGGLE =====
   const nymphoSpan = document.querySelector("#nympho-mode-toggle-wrapper span");
   if (nymphoSpan) nymphoSpan.textContent = "🥵 Mode Nympho";
