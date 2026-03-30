@@ -58,3 +58,54 @@ document.addEventListener("DOMContentLoaded", () => {
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
+
+const isGerman = navigator.language?.startsWith("de");
+
+if (isGerman) {
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.title = "Passwort vergessen – MyAiCrush";
+
+  const subtitle = document.querySelector(".subtitle");
+  if (subtitle) subtitle.innerHTML = "Passwort vergessen?<br>Gib deine E-Mail ein und wir senden dir einen Link zum Zurücksetzen.";
+
+  const emailLabel = document.querySelector('label[for="email"]');
+  if (emailLabel) emailLabel.textContent = "E-Mail-Adresse";
+
+  const emailInput = document.getElementById("email");
+  if (emailInput) emailInput.placeholder = "du@email.com";
+
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) submitBtn.textContent = "Link senden";
+
+  const form = document.getElementById("forgotForm");
+  const messageEl = document.getElementById("message");
+
+  if (form && messageEl) {
+    form.addEventListener("submit", () => {
+      const waitForMessage = setInterval(() => {
+        const text = messageEl.textContent.trim();
+        if (!text) return;
+
+        clearInterval(waitForMessage);
+
+        if (messageEl.classList.contains("success")) {
+          messageEl.textContent = "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen gesendet. Das kann ein paar Minuten dauern.";
+        } else if (messageEl.classList.contains("error")) {
+          if (text.includes("Server error")) {
+            messageEl.textContent = "Serverfehler. Versuche es gleich nochmal.";
+          } else {
+            messageEl.textContent = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.";
+          }
+        }
+      }, 100);
+    }, true);
+  }
+
+  const backLink = document.querySelector(".back-link a");
+  if (backLink) backLink.textContent = "Zurück zur Anmeldung";
+
+}); // fin DOMContentLoaded
+
+} // fin if (isGerman)

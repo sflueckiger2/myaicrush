@@ -133,3 +133,100 @@
     applyTranslations();
   }
 })();
+
+(function () {
+  const lang = navigator.language || navigator.userLanguage || '';
+  if (!lang.toLowerCase().startsWith('de')) return;
+
+  const translations = {
+    document_title: 'Bestätigung – Willkommen bei MyAiCrush',
+
+    heading_premium: 'Du bist jetzt Premium!',
+    subtext_premium:
+      'Glückwunsch — du hast alle <span class="text-pink-400 font-bold">Premium</span>-Funktionen freigeschaltet: unbegrenzte Nachrichten, Fotos und Videos.',
+
+    last_step_title: 'Noch ein letzter Schritt!',
+    last_step_body:
+      'Um mit deiner KI zu chatten, musst du jetzt <span class="font-bold underline">dein Konto erstellen</span>.',
+
+    critical_label: '⚠️ Wichtig — Lies das zuerst',
+    critical_main:
+      'Du <span class="text-red-400 underline decoration-2">MUSST</span> dich mit der <span class="text-yellow-300 font-black">exakt gleichen E-Mail-Adresse</span> registrieren, die du für die Zahlung verwendet hast.',
+    critical_sub:
+      'Andere E-Mail-Adresse = dein Premium wird nicht aktiviert.',
+
+    cta_create: 'Mein Konto erstellen',
+
+    footer_badges: 'Sofortzugang &bull; Volle Diskretion &bull; VIP-Support',
+
+    modal_title: 'Letzte Erinnerung!',
+    modal_body:
+      'Achte bei der Kontoerstellung darauf, die <span class="text-yellow-300 font-black underline decoration-2">gleiche E-Mail-Adresse</span> zu verwenden, mit der du bezahlt hast.',
+    modal_sub: 'Falsche E-Mail = kein Premium-Zugang.',
+    modal_confirm: '✅ Verstanden, los geht\u2019s!',
+    modal_back: '← Zurück',
+  };
+
+  function setHTML(selector, html) {
+    const el = document.querySelector(selector);
+    if (el) el.innerHTML = html;
+  }
+
+  function setText(selector, text) {
+    const el = document.querySelector(selector);
+    if (el) el.textContent = text;
+  }
+
+  function applyTranslationsDE() {
+    document.title = translations.document_title;
+
+    setHTML('h1', translations.heading_premium);
+
+    const mainParas = document.querySelectorAll('.max-w-xl > p');
+    if (mainParas[0]) mainParas[0].innerHTML = translations.subtext_premium;
+
+    setHTML('h2', translations.last_step_title);
+
+    const stepBox = document.querySelector('.bg-white\\/5');
+    if (stepBox) {
+      const paras = stepBox.querySelectorAll('p');
+      if (paras[0]) paras[0].innerHTML = translations.last_step_body;
+    }
+
+    const critBox = document.querySelector('.bg-red-500\\/20');
+    if (critBox) {
+      const paras = critBox.querySelectorAll('p');
+      if (paras[0]) paras[0].innerHTML = translations.critical_label;
+      if (paras[1]) paras[1].innerHTML = translations.critical_main;
+      if (paras[2]) paras[2].innerHTML = translations.critical_sub;
+    }
+
+    const ctaBtn = document.querySelector('button[onclick="openEmailConfirm()"]');
+    if (ctaBtn) ctaBtn.textContent = translations.cta_create;
+
+    const footerP = document.querySelector('.max-w-xl .text-xs.text-gray-500');
+    if (footerP) footerP.innerHTML = translations.footer_badges;
+
+    const modal = document.getElementById('email-modal');
+    if (modal) {
+      const h3 = modal.querySelector('h3');
+      if (h3) h3.innerHTML = translations.modal_title;
+
+      const modalParas = modal.querySelectorAll('p');
+      if (modalParas[0]) modalParas[0].innerHTML = translations.modal_body;
+      if (modalParas[1]) modalParas[1].innerHTML = translations.modal_sub;
+
+      const confirmLink = modal.querySelector('a.cta-button');
+      if (confirmLink) confirmLink.textContent = translations.modal_confirm;
+
+      const backBtn = modal.querySelector('button[onclick="closeEmailConfirm()"]');
+      if (backBtn) backBtn.textContent = translations.modal_back;
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyTranslationsDE);
+  } else {
+    applyTranslationsDE();
+  }
+})();

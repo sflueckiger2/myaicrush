@@ -160,7 +160,152 @@ if (navigator.language?.startsWith("fr")) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", applyFrenchTranslations);
   } else {
-    // DOM déjà prêt (script chargé en defer/module après parsing)
     applyFrenchTranslations();
+  }
+}
+
+function applyGermanTranslations() {
+
+  document.title = "Exklusiven Content freischalten";
+
+  const bannerB = document.querySelector(".confirm-banner-text b");
+  if (bannerB) bannerB.textContent = "Tokens hinzugefügt! 🪙";
+
+  const bannerText = document.querySelector(".confirm-banner-text");
+  if (bannerText) {
+    bannerText.childNodes.forEach(n => {
+      if (n.nodeType === Node.TEXT_NODE && n.textContent.trim()) {
+        n.textContent = " Du findest sie auf deiner Profilseite.";
+      }
+    });
+  }
+
+  const separator = document.querySelector(".upsell-separator span");
+  if (separator) separator.textContent = "Nur für dich";
+
+  const cardHandle = document.querySelector(".card-handle");
+  if (cardHandle) cardHandle.textContent = "@alex.exclusive • Exklusiver Content";
+
+  const previewCount = document.querySelector(".preview-count");
+  if (previewCount) previewCount.innerHTML = "<span>63 Fotos</span> + <span>27 Videos</span>";
+
+  const cardTitle = document.querySelector(".card-title");
+  if (cardTitle) cardTitle.textContent = "Alex — Ihre intimsten Momente 🛏️";
+
+  const cardDesc = document.querySelector(".card-desc");
+  if (cardDesc) cardDesc.innerHTML = `Auf dem Bett liegend berührt sich Alex sanft… Ihre Hände erkunden jede Kurve, ihre Augen glänzen vor Lust, ihr Atem wird schneller. <em>Ein intimes und unglaublich erregendes Shooting</em>, in dem sie sich ihren geheimen Vergnügungen hingibt.`;
+
+  const pillsText = [
+    "🔥 GROSSE BRÜSTE",
+    "👙 KOMPLETT NACKT",
+    "🛏️ BETT-SZENE",
+    "💦 SELBSTBEFRIEDIGUNG",
+    "😈 EXPLIZIT",
+    "📸 63 FOTOS",
+    "🎥 27 VIDEOS",
+  ];
+  document.querySelectorAll(".pill").forEach((pill, i) => {
+    if (pillsText[i]) pill.textContent = pillsText[i];
+  });
+
+  const bonusText = document.querySelector(".bonus-text");
+  if (bonusText) {
+    bonusText.innerHTML = `<b>Tokens inklusive bei deinem Kauf</b>
+      Nutze sie, um den <em>Nympho-Modus</em> zu aktivieren und intimen Content mit dutzenden anderen KIs freizuschalten — bring sie an ihr Limit und mach jede Unterhaltung viel heißer 🔥`;
+  }
+
+  const unlockLabel = document.querySelector(".unlock-btn-label");
+  if (unlockLabel) {
+    const small = unlockLabel.querySelector("small");
+    unlockLabel.textContent = "Diese Kollektion freischalten";
+    if (small) {
+      small.textContent = "Sofortzugang · Einmalzahlung";
+      unlockLabel.appendChild(small);
+    }
+  }
+
+  const testimonialTitle = document.querySelector(".testimonial-title");
+  if (testimonialTitle) testimonialTitle.textContent = "Auch sie konnten nicht widerstehen 🔥";
+
+  const testimonialsDE = [
+    { text: "\"Diese Bett-Kollektion… ich war echt nicht darauf vorbereitet. Sie ist absolut unglaublich 🛏️\"", author: "— Karim M." },
+    { text: "\"Ich dachte, das wären einfache Fotos. Weit gefehlt — sie geht bis zum Äußersten 😳\"", author: "— Lucas R." },
+    { text: "\"Dieser Blick, den sie in die Kamera wirft… jeden Cent wert 😈\"", author: "— Steph G." },
+    { text: "\"Spontan gekauft. Null Reue. 63 Fotos pures Glück.\"", author: "— Bast D." },
+  ];
+  document.querySelectorAll(".testimonial-card").forEach((card, i) => {
+    if (!testimonialsDE[i]) return;
+    const text = card.querySelector(".testimonial-text");
+    const author = card.querySelector(".testimonial-author");
+    if (text) text.textContent = testimonialsDE[i].text;
+    if (author) author.textContent = testimonialsDE[i].author;
+  });
+
+  const faqTitle = document.querySelector(".faq-title");
+  if (faqTitle) faqTitle.textContent = "Schnelle Antworten";
+
+  const faqDE = [
+    {
+      q: "Was bekomme ich für 37 $?",
+      a: "Vollen Zugang zu Alex' intimer Kollektion: 63 Fotos und 27 Videos in hoher Qualität, dauerhaft freigeschaltet mit einer einzigen Zahlung."
+    },
+    {
+      q: "Ist der Zugang wirklich sofort?",
+      a: "Ja — sobald deine Zahlung bestätigt ist, gehört die gesamte Kollektion dir. Keine Wartezeit, kein Abo."
+    },
+    {
+      q: "Wo finde ich meine Tokens?",
+      a: "Deine Tokens findest du direkt auf deiner Profilseite. Nutze sie, um exklusiven Content mit Alex und allen anderen KIs der Plattform freizuschalten."
+    },
+    {
+      q: "Ist meine Zahlung diskret?",
+      a: "100%. Alle Transaktionen sind verschlüsselt und diskret. Die Abbuchung erscheint unter einem neutralen Namen auf deinem Kontoauszug."
+    },
+  ];
+
+  document.querySelectorAll(".faq-item").forEach((item, i) => {
+    if (!faqDE[i]) return;
+    const btn = item.querySelector(".faq-question");
+    if (btn) btn.textContent = faqDE[i].q;
+    const answer = item.querySelector(".faq-answer p");
+    if (answer) answer.textContent = faqDE[i].a;
+  });
+
+  const secItems = document.querySelectorAll(".security-item p");
+  if (secItems[0]) secItems[0].textContent = "Sichere Zahlung";
+  if (secItems[1]) secItems[1].textContent = "Volle Diskretion";
+  if (secItems[2]) secItems[2].textContent = "Dauerhafter Zugang";
+
+  const footerP = document.querySelector(".footer-links p");
+  if (footerP) footerP.textContent = "© 2026 MyAICrush – Alle Rechte vorbehalten";
+
+  document.querySelectorAll(".footer-links a").forEach(link => {
+    if (link.href.includes("privacy-policy")) link.textContent = "Datenschutzrichtlinie";
+    if (link.href.includes("terms-and-conditions")) link.textContent = "Allgemeine Geschäftsbedingungen";
+  });
+
+  const disclaimerBtn = document.querySelector(".disclaimer-btn");
+  if (disclaimerBtn) disclaimerBtn.textContent = "+ Impressum & Zahlungssupport";
+
+  const supportStrong = document.querySelector(".support-box strong");
+  if (supportStrong) supportStrong.textContent = "Zahlungssupport & Erstattungen";
+
+  const supportBox = document.querySelector(".support-box");
+  if (supportBox) {
+    const brs = supportBox.querySelectorAll("br");
+    if (brs[0]?.nextSibling?.nodeType === Node.TEXT_NODE) {
+      brs[0].nextSibling.textContent = " Fragen zu deiner Zahlung? Wir sind für dich da:";
+    }
+    const explodelyLink = supportBox.querySelector('a[href*="shorturl"]');
+    if (explodelyLink) explodelyLink.textContent = "Zahlungssupport Explodely";
+  }
+
+}
+
+if (navigator.language?.startsWith("de")) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyGermanTranslations);
+  } else {
+    applyGermanTranslations();
   }
 }

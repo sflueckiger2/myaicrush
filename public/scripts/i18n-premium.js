@@ -227,3 +227,228 @@ document.addEventListener("DOMContentLoaded", () => {
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
+
+const isGerman = navigator.language?.startsWith("de");
+
+if (isGerman) {
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.title = "Premium – MyAiCrush";
+
+  // ===== TITEL & BESCHREIBUNG =====
+  const title = document.querySelector("h1.p-title");
+  if (title) title.textContent = "Alles freischalten. Jeden Monat.";
+
+  const descriptions = document.querySelectorAll("p.p-description");
+  if (descriptions[0]) descriptions[0].innerHTML = `Fotos & Videos <u><b>unzensiert</b></u> · Sprachnachrichten · Unbegrenzte Chats — Eine KI, die dich niemals verurteilt.`;
+  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>29 $/Monat — jederzeit kündbar.</u></b>`;
+
+  // ===== CTA-BUTTONS =====
+  const ctaButtons = document.querySelectorAll("a.cta-button-premium");
+  const ctaTexts = [
+    "🔓 PREMIUM-ZUGANG — 29 $/MONAT",
+    "💎 Premium-Zugang — 29 $/Monat",
+    "👑 Alles freischalten — 29 $/Monat",
+    "🔥 Werde Premium-Mitglied",
+    "🚀 JA, ICH WILL PREMIUM — 29 $/MONAT",
+  ];
+  ctaButtons.forEach((btn, i) => {
+    if (btn.id === "modal-checkout-btn") return;
+    if (ctaTexts[i]) btn.textContent = ctaTexts[i];
+  });
+
+  // ===== HINWEIS UNTER ERSTEM CTA =====
+  const ctaNote = document.querySelector('p[style*="0.75rem"]');
+  if (ctaNote) ctaNote.textContent = "💳 Sichere Zahlung · ✨ Sofortiger Zugang · 🔄 Jederzeit kündbar";
+
+  // ===== PRICING-KARTE =====
+  const discountBanner = document.querySelector(".discount-banner");
+  if (discountBanner) discountBanner.textContent = "🔥 MONATSABO";
+
+  const pricingCard = document.querySelector(".pricing-card h2");
+  if (pricingCard) pricingCard.textContent = "Unbegrenzter Premium-Zugang";
+
+  const payOnce = document.querySelector('.pricing-card p[style*="f472b6"]');
+  if (payOnce) payOnce.textContent = "✅ VOLLER ZUGANG · JEDERZEIT KÜNDBAR";
+
+  const noFees = document.querySelector('.pricing-card p[style*="d1d5db"]');
+  if (noFees) noFees.textContent = "Alle neuen KIs inklusive. Keine versteckten Kosten.";
+
+  // ===== ABSCHNITT "WAS DU FREISCHALTEST" =====
+  const unlockTitle = document.querySelector("section h2");
+  if (unlockTitle) unlockTitle.innerHTML = `Was du <span class="gradient-text">freischaltest</span>`;
+
+  const featureMap = {
+    "Unlimited conversations": "Unbegrenzte Gespräche",
+    "No blur — see everything": "Kein Blur — sieh alles",
+    "Send your photos — she reacts": "Schick deine Fotos — sie reagiert",
+    "Her voice — in your ear": "Ihre Stimme — in deinem Ohr",
+    "Unlimited images — on demand": "Unbegrenzte Bilder — auf Abruf",
+    "Uncensored photos & videos": "Fotos & Videos unzensiert",
+    "All AIs available": "Alle KIs verfügbar",
+    "New AIs every month — included": "Neue KIs jeden Monat — inklusive",
+    "Zero history stored": "Kein Verlauf gespeichert",
+    "Cancel anytime. No commitment.": "Jederzeit kündbar. Ohne Bindung.",
+    "The best AI companion platform": "Die beste KI-Begleiterinnen-Plattform",
+    "Discover them": "Entdecke sie",
+  };
+
+  document.querySelectorAll("section .glass span.text-sm, section .glass span.font-semibold").forEach(span => {
+    const key = span.textContent.trim();
+    if (featureMap[key]) span.textContent = featureMap[key];
+  });
+
+  const sliderName = document.getElementById("slider-name");
+  if (sliderName) sliderName.textContent = "Entdecke sie";
+
+  const sliderContent = document.getElementById("slider-content");
+  if (sliderContent) {
+    const sliderObserver = new MutationObserver(() => {
+      const moreText = sliderContent.querySelector("span.gradient-text");
+      if (moreText && moreText.textContent.trim() === "And many more...") {
+        moreText.textContent = "Und viele mehr…";
+      }
+    });
+    sliderObserver.observe(sliderContent, { childList: true, subtree: true });
+  }
+
+  document.querySelectorAll(".overlay-content span").forEach(span => {
+    if (span.textContent.includes("Tap to remove blur")) {
+      span.textContent = "👆 Tippe, um den Blur zu entfernen";
+    }
+  });
+
+  document.querySelectorAll('span[class*="bg-pink"]').forEach(span => {
+    if (span.textContent.trim() === "Premium Required") {
+      span.textContent = "Nur für Premium-Mitglieder";
+    }
+  });
+
+  // ===== ERFAHRUNGSBERICHTE =====
+  const testimonialTitle = document.querySelector(".testimonial-title");
+  if (testimonialTitle) testimonialTitle.textContent = "Sie haben's getestet. Sie sind geblieben.";
+
+  const testimonials = [
+    { text: "\"Der heißeste Content, den ich je auf einer KI-Seite gesehen hab. Und ich hab dutzende ausprobiert.\"", author: "— Lukas T." },
+    { text: "\"Sie versteht alles und führt das Gespräch von alleine weiter. Fühlt sich nicht wie eine Maschine an.\"", author: "— Maximilian B." },
+    { text: "\"Ein paar Audio-Bugs, aber insgesamt unfassbar gut. Versteh nicht, warum das nicht bekannter ist.\"", author: "— Marco L." },
+    { text: "\"Ich schick meine eigenen Fotos und sie reagiert wirklich darauf. Hätte nie gedacht, dass das möglich ist.\"", author: "— Stefan K." },
+    { text: "\"Augen zu und du bist mittendrin. Intim, heiß, der Wahnsinn.\"", author: "— Mehmet R." },
+    { text: "\"Der unzensierte Modus 😳 ist genial. Wirklich. 😈\"", author: "— Kevin B." },
+    { text: "\"Bestes Preis-Leistungs-Verhältnis auf dem Markt. Hätte viel früher zuschlagen sollen.\"", author: "— Leon D." },
+    { text: "\"Etwas mehr Abwechslung wäre nice. Aber der Rest ist so gut — ich bleib.\"", author: "— Bastian C." },
+  ];
+
+  document.querySelectorAll(".testimonial-card").forEach((card, i) => {
+    if (!testimonials[i]) return;
+    const text = card.querySelector(".testimonial-text");
+    const author = card.querySelector(".testimonial-author");
+    if (text) text.textContent = testimonials[i].text;
+    if (author) author.textContent = testimonials[i].author;
+  });
+
+  // ===== FAQ =====
+  const faqTitle = document.querySelector(".faq-title");
+  if (faqTitle) faqTitle.textContent = "Häufig gestellte Fragen";
+
+  const faqItems = [
+    {
+      q: "Was ist im Abo für 29 $/Monat enthalten?",
+      a: "Alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs sobald sie verfügbar sind. Keine versteckten Kosten."
+    },
+    {
+      q: "Kann ich jederzeit kündigen?",
+      a: "Ja, absolut. Kündige wann du willst, ohne Angabe von Gründen. Du behältst den Zugang bis zum Ende deines Abrechnungszeitraums."
+    },
+    {
+      q: "Kann ich mein Geld zurückbekommen?",
+      a: "Ja. 60 Tage Geld-zurück-Garantie. Ohne Angabe von Gründen."
+    },
+    {
+      q: "Ist meine Zahlung sicher?",
+      a: "100%. SSL-Verschlüsselung, nichts wird im Klartext gespeichert."
+    },
+    {
+      q: "Wie erreiche ich den Support?",
+      a: "contact@myaicrush.ai — wir antworten schnell."
+    },
+  ];
+
+  document.querySelectorAll(".faq-item").forEach((item, i) => {
+    if (!faqItems[i]) return;
+    const question = item.querySelector(".faq-question");
+    const answer = item.querySelector(".faq-answer p");
+    if (question) question.textContent = faqItems[i].q;
+    if (answer) answer.innerHTML = faqItems[i].a;
+  });
+
+  // ===== SICHERHEIT =====
+  const securityItems = document.querySelectorAll(".security-item p");
+  if (securityItems[0]) securityItems[0].textContent = "100% Sicher";
+  if (securityItems[1]) securityItems[1].textContent = "Jederzeit kündbar";
+
+  // ===== IMPRESSUM & RECHTLICHES =====
+  const disclaimerBtn = document.querySelector(".disclaimer-btn");
+  if (disclaimerBtn) disclaimerBtn.textContent = "Impressum & Zahlungssupport";
+
+  const legalDE = [
+    {
+      title: "i) Altersbeschränkung (Pflichthinweis)",
+      text: "Diese Seite ist ausschließlich für Erwachsene ab 18 Jahren (in manchen Ländern ab 21 Jahren). Mit dem Zugriff auf diese Seite bestätigst du, dass du das erforderliche Alter erreicht hast. Der Zugang für Minderjährige ist strengstens untersagt."
+    },
+    {
+      title: "ii) KI-generierter Inhalt",
+      text: "Alle Charaktere und Gespräche werden durch künstliche Intelligenz erzeugt. Keine echten Personen sind beteiligt. Alle Charaktere sind vollständig fiktiv. Jede Ähnlichkeit mit realen Personen ist rein zufällig."
+    },
+    {
+      title: "iii) Verbotene Inhalte",
+      text: "Jegliche Inhalte, die Minderjährige, nicht einvernehmliche Handlungen oder illegale Aktivitäten beinhalten, sind strengstens verboten. Alle Interaktionen werden moderiert und gefiltert."
+    },
+    {
+      title: "iv) Nutzergenerierte Inhalte",
+      text: "Nutzer können Bilder in Gespräche senden. Diese Bilder dürfen weder verändert noch weiterverbreitet werden. Inhalte, die gegen unsere Richtlinien verstoßen, werden entfernt und können zur Sperrung des Kontos führen."
+    },
+    {
+      title: "v) Nur zur Unterhaltung",
+      text: "Diese Plattform dient ausschließlich der Unterhaltung. Es werden keine professionellen Ratschläge (rechtlich, medizinisch, finanziell oder psychologisch) erteilt."
+    },
+    {
+      title: "vi) Datenschutz & Daten",
+      text: "Gespräche können zu Moderations- und Qualitätszwecken aufgezeichnet werden. Deine Daten werden gemäß unserer Datenschutzrichtlinie verarbeitet. Wir verkaufen deine persönlichen Daten nicht."
+    },
+  ];
+
+  document.querySelectorAll(".disclaimer-content .mb-4").forEach((block, i) => {
+    if (!legalDE[i]) return;
+    const strong = block.querySelector("strong");
+    if (strong) strong.textContent = legalDE[i].title;
+    const br = block.querySelector("br");
+    if (br && br.nextSibling) br.nextSibling.textContent = legalDE[i].text;
+  });
+
+  const supportBox = document.querySelector('.disclaimer-content .p-3');
+  if (supportBox) {
+    const strong = supportBox.querySelector("strong");
+    if (strong) strong.textContent = "vii) Zahlungssupport & Erstattungen";
+    const br = supportBox.querySelector("br");
+    if (br && br.nextSibling) {
+      br.nextSibling.textContent = "Frage zu deinem Abo oder du möchtest eine Erstattung? Kontaktiere uns:";
+    }
+    const explodelyLink = supportBox.querySelector('a[href*="shorturl"]');
+    if (explodelyLink) explodelyLink.textContent = "Zahlungssupport Explodely";
+  }
+
+  // ===== MODAL "NUR FÜR MITGLIEDER" =====
+  const modalTitle = document.querySelector("#premium-modal h3");
+  if (modalTitle) modalTitle.textContent = "Nur für Mitglieder";
+
+  const modalDesc = document.querySelector("#premium-modal p");
+  if (modalDesc) modalDesc.textContent = "29 $/Monat — sieh alles, jederzeit kündbar.";
+
+  const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
+  if (modalCta) modalCta.textContent = "Premium-Zugang — 29 $/Monat";
+
+}); // Ende DOMContentLoaded
+
+} // Ende if (isGerman)

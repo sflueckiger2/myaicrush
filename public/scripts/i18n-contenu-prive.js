@@ -64,3 +64,67 @@ document.addEventListener("DOMContentLoaded", () => {
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
+
+// ===== DEUTSCHE ÜBERSETZUNG =====
+const isGerman = navigator.language?.startsWith("de");
+
+if (isGerman) {
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.title = "Exklusiver Content – MyAICrush";
+
+  // ===== HEADER =====
+  const headerTitle = document.querySelector(".header h1");
+  if (headerTitle) headerTitle.textContent = "🔒 Exklusiver Content 🔥";
+
+  const headerDesc = document.querySelector(".header p");
+  if (headerDesc) headerDesc.innerHTML = "📸 Exklusive Fotos &nbsp;·&nbsp; 🎥 Intime Videos &nbsp;·&nbsp; 😈 Unzensiert";
+
+  // ===== LOADER =====
+  const loaderText = document.querySelector("#loader-overlay .loader-text");
+  if (loaderText) loaderText.textContent = "Wird geladen...";
+
+  // ===== FOOTER =====
+  const footerCopyright = document.querySelector(".footer-links p");
+  if (footerCopyright) footerCopyright.textContent = "© 2026 MyAICrush – Alle Rechte vorbehalten";
+
+  document.querySelectorAll(".footer-links a").forEach(link => {
+    if (link.href.includes("privacy-policy")) link.textContent = "Datenschutzrichtlinie";
+    if (link.href.includes("terms-and-conditions")) link.textContent = "Allgemeine Geschäftsbedingungen";
+  });
+
+  const disclaimerBtn = document.querySelector(".disclaimer-btn");
+  if (disclaimerBtn) disclaimerBtn.textContent = "+ Rechtliche Hinweise & Zahlungssupport";
+
+  // ===== RECHTLICHE HINWEISE =====
+  const legalDE = [
+    { title: "i) Altersbeschränkung (Pflicht)", text: "Diese Website ist ausschließlich für Erwachsene ab 18 Jahren (in manchen Ländern ab 21 Jahren). Mit dem Zugriff auf diese Website bestätigst du, das erforderliche Alter zu haben. Der Zugang für Minderjährige ist strengstens untersagt." },
+    { title: "ii) KI-generierter Inhalt", text: "Alle Charaktere und Gespräche werden durch künstliche Intelligenz erzeugt. Keine echten Personen sind beteiligt. Die Charaktere sind vollständig fiktiv. Jede Ähnlichkeit mit realen Personen ist rein zufällig." },
+    { title: "iii) Verbotene Inhalte", text: "Jeglicher Inhalt, der Minderjährige, nicht einvernehmliche Handlungen oder illegale Aktivitäten einbezieht, ist strengstens verboten. Alle Interaktionen werden moderiert und gefiltert." },
+    { title: "iv) Nutzergenerierter Inhalt", text: "Nutzer können Bilder in Gesprächen senden. Diese Bilder dürfen nicht verändert oder weiterverbreitet werden. Inhalte, die gegen unsere Regeln verstoßen, werden entfernt und können zur Sperrung des Kontos führen." },
+    { title: "v) Nur zur Unterhaltung", text: "Diese Plattform dient ausschließlich der Unterhaltung. Es wird keine professionelle Beratung (rechtlich, medizinisch, finanziell oder psychologisch) angeboten." },
+    { title: "vi) Datenschutz & Daten", text: "Gespräche können zu Moderations- und Qualitätszwecken aufgezeichnet werden. Deine Daten werden gemäß unserer Datenschutzrichtlinie verarbeitet. Wir verkaufen deine persönlichen Daten nicht." },
+  ];
+
+  document.querySelectorAll(".disclaimer-content .mb-4").forEach((block, i) => {
+    if (!legalDE[i]) return;
+    const strong = block.querySelector("strong");
+    if (strong) strong.textContent = legalDE[i].title;
+    const br = block.querySelector("br");
+    if (br && br.nextSibling) br.nextSibling.textContent = legalDE[i].text;
+  });
+
+  const supportBox = document.querySelector(".support-box");
+  if (supportBox) {
+    const strong = supportBox.querySelector("strong");
+    if (strong) strong.textContent = "vii) Zahlungssupport & Erstattungen";
+    const br = supportBox.querySelector("br");
+    if (br && br.nextSibling) br.nextSibling.textContent = "Frage zu deiner Zahlung oder du möchtest eine Erstattung? Wir sind für dich da:";
+    const explodelyLink = supportBox.querySelector('a[href*="shorturl"]');
+    if (explodelyLink) explodelyLink.textContent = "Zahlungssupport Explodely";
+  }
+
+}); // Ende DOMContentLoaded
+
+} // Ende if (isGerman)

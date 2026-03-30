@@ -517,16 +517,17 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
     const audioCallBtn = document.getElementById("audio-call-btn");
     let widgetInjected = false;
     const _fr = navigator.language?.startsWith("fr");
+    const _de = navigator.language?.startsWith("de");
 
     audioCallBtn.addEventListener("click", async () => {
       const characterName = document.getElementById("chat-name")?.textContent?.trim();
       const character = characters.find(c => c.name === characterName);
-      if (!character || !character.agent?.id) return alert(_fr ? "Erreur : personnage introuvable." : "Error: character not found.");
+      if (!character || !character.agent?.id) return alert(_fr ? "Erreur : personnage introuvable." : _de ? "Fehler: Charakter nicht gefunden." : "Error: character not found.");
       const assistantId = character.agent.id;
 
       const user = JSON.parse(localStorage.getItem("user"));
       const email = user?.email;
-      if (!email) return alert(_fr ? "Connecte-toi d'abord." : "Please log in.");
+      if (!email) return alert(_fr ? "Connecte-toi d'abord." : _de ? "Bitte melde dich zuerst an." : "Please log in.");
 
       try {
         const resPremium = await fetch("/api/is-premium", {
@@ -536,7 +537,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         });
         const { isPremium } = await resPremium.json();
         if (!isPremium) {
-          alert(_fr ? "🔒 Les appels audio sont réservés aux membres Premium." : "🔒 Audio calls are for Premium members only.");
+          alert(_fr ? "🔒 Les appels audio sont réservés aux membres Premium." : _de ? "🔒 Audioanrufe sind nur für Premium-Mitglieder." : "🔒 Audio calls are for Premium members only.");
           return window.location.href = "/premium.html";
         }
       } catch (err) {
@@ -544,7 +545,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         return;
       }
 
-      if (!confirm(_fr ? "Un appel audio coûte 20 jetons pour 10 minutes. Continuer ?" : "An audio call costs 20 tokens for 10 minutes. Continue?")) return;
+      if (!confirm(_fr ? "Un appel audio coûte 20 jetons pour 10 minutes. Continuer ?" : _de ? "Ein Audioanruf kostet 20 Tokens für 10 Minuten. Fortfahren?" : "An audio call costs 20 tokens for 10 minutes. Continue?")) return;
 
       try {
         const resCall = await fetch("/api/start-call", {
@@ -573,14 +574,14 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
             }
           }
 
-          alert(result.message || (_fr ? "Erreur lors du démarrage de l'appel." : "Error starting the call."));
+          alert(result.message || (_fr ? "Erreur lors du démarrage de l'appel." : _de ? "Fehler beim Starten des Anrufs." : "Error starting the call."));
           return;
         }
 
         console.log("✅ Appel démarré :", result.message);
       } catch (err) {
         console.error("❌ Erreur backend /start-call :", err);
-        return alert(_fr ? "Erreur serveur lors du démarrage de l'appel." : "Server error while starting the call.");
+        return alert(_fr ? "Erreur serveur lors du démarrage de l'appel." : _de ? "Serverfehler beim Starten des Anrufs." : "Server error while starting the call.");
       }
 
       if (widgetInjected) return;
@@ -612,7 +613,7 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         ></vapi-widget>
       `;
 
-      alert(_fr ? "🎧 Ton appel audio va démarrer...\nUne petite bulle rose apparaîtra en bas de ton écran." : "🎧 Your audio call is about to start...\nA small pink bubble will appear at the bottom of your screen.");
+      alert(_fr ? "🎧 Ton appel audio va démarrer...\nUne petite bulle rose apparaîtra en bas de ton écran." : _de ? "🎧 Dein Audioanruf startet gleich...\nEine kleine rosa Blase erscheint unten auf deinem Bildschirm." : "🎧 Your audio call is about to start...\nA small pink bubble will appear at the bottom of your screen.");
 
       document.body.insertAdjacentHTML("beforeend", widgetHTML);
 

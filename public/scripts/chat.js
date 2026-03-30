@@ -1,5 +1,6 @@
 import { scrollToBottom } from './utils.js';
 const _fr = navigator.language?.startsWith("fr");
+const _de = navigator.language?.startsWith("de");
 import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 import { openProfileModal } from './profile.js';
@@ -11,7 +12,14 @@ const _levelMap = {
   "She likes you less now": "Elle t'apprécie moins maintenant",
   "She didn't like that": "Elle n'a pas aimé ça",
 };
-function _translateLevel(msg) { return _levelMap[msg] || msg; }
+const _levelMapDE = {
+  "Level up: you unlock a photo": "Level Up: du schaltest ein Foto frei",
+  "Level up: things are getting hotter": "Level Up: es wird heißer",
+  "Level up: intimate photos unlocked": "Level Up: intime Fotos freigeschaltet",
+  "She likes you less now": "Sie mag dich jetzt weniger",
+  "She didn't like that": "Das hat ihr nicht gefallen",
+};
+function _translateLevel(msg) { return (_fr ? _levelMap[msg] : _de ? _levelMapDE[msg] : null) || msg; }
 
 window.addEventListener("vapi-ready", () => {
   console.log("✅ Vapi prêt !");
@@ -125,7 +133,7 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
         const { isPremium } = await premiumCheck.json();
 
         if (!isPremium) {
-            alert(_fr ? "🎥 Réservé aux membres Premium." : "🎥 Premium members only.");
+            alert(_fr ? "🎥 Réservé aux membres Premium." : _de ? "🎥 Nur für Premium-Mitglieder." : "🎥 Premium members only.");
             toggleMode.checked = false;
             window.location.href = "/premium.html";
             return;
@@ -175,7 +183,7 @@ if (nymphoToggle) {
     const { isPremium } = await premiumCheck.json();
 
     if (!isPremium) {
-      alert(_fr ? "Réservé aux membres Premium 😈" : "Premium members only 😈");
+      alert(_fr ? "Réservé aux membres Premium 😈" : _de ? "Nur für Premium-Mitglieder 😈" : "Premium members only 😈");
       window.location.href = "/premium.html";
       nymphoToggle.checked = false;
       return;
@@ -332,6 +340,10 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
                       ? `Tu as atteint ta limite de messages gratuits.
                          <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
                          Passe Premium</a> pour des messages illimités.`
+                      : _de
+                      ? `Du hast dein kostenloses Nachrichtenlimit erreicht.
+                         <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
+                         Werde Premium</a> für unbegrenzte Nachrichten.`
                       : `You've reached your free message limit.
                          <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
                          Become Premium</a> to unlock unlimited messages.`,
@@ -376,7 +388,7 @@ fetch(`${BASE_URL}/message`, {
 
     // Mise à jour de niveau (popup)
     if (data.levelUpdateMessage && data.levelUpdateType) {
-        const msg = _fr ? _translateLevel(data.levelUpdateMessage) : data.levelUpdateMessage;
+        const msg = (_fr || _de) ? _translateLevel(data.levelUpdateMessage) : data.levelUpdateMessage;
         showLevelUpdatePopup(msg, data.levelUpdateType);
     }
 
@@ -643,7 +655,7 @@ if (isVideo) {
         imageContainer.classList.add('image-container');
 
         const unlockButton = document.createElement('button');
-        unlockButton.textContent = _fr ? 'Débloquer' : 'Unlock';
+        unlockButton.textContent = _fr ? 'Débloquer' : _de ? 'Freischalten' : 'Unlock';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
             window.location.href = '/premium.html';
@@ -1558,7 +1570,7 @@ if (imageInput) {
                 
                 // ✅ AFFICHER D'ABORD LA POP-UP DE PASSAGE DE NIVEAU AVANT LA RÉPONSE IA
                 if (iaData.levelUpdateMessage && iaData.levelUpdateType) {
-                    const msg = _fr ? _translateLevel(iaData.levelUpdateMessage) : iaData.levelUpdateMessage;
+                    const msg = (_fr || _de) ? _translateLevel(iaData.levelUpdateMessage) : iaData.levelUpdateMessage;
                     showLevelUpdatePopup(msg, iaData.levelUpdateType);
                 }
                 

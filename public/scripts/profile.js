@@ -28,7 +28,8 @@ async function cancelWithFallback(primaryEmail) {
   if (result.error !== "explodely_error" && result.error !== "server_error") {
     openCancelModal();
   } else {
-    alert((navigator.language?.startsWith("fr") ? "Erreur : " : "Error: ") + (result.message || (navigator.language?.startsWith("fr") ? "Erreur inconnue" : "Unknown error")));
+    const _l = navigator.language || "";
+    alert((_l.startsWith("fr") ? "Erreur : " : _l.startsWith("de") ? "Fehler: " : "Error: ") + (result.message || (_l.startsWith("fr") ? "Erreur inconnue" : _l.startsWith("de") ? "Unbekannter Fehler" : "Unknown error")));
   }
 }
 

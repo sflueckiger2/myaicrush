@@ -44,3 +44,43 @@ if (isFrench) {
   });
 
 }
+
+const isGerman = navigator.language?.startsWith("de");
+
+if (isGerman) {
+
+  const menuTranslationsDE = [
+    { href: "index.html",          text: "Wähle deine Begleiterin" },
+    { href: "profile.html",        text: "Mein Profil" },
+    { href: "premium.html",        text: "Premium" },
+    { href: "contact.html",        text: "Kontakt" },
+    { href: "contenu-prive.html",  text: "Exklusiver Content" },
+  ];
+
+  function traduireMenuDE() {
+    const menuItems = document.querySelectorAll(".menu-items li a");
+    if (!menuItems.length) return false;
+
+    menuItems.forEach(link => {
+      const match = menuTranslationsDE.find(t => link.getAttribute("href") === t.href);
+      if (match) {
+        const icon = link.querySelector("i");
+        link.textContent = match.text;
+        if (icon) link.prepend(icon);
+      }
+    });
+
+    return true;
+  }
+
+  const observerDE = new MutationObserver(() => {
+    if (traduireMenuDE()) observerDE.disconnect();
+  });
+
+  observerDE.observe(document.body, { childList: true, subtree: true });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (traduireMenuDE()) observerDE.disconnect();
+  });
+
+}

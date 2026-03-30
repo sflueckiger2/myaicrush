@@ -53,10 +53,11 @@ if (character.hasVideos) {
         card.addEventListener('click', () => startChat(character.name));
 // Déterminer les badges à afficher
 const _fr = navigator.language?.startsWith("fr");
+const _de = navigator.language?.startsWith("de");
 let badgesToShow = [];
 
 if (character.new) {
-    badgesToShow.push({ text: _fr ? "Nouveau" : "New", class: "new-badge" });
+    badgesToShow.push({ text: _fr ? "Nouveau" : _de ? "Neu" : "New", class: "new-badge" });
 }
 if (character.hasVideos) {
     badgesToShow.push({ text: _fr ? "🎥 Vidéos" : "🎥 Videos", class: "video-badge" });
@@ -66,7 +67,7 @@ if (character.hasNymphoMode) {
 }
 
 if (character.hasAudioCall) {
-    badgesToShow.push({ text: _fr ? "📞 Appel" : "📞 Call", class: "call-audio-badge" });
+    badgesToShow.push({ text: _fr ? "📞 Appel" : _de ? "📞 Anruf" : "📞 Call", class: "call-audio-badge" });
 }
 
 // Bordure prioritaire (vert > rouge > violet)

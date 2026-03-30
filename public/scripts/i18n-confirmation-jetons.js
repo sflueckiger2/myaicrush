@@ -33,3 +33,31 @@ document.addEventListener("DOMContentLoaded", () => {
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
+
+const isGerman = navigator.language?.startsWith("de");
+
+if (isGerman) {
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.title = "Tokens gekauft – MyAiCrush";
+
+  const title = document.querySelector("h1.p-title");
+  if (title) title.textContent = "Tokens hinzugefügt! 🎉";
+
+  const descriptions = document.querySelectorAll("p.p-description");
+  if (descriptions[0]) descriptions[0].textContent = "Deine Tokens sind jetzt auf deinem Konto.";
+  if (descriptions[1]) descriptions[1].textContent = "Nutze sie mit jeder deiner KIs.";
+  if (descriptions[2]) descriptions[2].innerHTML = "Um deinen Kontostand zu sehen, geh zu deinem <b>Profil</b>.";
+  if (descriptions[3]) descriptions[3].innerHTML = "Danke,<br>Das MyAiCrush-Team ❤️";
+
+  const startBtn = document.getElementById("startChatButton");
+  if (startBtn) startBtn.textContent = "Chat starten";
+
+  const securityItems = document.querySelectorAll(".security-item p");
+  if (securityItems[0]) securityItems[0].textContent = "100% Sicher";
+  if (securityItems[1]) securityItems[1].textContent = "Volle Diskretion";
+
+}); // fin DOMContentLoaded
+
+} // fin if (isGerman)

@@ -49,3 +49,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
 }); // fin DOMContentLoaded
 } // fin if (isFrench)
+
+const isGerman = navigator.language?.startsWith("de");
+
+if (isGerman) {
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.title = "Abo gekündigt";
+
+  const h1 = document.querySelector("h1.cancel-title");
+  if (h1) h1.textContent = "Dein Abo wurde gekündigt";
+
+  const subtitle = document.querySelector("p.cancel-subtitle");
+  if (subtitle) {
+    subtitle.textContent =
+      "Schade, dass du gehst. Deine Kündigung wurde bestätigt.";
+  }
+
+  const infoStrong = document.querySelector(".cancel-info-box strong");
+  if (infoStrong) infoStrong.textContent = "📅 Du hast noch Zugang bis:";
+
+  const expiresLabel = document.getElementById("expires-label");
+  if (expiresLabel && expiresLabel.textContent.trim() === "Loading...") {
+    expiresLabel.textContent = "Wird geladen...";
+  }
+
+  const infoBox = document.querySelector(".cancel-info-box");
+  if (infoBox) {
+    for (const node of infoBox.childNodes) {
+      if (
+        node.nodeType === Node.TEXT_NODE &&
+        node.textContent.includes("Your Premium features")
+      ) {
+        node.textContent =
+          "\n      Deine Premium-Funktionen bleiben bis zu diesem Datum aktiv. Danach wird dein Konto auf den kostenlosen Plan zurückgesetzt.\n    ";
+        break;
+      }
+    }
+  }
+
+  const btnPremium = document.querySelector("a.cancel-btn[href='premium.html']");
+  if (btnPremium) btnPremium.textContent = "🚀 Premium reaktivieren";
+
+  const btnHome = document.querySelector("a.cancel-btn-ghost[href='index.html']");
+  if (btnHome) btnHome.textContent = "Zurück zur Startseite";
+
+}); // fin DOMContentLoaded
+} // fin if (isGerman)

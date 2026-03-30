@@ -121,7 +121,7 @@
 
         if (data.expiresAt) {
           const date = new Date(data.expiresAt);
-          const locale = navigator.language?.startsWith("fr") ? "fr-FR" : "en-US";
+          const locale = navigator.language?.startsWith("fr") ? "fr-FR" : navigator.language?.startsWith("de") ? "de-DE" : "en-US";
           document.getElementById("expires-label").textContent =
             date.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
         }
