@@ -646,7 +646,6 @@ setTimeout(() => {
 </script>
 
 <script type="module">
-  import { characters } from './scripts/data.js';
   import { startChat } from './scripts/chat.js';
 
   const STORY_CDN = 'https://img.myaicrush.ai';
@@ -660,23 +659,13 @@ setTimeout(() => {
   }
 
   const STORY_DURATION = 5000;
-  const STORY_CACHE_KEY = 'myaicrush_stories_v1';
+  const STORY_CACHE_KEY = 'myaicrush_stories_v2';
   const STORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
   let storyGroups = [];
   let currentGroupIndex = 0;
   let currentStoryIndex = 0;
   let autoTimer = null;
-
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-  async function waitForCharacters() {
-    const start = Date.now();
-    while (characters.length === 0 && Date.now() - start < 5000) {
-      await sleep(50);
-    }
-    return characters;
-  }
 
   function renderProgressBar(total) {
     const container = document.getElementById('story-progress');
@@ -858,8 +847,6 @@ setTimeout(() => {
   }
 
   async function loadStories() {
-    await waitForCharacters();
-
     const container = document.getElementById('stories');
     if (!container) return;
 
@@ -879,31 +866,21 @@ setTimeout(() => {
 
     storyGroups = [];
 
-    for (const char of characters) {
-      const pool = [];
-      if (char.backgroundPhoto) pool.push(resolveStoryMedia(char.backgroundPhoto));
-      if (char.introVideo) pool.push(resolveStoryMedia(char.introVideo));
-      if (char.photo) pool.push(resolveStoryMedia(char.photo));
+    try {
+      const res = await fetch('/api/stories');
+      const data = await res.json();
 
-      if (!pool.length) continue;
-
-      let avatarUrl = pool.find(u => !/\.(mp4|webm|mov)$/i.test(u)) || pool[0];
-
-      const dayHash = Math.floor(Date.now() / 86400000);
-      let s = dayHash;
-      for (let i = 0; i < char.name.length; i++) s = (s * 31 + char.name.charCodeAt(i)) | 0;
-
-      const shuffled = [...pool].sort((a, b) => {
-        s = (s * 9301 + 49297) % 233280;
-        return s / 233280 - 0.5;
-      });
-      const pick = Math.min(shuffled.length, 2);
-
-      storyGroups.push({
-        characterName: char.name,
-        avatar: avatarUrl,
-        media: shuffled.slice(0, pick),
-      });
+      if (Array.isArray(data.groups)) {
+        for (const g of data.groups) {
+          storyGroups.push({
+            characterName: g.name,
+            avatar: resolveStoryMedia(g.avatar),
+            media: g.media.map(resolveStoryMedia),
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Stories API failed:', err);
     }
 
 

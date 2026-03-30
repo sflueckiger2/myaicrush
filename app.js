@@ -1582,30 +1582,41 @@ app.get('/characters.json', (req, res) => {
   res.sendFile(path.join(__dirname, file));
 });
 
-app.get('/api/story-media', async (req, res) => {
-  const folder = req.query.folder;
-  if (!folder || folder.includes('..')) {
-    return res.json({ media: [] });
+app.get('/api/stories', async (req, res) => {
+  const fsP = require('fs').promises;
+  const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
+  const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+
+  const groups = [];
+
+  for (const char of charactersEN) {
+    const photoPath = char.photo || '';
+    const match = photoPath.match(/images\/([^/]+)\//);
+    if (!match) continue;
+    const girl = match[1];
+    const folder = `images/${girl}/${girl}1`;
+    const absDir = path.join(__dirname, 'public', folder);
+
+    try {
+      const files = await fsP.readdir(absDir);
+      const all = files.filter(f => mediaExts.test(f)).map(f => `${folder}/${f}`);
+      if (!all.length) continue;
+
+      let s = daysSinceEpoch ^ (girl.length * 2654435761);
+      const shuffled = [...all].sort(() => { s = (s * 9301 + 49297) % 233280; return s / 233280 - 0.5; });
+      const media = shuffled.slice(0, Math.min(shuffled.length, 2));
+
+      const bgPhoto = char.backgroundPhoto || '';
+      let avatar = bgPhoto || photoPath;
+      if (/\.(mp4|webm|mov)$/i.test(avatar)) {
+        avatar = all.find(f => !/\.(mp4|webm|mov)$/i.test(f)) || media[0];
+      }
+
+      groups.push({ name: char.name, avatar, media });
+    } catch (_) {}
   }
 
-  const absDir = path.join(__dirname, 'public', folder);
-  try {
-    const files = await require('fs').promises.readdir(absDir);
-    const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
-    const all = files
-      .filter(f => mediaExts.test(f))
-      .map(f => `${folder}/${f}`);
-
-    if (!all.length) return res.json({ media: [] });
-
-    const daysSinceEpoch = Math.floor(Date.now() / 86400000);
-    let s = daysSinceEpoch ^ (folder.length * 2654435761);
-    const shuffled = [...all].sort(() => { s = (s * 9301 + 49297) % 233280; return s / 233280 - 0.5; });
-    const pick = Math.min(shuffled.length, 2);
-    res.json({ media: shuffled.slice(0, pick) });
-  } catch (err) {
-    res.json({ media: [] });
-  }
+  res.json({ groups });
 });
 
 let conversationHistory = [];
