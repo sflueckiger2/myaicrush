@@ -4,6 +4,14 @@ import { characters, setCharacter } from './data.js';
 import { showLevelUpdatePopup, toggleSignupModal } from './ui.js';
 import { openProfileModal } from './profile.js';
 
+const _levelMap = {
+  "Level up: you unlock a photo": "Niveau supérieur : tu débloques une photo",
+  "Level up: things are getting hotter": "Niveau supérieur : ça devient plus chaud",
+  "Level up: intimate photos unlocked": "Niveau supérieur : photos intimes débloquées",
+  "She likes you less now": "Elle t'apprécie moins maintenant",
+  "She didn't like that": "Elle n'a pas aimé ça",
+};
+function _translateLevel(msg) { return _levelMap[msg] || msg; }
 
 window.addEventListener("vapi-ready", () => {
   console.log("✅ Vapi prêt !");
@@ -320,9 +328,13 @@ export function addUserMessage(userMessage, messagesContainer, scrollToBottomCal
             // Limite messages non-premium
             if (!isPremium && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
                 addBotMessage(
-                    `You've reached your free message limit.
-                     <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
-                     Become Premium</a> to unlock unlimited messages.`,
+                    _fr
+                      ? `Tu as atteint ta limite de messages gratuits.
+                         <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
+                         Passe Premium</a> pour des messages illimités.`
+                      : `You've reached your free message limit.
+                         <a href="premium.html" style="color: #dd4d9d; text-decoration: underline;">
+                         Become Premium</a> to unlock unlimited messages.`,
                     messagesContainer
                 );
                 hideTypingIndicator();
@@ -364,7 +376,8 @@ fetch(`${BASE_URL}/message`, {
 
     // Mise à jour de niveau (popup)
     if (data.levelUpdateMessage && data.levelUpdateType) {
-        showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+        const msg = _fr ? _translateLevel(data.levelUpdateMessage) : data.levelUpdateMessage;
+        showLevelUpdatePopup(msg, data.levelUpdateType);
     }
 
     // Message texte ou image
@@ -629,9 +642,8 @@ if (isVideo) {
         const imageContainer = document.createElement('div');
         imageContainer.classList.add('image-container');
 
-        // ✅ Ajouter le bouton Unlock
         const unlockButton = document.createElement('button');
-        unlockButton.textContent = 'Unlock';
+        unlockButton.textContent = _fr ? 'Débloquer' : 'Unlock';
         unlockButton.classList.add('unlock-button');
         unlockButton.onclick = () => {
             window.location.href = '/premium.html';
@@ -1546,7 +1558,8 @@ if (imageInput) {
                 
                 // ✅ AFFICHER D'ABORD LA POP-UP DE PASSAGE DE NIVEAU AVANT LA RÉPONSE IA
                 if (iaData.levelUpdateMessage && iaData.levelUpdateType) {
-                    showLevelUpdatePopup(iaData.levelUpdateMessage, iaData.levelUpdateType);
+                    const msg = _fr ? _translateLevel(iaData.levelUpdateMessage) : iaData.levelUpdateMessage;
+                    showLevelUpdatePopup(msg, iaData.levelUpdateType);
                 }
                 
                 // ✅ Toujours afficher le message de l'IA (texte et/ou image)

@@ -144,7 +144,16 @@ function addUserMessage() {
       .then(data => {
         // Afficher la pop-up si une mise à jour de niveau est détectée
         if (data.levelUpdateMessage && data.levelUpdateType) {
-          showLevelUpdatePopup(data.levelUpdateMessage, data.levelUpdateType);
+          const _fr = navigator.language?.startsWith("fr");
+          const _lvlMap = {
+            "Level up: you unlock a photo": "Niveau supérieur : tu débloques une photo",
+            "Level up: things are getting hotter": "Niveau supérieur : ça devient plus chaud",
+            "Level up: intimate photos unlocked": "Niveau supérieur : photos intimes débloquées",
+            "She likes you less now": "Elle t'apprécie moins maintenant",
+            "She didn't like that": "Elle n'a pas aimé ça",
+          };
+          const msg = _fr ? (_lvlMap[data.levelUpdateMessage] || data.levelUpdateMessage) : data.levelUpdateMessage;
+          showLevelUpdatePopup(msg, data.levelUpdateType);
         }
 
         if (data.imageUrl) {
