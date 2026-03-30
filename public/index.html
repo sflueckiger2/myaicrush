@@ -178,7 +178,10 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     <div class="story-header">
       <div class="story-header-left">
         <img id="story-avatar" class="story-avatar" src="" alt="Profile">
-        <span id="story-username" class="story-username"></span>
+        <div class="story-header-text">
+          <span id="story-username" class="story-username"></span>
+          <span id="story-timestamp" class="story-timestamp"></span>
+        </div>
       </div>
       <button id="story-close-btn" class="story-close-btn">&times;</button>
     </div>
@@ -362,7 +365,7 @@ banner.addEventListener("click", async (e) => {
 
       const data = await res.json();
 
-      const resolvedMedia = resolvedMedia.map(resolveStoryMedia);
+      // (resolved media handled in story loader)
 
 
       if (data.eligible) {
@@ -741,6 +744,17 @@ setTimeout(() => {
     avatar.src = group.avatar || '';
     username.textContent = group.characterName || '';
 
+    const _l = navigator.language || '';
+    const _isFr = _l.startsWith('fr');
+    const _isDe = _l.startsWith('de');
+    let hashVal = 0;
+    for (let c = 0; c < (group.characterName || '').length; c++) hashVal = (hashVal * 31 + group.characterName.charCodeAt(c)) | 0;
+    const hours = (Math.abs(hashVal) % 8) + 1;
+    const tsEl = document.getElementById('story-timestamp');
+    if (tsEl) {
+      tsEl.textContent = _isFr ? `environ ${hours} h` : _isDe ? `vor ${hours} Std.` : `${hours}h ago`;
+    }
+
     img.classList.add('hidden');
     vid.classList.add('hidden');
     vid.pause();
@@ -754,7 +768,11 @@ setTimeout(() => {
       img.classList.remove('hidden');
     }
 
-    replyInput.placeholder = `Reply to ${group.characterName}...`;
+    const name = group.characterName;
+    replyInput.placeholder = _isFr ? `Réponds à ${name}…` : _isDe ? `Antwort an ${name}…` : `Reply to ${name}...`;
+
+    const sendBtn = document.getElementById('story-reply-send');
+    if (sendBtn) sendBtn.textContent = _isFr ? 'Envoyer' : _isDe ? 'Senden' : 'Send';
 
     viewer.classList.remove('hidden');
 
@@ -823,29 +841,26 @@ setTimeout(() => {
   function renderStoryThumbnails(container) {
     container.innerHTML = '';
     storyGroups.forEach((group, groupIndex) => {
-      const thumbUrl = group.media[0];
       const item = document.createElement('div');
       item.className = 'story-item';
 
-      let thumbNode;
-      if (/\.(mp4|webm|mov)$/i.test(thumbUrl)) {
-        thumbNode = document.createElement('video');
-        thumbNode.src = thumbUrl;
-        thumbNode.autoplay = true;
-        thumbNode.loop = true;
-        thumbNode.muted = true;
-        thumbNode.playsInline = true;
-      } else {
-        thumbNode = document.createElement('img');
-        thumbNode.src = thumbUrl;
-      }
-      thumbNode.className = 'story-thumb';
+      const ring = document.createElement('div');
+      ring.className = 'story-ring';
+
+      const avatarImg = document.createElement('img');
+      avatarImg.src = group.avatar || group.media[0];
+      avatarImg.className = 'story-thumb';
+      avatarImg.alt = group.characterName;
+      ring.appendChild(avatarImg);
 
       const label = document.createElement('div');
       label.className = 'story-name';
-      label.textContent = group.characterName;
+      const maxLen = 12;
+      label.textContent = group.characterName.length > maxLen
+        ? group.characterName.slice(0, maxLen) + '…'
+        : group.characterName;
 
-      item.appendChild(thumbNode);
+      item.appendChild(ring);
       item.appendChild(label);
 
       item.addEventListener('click', () => {

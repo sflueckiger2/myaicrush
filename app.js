@@ -1582,6 +1582,32 @@ app.get('/characters.json', (req, res) => {
   res.sendFile(path.join(__dirname, file));
 });
 
+app.get('/api/story-media', async (req, res) => {
+  const folder = req.query.folder;
+  if (!folder || folder.includes('..')) {
+    return res.json({ media: [] });
+  }
+
+  const absDir = path.join(__dirname, 'public', folder);
+  try {
+    const files = await require('fs').promises.readdir(absDir);
+    const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
+    const all = files
+      .filter(f => mediaExts.test(f))
+      .map(f => `${folder}/${f}`);
+
+    if (!all.length) return res.json({ media: [] });
+
+    const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+    let s = daysSinceEpoch ^ (folder.length * 2654435761);
+    const shuffled = [...all].sort(() => { s = (s * 9301 + 49297) % 233280; return s / 233280 - 0.5; });
+    const pick = Math.min(shuffled.length, 2);
+    res.json({ media: shuffled.slice(0, pick) });
+  } catch (err) {
+    res.json({ media: [] });
+  }
+});
+
 let conversationHistory = [];
 const userLevels = new Map(); // 🔥 Stocke le niveau de chaque utilisateur
 let photoSentAtLittleCrush = false; // Variable pour suivre l'envoi de la photo au niveau Little Crush

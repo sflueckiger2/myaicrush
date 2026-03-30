@@ -2934,17 +2934,23 @@ vapi-widget {
   cursor: pointer;
 }
 
-.story-thumb {
-  width: 60px;
-  height: 60px;
+.story-ring {
+  width: 68px;
+  height: 68px;
   border-radius: 999px;
-  object-fit: cover;
-  border: 2px solid #dd4d9d; /* couleur MyAiCrush */
-  overflow: hidden;
+  background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
 }
 
-.story-item video.story-thumb {
+.story-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
   object-fit: cover;
+  border: 2px solid #0a0a14;
 }
 
 .story-name {
@@ -2952,7 +2958,7 @@ vapi-widget {
   font-size: 11px;
   color: #fff;
   text-align: center;
-  max-width: 70px;
+  max-width: 76px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3009,10 +3015,23 @@ vapi-widget {
   margin-left:7px;
 }
 
+.story-header-text {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .story-username {
   color: #fff;
   font-size: 14px;
   font-weight: 600;
+}
+
+.story-timestamp {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .story-close-btn {
