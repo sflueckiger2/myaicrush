@@ -4551,6 +4551,8 @@ app.post('/api/replicate/generate', async (req, res) => {
       body = { input };
     }
 
+    console.log(`[REP] Submitting to ${model}${version ? ' (v:' + version.substring(0,8) + '...)' : ''}`, JSON.stringify(input).substring(0, 200));
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -4562,8 +4564,8 @@ app.post('/api/replicate/generate', async (req, res) => {
     });
 
     let data = await response.json();
+    console.log(`[REP] Response status: ${data.status}`, data.error || '');
 
-    // Poll if prediction is still running (Prefer:wait may not work on /v1/predictions)
     if (data.status === 'starting' || data.status === 'processing') {
       const getUrl = data.urls?.get;
       if (getUrl) {
@@ -4573,6 +4575,7 @@ app.post('/api/replicate/generate', async (req, res) => {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           data = await pollRes.json();
+          if (i % 5 === 0) console.log(`[REP] Poll ${i}: ${data.status}`);
           if (data.status === 'succeeded' || data.status === 'failed' || data.status === 'canceled') {
             break;
           }
@@ -4580,29 +4583,36 @@ app.post('/api/replicate/generate', async (req, res) => {
       }
     }
 
+    if (data.status === 'succeeded') console.log('[REP] Done! Output:', JSON.stringify(data.output).substring(0, 200));
+    if (data.status === 'failed') console.log('[REP] FAILED:', data.error);
+
     res.json(data);
   } catch (error) {
-    console.error('Replicate error:', error);
+    console.error('[REP] Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// === FAL.AI IMAGE GENERATION (Juggernaut XL, RealVisXL, etc.) ===
+// === FAL.AI IMAGE GENERATION ===
 app.post('/api/fal/generate', async (req, res) => {
   try {
     const { input = {} } = req.body;
     const token = process.env.FAL_KEY || req.headers['x-fal-key'];
     if (!token) return res.status(400).json({ error: 'FAL_KEY manquant. Ajoute-le dans .env ou dans la page.' });
 
-    console.log('[FAL] Submitting with model:', input.model_name);
+    const falEndpoint = input._falEndpoint || 'fal-ai/lora';
+    const payload = { ...input };
+    delete payload._falEndpoint;
 
-    const submitRes = await fetch('https://queue.fal.run/fal-ai/lora', {
+    console.log(`[FAL] Submitting to ${falEndpoint}`, payload.model_name || '(FLUX)');
+
+    const submitRes = await fetch(`https://queue.fal.run/${falEndpoint}`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(input)
+      body: JSON.stringify(payload)
     });
     const submitData = await submitRes.json();
     console.log('[FAL] Submit response:', JSON.stringify(submitData).substring(0, 500));
@@ -4612,26 +4622,30 @@ app.post('/api/fal/generate', async (req, res) => {
     }
 
     const requestId = submitData.request_id;
+    const statusBase = submitData.status_url ? submitData.status_url.replace(/\/status$/, '') : `https://queue.fal.run/${falEndpoint}/requests/${requestId}`;
+
     if (!requestId) {
       return res.json({ error: 'Pas de request_id: ' + JSON.stringify(submitData).substring(0, 300) });
     }
 
     for (let i = 0; i < 150; i++) {
       await new Promise(r => setTimeout(r, 2000));
-      const statusRes = await fetch(`https://queue.fal.run/fal-ai/lora/requests/${requestId}/status`, {
+      const statusRes = await fetch(`${statusBase}/status`, {
         headers: { 'Authorization': `Key ${token}` }
       });
       const statusData = await statusRes.json();
       if (i % 5 === 0) console.log('[FAL] Poll', i, ':', statusData.status);
 
       if (statusData.status === 'COMPLETED') {
-        const resultRes = await fetch(`https://queue.fal.run/fal-ai/lora/requests/${requestId}`, {
+        const resultRes = await fetch(statusBase, {
           headers: { 'Authorization': `Key ${token}` }
         });
         const result = await resultRes.json();
-        const keys = Object.keys(result || {});
-        console.log('[FAL] Result keys:', keys);
-        console.log('[FAL] Result preview:', JSON.stringify(result).substring(0, 800));
+        if (result.detail) {
+          console.log('[FAL] Content policy error:', JSON.stringify(result.detail).substring(0, 300));
+          return res.json({ error: Array.isArray(result.detail) ? result.detail[0]?.msg : result.detail });
+        }
+        console.log('[FAL] Result keys:', Object.keys(result || {}));
         return res.json(result);
       }
       if (statusData.status === 'FAILED') {
