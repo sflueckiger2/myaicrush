@@ -4663,6 +4663,29 @@ app.post('/api/fal/generate', async (req, res) => {
 
 // === VIDEO GENERATION (Image-to-Video via fal.ai) ===
 const VIDEO_MODELS = {
+  kling26: {
+    submitUrl: 'https://queue.fal.run/fal-ai/kling-video/v2.6/pro/image-to-video',
+    buildPayload: (prompt, image_url, duration) => ({
+      prompt,
+      start_image_url: image_url,
+      duration: String(duration),
+      negative_prompt: 'blur, distort, and low quality',
+      generate_audio: false
+    }),
+    extractVideo: (result) => result.video?.url,
+    cost5s: 0.40, cost10s: 0.75
+  },
+  kling25: {
+    submitUrl: 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
+    buildPayload: (prompt, image_url, duration) => ({
+      prompt,
+      image_url,
+      duration: String(duration),
+      negative_prompt: 'blur, distort, and low quality'
+    }),
+    extractVideo: (result) => result.video?.url,
+    cost5s: 0.35, cost10s: 0.70
+  },
   wan26: {
     submitUrl: 'https://queue.fal.run/wan/v2.6/image-to-video',
     buildPayload: (prompt, image_url, duration) => ({

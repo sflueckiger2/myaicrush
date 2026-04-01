@@ -366,16 +366,18 @@
     <section id="videoSection" class="card hidden">
         <h3 style="margin-bottom:4px">Generation de videos</h3>
         <p style="color:var(--dim);font-size:0.82rem;margin-bottom:16px">
-            Wan 2.1 = permissif NSFW | Wan 2.6 = meilleure qualite mais filtre strict.<br>
-            Les videos se generent en parallele (~$0.50/5s).
+            Kling = meilleure qualite cine, mais filtre NSFW | Wan 2.1 = permissif NSFW.<br>
+            Les videos se generent en parallele.
         </p>
 
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-            <div class="form-group" style="flex:0 0 160px;margin:0">
+            <div class="form-group" style="flex:0 0 200px;margin:0">
                 <label>Modele</label>
                 <select id="videoModelSelect" onchange="updateVideoCost()">
-                    <option value="wan21" selected>Wan 2.1 (NSFW OK)</option>
-                    <option value="wan26">Wan 2.6 (qualite+)</option>
+                    <option value="kling26" selected>Kling 2.6 Pro ($0.40/5s)</option>
+                    <option value="kling25">Kling 2.5 Turbo ($0.35/5s)</option>
+                    <option value="wan21">Wan 2.1 — NSFW OK ($0.50/5s)</option>
+                    <option value="wan26">Wan 2.6 ($0.50/5s)</option>
                 </select>
             </div>
             <div class="form-group" style="flex:0 0 160px;margin:0">
@@ -1340,11 +1342,16 @@ function updateVideoCost() {
     const duration = document.getElementById('videoDuration').value;
     const selectedModel = document.getElementById('videoModelSelect').value;
     const matching = generatedImages.filter(i => i.type === type);
-    const costMap = { '5': 0.50, '10': 1.00 };
-    const costPer = costMap[duration] || 0.50;
-    const modelName = selectedModel === 'wan26' ? 'Wan 2.6' : 'Wan 2.1';
+    const costPerModel = {
+        kling26: { '5': 0.40, '10': 0.75 },
+        kling25: { '5': 0.35, '10': 0.70 },
+        wan21:   { '5': 0.50, '10': 1.00 },
+        wan26:   { '5': 0.50, '10': 1.00 }
+    };
+    const costPer = costPerModel[selectedModel]?.[duration] || 0.50;
+    const modelNames = { kling26: 'Kling 2.6 Pro', kling25: 'Kling 2.5 Turbo', wan21: 'Wan 2.1', wan26: 'Wan 2.6' };
     const el = document.getElementById('videoCostEstimate');
-    el.innerHTML = `<b>${matching.length}</b> images → <b>${modelName}</b> → cout: <b>$${(matching.length * costPer).toFixed(2)}</b>`;
+    el.innerHTML = `<b>${matching.length}</b> images → <b>${modelNames[selectedModel]}</b> → cout: <b>$${(matching.length * costPer).toFixed(2)}</b>`;
 }
 
 async function pollVideoStatus(model, requestId, card, imgId, type, maxPolls = 200) {
