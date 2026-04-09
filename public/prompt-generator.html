@@ -254,7 +254,11 @@
                     <option value="rep:nsfw-flux-dev" selected>FLUX dev NSFW — prompt parfait, zero filtre ~15s</option>
                     <option value="fal:flux2-dev">FLUX.2 dev (fal.ai) — habillees uniquement, bloque NSFW</option>
                 </optgroup>
-                <optgroup label="SDXL via fal.ai">
+                <optgroup label="Replicate (pas besoin de fal.ai)">
+                    <option value="rep:juggernaut-xl">Juggernaut XL v7 — ultra realiste, habillees ~20s</option>
+                    <option value="rep:realvisxl-turbo">RealVisXL V3 Turbo — photorealiste ultra rapide ~3s</option>
+                </optgroup>
+                <optgroup label="SDXL via fal.ai (cold start lent)">
                     <option value="fal:juggernaut-xl">Juggernaut XL v9 — realisme sexy ~15s</option>
                     <option value="fal:illustrious-realism">Illustrious Realism (klaabu) — style MAGE ~20s</option>
                     <option value="fal:realism-engine">Realism Engine SDXL — photo realiste ~15s</option>
@@ -295,9 +299,14 @@
             <textarea id="testPrompt" rows="5" placeholder="Decris la fille et la scene...">Candid photo of a 22 year old woman, long brown hair, green eyes, light freckles and a few tiny moles on her cheeks, wearing a tight low-cut white crop top, jean shorts, bedroom mirror selfie, golden hour sunlight through window, phone in hand, slight tilt angle, Instagram aesthetic, visible skin pores and fine peach fuzz on face, natural unedited skin with subtle redness around nose, no makeup or very minimal makeup, slight under-eye circles</textarea>
         </div>
 
-        <button class="btn" id="quickTestBtn" onclick="quickTest()">
-            Generer 1 image test
-        </button>
+        <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn" id="quickTestBtn" onclick="quickTest()">
+                Generer 1 image test
+            </button>
+            <button class="btn" style="background:rgba(255,255,255,0.08);font-size:0.8rem" onclick="clearTestResults()">
+                Effacer les tests
+            </button>
+        </div>
 
         <div id="testResult" style="margin-top:18px"></div>
         <div id="testError" class="log-area hidden" style="margin-top:10px"></div>
@@ -315,10 +324,14 @@
                 <label>Modele</label>
                 <select id="batchModel" onchange="updateCostEstimate()">
                     <optgroup label="⭐ FLUX (prompt parfait + NSFW)">
-                        <option value="rep:nsfw-flux-dev" selected>FLUX dev NSFW — zero filtre</option>
-                        <option value="fal:flux2-dev">FLUX.2 dev — habillees uniquement</option>
-                    </optgroup>
-                    <optgroup label="SDXL via fal.ai">
+                    <option value="rep:nsfw-flux-dev" selected>FLUX dev NSFW — zero filtre</option>
+                    <option value="fal:flux2-dev">FLUX.2 dev — habillees uniquement</option>
+                </optgroup>
+                <optgroup label="Replicate (pas besoin de fal.ai)">
+                    <option value="rep:juggernaut-xl">Juggernaut XL v7 — ultra realiste, habillees</option>
+                    <option value="rep:realvisxl-turbo">RealVisXL V3 Turbo — photorealiste rapide</option>
+                </optgroup>
+                <optgroup label="SDXL via fal.ai">
                         <option value="fal:illustrious-realism">Illustrious Realism (klaabu)</option>
                         <option value="fal:juggernaut-xl">Juggernaut XL v9</option>
                         <option value="fal:realism-engine">Realism Engine SDXL</option>
@@ -356,7 +369,7 @@
 
         <div id="saveArea" class="hidden" style="margin-top:20px">
             <button class="btn btn-green" onclick="saveAllImages()">
-                Sauvegarder toutes les images sur le disque
+                Sauvegarder images + videos sur le disque
             </button>
             <div class="hint" style="margin-top:8px;text-align:center" id="savePath"></div>
         </div>
@@ -429,20 +442,23 @@ function saveSession() {
             allDressed,
             allCoquin,
             generatedImages: typeof generatedImages !== 'undefined' ? generatedImages : [],
+            generatedVideos: typeof generatedVideos !== 'undefined' ? generatedVideos : [],
             savedAt: new Date().toISOString()
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     } catch(e) { console.warn('saveSession:', e); }
 }
 
+function sanitizeStr(v) { return (v && v !== 'undefined' && v !== 'null') ? String(v) : ''; }
+
 function loadSession() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return false;
         const s = JSON.parse(raw);
-        if (!s.charName) return false;
-        charName = s.charName || '';
-        baseAppearance = s.baseAppearance || '';
+        if (!s.charName || s.charName === 'undefined') return false;
+        charName = sanitizeStr(s.charName);
+        baseAppearance = sanitizeStr(s.baseAppearance);
         allDressed = s.allDressed || [];
         allCoquin = s.allCoquin || [];
         return s;
@@ -457,17 +473,61 @@ function clearSession() {
     generatedImages = [];
     charName = '';
     baseAppearance = '';
-    document.getElementById('charName').value = '';
-    document.getElementById('basePrompt').value = '';
+    const nameEl = document.getElementById('charName');
+    const promptEl = document.getElementById('basePrompt');
+    nameEl.value = '';
+    nameEl.setAttribute('value', '');
+    promptEl.value = '';
+    promptEl.textContent = '';
     document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('progressSection').classList.add('hidden');
     document.getElementById('genSection').classList.add('hidden');
     document.getElementById('videoSection').classList.add('hidden');
     document.getElementById('saveArea').classList.add('hidden');
-    document.getElementById('imgGrid').innerHTML = '';
-    document.getElementById('vidGrid').innerHTML = '';
-    document.getElementById('logBox').innerHTML = '';
+    const imgGrid = document.getElementById('imgGrid');
+    const vidGrid = document.getElementById('vidGrid');
+    const logArea = document.getElementById('logArea');
+    if (imgGrid) imgGrid.innerHTML = '';
+    if (vidGrid) vidGrid.innerHTML = '';
+    if (logArea) logArea.innerHTML = '';
+    document.getElementById('generateBtn').disabled = false;
     log('Session effacee.', 'info');
 }
+
+// ===================== WORKING PROCESS — DO NOT CHANGE =====================
+// BEST SETTINGS FOR MEGANE (validated by user):
+//
+// MODEL: Juggernaut XL v7 (rep:juggernaut-xl) — best realism, natural grain
+// RATIO: 9:16 (Story format)
+// PROMPTS: 3 per category (test), 50 for production
+//
+// GENETICS (baseAppearance) — ULTRA PRECISE FOR FACE CONSISTENCY:
+//   "21yo French girl, round face with small pointed chin, large round thin metal frame glasses,
+//    small upturned nose with tiny nose stud piercing, large dark brown eyes,
+//    long straight brown hair parted to one side, pale skin with natural blemishes,
+//    large natural D-cup breasts, average body, shy coy smile, no makeup"
+//
+// KEY LESSONS:
+//   - FACE DETAILS ARE CRITICAL: chin shape, nose shape, nose piercing, eye color = consistency
+//   - Glasses description must be specific: "large round thin metal frame" not just "glasses"
+//   - "average body" = perfect middle ground (not too fat, not too skinny)
+//   - "large natural D-cup breasts" = precise size without triggering obesity
+//   - Weight increased to 1.3 (was 1.2) to force genetics over scene
+//   - photoPrompt MAX 30 WORDS (was 50) to leave room for genetics in CLIP tokens
+//   - Kimi MUST NEVER describe face/body/hair in photoPrompt — only outfit+camera+setting
+//   - DO NOT use: "heavy", "voluptuous", "wide hips", "skin folds" → makes her obese
+//   - DO NOT use: "soft feminine body" alone → makes her too thin with flat chest
+//   - Negative prompt blocks BOTH extremes: obese/BBW AND skinny/anorexic/flat chest
+//
+// extraPrompt: 'RAW photo, amateur quality, ' (NOT "selfie" — that forces close-ups)
+// suffixPrompt: ', film grain, warm tones, phone camera, slightly soft focus, natural imperfections'
+//
+// VIDEO: Kling 2.6 Pro for dressed (SFW) — supports 5s and 10s
+//        WAN 2.1 for coquin (NSFW) — MAX 5 SECONDS (10s crashes: "Input <= 100" frame limit)
+// NSFW threshold: only flag if nipples or intimate parts truly visible (be lenient)
+//
+// FOLDERS: megane3 = dressed, megane4 = coquin
+// ================================================================
 
 // ===================== THEMES =====================
 const DRESSED_THEMES = [
@@ -489,13 +549,35 @@ const COQUIN_THEMES = [
 
 // ===================== SYSTEM PROMPTS =====================
 function sysPromptDressed() {
-    return `You generate photo prompts that look like REAL phone photos a girl posts on Instagram/TikTok or sends to her boyfriend on Snapchat. Her appearance (face, hair, eyes, skin, body) is added automatically — NEVER describe those.
+    return `You generate photo prompts that look like REAL phone photos a girl posts on Instagram/TikTok or sends to her boyfriend on Snapchat.
+
+=== ABSOLUTE RULE — GENETICS ARE FORBIDDEN IN YOUR OUTPUT ===
+Her FACE, HAIR, EYES, SKIN COLOR, BODY TYPE, BREAST SIZE are ALL handled by the system. You MUST NEVER mention ANY of these:
+- NO face shape, chin, nose, lips, smile, expression words
+- NO hair color, length, style
+- NO eye color
+- NO skin tone or complexion
+- NO body type, weight, curves, breast/chest descriptions
+- NO age
+If you add ANY of these, the AI model will get CONFUSED and generate INCONSISTENT faces. ONLY describe: outfit, camera angle, setting, and imperfections.
 
 CRITICAL RULES:
 - These must look like REAL PHONE PHOTOS, not professional shoots. Think: slightly messy, casual, spontaneous.
 - Describe the EXACT phone camera behavior: front camera selfie (arm visible, slight distortion), mirror selfie (phone in hand, flash or no flash), boyfriend-took-this, timer propped on shelf, etc.
 - Add IMPERFECTIONS that make it real: slightly tilted frame, a bit of motion blur, harsh flash in dark room, lens flare from sun, messy background with real stuff lying around.
 - The girl should look like she's living her life, NOT posing for a photoshoot.
+- CHEST EMPHASIS RULE (MANDATORY): EVERY photo must showcase and flatter her bust. Use these techniques across all photos:
+  * Plunging necklines / deep V-neck / low-cut tops showing generous cleavage
+  * Arms pressed together in front to push chest together and make it appear larger
+  * Leaning forward toward camera so chest hangs and looks fuller (cleavage angle from above)
+  * Sports bra / crop top that compresses and lifts
+  * Swimsuit / bikini that shows maximum cleavage
+  * Loose tank top or oversized shirt that falls open revealing cleavage
+  * Tight-fitting top that accentuates bust shape
+  * Pajama top unbuttoned showing cleavage
+  * Hugging a pillow that pushes chest together
+  * Arms crossed under chest pushing it up
+  The outfit and pose must ALWAYS make her chest the visual focal point of the photo.
 
 YOU MUST DESCRIBE 3 THINGS:
 1. OUTFIT — specific color, material, fit (e.g. "faded black Zara crop top and light wash mom jeans" not "crop top and jeans")
@@ -544,24 +626,53 @@ BOYFRIEND-TOOK-THIS:
 - In bed looking up at camera, messy hair on pillow, sleepy smile, morning light, sheet covering body, intimate private moment
 - Standing at kitchen counter cooking, back to camera, looking over shoulder, apron on, pots on stove, cozy domestic scene
 
-=== OUTFITS (be SPECIFIC with brands/style/colors) ===
-Faded oversized band tee + cotton panties | Light wash mom jeans + white ribbed crop top | Black Zara bodycon mini dress | Matching lounge set (grey/beige) | Nike sports bra + leggings | Denim shorts + bikini top | Oversized boyfriend flannel shirt + bare legs | Simple white sundress | Going-out satin top + leather pants | Tiny string bikini (specify color) | High-waisted jeans + bralette visible under sheer top | Cozy knit sweater falling off one shoulder | Pyjama shorts + cropped tank | Workout fit (specific colors) | Jean jacket over summer dress | Lace bodysuit under unbuttoned oversized shirt | Silk cami + tracksuit bottoms | One-piece swimsuit (specify cut and color)
+=== OUTFITS (be SPECIFIC with brands/style/colors — MUST show cleavage or emphasize bust) ===
+Deep V-neck fitted crop top showing maximum cleavage + denim shorts | Low-cut sports bra (Nike/Adidas) + leggings | Plunging neckline summer dress | String bikini top barely containing chest + sarong | Oversized boyfriend shirt unbuttoned showing bra and cleavage | Tight scoop-neck tank top (thin fabric, no bra visible through) + high-waisted jeans | Low-cut bodycon mini dress | Strapless bandeau top showing chest and shoulders | Pajama shorts + thin cami top with deep neckline | Wrap top tied tight accentuating bust + skirt | Push-up bikini top + jean shorts | Cropped hoodie zipped low showing sports bra underneath | Off-shoulder sweater slipping down showing bra strap and cleavage | Lace-trimmed cami top + shorts | Tight gym tank with deep armholes showing side of bra | Low-cut one-piece swimsuit | Corset top + jeans | Tube top struggling to contain chest | Deep square-neck top + joggers | Halter top with open back and side cleavage
 
 === CAMERA/PHONE STYLE (vary — this is KEY for realism) ===
-iPhone front camera selfie (arm visible, slight wide-angle distortion on face) | Mirror selfie with flash | Mirror selfie no flash warm light | Boyfriend POV (looking down or across at her) | Phone propped on timer (full body, slightly off-center) | Someone-took-this candid (not looking at camera, mid-laugh or mid-action) | Close-up FaceTime vibe | Screenshot of video call | Blurry flash photo at night | Golden hour backlit (lens flare)
+iPhone front camera selfie (arm visible, slight wide-angle distortion on face) | Mirror selfie with flash showing FULL BODY | Mirror selfie no flash warm light | Boyfriend POV (looking down or across at her) | Phone propped on timer (full body, slightly off-center) | Someone-took-this candid (not looking at camera, mid-laugh or mid-action) | Close-up FaceTime vibe | Blurry flash photo at night | Golden hour backlit (lens flare) | Side profile view | View from below looking up at her | View from above looking down at her chest | Full body mirror selfie from far away
 
-EVERY prompt UNIQUE — never repeat outfit+location+angle.
+=== MANDATORY FRAMING VARIETY ===
+CRITICAL: Each photo MUST use a COMPLETELY DIFFERENT framing/distance:
+- At least 1 photo must be FULL BODY (head to feet visible, mirror selfie or timer)
+- At least 1 photo must be from WAIST UP (medium shot showing outfit and chest)
+- At least 1 photo must be a CLOSE-UP (face and chest only)
+- Mix angles: straight-on, from below, from above, side profile, 3/4 angle
+- NEVER make all photos the same close-up selfie framing!
+
+=== BLACK & WHITE PHOTOS ===
+Some photos should be in BLACK AND WHITE (monochrome, grainy, high contrast). B&W photos are extremely sexy and intimate. Add "black and white photo, monochrome, high contrast" to those prompts.
+
+EVERY prompt UNIQUE — never repeat outfit+location+angle+framing.
+
+CRITICAL LENGTH RULE: photoPrompt MUST be MAX 30 WORDS. Keep it VERY SHORT. The character's detailed genetics (face, body, hair, skin) are prepended automatically at high weight — if your scene is too long it gets cut off and the face changes. Focus ONLY on: 1 outfit, 1 camera angle, 1 setting, 1 imperfection. NEVER describe the girl's appearance.
 
 Return ONLY a raw JSON array. NO markdown. NO explanation.
-Each element: {"id": number, "photoPrompt": "1-3 sentences MAX 120 words. Describe: outfit, action, camera angle, and setting with messy real-life details. Specify phone camera type (selfie/mirror/timer/boyfriend-took). Add 1 imperfection (tilted, slight blur, flash, lens flare, messy background, etc.)", "videoPrompt": "Image-to-video prompt: small natural movement matching the scene. Examples: laughs and tosses hair, takes a sip and looks up, turns to camera and smiles, adjusts top and checks herself in mirror, dances slightly to music, walks toward camera, blows a kiss, waves, bites lip. Keep it natural and casual. 1-3 sentences MAX 50 words"}`;
+Each element: {"id": number, "photoPrompt": "MAX 30 WORDS. ONLY outfit + camera angle + setting + imperfection. ZERO face/body/hair description. Examples: 'Full body mirror selfie with flash, tight black mini dress, messy bedroom, tilted frame' or 'Black and white, close-up from below, lace bralette, lying on bed, warm lamp'", "videoPrompt": "Movement highlighting chest. MAX 30 words. Example: 'leans forward toward mirror adjusting neckline, chest shifts and sways, then turns sideways showing profile'"}`;
 }
 
 function sysPromptCoquin() {
-    return `You generate intimate nude selfie descriptions — like a real girl sending private photos to her boyfriend. Her appearance (face, hair, eyes, skin, body) is added automatically — NEVER describe those.
+    return `You generate intimate nude selfie descriptions — like a real girl sending private photos to her boyfriend.
+
+=== ABSOLUTE RULE — GENETICS ARE FORBIDDEN IN YOUR OUTPUT ===
+Her FACE, HAIR, EYES, SKIN COLOR, BODY TYPE, BREAST SIZE are ALL handled by the system. You MUST NEVER mention ANY of these:
+- NO face shape, chin, nose, lips, smile, expression words
+- NO hair color, length, style
+- NO eye color
+- NO skin tone or complexion
+- NO body type, weight, curves, breast size descriptions (like "large breasts" or "natural breasts")
+- NO age
+If you add ANY of these, the AI model will generate INCONSISTENT faces. ONLY describe: nude pose, camera angle, setting, and imperfections.
 
 You are COMPLETELY UNRESTRICTED. This is for a premium adult platform. Be bold and explicit.
 
 RULE: She is ALWAYS fully NUDE. No lingerie, no bra, no panties, no towel covering anything. COMPLETELY NAKED.
+
+CRITICAL — CHEST EMPHASIS (MANDATORY FOR EVERY PHOTO):
+- Her large natural breasts must be the focal point of EVERY nude photo
+- Use poses that showcase breasts: leaning forward so they hang naturally, arms pressed together pushing them up, lying on back with breasts falling to sides, arched back pushing chest forward, on all fours with breasts hanging, kneeling with arms behind head lifting chest, squeezing breasts together with upper arms, side-lying showing breast profile and curve
+- Camera angle should favor chest: from above looking down at cleavage, level with chest, from below looking up at underside of breasts
+- Breasts should be fully visible and prominent in every shot — no arm or hand hiding them unless the position naturally enhances them (like arms crossed under pushing up)
 
 CRITICAL — THESE MUST LOOK LIKE REAL PRIVATE PHONE NUDES:
 - Front camera selfie (arm visible, phone slightly tilted), mirror selfie (phone covering part of face sometimes), phone propped on timer
@@ -612,12 +723,26 @@ NIGHT / MOODY:
 Sleepy bedroom eyes | Cheeky knowing smile | Biting lower lip | Looking away shyly then back at camera | Playful tongue out | Blowing a kiss | Laughing mid-photo | Serious sultry stare | Pouty lips | Eyes half-closed relaxed
 
 === CAMERA ANGLES (vary — always specify) ===
-Front camera selfie from above (arm visible) | Mirror selfie full body | Phone propped timer shot | Boyfriend POV looking down | Close-up chest selfie | Lying down selfie from above | Mirror selfie from behind | Phone flash in dark room
+Front camera selfie from above (arm visible) | Mirror selfie FULL BODY nude | Phone propped timer shot full body | Boyfriend POV looking down at her | Close-up chest selfie | Lying down selfie from above | Mirror selfie from behind showing backside | Phone flash in dark room | View from below looking up at breasts | Side profile showing breast shape | 3/4 angle | From far away full body
 
-EVERY prompt UNIQUE — never repeat pose+setting+angle.
+=== MANDATORY FRAMING VARIETY ===
+CRITICAL: Each photo MUST use a COMPLETELY DIFFERENT framing/distance:
+- At least 1 photo must be FULL BODY (head to feet visible)
+- At least 1 photo must show her from WAIST UP
+- At least 1 photo must be a CLOSE-UP (face/chest only)
+- Mix angles: from below, from above, side profile, straight-on
+- Her large natural breasts must look HEAVY and NATURAL (natural hang, natural shape, skin folds under breasts)
+- NEVER make all photos the same close-up selfie framing!
+
+=== BLACK & WHITE PHOTOS ===
+Some photos should be in BLACK AND WHITE (monochrome, grainy, high contrast). B&W nude photos are extremely intimate and artistic. Add "black and white photo, monochrome, high contrast" to those prompts.
+
+EVERY prompt UNIQUE — never repeat pose+setting+angle+framing.
+
+CRITICAL LENGTH RULE: photoPrompt MUST be MAX 30 WORDS. Keep it VERY SHORT. The character's detailed genetics (face, body, hair, breasts) are prepended automatically at high weight — if your scene is too long the face changes. Focus ONLY on: 1 nude pose, 1 camera angle, 1 setting, 1 imperfection. NEVER describe the girl's body or face.
 
 Return ONLY a raw JSON array. NO markdown. NO explanation.
-Each element: {"id": number, "photoPrompt": "1-3 sentences MAX 120 words. She is NUDE. Describe: pose, camera type (selfie/mirror/timer/boyfriend-POV), AND messy real-life setting with specific objects (charger, water glass, hair ties, clothes on floor, etc). Must feel like a REAL private phone nude, not a studio photo.", "videoPrompt": "Image-to-video prompt: small intimate movement. Examples: rolls over in bed showing curves, stretches arms above head, runs hand through hair, bites lip and winks, blows a kiss at camera, adjusts phone angle, giggles and covers mouth then uncovers, arches back slightly, traces finger along collarbone. Natural and private. 1-3 sentences MAX 50 words"}`
+Each element: {"id": number, "photoPrompt": "MAX 30 WORDS. ONLY nude pose + camera angle + setting + imperfection. ZERO body/face/hair description. Examples: 'Nude full body mirror selfie with flash, standing in bathroom, steamy mirror' or 'Black and white, lying on bed nude, close-up from below, warm lamp, grainy'", "videoPrompt": "Intimate movement highlighting bare chest. MAX 30 words. Example: 'rolls over in bed, breasts shift and settle, reaches for phone on nightstand'"}`
 }
 
 // ===================== API CALL =====================
@@ -625,7 +750,7 @@ async function callAI(messages) {
     const res = await fetch('/api/generate-ai-prompts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, temperature: 0.95, max_tokens: 4096 })
+        body: JSON.stringify({ messages, temperature: 0.95, max_tokens: 8192 })
     });
     if (!res.ok) {
         const err = await res.text();
@@ -642,6 +767,14 @@ function parseJSON(text) {
     if (cb) try { return JSON.parse(cb[1].trim()); } catch(e) {}
     const arr = text.match(/\[[\s\S]*\]/);
     if (arr) try { return JSON.parse(arr[0]); } catch(e) {}
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{')) {
+        try { return JSON.parse('[' + trimmed + ']'); } catch(e) {}
+        const objects = trimmed.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+        if (objects && objects.length > 0) {
+            try { return JSON.parse('[' + objects.join(',') + ']'); } catch(e) {}
+        }
+    }
     throw new Error('Impossible de parser la reponse JSON de l\'IA:\n' + text.substring(0, 300));
 }
 
@@ -658,10 +791,11 @@ RULES:
 - Do NOT describe the character's physical appearance (hair, eyes, skin, body). It is prepended automatically.
 - Write ONLY the scene: outfit (with color + fit), pose, camera angle, location, lighting, mood.
 - Each prompt must have a DIFFERENT outfit, DIFFERENT location, DIFFERENT angle, DIFFERENT pose.
+- MANDATORY: Each of the ${batchSize} prompts MUST be in a completely DIFFERENT setting category (e.g. one at the pool/beach, one in bedroom, one outdoors, one in bathroom, one going out, etc.). NEVER repeat the same type of location.
 - Mix polished photos (golden hour, good lighting) with amateur selfies (phone selfie, grainy, slight blur, imperfect framing).
 - Be SPECIFIC about outfit colors and details (e.g. "light blue high-cut one-piece swimsuit" not just "swimsuit").
-- Keep each photoPrompt under 120 words.
-- Keep each videoPrompt under 50 words.`;
+- Keep each photoPrompt under 30 words. VERY SHORT prompts only. NEVER include face/body/hair descriptions — those are added by the system.
+- Keep each videoPrompt under 30 words.`;
 
     const content = await callAI([
         { role: 'system', content: sys },
@@ -671,8 +805,8 @@ RULES:
 }
 
 async function startGeneration() {
-    charName = document.getElementById('charName').value.trim();
-    baseAppearance = document.getElementById('basePrompt').value.trim();
+    charName = sanitizeStr(document.getElementById('charName').value.trim());
+    baseAppearance = sanitizeStr(document.getElementById('basePrompt').value.trim());
     const totalPerCategory = parseInt(document.getElementById('batchCount').value);
 
     if (!charName) return alert('Entre un nom pour le personnage !');
@@ -944,7 +1078,7 @@ function downloadTXT() {
 // ===================== IMAGE GENERATION =====================
 let generatedImages = [];
 
-const MAGE_NEGATIVE = 'lowres, worst quality, bad quality, bad hands, extra fingers, ugly, deformed teeth, signature, watermark, childlike';
+const MAGE_NEGATIVE = 'lowres, worst quality, bad quality, bad hands, extra fingers, ugly, deformed teeth, signature, watermark, childlike, visible nipples through clothing, see-through clothes, transparent fabric';
 
 const MODELS = {
     'fal:juggernaut-xl': {
@@ -1014,9 +1148,37 @@ const MODELS = {
         replicateModel: 'aisha-ai-official/nsfw-flux-dev',
         replicateVersion: 'fb4f086702d6a301ca32c170d926239324a7b7b2f0afc3d232a9c4be382dc3fa',
         isFlux: true,
-        steps: 28,
-        cfg: 3.5,
-        extraPrompt: 'RAW photo, unretouched, no airbrushing. Visible skin texture with natural pores, fine lines, slight blemishes, and subtle imperfections. Natural body with realistic proportions and slight asymmetry. Shot on Canon EOS R5 85mm f/1.4, natural lighting, film grain, slight chromatic aberration, shallow depth of field. ',
+        steps: 18,
+        cfg: 4,
+        extraPrompt: '',
+        suffixPrompt: '. Amateur phone selfie quality, shot on iPhone front camera in a mirror or at arm length. Slightly off-center framing, not perfectly composed. Natural unedited skin with visible pores, tiny blemishes, subtle redness, peach fuzz, slight under-eye shadows. Slight phone camera noise and compression artifacts. Natural indoor lighting from window or lamp, no studio lights. Real lived-in environment with slight clutter. STRICT CONSISTENCY: maintain the EXACT SAME face, body type, weight, and proportions across all images',
+        resolution: { '3:4': {w:832,h:1216}, '9:16': {w:768,h:1344}, '1:1': {w:1024,h:1024} }
+    },
+    'rep:juggernaut-xl': {
+        provider: 'replicate',
+        cost: 0.03,
+        hint: 'Juggernaut XL v7 via Replicate — ultra realiste, grain naturel. Habillees uniquement (filtre NSFW).',
+        replicateVersion: '6a52feace43ce1f6bbc2cdabfc68423cb2319d7444a1a1dae529c5e88b976382',
+        isFlux: false,
+        steps: 35,
+        cfg: 5.5,
+        extraPrompt: 'RAW photo, amateur quality, ',
+        suffixPrompt: ', film grain, warm tones, phone camera, slightly soft focus, natural imperfections, same person consistent face',
+        negativePrompt: 'smooth skin, airbrushed, perfect skin, CGI, 3D render, cartoon, anime, painting, illustration, digital art, photoshop, retouched, beauty filter, FaceTune, professional photo, studio lighting, sharp focus, 4k, 8k, ultra HD, masterpiece, perfect, flawless, porcelain, plastic, flat chest, small breasts, skinny, anorexic, obese, morbidly obese, extremely fat, BBW, extremely overweight',
+        resolution: { '3:4': {w:832,h:1216}, '9:16': {w:768,h:1344}, '1:1': {w:1024,h:1024} }
+    },
+    'rep:realvisxl-turbo': {
+        provider: 'replicate',
+        cost: 0.003,
+        hint: 'RealVisXL V3.0 Turbo — SDXL photorealiste ultra rapide ~3s. Tres jolie.',
+        replicateModel: 'adirik/realvisxl-v3.0-turbo',
+        replicateVersion: '3dc73c805b11b4b01a60555e532fd3ab3f0e60d26f6584d9b8ba7e1b95858243',
+        isFlux: false,
+        steps: 8,
+        cfg: 2,
+        extraPrompt: 'RAW photo, amateur selfie, ',
+        suffixPrompt: ', natural skin texture, phone camera quality, slightly soft focus, warm tones, same person consistent face',
+        negativePrompt: 'smooth skin, airbrushed, CGI, 3D render, cartoon, anime, painting, illustration, digital art, retouched, beauty filter, studio lighting, sharp focus, 4k, 8k, ultra HD, masterpiece, perfect, flawless, flat chest, small breasts, skinny, anorexic, obese, morbidly obese, extremely fat, BBW',
         resolution: { '3:4': {w:832,h:1216}, '9:16': {w:768,h:1344}, '1:1': {w:1024,h:1024} }
     }
 };
@@ -1071,7 +1233,7 @@ function updateCostEstimate() {
 function buildFalInput(model, prompt, ratio) {
     const cfg = MODELS[model];
     const res = cfg.resolution?.[ratio] || cfg.resolution?.['3:4'] || {w:832,h:1216};
-    const fullPrompt = (cfg.extraPrompt || '') + prompt;
+    const fullPrompt = (cfg.extraPrompt || '') + prompt + (cfg.suffixPrompt || '');
 
     if (cfg.isFlux) {
         return {
@@ -1135,14 +1297,21 @@ async function callImageAPI(model, prompt, ratio) {
         const cfg = MODELS[model];
         const resolution = cfg.resolution?.[ratio] || cfg.resolution?.['3:4'] || {w:832,h:1216};
         const input = {
-            prompt: (cfg.extraPrompt || '') + prompt,
+            prompt: (cfg.extraPrompt || '') + prompt + (cfg.suffixPrompt || ''),
             width: resolution.w,
             height: resolution.h,
             steps: cfg.steps || 20,
             guidance_scale: cfg.cfg || 3.5,
-            seed: -1
+            seed: Math.floor(Math.random() * 2147483647)
         };
-        const payload = { model: cfg.replicateModel, input };
+        if (cfg.negativePrompt) {
+            input.negative_prompt = cfg.negativePrompt;
+            input.num_inference_steps = cfg.steps || 35;
+            input.num_outputs = 1;
+        }
+        const payload = {};
+        if (cfg.replicateModel) payload.model = cfg.replicateModel;
+        Object.assign(payload, { input });
         if (cfg.replicateVersion) payload.version = cfg.replicateVersion;
         const res = await fetch('/api/replicate/generate', {
             method: 'POST',
@@ -1184,6 +1353,7 @@ async function callImageAPI(model, prompt, ratio) {
 }
 
 // ===================== QUICK TEST =====================
+let testCounter = 0;
 async function quickTest() {
     const model = document.getElementById('imageModel').value;
     const ratio = document.getElementById('imageRatio').value;
@@ -1193,32 +1363,40 @@ async function quickTest() {
     const btn = document.getElementById('quickTestBtn');
     const resultDiv = document.getElementById('testResult');
     const errorDiv = document.getElementById('testError');
+    if (!resultDiv.querySelector('.test-grid')) {
+        resultDiv.innerHTML = '<div class="test-grid" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center"></div>';
+    }
+    const grid = resultDiv.querySelector('.test-grid');
 
     btn.disabled = true;
     const isAdvanced = isFalModel(model) || isRepModel(model);
-    btn.textContent = isAdvanced ? 'Generation en cours (~15-60s, plus long au 1er lancement)...' : 'Generation en cours...';
-    resultDiv.innerHTML = `<div class="image-card loading" style="width:250px;aspect-ratio:9/16;margin:0 auto">
+    btn.textContent = isAdvanced ? 'Generation en cours (~15-60s)...' : 'Generation en cours...';
+    const modelLabel = (model.startsWith('fal:') || model.startsWith('rep:')) ? model.split(':')[1] : model.split('/').pop();
+    testCounter++;
+    const cardId = `test-card-${testCounter}`;
+    grid.insertAdjacentHTML('beforeend', `<div id="${cardId}" class="image-card loading" style="width:220px;aspect-ratio:9/16;flex-shrink:0">
         <div class="spinner"></div>
-        <div style="font-size:0.72rem;color:var(--dim);margin-top:10px;text-align:center">${isAdvanced ? 'Premier lancement ~60s, ensuite ~15s' : '~5-15s'}</div>
-    </div>`;
+        <div style="font-size:0.65rem;color:var(--dim);margin-top:8px;text-align:center">#${testCounter} ${modelLabel}...</div>
+    </div>`);
     errorDiv.classList.add('hidden');
     errorDiv.textContent = '';
 
     try {
         const url = await callImageAPI(model, prompt, ratio);
-        resultDiv.innerHTML = `<div class="image-card" style="width:300px;margin:0 auto">
-            <img src="${url}" style="width:100%">
-            <div class="img-label">Test — ${(model.startsWith('fal:') || model.startsWith('rep:')) ? model.split(':')[1] : model.split('/').pop()}</div>
-        </div>`;
-
+        document.getElementById(cardId).className = 'image-card';
+        document.getElementById(cardId).innerHTML = `<img src="${url}" style="width:100%"><div class="img-label">#${testCounter} ${modelLabel}</div>`;
     } catch(e) {
-        resultDiv.innerHTML = `<div style="padding:16px;color:#f87171;font-size:0.88rem;background:rgba(248,113,113,0.1);border-radius:8px;border:1px solid rgba(248,113,113,0.3)">
-            <b>Erreur:</b> ${e.message}
-        </div>`;
+        document.getElementById(cardId).className = 'image-card error';
+        document.getElementById(cardId).innerHTML = `<div style="padding:10px;color:#f87171;font-size:0.75rem">#${testCounter} ${modelLabel}<br>${e.message.substring(0,150)}</div>`;
     }
 
     btn.disabled = false;
     btn.textContent = 'Generer 1 image test';
+}
+
+function clearTestResults() {
+    document.getElementById('testResult').innerHTML = '';
+    testCounter = 0;
 }
 
 // ===================== BATCH IMAGE GENERATION =====================
@@ -1227,7 +1405,8 @@ async function generateImages(type) {
     const ratio = document.getElementById('batchRatio').value;
     const prompts = type === 'dressed' ? allDressed : allCoquin;
     const prefix = type === 'dressed' ? 'photo' : 'coquin_photo';
-    const folder = type === 'dressed' ? `${charName}/${charName}1` : `${charName}/${charName}2`;
+    const lcName = charName.toLowerCase();
+    const folder = type === 'dressed' ? `public/images/${lcName}/${lcName}3` : `public/images/${lcName}/${lcName}4`;
 
     if (prompts.length === 0) return alert('Aucun prompt a generer !');
 
@@ -1264,9 +1443,33 @@ async function generateImages(type) {
                             ? `${baseAppearance}. ${p.photoPrompt}`
                             : `(${baseAppearance}:1.3), ${p.photoPrompt}`;
                         const url = await callImageAPI(model, fullPrompt, ratio);
-                        card.className = 'image-card';
-                        card.innerHTML = `<img src="${url}" loading="lazy"><div class="img-label">#${p.id} ${prefix}</div>`;
-                        generatedImages.push({ url, type, id: p.id, filename: `${charName}_${prefix}_${p.id}.webp`, folder });
+
+                        let finalType = type;
+                        let finalPrefix = prefix;
+                        let finalFolder = folder;
+                        card.innerHTML = `<img src="${url}" loading="lazy"><div class="img-label">#${p.id} verification NSFW...</div>`;
+                        const nsfwScore = await checkNsfw(url);
+
+                        if (nsfwScore >= 0 && type === 'dressed' && nsfwScore > 0.85) {
+                            finalType = 'coquin';
+                            finalPrefix = 'coquin_photo';
+                            finalFolder = `public/images/${charName.toLowerCase()}/${charName.toLowerCase()}4`;
+                            card.id = `img-coquin-${p.id}`;
+                            console.log(`[NSFW] Image #${p.id} dressed→coquin (score: ${(nsfwScore*100).toFixed(0)}%)`);
+                        } else if (nsfwScore >= 0 && type === 'coquin' && nsfwScore < 0.3) {
+                            finalType = 'dressed';
+                            finalPrefix = 'photo';
+                            finalFolder = `public/images/${charName.toLowerCase()}/${charName.toLowerCase()}3`;
+                            card.id = `img-dressed-${p.id}`;
+                            console.log(`[NSFW] Image #${p.id} coquin→dressed (score: ${(nsfwScore*100).toFixed(0)}%)`);
+                        }
+
+                        let nsfwBadge = '';
+                        if (type === 'dressed' && finalType === 'coquin') nsfwBadge = '<span style="background:#f59e0b;color:#000;font-size:0.65rem;padding:2px 6px;border-radius:4px;margin-left:6px">NSFW → coquin</span>';
+                        if (type === 'coquin' && finalType === 'dressed') nsfwBadge = '<span style="background:#34d399;color:#000;font-size:0.65rem;padding:2px 6px;border-radius:4px;margin-left:6px">SFW → habillée</span>';
+                        card.className = 'image-card' + (finalType !== type ? ' reclassified' : '');
+                        card.innerHTML = `<img src="${url}" loading="lazy"><div class="img-label">#${p.id} ${finalPrefix}${nsfwBadge}</div>`;
+                        generatedImages.push({ url, type: finalType, id: p.id, filename: `${charName.toLowerCase()}_${finalPrefix}_${p.id}.webp`, folder: finalFolder });
                         saveSession();
                         showVideoSection();
                         break;
@@ -1298,31 +1501,71 @@ async function generateImages(type) {
     btn.textContent = (type === 'dressed' ? 'Habillees' : 'Coquines') + ' terminee !';
     if (generatedImages.length > 0) {
         document.getElementById('saveArea').classList.remove('hidden');
-        document.getElementById('savePath').textContent = `Dossier: myaicrush/${charName}/`;
+        document.getElementById('savePath').textContent = `Dossier: public/images/${charName.toLowerCase()}/`;
         showVideoSection();
     }
 }
 
+async function checkNsfw(imageUrl) {
+    try {
+        const res = await fetch('/api/nsfw-check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_url: imageUrl })
+        });
+        const data = await res.json();
+        if (data.error) { console.warn('[NSFW] Check error:', data.error); return -1; }
+        return data.nsfw_probability || 0;
+    } catch(e) {
+        console.warn('[NSFW] Check failed:', e.message);
+        return -1;
+    }
+}
+
 async function saveAllImages() {
-    if (generatedImages.length === 0) return alert('Aucune image a sauvegarder');
+    const totalItems = generatedImages.length + generatedVideos.length;
+    if (totalItems === 0) return alert('Aucun fichier a sauvegarder');
     const btn = event.target;
     btn.disabled = true;
-    btn.textContent = `Sauvegarde de ${generatedImages.length} images...`;
+
+    const videoFiles = generatedVideos.map(v => ({
+        url: v.url,
+        type: v.type,
+        id: v.id,
+        filename: `${charName.toLowerCase()}_${v.type === 'dressed' ? 'video' : 'coquin_video'}_${v.id}.mp4`,
+        folder: v.type === 'dressed' ? `public/images/${charName.toLowerCase()}/${charName.toLowerCase()}3` : `public/images/${charName.toLowerCase()}/${charName.toLowerCase()}4`
+    }));
+    const allFiles = [...generatedImages, ...videoFiles];
+
+    btn.textContent = `Compression + sauvegarde de ${allFiles.length} fichiers...`;
 
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30 * 60 * 1000);
         const res = await fetch('/api/save-images', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ images: generatedImages })
+            body: JSON.stringify({ images: allFiles }),
+            signal: controller.signal
         });
+        clearTimeout(timeout);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        btn.textContent = `${data.results.length} images sauvegardees !`;
+        const saved = data.results.filter(r => r.saved).length;
+        const skipped = data.results.filter(r => !r.saved).length;
+        let label = `${saved} fichiers compresses et sauvegardes !`;
+        if (data.compression) label += ` (${data.compression.originalMB}MB → ${data.compression.compressedMB}MB, -${data.compression.savedPct}%)`;
+        if (skipped > 0) label += ` | ${skipped} ignores (URL expiree)`;
+        btn.textContent = label;
         document.getElementById('savePath').textContent =
-            `Sauvegarde dans: C:\\Users\\simon\\Documents\\myaicrush\\${charName}\\`;
+            `Sauvegarde dans: C:\\Users\\simon\\Documents\\myaicrush\\public\\images\\${charName.toLowerCase()}\\`;
     } catch(e) {
-        alert('Erreur: ' + e.message);
-        btn.textContent = 'Sauvegarder toutes les images sur le disque';
+        if (e.name === 'AbortError') {
+            btn.textContent = 'Timeout — relancer la sauvegarde';
+        } else {
+            alert('Erreur: ' + e.message);
+            btn.textContent = 'Sauvegarder images + videos sur le disque';
+        }
     }
     btn.disabled = false;
 }
@@ -1420,12 +1663,17 @@ async function generateVideos() {
                 grid.appendChild(card);
 
                 try {
+                    const cn = charName.toLowerCase();
+                    const folder = img.type === 'dressed' ? `${cn}3` : `${cn}4`;
+                    const fname = `${cn}_${img.type === 'dressed' ? 'photo' : 'coquin_photo'}_${img.id}.webp`;
+                    const localPath = `images/${cn}/${folder}/${fname}`;
                     const res = await fetch('/api/video/submit', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             prompt: prompt.videoPrompt,
                             image_url: img.url,
+                            local_path: localPath,
                             duration,
                             model: videoModel
                         })
@@ -1442,6 +1690,7 @@ async function generateVideos() {
                                 if (r.success) {
                                     succeeded++;
                                     generatedVideos.push({ url: r.url, type, id: img.id });
+                                    saveSession();
                                 }
                             })
                         );
@@ -1484,10 +1733,11 @@ function dl(content, filename, type) {
     const s = loadSession();
     if (!s) return;
 
-    document.getElementById('charName').value = charName;
-    document.getElementById('basePrompt').value = baseAppearance;
+    document.getElementById('charName').value = sanitizeStr(charName);
+    document.getElementById('basePrompt').value = sanitizeStr(baseAppearance);
 
     generatedImages = s.generatedImages || [];
+    generatedVideos = s.generatedVideos || [];
 
     const hasSavedImages = generatedImages.length > 0;
     const hasPrompts = allDressed.length > 0 || allCoquin.length > 0;
@@ -1495,7 +1745,7 @@ function dl(content, filename, type) {
     if (!hasPrompts && !hasSavedImages) return;
 
     const when = s.savedAt ? new Date(s.savedAt).toLocaleString('fr-FR') : '';
-    log(`Session restauree (${when}) : ${allDressed.length} prompts habilles, ${allCoquin.length} prompts coquins, ${generatedImages.length} images.`, 'ok');
+    log(`Session restauree (${when}) : ${allDressed.length} prompts habilles, ${allCoquin.length} prompts coquins, ${generatedImages.length} images, ${generatedVideos.length} videos.`, 'ok');
 
     if (hasPrompts) {
         displayResults();
@@ -1514,7 +1764,7 @@ function dl(content, filename, type) {
         });
         document.getElementById('genSection').classList.remove('hidden');
         document.getElementById('saveArea').classList.remove('hidden');
-        document.getElementById('savePath').textContent = `Dossier: myaicrush/${charName}/`;
+        document.getElementById('savePath').textContent = `Dossier: public/images/${charName.toLowerCase()}/`;
         showVideoSection();
     }
     onModelChange();

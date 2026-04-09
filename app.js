@@ -1745,18 +1745,11 @@ async function getRandomCharacterMedia(email, isPremium, userLevel, isGifMode, i
 
   let levelFolder;
 
-  // 🔥 Si le mode nympho est activé, forcer le dossier "4" (niveau spécial)
-if (isNymphoMode) {
+  if (isNymphoMode) {
     levelFolder = `${sanitizedCharacterName}4`;
     console.log(`💋 Mode nympho activé pour ${email}, utilisation du dossier ${levelFolder}`);
 } else {
-    if (userLevel < 1.3) {
-        levelFolder = `${sanitizedCharacterName}1`; // Little Crush
-    } else if (userLevel < 1.5) {
-        levelFolder = `${sanitizedCharacterName}3`; // Big Crush
-    } else {
-        levelFolder = `${sanitizedCharacterName}3`; // Perfect Crush
-    }
+    levelFolder = `${sanitizedCharacterName}3`;
 }
 
 
@@ -4809,6 +4802,28 @@ app.get('/api/video/status/:model/:requestId', async (req, res) => {
   }
 });
 
+app.options('/api/save-canvas', (req, res) => {
+  res.set({ 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type' });
+  res.sendStatus(204);
+});
+app.post('/api/save-canvas', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  try {
+    const { data, folder, filename } = req.body;
+    if (!data || !folder || !filename) return res.status(400).json({ error: 'data, folder, filename required' });
+    const base64 = data.replace(/^data:image\/\w+;base64,/, '');
+    const dir = path.join(__dirname, folder);
+    await fsp.mkdir(dir, { recursive: true });
+    const filepath = path.join(dir, filename);
+    await fsp.writeFile(filepath, Buffer.from(base64, 'base64'));
+    console.log(`[SAVE-CANVAS] ${filepath} (${Buffer.from(base64, 'base64').length} bytes)`);
+    res.json({ saved: true, filename });
+  } catch (error) {
+    console.error('[SAVE-CANVAS] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/save-images', async (req, res) => {
   try {
     const { images } = req.body;
@@ -5125,6 +5140,10 @@ async function supportCheckPremiumDiagnosis(email) {
 
   const accountCreatedBefore2026 = user.createdAt && new Date(user.createdAt) < new Date("2026-01-01");
 
+  const unlockedContents = Array.isArray(user.unlockedContents) ? user.unlockedContents : [];
+  const nymphoUnlocked = user.nymphoUnlocked && typeof user.nymphoUnlocked === "object" ? Object.keys(user.nymphoUnlocked) : [];
+  const hasPremiumActivity = unlockedContents.length > 0 || nymphoUnlocked.length > 0;
+
   if (!explodelyStatus.active && !stripeInfo && !isExplodelyPremiumInDb) {
     if (explodelyStatus.reason === "no_events_found" || explodelyStatus.reason === "no_sale_found") {
       if (accountCreatedBefore2026 || hasPremiumActivity) {
@@ -5138,10 +5157,6 @@ async function supportCheckPremiumDiagnosis(email) {
       issues.push("Payment data unclear. " + (explodelyStatus.reason || ""));
     }
   }
-
-  const unlockedContents = Array.isArray(user.unlockedContents) ? user.unlockedContents : [];
-  const nymphoUnlocked = user.nymphoUnlocked && typeof user.nymphoUnlocked === "object" ? Object.keys(user.nymphoUnlocked) : [];
-  const hasPremiumActivity = unlockedContents.length > 0 || nymphoUnlocked.length > 0;
 
   if (hasPremiumActivity && isExplodelyPremiumInDb) {
     issues.push(`PREMIUM USAGE CONFIRMED: The user has unlocked ${unlockedContents.length} private content(s) and used nympho mode with ${nymphoUnlocked.length} character(s) (${nymphoUnlocked.join(", ") || "none"}). This PROVES premium is working on their account. Blurry images = cache/session issue, NOT a premium problem.`);
@@ -6365,6 +6380,3 @@ connectToDb().then(() => {
 }).catch((err) => {
   console.error('Erreur de connexion à la base de données :', err);
 });
-
-
-

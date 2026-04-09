@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juju Test Gallery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0e0e0e;color:#e8e4df;padding:16px}
+h1{text-align:center;font-size:1.8rem;font-weight:300;padding:20px 0 6px}
+.subtitle{text-align:center;color:#8a847c;font-size:.85rem;margin-bottom:20px}
+.tabs{display:flex;justify-content:center;gap:8px;margin:16px 0;flex-wrap:wrap}
+.tab{padding:8px 18px;border:1px solid #333;background:transparent;color:#8a847c;border-radius:20px;cursor:pointer;font-size:.8rem}
+.tab:hover{border-color:#666;color:#e8e4df}
+.tab.active{background:#c9a96e;border-color:#c9a96e;color:#0e0e0e}
+.section{margin:24px auto;max-width:1200px}
+.section h2{font-size:1.1rem;font-weight:400;margin-bottom:12px;padding-left:4px;color:#c9a96e}
+.section h2.jugxl{color:#7ba68c}
+.section h2.flux{color:#9b8ec4}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.card{position:relative;border-radius:10px;overflow:hidden;border:1px solid #222;cursor:pointer;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-2px);border-color:#555}
+.card img{width:100%;aspect-ratio:832/1216;object-fit:cover;display:block;background:#111}
+.card .lbl{position:absolute;bottom:0;left:0;right:0;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:.7rem;color:#ccc}
+.card .num{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:.65rem;padding:2px 7px;border-radius:10px}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);z-index:999;justify-content:center;align-items:center;cursor:pointer}
+.overlay.on{display:flex}
+.overlay img{max-height:95vh;max-width:95vw;object-fit:contain}
+.note{text-align:center;color:#8a847c;font-size:.75rem;padding:20px 0}
+@media(max-width:800px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<h1>Juju — Galerie de test</h1>
+<p class="subtitle">Clique sur une image pour l'agrandir</p>
+
+<div class="section">
+  <h2 class="jugxl">&#x2B50; Juggernaut XL (062-066)</h2>
+  <div class="grid" id="g-jugxl"></div>
+</div>
+
+<div class="section">
+  <h2 style="color:#e07c4f">&#x1F525; CyberRealistic XL v5 (067-071)</h2>
+  <div class="grid" id="g-cyber"></div>
+</div>
+
+<div class="section">
+  <h2 style="color:#4fc3e0">&#x2728; Luma Photon (072-076)</h2>
+  <div class="grid" id="g-photon"></div>
+</div>
+
+<div class="section">
+  <h2 class="flux">FLUX NSFW v7 (047-056)</h2>
+  <div class="grid" id="g-v7"></div>
+</div>
+
+<div class="section">
+  <h2>FLUX NSFW v6 — Post-traitement moyen (037-046)</h2>
+  <div class="grid" id="g-v6"></div>
+</div>
+
+<p class="note">Les images noires (062, 064) = filtre securite JugXL sur contenu sensible</p>
+
+<div class="overlay" id="ov" onclick="this.classList.remove('on')"><img id="ovi"></div>
+
+<script>
+const t = Date.now();
+const sets = [
+  { grid:'g-jugxl', ids:[
+    {n:'062',l:'Robe lavande'},{n:'063',l:'Top noir close-up'},{n:'064',l:'B&W lingerie'},{n:'065',l:'Reveil matin'},{n:'066',l:'Selfie voiture'}
+  ]},
+  { grid:'g-cyber', ids:[
+    {n:'067',l:'Robe lavande'},{n:'068',l:'Top noir close-up'},{n:'069',l:'B&W bralette'},{n:'070',l:'Reveil matin'},{n:'071',l:'Selfie voiture'}
+  ]},
+  { grid:'g-photon', ids:[
+    {n:'072',l:'Robe lavande'},{n:'073',l:'Top noir close-up'},{n:'074',l:'B&W bralette'},{n:'075',l:'Reveil matin'},{n:'076',l:'Selfie voiture'}
+  ]},
+  { grid:'g-v7', ids:[
+    {n:'047',l:'Robe lavande'},{n:'048',l:'Top noir'},{n:'049',l:'B&W lingerie'},{n:'050',l:'B&W bralette'},{n:'051',l:'Reveil matin'},
+    {n:'052',l:'Plage'},{n:'053',l:'Salle de bain'},{n:'054',l:'Hallway OOTD'},{n:'055',l:'Canape soiree'},{n:'056',l:'Voiture'}
+  ]},
+  { grid:'g-v6', ids:[
+    {n:'037',l:'Robe lavande'},{n:'038',l:'Top noir'},{n:'039',l:'B&W lingerie'},{n:'040',l:'B&W bralette'},{n:'041',l:'Reveil matin'},
+    {n:'042',l:'Plage'},{n:'043',l:'Salle de bain'},{n:'044',l:'Hallway OOTD'},{n:'045',l:'Canape soiree'},{n:'046',l:'Voiture'}
+  ]}
+];
+const ov = document.getElementById('ov');
+const ovi = document.getElementById('ovi');
+sets.forEach(s => {
+  const g = document.getElementById(s.grid);
+  s.ids.forEach(img => {
+    const url = `/images/test_juju/juju_test_${img.n}.webp?t=${t}`;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<span class="num">#${img.n}</span><img src="${url}" loading="lazy"><div class="lbl">${img.l}</div>`;
+    card.onclick = () => { ovi.src = url; ov.classList.add('on'); };
+    g.appendChild(card);
+  });
+});
+</script>
+</body>
+</html>

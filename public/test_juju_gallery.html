@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Juju - Galerie</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a14; color: #e8e8f0; font-family: -apple-system, sans-serif; padding: 20px; }
+        h1 { text-align: center; margin: 20px 0; color: #ff4d8d; }
+        .subtitle { text-align: center; color: #6b6b88; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto; }
+        .card { background: rgba(22,22,40,0.9); border: 1px solid rgba(255,77,141,0.12); border-radius: 12px; overflow: hidden; transition: transform 0.2s, border-color 0.3s; cursor: pointer; }
+        .card:hover { transform: translateY(-4px); border-color: rgba(255,77,141,0.4); }
+        .card img { width: 100%; aspect-ratio: 832/1216; object-fit: cover; display: block; }
+        .card .info { padding: 12px; }
+        .card .id { color: #ff4d8d; font-weight: 700; font-size: 1.1rem; }
+        .card .label { color: #6b6b88; font-size: 0.78rem; margin-top: 4px; }
+        .card .params { color: #34d399; font-size: 0.72rem; margin-top: 4px; }
+        .sections { max-width: 1400px; margin: 0 auto 30px; }
+        .section-title { color: #c026d3; font-size: 1.1rem; margin: 30px 0 10px; padding: 8px 14px; background: rgba(192,38,211,0.08); border-radius: 8px; border-left: 3px solid #c026d3; }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
+        .lightbox.active { display: flex; }
+        .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+        .lightbox .close { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; }
+        .lightbox .lb-info { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Test Juju - Toutes les images generees</h1>
+    <p class="subtitle">Clique sur une image pour la voir en grand. 20 images au total dans test_juju/</p>
+
+    <div class="sections">
+        <div class="section-title">BATCH 1 (V1) — Premier essai, guidance=4.0, steps=20</div>
+    </div>
+    <div class="grid" id="grid1"></div>
+    
+    <div class="sections">
+        <div class="section-title">BATCH 2 (V2) — Prompt ameliore, guidance=3.5, steps=22</div>
+    </div>
+    <div class="grid" id="grid2"></div>
+
+    <div class="sections">
+        <div class="section-title">BATCH 3 (V3) — Ultra amateur, guidance=3.0, steps=25</div>
+    </div>
+    <div class="grid" id="grid3"></div>
+    
+    <div class="sections">
+        <div class="section-title" style="color:#34d399;border-left-color:#34d399;">BATCH 4 (V4) — Guidance=2.5 + Post-processing (blur, desaturation, JPEG artifacts)</div>
+    </div>
+    <div class="grid" id="grid4"></div>
+
+    <div class="lightbox" id="lightbox" onclick="closeLB()">
+        <span class="close">&times;</span>
+        <img id="lbImg" src="">
+        <div class="lb-info"><span id="lbLabel"></span></div>
+    </div>
+
+    <script>
+    const images = [
+        { id: 1, file: 'juju_test_001.webp', label: 'V1 lavender dress mirror', params: 'guidance=4.0, steps=20', grid: 'grid1' },
+        { id: 2, file: 'juju_test_002.webp', label: 'V1 morning bed selfie', params: 'guidance=4.0, steps=20', grid: 'grid1' },
+        { id: 3, file: 'juju_test_003.webp', label: 'V1 bathroom getting ready', params: 'guidance=4.0, steps=20', grid: 'grid1' },
+        { id: 4, file: 'juju_test_004.webp', label: 'V1 cafe terrace', params: 'guidance=4.0, steps=20', grid: 'grid1' },
+        { id: 5, file: 'juju_test_005.webp', label: 'V1 car selfie', params: 'guidance=4.0, steps=20', grid: 'grid1' },
+        { id: 6, file: 'juju_test_006.webp', label: 'V1 hallway full body', params: 'guidance=4.0, steps=20', grid: 'grid1' },
+        { id: 7, file: 'juju_test_007.webp', label: 'V2 lavender dress attic', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 8, file: 'juju_test_008.webp', label: 'V2 Nirvana tee bed', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 9, file: 'juju_test_009.webp', label: 'V2 bathroom mirror', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 10, file: 'juju_test_010.webp', label: 'V2 cafe terrace golden hour', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 11, file: 'juju_test_011.webp', label: 'V2 car selfie sage dress', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 12, file: 'juju_test_012.webp', label: 'V2 hallway full body', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 13, file: 'juju_test_013.webp', label: 'V2 FaceTime close-up', params: 'guidance=3.0, steps=22', grid: 'grid2' },
+        { id: 14, file: 'juju_test_014.webp', label: 'V2 elevator going out', params: 'guidance=3.5, steps=22', grid: 'grid2' },
+        { id: 15, file: 'juju_test_015.webp', label: 'V3 pink hoodie mirror', params: 'guidance=3.0, steps=25', grid: 'grid3' },
+        { id: 16, file: 'juju_test_016.webp', label: 'V3 kitchen morning', params: 'guidance=3.0, steps=25', grid: 'grid3' },
+        { id: 17, file: 'juju_test_017.webp', label: 'V3 boyfriend POV bed', params: 'guidance=3.0, steps=25', grid: 'grid3' },
+        { id: 18, file: 'juju_test_018.webp', label: 'V3 night phone glow', params: 'guidance=2.8, steps=25', grid: 'grid3' },
+        { id: 19, file: 'juju_test_019.webp', label: 'V3 fitting room tryout', params: 'guidance=3.0, steps=25', grid: 'grid3' },
+        { id: 20, file: 'juju_test_020.webp', label: 'V3 rainy street trench', params: 'guidance=3.0, steps=25', grid: 'grid3' },
+        { id: 21, file: 'juju_test_021.webp', label: 'V4 lavender dress attic (ref)', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 22, file: 'juju_test_022.webp', label: 'V4 morning bed messy', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 23, file: 'juju_test_023.webp', label: 'V4 bathroom harsh light', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 24, file: 'juju_test_024.webp', label: 'V4 cafe afternoon', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 25, file: 'juju_test_025.webp', label: 'V4 fitting room', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 26, file: 'juju_test_026.webp', label: 'V4 car selfie squint', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 27, file: 'juju_test_027.webp', label: 'V4 night phone glow', params: 'guidance=2.2, steps=28 + post-process', grid: 'grid4' },
+        { id: 28, file: 'juju_test_028.webp', label: 'V4 hallway OOTD', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 29, file: 'juju_test_029.webp', label: 'V4 couch TV evening', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+        { id: 30, file: 'juju_test_030.webp', label: 'V4 elevator going out', params: 'guidance=2.5, steps=28 + post-process', grid: 'grid4' },
+    ];
+
+    images.forEach(img => {
+        const grid = document.getElementById(img.grid);
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = (e) => { e.stopPropagation(); openLB(img); };
+        card.innerHTML = `
+            <img src="/images/test_juju/${img.file}" loading="lazy" alt="${img.label}">
+            <div class="info">
+                <div class="id">#${String(img.id).padStart(3, '0')}</div>
+                <div class="label">${img.label}</div>
+                <div class="params">${img.params}</div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    function openLB(img) {
+        document.getElementById('lbImg').src = `/images/test_juju/${img.file}`;
+        document.getElementById('lbLabel').textContent = `#${String(img.id).padStart(3, '0')} — ${img.label} (${img.params})`;
+        document.getElementById('lightbox').classList.add('active');
+    }
+    function closeLB() {
+        document.getElementById('lightbox').classList.remove('active');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
+    </script>
+</body>
+</html>

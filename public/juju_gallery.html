@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juju — Test Gallery</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 30px; }
+h1 { text-align: center; font-size: 2rem; margin-bottom: 10px; }
+.sub { text-align: center; color: #888; margin-bottom: 40px; font-size: 0.9rem; }
+.section { margin-bottom: 50px; }
+.section h2 { font-size: 1.3rem; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+.section h2.dressed { color: #7ecfff; }
+.section h2.coquin { color: #ff6b8a; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.card { background: #1a1a1a; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+.card:hover { transform: scale(1.02); }
+.card img { width: 100%; display: block; }
+.card .info { padding: 10px 14px; font-size: 0.8rem; color: #aaa; }
+.overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; cursor: pointer; }
+.overlay.active { display: flex; }
+.overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>Juju — Test Gallery</h1>
+<p class="sub">3 photos habillees (Juggernaut XL) + 3 photos coquines (FLUX NSFW + post-process V7)</p>
+
+<div class="section">
+  <h2 class="dressed">Photos Habillees (Juggernaut XL)</h2>
+  <div class="grid">
+    <div class="card" onclick="show(this)"><img src="/images/juju/juju3/juju_photo_1.webp?t=1"><div class="info">#1 — Robe lavande, selfie miroir chambre</div></div>
+    <div class="card" onclick="show(this)"><img src="/images/juju/juju3/juju_photo_2.webp?t=1"><div class="info">#2 — Robe verte, selfie voiture</div></div>
+    <div class="card" onclick="show(this)"><img src="/images/juju/juju3/juju_photo_3.webp?t=1"><div class="info">#3 — T-shirt oversize, reveil au lit</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="coquin">Photos Coquines (FLUX NSFW + V7 post-process)</h2>
+  <div class="grid">
+    <div class="card" onclick="show(this)"><img src="/images/juju/juju4/juju_coquin_photo_1.webp?t=1"><div class="info">#1 — Nue au lit, matin</div></div>
+    <div class="card" onclick="show(this)"><img src="/images/juju/juju4/juju_coquin_photo_2.webp?t=1"><div class="info">#2 — Nue, selfie miroir salle de bain</div></div>
+    <div class="card" onclick="show(this)"><img src="/images/juju/juju4/juju_coquin_photo_3.webp?t=1"><div class="info">#3 — Nue sur canape, soiree</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="this.classList.remove('active')">
+  <img id="overlayImg">
+</div>
+
+<script>
+function show(card) {
+  const src = card.querySelector('img').src;
+  document.getElementById('overlayImg').src = src;
+  document.getElementById('overlay').classList.add('active');
+}
+</script>
+</body>
+</html>
