@@ -117,6 +117,10 @@ async function checkPremiumStatus() {
 
     if (data.isPremium === true) {
       let expiryHtml = "";
+      let cancelledBanner = "";
+      let isCancelled = false;
+      let expiryFormatted = "";
+
       try {
         const userRes = await fetch("/api/get-user-info", {
           method: "POST",
@@ -124,33 +128,71 @@ async function checkPremiumStatus() {
           body: JSON.stringify({ email: user.email })
         });
         const userData = await userRes.json();
+
         if (userData.premiumExpiresAt) {
           const date = new Date(userData.premiumExpiresAt);
-          const formatted = date.toLocaleDateString("en-US", {
+          const lang = navigator.language || "en";
+          const locale = lang.startsWith("fr") ? "fr-FR" : lang.startsWith("de") ? "de-DE" : "en-US";
+          expiryFormatted = date.toLocaleDateString(locale, {
             year: "numeric", month: "long", day: "numeric"
           });
-          expiryHtml = `<p style="color:#9ca3af; font-size:0.85rem; margin-top:8px;">Access until: ${formatted}</p>`;
+          const _el = navigator.language || "";
+          let accessLabel = "Access until:";
+          if (_el.startsWith("fr")) accessLabel = "Accès jusqu'au :";
+          else if (_el.startsWith("de")) accessLabel = "Zugang bis:";
+          expiryHtml = `<p style="color:#9ca3af; font-size:0.85rem; margin-top:8px;">${accessLabel} ${expiryFormatted}</p>`;
+        }
+
+        if (userData.premiumCancelledAt) {
+          isCancelled = true;
+          const _l = navigator.language || "";
+          let bannerText = `Your subscription has been cancelled. You keep premium access until <strong style="color:#f472b6;">${expiryFormatted}</strong>.`;
+          if (_l.startsWith("fr")) {
+            bannerText = `Ton abonnement a été annulé. Tu conserves l'accès premium jusqu'au <strong style="color:#f472b6;">${expiryFormatted}</strong>.`;
+          } else if (_l.startsWith("de")) {
+            bannerText = `Dein Abo wurde gekündigt. Du behältst den Premium-Zugang bis zum <strong style="color:#f472b6;">${expiryFormatted}</strong>.`;
+          }
+          cancelledBanner = `
+            <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:14px 18px; margin-bottom:14px;">
+              <p style="color:#fbbf24; font-size:0.9rem; margin:0; line-height:1.5;">
+                ${bannerText}
+              </p>
+            </div>
+          `;
         }
       } catch (e) {}
 
+      const _cl = navigator.language || "";
+      let cancelLabel = "Cancel subscription";
+      if (_cl.startsWith("fr")) cancelLabel = "Annuler mon abonnement";
+      else if (_cl.startsWith("de")) cancelLabel = "Abo kündigen";
+
+      const cancelBtnHtml = isCancelled ? "" : `
+        <button id="cancel-sub-btn" style="display:inline-block; margin-top:12px; font-size:0.8rem; color:#6b7280; text-decoration:underline; background:none; border:none; cursor:pointer;">
+          ${cancelLabel}
+        </button>
+      `;
+
       statusEl.innerHTML = `
         <div class="sub-ok">
+          ${cancelledBanner}
           Premium ✅
           ${expiryHtml}
-          <button id="cancel-sub-btn" style="display:inline-block; margin-top:12px; font-size:0.8rem; color:#6b7280; text-decoration:underline; background:none; border:none; cursor:pointer;">
-            Cancel subscription
-          </button>
+          ${cancelBtnHtml}
         </div>
       `;
 
-      document.getElementById("cancel-sub-btn")?.addEventListener("click", async () => {
-        const confirmed = confirm("Are you sure you want to cancel your subscription? You'll keep access until the end of the current period.");
-        if (!confirmed) return;
+      if (!isCancelled) {
+        document.getElementById("cancel-sub-btn")?.addEventListener("click", () => {
+          const modal = document.getElementById("cancel-warning-modal");
+          if (!modal) return;
 
-        document.getElementById("cancel-loader-overlay")?.classList.remove("hidden");
-        await cancelWithFallback(user.email);
-        document.getElementById("cancel-loader-overlay")?.classList.add("hidden");
-      });
+          const dateEl = document.getElementById("cancel-modal-date");
+          if (dateEl) dateEl.textContent = expiryFormatted || "—";
+
+          modal.style.display = "flex";
+        });
+      }
 
     } else {
       statusEl.innerHTML = `
@@ -173,6 +215,29 @@ async function checkPremiumStatus() {
   } catch (error) {
     console.error("❌ Erreur vérification premium :", error);
   }
+}
+
+function setupCancelModal() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user?.email) return;
+
+  const modal = document.getElementById("cancel-warning-modal");
+  if (!modal) return;
+
+  document.getElementById("cancel-modal-keep")?.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  document.getElementById("cancel-modal-confirm")?.addEventListener("click", async () => {
+    modal.style.display = "none";
+    document.getElementById("cancel-loader-overlay")?.classList.remove("hidden");
+    await cancelWithFallback(user.email);
+    document.getElementById("cancel-loader-overlay")?.classList.add("hidden");
+  });
 }
 
 // Fonction pour ouvrir la modal de profil du personnage
@@ -295,6 +360,7 @@ async function displayUserTokens() {
 displayUserTokens();
 // Appelle la fonction après chargement du profil
 checkPremiumStatus();
+setupCancelModal();
 
 
 } else {

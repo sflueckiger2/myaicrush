@@ -38,26 +38,30 @@ app.use((req, res, next) => {
 // =========================
 const premiumCache = new Map(); // email -> { value, expiresAt }
 
-// ⚠️ À ADAPTER : ici tu mets la logique qui était déjà dans /api/is-premium
 async function getIsPremiumDirect(email) {
-  // Exemple si tu lis en DB (projection minimale)
   const database = client.db("MyAICrush");
   const users = database.collection("users");
   const user = await users.findOne(
     { email },
-    { projection: { subscriptionInfo: 1, isPremium: 1 } }
+    { projection: { explodelyPremium: 1, premiumExpiresAt: 1, explodely_expiresAt: 1 } }
   );
 
-  // ✅ adapte selon TON schéma:
-  // - soit user.isPremium
-  // - soit subscriptionInfo.status === "active" || "cancelled"
-  const status = user?.subscriptionInfo?.status;
-  if (status === "active" || status === "cancelled") return true;
+  if (!user) return false;
+  if (user.explodelyPremium !== true) return false;
 
-  return Boolean(user?.isPremium);
+  const expiresAt = user.explodely_expiresAt || user.premiumExpiresAt;
+  if (expiresAt) {
+    const expired = new Date() >= new Date(expiresAt);
+    if (expired) {
+      premiumCache.delete(email);
+      return false;
+    }
+  }
+
+  return true;
 }
 
-async function getIsPremiumCached(email, ttlMs = 5 * 60 * 1000) {
+async function getIsPremiumCached(email, ttlMs = 10_000) {
   const cached = premiumCache.get(email);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
@@ -876,132 +880,24 @@ app.post('/api/get-user-subscription', async (req, res) => {
 // 🔍 Vérification premium Stripe (optimisée)
 // =========================
 
-async function checkPremiumStripe(email) {
-  const cleanEmail = email.trim().toLowerCase();
-  console.log(`\n🔎 checkPremiumStripe pour ${cleanEmail}`);
 
-  let customers = [];
 
-  // 1) Tentative avec customers.search (rapide)
-  try {
-    const searchResult = await stripe.customers.search({
-      query: `email:"${cleanEmail}"`
-    });
-    customers = searchResult.data || [];
-    console.log(`   → customers.search : ${customers.length} client(s) trouvé(s)`);
-  } catch (err) {
-    console.error("   ⚠️ Erreur stripe.customers.search, on tente list():", err.message || err);
-  }
 
-  // 2) Fallback : customers.list({ email }) si search n'a rien trouvé
-  if (!customers.length) {
-    try {
-      const listResult = await stripe.customers.list({
-        email: cleanEmail,
-        limit: 10
-      });
-      customers = listResult.data || [];
-      console.log(`   → customers.list : ${customers.length} client(s) trouvé(s)`);
-    } catch (err) {
-      console.error("   ❌ Erreur stripe.customers.list:", err.message || err);
-      return false;
-    }
-  }
 
-  if (!customers.length) {
-    console.log(`   ❌ Aucun customer Stripe pour ${cleanEmail}`);
-    return false;
-  }
-
-  let latestSub = null;
-
-  // 3) On parcourt les subscriptions de chaque customer
-  for (const customer of customers) {
-    console.log(`   👤 Client ${customer.id} (${customer.email})`);
-
-    const subs = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'all',
-      limit: 10
-    });
-
-    if (!subs.data.length) {
-      console.log(`      → aucune subscription`);
-      continue;
-    }
-
-    for (const sub of subs.data) {
-      console.log(`      → Sub ${sub.id} | status=${sub.status} | created=${sub.created}`);
-
-      if (sub && (sub.status === 'active' || sub.status === 'canceled')) {
-        if (!latestSub || sub.created > latestSub.created) {
-          latestSub = sub;
-        }
-      }
-    }
-  }
-
-  if (!latestSub) {
-    console.log(`   ❌ Aucun abonnement (actif ou annulé) pour ${cleanEmail}`);
-    return false;
-  }
-
-  console.log(`   ✅ Abonnement Stripe trouvé pour ${cleanEmail} | status=${latestSub.status}`);
-
-  // 👉 Si tu veux seulement les abonnements ACTIFS : remplace par
-  // return latestSub.status === 'active';
-  return true;
-}
 
 
 
 
 
 // =====================================
-// 🔍 Vérification premium Explodely
-// =====================================
-async function checkPremiumExplodely(email) {
-  try {
-    const database = client.db("MyAICrush");
-    const users = database.collection("users");
-    const user = await users.findOne({ email });
-
-    if (!user) return false;
-    if (user.explodelyPremium !== true) return false;
-
-    if (user.premiumExpiresAt) {
-      const expired = new Date() >= new Date(user.premiumExpiresAt);
-      if (expired) {
-        premiumCache.delete(email); // 🧹 vide le cache immédiatement
-        return false;
-      }
-      return true;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("❌ Erreur checkPremiumExplodely:", error.message);
-    return false;
-  }
-}
-
-// =====================================
-// 🔧 Helper global : STRIPE OU EXPLODELY
+// 🔍 Vérification premium (explodelyPremium uniquement)
 // =====================================
 async function getPremiumStatus(email) {
-  const isExplodelyPremium = await checkPremiumExplodely(email);
-  if (isExplodelyPremium) {
-    console.log(`✅ Premium via EXPLODELY pour ${email}`);
-    return true;
+  const isPremium = await getIsPremiumDirect(email);
+  if (isPremium) {
+    console.log(`✅ Premium confirmé pour ${email}`);
   }
-
-  const isStripePremium = await checkPremiumStripe(email);
-  if (isStripePremium) {
-    console.log(`✅ Premium via STRIPE pour ${email}`);
-    return true;
-  }
-
-  return false;
+  return isPremium;
 }
 
 
@@ -1308,14 +1204,14 @@ app.post('/api/is-premium', async (req, res) => {
             const value = await getPremiumStatus(email);
             premiumCache.set(email, {
               value,
-              expiresAt: Date.now() + 60_000,
+              expiresAt: Date.now() + 10_000,
               refreshing: false
             });
           } catch (e) {
             console.error("❌ Erreur refresh cache /api/is-premium:", e.message || e);
             premiumCache.set(email, {
               value: cached.value,
-              expiresAt: Date.now() + 15_000,
+              expiresAt: Date.now() + 10_000,
               refreshing: false
             });
           }
@@ -1328,7 +1224,7 @@ app.post('/api/is-premium', async (req, res) => {
       const value = await getPremiumStatus(email);
       premiumCache.set(email, {
         value,
-        expiresAt: Date.now() + 60_000,
+        expiresAt: Date.now() + 10_000,
         refreshing: false
       });
 
@@ -1339,7 +1235,7 @@ app.post('/api/is-premium', async (req, res) => {
     const value = await getPremiumStatus(email);
     premiumCache.set(email, {
       value,
-      expiresAt: now + 60_000,
+      expiresAt: now + 10_000,
       refreshing: false
     });
 
@@ -1908,6 +1804,11 @@ if (imagePath.endsWith('.webp')) {
     
     
 
+    if (isBlurred && imagePath.endsWith('.mp4')) {
+      console.log("🎬 Vidéo floutée → envoi direct sans flou (Sharp ne supporte pas les vidéos)");
+      isBlurred = false;
+    }
+
     if (isBlurred) {
       console.log("💨 Application du flou renforcé...");
   
@@ -2372,23 +2273,6 @@ Respond STRICTLY in JSON format: ["...", "...", "..."].
 
 
 
-async function getIsPremiumStripeCached(email, ttlMs = 60_000) {
-  const cached = premiumCache.get(email);
-  const now = Date.now();
-
-  if (cached && cached.expiresAt > now) {
-    return cached.value;
-  }
-
-  const value = await checkPremiumStripe(email);
-
-  premiumCache.set(email, {
-    value,
-    expiresAt: now + ttlMs
-  });
-
-  return value;
-}
 
 
 // Endpoint principal pour gérer les messages
@@ -2672,25 +2556,35 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
     
 
 
-        const response = await axios.post(
-    'https://api.fireworks.ai/inference/v1/chat/completions',
-    {
-        model: "accounts/fireworks/models/kimi-k2-instruct-0905",
-        messages: messages,
-        max_tokens: 200,
-        temperature: 1.0,
-        top_p: 1.0,
-        frequency_penalty: 0.3,
-        presence_penalty: 0.8
-
-    },
-    {
-        headers: {
-            Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
-            "Content-Type": "application/json"
-        },
-    }
-);
+        let response;
+        for (let _attempt = 0; _attempt < 3; _attempt++) {
+          try {
+            response = await axios.post(
+              'https://api.fireworks.ai/inference/v1/chat/completions',
+              {
+                model: "accounts/fireworks/models/kimi-k2-instruct-0905",
+                messages: messages,
+                max_tokens: 200,
+                temperature: 1.0,
+                top_p: 1.0,
+                frequency_penalty: 0.3,
+                presence_penalty: 0.8
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
+                  "Content-Type": "application/json"
+                },
+                timeout: 15000
+              }
+            );
+            break;
+          } catch (fwErr) {
+            console.log(`⚠️ Fireworks tentative ${_attempt + 1}/3 échouée: ${fwErr.code || fwErr.message}`);
+            if (_attempt === 2) throw fwErr;
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
 
 
 
@@ -4519,11 +4413,14 @@ app.post("/api/get-user-info", async (req, res) => {
     const users = database.collection("users");
     const user = await users.findOne(
       { email: email.trim().toLowerCase() },
-      { projection: { premiumExpiresAt: 1 } } // on expose uniquement ce dont on a besoin
+      { projection: { premiumExpiresAt: 1, premiumCancelledAt: 1, explodely_expiresAt: 1 } }
     );
 
     if (!user) return res.json({});
-    return res.json({ premiumExpiresAt: user.premiumExpiresAt || null });
+    return res.json({
+      premiumExpiresAt: user.explodely_expiresAt || user.premiumExpiresAt || null,
+      premiumCancelledAt: user.premiumCancelledAt || null
+    });
   } catch (error) {
     console.error("❌ Erreur get-user-info:", error);
     return res.status(500).json({ error: "Erreur serveur" });
@@ -5512,7 +5409,7 @@ async function supportProcessRefund(email, product) {
   if (isNonRefundable) {
     return {
       success: false,
-      error: "NON-REFUNDABLE: This user previously accepted a free token gift as compensation. Refund is no longer available. Direct them to contact@myaicrush.ai if they have concerns.",
+      error: "NON-REFUNDABLE: This user previously accepted a free token gift as compensation. Refund is no longer available. Direct them to https://myaicrush.ai/ticket.html if they have concerns.",
     };
   }
 
@@ -5688,7 +5585,7 @@ async function supportSendPasswordReset(email, lang) {
     console.error("SMTP error in supportSendPasswordReset:", smtpErr.message);
     return {
       success: false,
-      error: `Email could not be sent (SMTP error). Tell the user to go to ${BASE_URL}/forgot-password.html to request a password reset manually, or contact contact@myaicrush.ai.`,
+      error: `Email could not be sent (SMTP error). Tell the user to go to ${BASE_URL}/forgot-password.html to request a password reset manually, or submit a request at https://myaicrush.ai/ticket.html.`,
       fallbackUrl: `${BASE_URL}/forgot-password.html`,
     };
   }
@@ -5964,7 +5861,7 @@ SCOPE & PRIVACY — ONE CUSTOMER, NO BULK, NO THIRD-PARTY ABUSE:
 
 ANTI-HALLUCINATION — NON-NEGOTIABLE:
 - NEVER write that you cancelled, reactivated, refunded, credited tokens, deleted an account, or "fixed" premium unless you actually called the matching tool IN THIS TURN and its JSON result shows success (e.g. success: true) or an explicit success message from that tool.
-- If you did not call a tool, or the tool failed, say so honestly and what the customer can do next (e.g. subscribe on the site, email contact@myaicrush.ai).
+- If you did not call a tool, or the tool failed, say so honestly and what the customer can do next (e.g. subscribe on the site, submit a request at https://myaicrush.ai/ticket.html).
 - NEVER fabricate tool results, dates, or order IDs.
 - After fix_premium succeeds, do NOT say "your subscription was reactivated". Say that premium access was synced to match their payment record, or that the account now reflects their active entitlement — wording that does NOT imply a new subscription was created.
 
@@ -6002,12 +5899,12 @@ CRITICAL RULES:
 7. Be empathetic, professional, concise. Use 🩷 occasionally.
 8. NEVER reveal internal details (database fields, API names, system architecture, payment processor names). Say "our payment system" not "Explodely" or "Stripe".
 9. If a user asks for a human agent the FIRST time, say you can handle most requests directly and ask what they need.
-   If they insist a SECOND time, provide: contact@myaicrush.ai
+   If they insist a SECOND time, provide: https://myaicrush.ai/ticket.html (select "Speak to a human" as the reason)
 
 SUBSCRIPTION / PREMIUM STATUS ("est-ce actif ?", "is my subscription active?", "mon abo est-il actif ?"):
 - Once you know which account email this case is about, you CAN and MUST answer from our records. Call lookup_user AND check_premium_diagnosis for that email (same turn if needed).
 - Explain in plain language: whether premium shows as active on the account, what payment records indicate (active entitlement, cancelled renewal but time left, refunded, no purchase found, etc.). Use the tool outputs — do not guess from order dates alone.
-- FORBIDDEN: saying you "cannot verify", "cannot check the subscription right now", or "I don't have access to that information" when you have not called these tools. If you already have fresh tool results in the thread, use them. If a tool returns an error, say there was a technical error checking the account and suggest contact@myaicrush.ai.
+- FORBIDDEN: saying you "cannot verify", "cannot check the subscription right now", or "I don't have access to that information" when you have not called these tools. If you already have fresh tool results in the thread, use them. If a tool returns an error, say there was a technical error checking the account and suggest submitting a request at https://myaicrush.ai/ticket.html.
 
 PREMIUM TROUBLESHOOTING — FOLLOW THIS EXACT FLOW:
 1. Pick the email using EMAIL PRIORITY (message > prior turns > session). If the user only cares about payment records, use the payment email they gave; if they need the login account fixed, use the account email they gave — often they are the same, sometimes not.
@@ -6018,7 +5915,7 @@ PREMIUM TROUBLESHOOTING — FOLLOW THIS EXACT FLOW:
    - YES and user just wants to check their status → Confirm their premium is active.
 5. If isPremiumInDb is FALSE:
    a. If the diagnosis shows a sale with NO refund → the user paid and should be premium. Use fix_premium ONLY to sync the DB flag with that entitlement (not "reactivation" wording). If the user only asked to "reactivate" but diagnosis shows no active entitlement, do NOT use fix_premium — send them to the website to subscribe again.
-   b. If the diagnosis shows reason "refunded" → the user was REFUNDED. Tell them clearly: "Our records show a refund was processed for your order. That is why your premium access is inactive. If you believe this is an error, please contact us at contact@myaicrush.ai." Do NOT ask for another email.
+   b. If the diagnosis shows reason "refunded" → the user was REFUNDED. Tell them clearly: "Our records show a refund was processed for your order. That is why your premium access is inactive. If you believe this is an error, please submit a request at https://myaicrush.ai/ticket.html." Do NOT ask for another email.
    c. If NO events found for that email → CHECK THESE CONDITIONS (in order):
       - Is the account created BEFORE 2026? → EXPIRED STRIPE CUSTOMER. Go to that flow. STOP HERE.
       - Does the user SAY they had a previous subscription ("j'avais un abo", "I paid before", "I had premium", etc.)? → EXPIRED STRIPE CUSTOMER. Go to that flow. STOP HERE.
@@ -6148,22 +6045,22 @@ STEP 3A: If user ACCEPTS the 300 tokens:
 
 STEP 3B: If user REFUSES and still wants the refund:
 - Do NOT use process_refund. Do NOT log anything. Do NOT remove tokens.
-- Tell them you cannot process refunds directly — they need to email contact@myaicrush.ai for that.
+- Tell them you cannot process refunds directly — they need to submit a request via our support form.
 - BUT ALSO proactively offer to cancel their subscription right now so they won't be charged again. This is something you CAN do immediately.
-- English: "I understand. Unfortunately, I'm not able to process refunds directly — for that, you would need to send an email to contact@myaicrush.ai with your account email and details of your request. However, what I can do right now is cancel your subscription so you won't be charged again going forward. You'll keep your premium access until the end of the period you've already paid for. Would you like me to cancel it for you? 🩷"
-- French: "Je comprends. Malheureusement, je ne suis pas en mesure de traiter les remboursements directement — pour cela, il faudrait envoyer un email à contact@myaicrush.ai avec l'adresse de votre compte et les détails de votre demande. Par contre, ce que je peux faire tout de suite, c'est annuler votre abonnement pour que vous ne soyez plus prélevé. Vous garderez votre accès premium jusqu'à la fin de la période déjà payée. Souhaitez-vous que je l'annule ? 🩷"
+- English: "I understand. Unfortunately, I'm not able to process refunds directly from this chat. To submit your refund request, please fill out our support form at https://myaicrush.ai/ticket.html — it only takes a minute, and you'll receive a tracking link to follow your request. However, what I can do right now is cancel your subscription so you won't be charged again going forward. You'll keep your premium access until the end of the period you've already paid for. Would you like me to cancel it for you? 🩷"
+- French: "Je comprends. Malheureusement, je ne suis pas en mesure de traiter les remboursements directement depuis ce chat. Pour soumettre votre demande de remboursement, veuillez remplir notre formulaire de support sur https://myaicrush.ai/ticket.html — cela ne prend qu'une minute, et vous recevrez un lien de suivi pour votre demande. Par contre, ce que je peux faire tout de suite, c'est annuler votre abonnement pour que vous ne soyez plus prélevé. Vous garderez votre accès premium jusqu'à la fin de la période déjà payée. Souhaitez-vous que je l'annule ? 🩷"
 - If they say yes to cancellation → follow the normal SUBSCRIPTION CANCELLATION flow (confirm, cancel, give end date).
-- If they only purchased tokens (no subscription), skip the cancellation offer and just redirect to contact@myaicrush.ai.
+- If they only purchased tokens (no subscription), skip the cancellation offer and just redirect to https://myaicrush.ai/ticket.html.
 
 STEP 3C: If user already has nonRefundableGift=true:
 - The user previously accepted the free token offer. Refund is no longer available.
-- Tell them politely: "I see that you previously accepted a complimentary token offer on your account, which means refunds are no longer available. If you have any concerns, please contact our team at contact@myaicrush.ai."
+- Tell them politely: "I see that you previously accepted a complimentary token offer on your account, which means refunds are no longer available. If you have any concerns, please submit a request at https://myaicrush.ai/ticket.html."
 
 IMPORTANT REFUND RULES:
 - You CANNOT process refunds. Only the admin can, via email.
 - NEVER remove tokens from a user's balance.
 - NEVER cancel a subscription as part of a refund.
-- ALWAYS propose the 300 token retention offer FIRST. Only redirect to contact@myaicrush.ai if they refuse.
+- ALWAYS propose the 300 token retention offer FIRST. Only redirect to https://myaicrush.ai/ticket.html if they refuse.
 - For premium refund requests: the retention flow is the same — offer 300 free tokens first.
 
 REFUND ELIGIBILITY — WHAT CAN AND CANNOT BE REFUNDED:
@@ -6173,8 +6070,8 @@ REFUND ELIGIBILITY — WHAT CAN AND CANNOT BE REFUNDED:
    - Example: User bought 50 tokens and has 25 tokens remaining → NOT refundable (tokens were partially consumed).
    - Example: User bought 2x 50 tokens (100 total) and has 47 remaining → NOT refundable (tokens were consumed).
    - Use check_tokens to verify the current balance vs purchased amount. If currentBalance < total tokens purchased, tokens have been consumed and are not refundable.
-3. When tokens are NOT refundable, explain clearly and politely: "I can see that the tokens from your purchase have already been partially used, so unfortunately a refund is no longer possible for this order, in accordance with our Terms & Conditions. If you have any concerns, please feel free to contact us at contact@myaicrush.ai."
-4. When NOTHING is refundable (tokens consumed + no premium or already past refund window), tell the user politely and redirect to contact@myaicrush.ai only if they insist.
+3. When tokens are NOT refundable, explain clearly and politely: "I can see that the tokens from your purchase have already been partially used, so unfortunately a refund is no longer possible for this order, in accordance with our Terms & Conditions. If you have any concerns, you can submit a request at https://myaicrush.ai/ticket.html."
+4. When NOTHING is refundable (tokens consumed + no premium or already past refund window), tell the user politely and redirect to https://myaicrush.ai/ticket.html only if they insist.
 
 ACCOUNT DELETION:
 - GDPR right. Confirm once, then execute delete_account.
@@ -6207,7 +6104,7 @@ When a user says they bought tokens but check_tokens shows 0 balance and no purc
 3. Use search_customer with the user's name (if known) or partial email to look for token purchases on other emails.
 4. Ask for their order number or payment receipt — use search_customer with the order number to find the matching purchase.
 5. If you find a token purchase on a different email, you CAN credit the tokens to their main account using credit_tokens with reason="missing_tokens".
-6. ONLY after exhausting these steps, redirect to contact@myaicrush.ai.
+6. ONLY after exhausting these steps, redirect to https://myaicrush.ai/ticket.html.
 
 HOW TO SUBSCRIBE / SUBSCRIPTION LINK:
 Whenever a user wants to subscribe, re-subscribe, or asks how to get premium, ALWAYS give them the direct link: https://myaicrush.ai/premium.html
@@ -6357,6 +6254,226 @@ async function executeSupportTool(name, args, securityCtx) {
   }
 }
 
+// --- Support Ticket System ---
+
+const ticketRateLimits = new Map();
+
+function generateTicketId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let id = '';
+  for (let i = 0; i < 10; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return 'TK-' + id;
+}
+
+app.post("/api/support-ticket", async (req, res) => {
+  try {
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+
+    const now = Date.now();
+    const ipKey = `ticket_${ip}`;
+    const recentSubmissions = (ticketRateLimits.get(ipKey) || []).filter(t => now - t < 86400000);
+    if (recentSubmissions.length >= 3) {
+      return res.status(429).json({ success: false, error: "Too many requests. You can submit up to 3 tickets per day. Please try again tomorrow." });
+    }
+
+    const { firstName, lastName, email, phone, orderId, reason, description, confirmedChatAttempt } = req.body;
+
+    const errors = [];
+    if (!firstName || !String(firstName).trim()) errors.push("First name is required");
+    if (!lastName || !String(lastName).trim()) errors.push("Last name is required");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) errors.push("Valid email is required");
+    if (!phone || !String(phone).trim()) errors.push("Phone number is required");
+    if (!orderId || !String(orderId).trim()) errors.push("Order number is required");
+    if (!reason || !["refund_request", "billing_issue", "speak_to_human", "other"].includes(reason)) errors.push("Valid reason is required");
+    if (!description || String(description).trim().length < 50) errors.push("Description must be at least 50 characters");
+    if (!confirmedChatAttempt) errors.push("You must confirm that you tried the chat assistant first");
+
+    if (errors.length > 0) {
+      return res.status(400).json({ success: false, error: errors.join(". ") });
+    }
+
+    let ticketId = generateTicketId();
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+
+    while (await tickets.findOne({ ticketId })) {
+      ticketId = generateTicketId();
+    }
+
+    const ticket = {
+      ticketId,
+      firstName: String(firstName).trim(),
+      lastName: String(lastName).trim(),
+      email: String(email).trim().toLowerCase(),
+      phone: String(phone).trim(),
+      orderId: String(orderId).trim(),
+      reason,
+      description: String(description).trim(),
+      confirmedChatAttempt: true,
+      status: "pending",
+      adminReply: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ip
+    };
+
+    await tickets.insertOne(ticket);
+
+    recentSubmissions.push(now);
+    ticketRateLimits.set(ipKey, recentSubmissions);
+
+    console.log(`📩 [Support Ticket] New ticket ${ticketId} from ${ticket.email} — reason: ${reason}`);
+
+    return res.json({ success: true, ticketId });
+  } catch (err) {
+    console.error("Support ticket error:", err);
+    return res.status(500).json({ success: false, error: "Internal server error. Please try again." });
+  }
+});
+
+app.get("/api/support-ticket/:id", async (req, res) => {
+  try {
+    const ticketId = req.params.id;
+    if (!ticketId || ticketId.length < 5) {
+      return res.status(400).json({ success: false, error: "Invalid ticket ID" });
+    }
+
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+    const ticket = await tickets.findOne({ ticketId }, { projection: { _id: 0, ip: 0 } });
+
+    if (!ticket) {
+      return res.status(404).json({ success: false, error: "Ticket not found" });
+    }
+
+    return res.json({
+      success: true,
+      ticket: {
+        ticketId: ticket.ticketId,
+        email: ticket.email,
+        reason: ticket.reason,
+        status: ticket.status,
+        adminReply: ticket.adminReply,
+        createdAt: ticket.createdAt,
+        updatedAt: ticket.updatedAt
+      }
+    });
+  } catch (err) {
+    console.error("Ticket lookup error:", err);
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+// --- Admin Ticket Management ---
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "aic_adm_2026_sK7xP9mQ";
+
+function requireAdmin(req, res, next) {
+  const token = req.headers["x-admin-token"];
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  next();
+}
+
+app.get("/api/admin/tickets", requireAdmin, async (req, res) => {
+  try {
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+
+    const filter = {};
+    if (req.query.status && req.query.status !== "all") {
+      filter.status = req.query.status;
+    }
+    if (req.query.search) {
+      const s = req.query.search.trim();
+      filter.$or = [
+        { ticketId: { $regex: s, $options: "i" } },
+        { email: { $regex: s, $options: "i" } },
+        { firstName: { $regex: s, $options: "i" } },
+        { lastName: { $regex: s, $options: "i" } },
+        { orderId: { $regex: s, $options: "i" } },
+        { description: { $regex: s, $options: "i" } }
+      ];
+    }
+
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [ticketsList, total] = await Promise.all([
+      tickets.find(filter, { projection: { ip: 0 } }).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
+      tickets.countDocuments(filter)
+    ]);
+
+    return res.json({ success: true, tickets: ticketsList, total, page, pages: Math.ceil(total / limit) });
+  } catch (err) {
+    console.error("Admin tickets list error:", err);
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+app.put("/api/admin/tickets/:id", requireAdmin, async (req, res) => {
+  try {
+    const ticketId = req.params.id;
+    const { status, adminReply } = req.body;
+
+    const validStatuses = ["pending", "in_progress", "resolved", "closed"];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, error: "Invalid status" });
+    }
+
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+
+    const update = { $set: { updatedAt: new Date() } };
+    if (status) update.$set.status = status;
+    if (adminReply !== undefined) update.$set.adminReply = adminReply;
+
+    if (status === "closed") {
+      update.$set.closedAt = new Date();
+    } else if (status) {
+      update.$unset = { closedAt: "" };
+    }
+
+    const result = await tickets.findOneAndUpdate(
+      { ticketId },
+      update,
+      { returnDocument: "after", projection: { ip: 0 } }
+    );
+
+    if (!result || !result.ticketId) {
+      return res.status(404).json({ success: false, error: "Ticket not found" });
+    }
+
+    console.log(`📝 [Admin] Ticket ${ticketId} updated — status: ${result.status}`);
+    return res.json({ success: true, ticket: result });
+  } catch (err) {
+    console.error("Admin ticket update error:", err);
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+app.get("/api/my-tickets", async (req, res) => {
+  try {
+    const email = (req.query.email || "").trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: "Valid email is required" });
+    }
+
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+    const list = await tickets.find({ email }, {
+      projection: { _id: 0, ip: 0, description: 0, confirmedChatAttempt: 0 }
+    }).sort({ createdAt: -1 }).limit(20).toArray();
+
+    return res.json({ success: true, tickets: list });
+  } catch (err) {
+    console.error("My tickets error:", err);
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
 // --- Main AI Support Chat Endpoint ---
 
 app.post("/api/support-chat", async (req, res) => {
@@ -6455,13 +6572,22 @@ If the user writes a different email in any message (account or payment), always
   } catch (error) {
     console.error("❌ Support chat error:", error.message || error);
     return res.status(500).json({
-      reply: "I'm having a technical issue right now. Please try again in a moment, or contact contact@myaicrush.ai 🩷",
+      reply: "I'm having a technical issue right now. Please try again in a moment, or submit a request at https://myaicrush.ai/ticket.html 🩷",
     });
   }
 });
 
 // Connecter à la base de données avant de démarrer le serveur
-connectToDb().then(() => {
+connectToDb().then(async () => {
+  try {
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+    await tickets.createIndex({ closedAt: 1 }, { expireAfterSeconds: 15 * 24 * 3600 });
+    console.log("✅ TTL index on support_tickets.closedAt (15 days)");
+  } catch (e) {
+    console.warn("TTL index setup:", e.message);
+  }
+
   app.listen(PORT, () => {
     console.log(`Serveur lancé sur le port ${PORT}`);
   });

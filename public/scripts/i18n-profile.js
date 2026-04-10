@@ -155,6 +155,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (icon) cancelSubLink.prepend(icon);
   }
 
+  // ===== MODALE ANNULATION =====
+  const cancelModalTitle = document.getElementById("cancel-modal-title");
+  if (cancelModalTitle) cancelModalTitle.textContent = "Es-tu sûr de vouloir annuler ?";
+
+  const cancelModalBody = document.getElementById("cancel-modal-body");
+  if (cancelModalBody) {
+    const dateEl = document.getElementById("cancel-modal-date");
+    const dateHtml = dateEl ? dateEl.outerHTML : "";
+    cancelModalBody.innerHTML = `Tu perdras l'accès à tous les contenus exclusifs, photos, vidéos et messages vocaux dès le ${dateHtml}.`;
+  }
+
+  const cancelModalKeep = document.getElementById("cancel-modal-keep");
+  if (cancelModalKeep) cancelModalKeep.textContent = "Garder mon abonnement";
+
+  const cancelModalConfirm = document.getElementById("cancel-modal-confirm");
+  if (cancelModalConfirm) cancelModalConfirm.textContent = "Confirmer l'annulation";
+
   // ===== LOADER ANNULATION =====
   const cancelLoader = document.querySelector("#cancel-loader-overlay .loader-text");
   if (cancelLoader) cancelLoader.textContent = "Annulation en cours...";
@@ -378,6 +395,23 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelSubLink.textContent = " Abo kündigen";
     if (icon) cancelSubLink.prepend(icon);
   }
+
+  // ===== KÜNDIGUNGS-MODAL =====
+  const cancelModalTitle = document.getElementById("cancel-modal-title");
+  if (cancelModalTitle) cancelModalTitle.textContent = "Bist du sicher, dass du kündigen willst?";
+
+  const cancelModalBody = document.getElementById("cancel-modal-body");
+  if (cancelModalBody) {
+    const dateEl = document.getElementById("cancel-modal-date");
+    const dateHtml = dateEl ? dateEl.outerHTML : "";
+    cancelModalBody.innerHTML = `Du verlierst den Zugang zu allen exklusiven Inhalten, Fotos, Videos und Sprachnachrichten ab dem ${dateHtml}.`;
+  }
+
+  const cancelModalKeep = document.getElementById("cancel-modal-keep");
+  if (cancelModalKeep) cancelModalKeep.textContent = "Abo behalten";
+
+  const cancelModalConfirm = document.getElementById("cancel-modal-confirm");
+  if (cancelModalConfirm) cancelModalConfirm.textContent = "Kündigung bestätigen";
 
   // ===== KÜNDIGUNGS-LOADER =====
   const cancelLoader = document.querySelector("#cancel-loader-overlay .loader-text");

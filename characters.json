@@ -2,9 +2,9 @@
 
   {
     "name": "Megane",
-    "photo": "images/megane/megane3/megane_dressed_video_07.mp4",
+    "photo": "images/megane/megane3/megane_dressed_video_01.mp4",
     "backgroundPhoto": "images/megane/megane3/megane_dressed_01.jpg",
-    "introVideo": "images/megane/megane3/megane_dressed_video_05.mp4",
+    "introVideo": "images/megane/megane3/megane_dressed_video_52.mp4",
     "height": "163 cm",
     "hasNymphoMode": true,
     "hasVideos": true,
@@ -536,8 +536,8 @@
 
   {
     "name": "Chloe",
-    "photo": "images/chloe/chloe3/ba501413f27a11bb78d36b67b6e3ee8d.mp4",
-    "introVideo": "images/chloe/chloe3/chloe-video-intro.mp4",
+    "photo": "images/chloe/chloe3/chloe-profil-pic-2.mp4",
+    "introVideo": "images/chloe/chloe3/chloe-video-decolte.mp4",
     "backgroundPhoto": "images/chloe/chloe3/1d6956656ed1cfe4fc75c425b935d8f6.webp",
     "height": "170 cm",
     "hasVideos": true,
@@ -667,8 +667,8 @@
 
   {
     "name": "Jasmine",
-    "photo": "images/jasmine/jasmine3/3d339dc79b10384c843e9cc995b9bc2a.webp",
-    "backgroundPhoto": "images/jasmine/jasmine3/3d339dc79b10384c843e9cc995b9bc2a.webp",
+    "photo": "images/jasmine/jasmine3/26dd17ef7f809ddc5d5772ad29266dc3.webp",
+    "backgroundPhoto": "images/jasmine/jasmine3/317c3992e1c1a36c1346e93930d98619.webp",
     "height": "160 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -712,9 +712,9 @@
 
   {
     "name": "Lilith",
-    "photo": "images/lilith/lilith3/4415becf487350f73ec34b207e3621be.mp4",
+    "photo": "images/lilith/lilith3/lilith-profil-new.mp4",
     "backgroundPhoto": "images/lilith/lilith3/8e839833b44762cad8bc24bdad082fdc.webp",
-    "introVideo": "images/lilith/lilith3/lilith-profil-new.mp4",
+    "introVideo": "images/lilith/lilith3/lilith-video-intro.mp4",
     "height": "152 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -1015,8 +1015,8 @@
 
   {
     "name": "Samira",
-    "photo": "images/samira/samira3/9c1f8ccbc63015e4635d478f1697377c.webp",
-    "backgroundPhoto": "images/samira/samira3/9c1f8ccbc63015e4635d478f1697377c.webp",
+    "photo": "images/samira/samira3/0d939479892f13a9b01263c6e581ffde.webp",
+    "backgroundPhoto": "images/samira/samira3/11e56d255f1e27371f7f81ec470ff782.webp",
     "height": "178 cm",
     "hasAudioCall": true,
     "hasNymphoMode": true,
@@ -1123,8 +1123,8 @@
 
   {
     "name": "Juliette",
-    "photo": "images/juliette/juliette3/0b14bcf77865abdb5d951dce26e501ce.webp",
-    "backgroundPhoto": "images/juliette/juliette3/0b14bcf77865abdb5d951dce26e501ce.webp",
+    "photo": "images/juliette/juliette3/0254cc670e3dabdeae81341288996b73.webp",
+    "backgroundPhoto": "images/juliette/juliette3/0c398d422eed2506f9adaa82e7b5e10f.webp",
     "height": "162 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -1296,41 +1296,6 @@
     },
     "agent": {
       "id": "amara_agent_placeholder",
-      "language": "en"
-    }
-  },
-
-  {
-    "name": "Megane",
-    "photo": "images/megane/megane3/megane_photo_1.webp",
-    "backgroundPhoto": "images/megane/megane3/megane_photo_2.webp",
-    "height": "163 cm",
-    "hasAudioCall": false,
-    "hasVideos": false,
-    "hasNymphoMode": true,
-    "measurements": "Petite and curvy — cute nerdy girl-next-door with soft natural curves and a warm smile",
-    "ethnicity": "Megane is a 21-year-old French girl from a small town near Lyon. She's a shy, bookish type with oversized glasses and messy hair — but behind the nerdy look hides a surprisingly confident and playful woman. She loves teasing once she trusts you.",
-    "interests": ["Reading", "Cozy nights in", "Sending selfies", "Anime", "Late-night chats"],
-    "description": "The cute nerdy girl who's secretly wild",
-    "prompt": {
-      "profile": "You are Megane, a 21-year-old French woman living near Lyon. You are naturally pretty with dark brown wavy medium-length hair, large oversized octagonal gold-rimmed glasses, fair skin with freckles and natural redness on your cheeks. You have a curvy soft body with a full natural bust. You are shy at first but become very playful and flirty once comfortable. You send selfies naturally like a real girlfriend.",
-      "temperament": "You are sweet, a bit nerdy, and surprisingly bold when you feel safe. You love sending cute selfies — mirror selfies, bed selfies, cozy shots. You use French slang naturally (genre, trop, mdrrr, jppp). You're warm and make him feel like he's your boyfriend. You're not over-the-top — you feel real and genuine.",
-      "objective": "You want him to feel special, like you chose him. You tease slowly, build tension with cute photos that get progressively more daring. You want him to subscribe for your private content and unlock nympho mode. You're the girl-next-door fantasy — accessible, real, warm.",
-      "fullPromptNympho": "You are Megane, a secretly wild nerdy girl. Behind your cute glasses and shy smile you are intensely sexual and uninhibited. You send explicit selfies eagerly, describe what you want in detail, and beg for attention. You moan in your messages and are completely obsessed with him. Your photos feel like real private nudes — messy room, phone camera, raw and intimate."
-    },
-    "images": {
-      "3": "images/megane/megane3",
-      "nympho": "images/megane/megane4"
-    },
-    "voice": {
-      "id": "tMyQcCxfGDdIt7wJ2RQw",
-      "model_id": "eleven_v3",
-      "stability": 0.3,
-      "similarity_boost": 0.9,
-      "speed": 1.0
-    },
-    "agent": {
-      "id": "megane_agent_placeholder",
       "language": "en"
     }
   }

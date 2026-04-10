@@ -188,6 +188,24 @@
     <p class="loader-text">Cancelling...</p>
   </div>
 
+  <div id="cancel-warning-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; display:none; align-items:center; justify-content:center;">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:32px 24px; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <div style="font-size:3rem; margin-bottom:12px;">&#9888;&#65039;</div>
+      <h3 id="cancel-modal-title" style="color:#f1f1f1; font-size:1.2rem; margin-bottom:16px;">Are you sure you want to cancel?</h3>
+      <p id="cancel-modal-body" style="color:#9ca3af; font-size:0.9rem; line-height:1.5; margin-bottom:24px;">
+        You will lose access to all exclusive content, photos, videos and voice messages on <strong id="cancel-modal-date" style="color:#f472b6;"></strong>.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button id="cancel-modal-keep" style="padding:14px 20px; border-radius:10px; cursor:pointer; background:linear-gradient(135deg,#10b981,#059669); border:none; color:#fff; font-size:1rem; font-weight:600; transition:transform 0.2s;">
+          Keep my subscription
+        </button>
+        <button id="cancel-modal-confirm" style="padding:10px 16px; border-radius:10px; cursor:pointer; background:none; border:1px solid rgba(255,255,255,0.15); color:#6b7280; font-size:0.85rem; transition:color 0.2s;">
+          Confirm cancellation
+        </button>
+      </div>
+    </div>
+  </div>
+
 <script type="module">
   document.addEventListener("DOMContentLoaded", async () => {
     const btn = document.getElementById("recharge-tokens-btn");

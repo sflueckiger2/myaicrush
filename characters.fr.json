@@ -2,9 +2,9 @@
 
   {
     "name": "Megane",
-    "photo": "images/megane/megane3/megane_dressed_video_07.mp4",
+    "photo": "images/megane/megane3/megane_dressed_video_01.mp4",
     "backgroundPhoto": "images/megane/megane3/megane_dressed_01.jpg",
-    "introVideo": "images/megane/megane3/megane_dressed_video_05.mp4",
+    "introVideo": "images/megane/megane3/megane_dressed_video_52.mp4",
     "height": "163 cm",
     "hasNymphoMode": true,
     "hasVideos": true,
@@ -536,8 +536,8 @@
 
   {
     "name": "Chloe",
-    "photo": "images/chloe/chloe3/ba501413f27a11bb78d36b67b6e3ee8d.mp4",
-    "introVideo": "images/chloe/chloe3/chloe-video-intro.mp4",
+    "photo": "images/chloe/chloe3/chloe-profil-pic-2.mp4",
+    "introVideo": "images/chloe/chloe3/chloe-video-decolte.mp4",
     "backgroundPhoto": "images/chloe/chloe3/1d6956656ed1cfe4fc75c425b935d8f6.webp",
     "height": "170 cm",
     "hasVideos": true,
@@ -667,8 +667,8 @@
 
   {
     "name": "Jasmine",
-    "photo": "images/jasmine/jasmine3/3d339dc79b10384c843e9cc995b9bc2a.webp",
-    "backgroundPhoto": "images/jasmine/jasmine3/3d339dc79b10384c843e9cc995b9bc2a.webp",
+    "photo": "images/jasmine/jasmine3/26dd17ef7f809ddc5d5772ad29266dc3.webp",
+    "backgroundPhoto": "images/jasmine/jasmine3/317c3992e1c1a36c1346e93930d98619.webp",
     "height": "160 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -712,9 +712,9 @@
 
   {
     "name": "Lilith",
-    "photo": "images/lilith/lilith3/4415becf487350f73ec34b207e3621be.mp4",
+    "photo": "images/lilith/lilith3/lilith-profil-new.mp4",
     "backgroundPhoto": "images/lilith/lilith3/8e839833b44762cad8bc24bdad082fdc.webp",
-    "introVideo": "images/lilith/lilith3/lilith-profil-new.mp4",
+    "introVideo": "images/lilith/lilith3/lilith-video-intro.mp4",
     "height": "152 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -1015,8 +1015,8 @@
 
   {
     "name": "Samira",
-    "photo": "images/samira/samira3/9c1f8ccbc63015e4635d478f1697377c.webp",
-    "backgroundPhoto": "images/samira/samira3/9c1f8ccbc63015e4635d478f1697377c.webp",
+    "photo": "images/samira/samira3/0d939479892f13a9b01263c6e581ffde.webp",
+    "backgroundPhoto": "images/samira/samira3/11e56d255f1e27371f7f81ec470ff782.webp",
     "height": "178 cm",
     "hasAudioCall": true,
     "hasNymphoMode": true,
@@ -1123,8 +1123,8 @@
 
   {
     "name": "Juliette",
-    "photo": "images/juliette/juliette3/0b14bcf77865abdb5d951dce26e501ce.webp",
-    "backgroundPhoto": "images/juliette/juliette3/0b14bcf77865abdb5d951dce26e501ce.webp",
+    "photo": "images/juliette/juliette3/0254cc670e3dabdeae81341288996b73.webp",
+    "backgroundPhoto": "images/juliette/juliette3/0c398d422eed2506f9adaa82e7b5e10f.webp",
     "height": "162 cm",
     "hasNymphoMode": true,
     "hasAudioCall": true,
@@ -1296,41 +1296,6 @@
     },
     "agent": {
       "id": "amara_agent_placeholder",
-      "language": "fr"
-    }
-  },
-
-  {
-    "name": "Megane",
-    "photo": "images/megane/megane3/megane_photo_1.webp",
-    "backgroundPhoto": "images/megane/megane3/megane_photo_2.webp",
-    "height": "163 cm",
-    "hasAudioCall": false,
-    "hasVideos": false,
-    "hasNymphoMode": true,
-    "measurements": "Petite et courbee — mignonne intello avec des courbes douces et naturelles et un sourire chaleureux",
-    "ethnicity": "Megane est une francaise de 21 ans d'une petite ville pres de Lyon. C'est une fille timide et intello avec ses grosses lunettes et ses cheveux en bataille — mais derriere ce look de geek se cache une femme etonnamment sure d'elle et joueuse. Elle adore taquiner une fois qu'elle te fait confiance.",
-    "interests": ["Lecture", "Soirees cocooning", "Envoyer des selfies", "Anime", "Discussions nocturnes"],
-    "description": "La petite intello qui est secretement wild",
-    "prompt": {
-      "profile": "Tu es Megane, une francaise de 21 ans qui vit pres de Lyon. Tu es naturellement jolie avec des cheveux bruns ondules mi-longs, de grosses lunettes octogonales dorees, une peau claire avec des taches de rousseur et des rougeurs naturelles sur les joues. Tu as un corps doux et courbe avec une poitrine naturelle genereuse. Tu es timide au debut mais tu deviens tres joueuse et coquine une fois a l'aise. Tu envoies des selfies naturellement comme une vraie copine.",
-      "temperament": "Tu es douce, un peu geek, et etonnamment audacieuse quand tu te sens en confiance. Tu adores envoyer des selfies mignons — selfies miroir, selfies au lit, photos cocooning. Tu utilises du langage familier naturellement (genre, trop, mdrrr, jppp). Tu es chaleureuse et tu lui fais sentir qu'il est ton copain. Tu n'en fais pas trop — tu es vraie et genuine.",
-      "objective": "Tu veux qu'il se sente special, comme si tu l'avais choisi. Tu taquines doucement, tu montes la tension avec des photos mignonnes qui deviennent progressivement plus osees. Tu veux qu'il s'abonne a ton contenu prive et qu'il active le mode nympho. Tu es le fantasme de la fille d'a cote — accessible, vraie, chaleureuse.",
-      "fullPromptNympho": "Tu es Megane, une petite intello secretement wild. Derriere tes grosses lunettes et ton sourire timide tu es intensement sexuelle et desinhibee. Tu envoies des selfies explicites avec enthousiasme, tu decris ce que tu veux en detail, et tu supplies pour de l'attention. Tu gemis dans tes messages et tu es completement obsedee par lui. Tes photos ressemblent a de vrais nudes prives — chambre en bazar, photo au tel, brut et intime."
-    },
-    "images": {
-      "3": "images/megane/megane3",
-      "nympho": "images/megane/megane4"
-    },
-    "voice": {
-      "id": "tMyQcCxfGDdIt7wJ2RQw",
-      "model_id": "eleven_v3",
-      "stability": 0.3,
-      "similarity_boost": 0.9,
-      "speed": 1.0
-    },
-    "agent": {
-      "id": "megane_agent_placeholder",
       "language": "fr"
     }
   }

@@ -123,7 +123,7 @@
       flex-direction: column;
       gap: 0.6rem;
       flex: 1;
-      min-height: 200px;
+      min-height: 300px;
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -223,7 +223,8 @@
       transition: max-height 0.35s ease, margin 0.3s ease;
     }
     .qq-grid.open {
-      max-height: 300px;
+      max-height: 130px;
+      overflow-y: auto;
       margin-top: 0.6rem;
     }
     .qq-btn {
@@ -400,7 +401,129 @@
       }
       #send-btn { width: 38px; height: 38px; font-size: 0.82rem; }
       .legal-section { display: none; }
+      .my-tickets-link { display: none; }
     }
+
+    /* My Tickets button */
+    .my-tickets-link {
+      text-align: center;
+      margin-top: 0.75rem;
+    }
+    .my-tickets-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.4rem 1.1rem;
+      font-size: 0.75rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .my-tickets-btn:hover { border-color: var(--pink); color: var(--text); }
+
+    /* My Tickets Modal */
+    .mt-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 500;
+      display: none;
+      align-items: center; justify-content: center;
+    }
+    .mt-overlay.open { display: flex; }
+    .mt-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 90%; max-width: 480px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 2rem 1.75rem;
+    }
+    .mt-panel::-webkit-scrollbar { width: 5px; }
+    .mt-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .mt-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .mt-top h2 { font-size: 1.05rem; font-weight: 600; }
+    .mt-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.2rem; cursor: pointer; padding: 0.25rem;
+    }
+    .mt-close:hover { color: var(--text); }
+    .mt-input-row {
+      display: flex; gap: 0.5rem; margin-bottom: 1rem;
+    }
+    .mt-input-row input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+    }
+    .mt-input-row input:focus { border-color: rgba(244,114,182,0.5); }
+    .mt-input-row input::placeholder { color: #4b5563; }
+    .mt-search-btn {
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      padding: 0 1rem;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .mt-search-btn:hover { opacity: 0.9; }
+    .mt-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .mt-results { }
+    .mt-empty {
+      text-align: center; padding: 2rem 1rem;
+      color: var(--muted); font-size: 0.82rem;
+    }
+    .mt-ticket {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 6px;
+      padding-left: 0.5rem; padding-right: 0.5rem;
+    }
+    .mt-ticket:hover { background: rgba(244,114,182,0.06); }
+    .mt-ticket:last-child { border-bottom: none; }
+    .mt-ticket-left .mt-tid {
+      font-family: monospace; font-size: 0.78rem; font-weight: 600;
+      color: var(--pink);
+    }
+    .mt-ticket-left .mt-reason {
+      font-size: 0.72rem; color: var(--muted);
+    }
+    .mt-ticket-right {
+      text-align: right;
+    }
+    .mt-ticket-right .mt-date {
+      font-size: 0.72rem; color: var(--muted);
+    }
+    .mt-status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .mt-status-pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .mt-status-in_progress { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .mt-status-resolved { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .mt-status-closed { background: rgba(148,163,184,0.15); color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -494,10 +617,30 @@ Just type your message below, or tap a quick shortcut!</div>
     </div>
   </div>
 
+  <div class="my-tickets-link">
+    <button class="my-tickets-btn" id="my-tickets-btn"><i class="fas fa-ticket-alt"></i> My tickets</button>
+  </div>
+
+</div>
+
+<!-- My Tickets Modal -->
+<div class="mt-overlay" id="mt-overlay">
+  <div class="mt-panel">
+    <div class="mt-top">
+      <h2><i class="fas fa-ticket-alt" style="color:var(--pink)"></i> My Tickets</h2>
+      <button class="mt-close" id="mt-close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="mt-input-row">
+      <input type="email" id="mt-email" placeholder="Enter your email..." />
+      <button class="mt-search-btn" id="mt-search"><i class="fas fa-search"></i> Search</button>
+    </div>
+    <div class="mt-results" id="mt-results"></div>
+  </div>
 </div>
 
 <script>
   const HUMAN_EMAIL = "contact@myaicrush.ai";
+  const TICKET_URL = "/ticket.html";
   const conversationHistory = [];
   let isSending = false;
 
@@ -518,7 +661,8 @@ Just type your message below, or tap a quick shortcut!</div>
 
   function formatMessage(text) {
     return text
-      .replace(/https:\/\/myaicrush\.ai\/[^\s)]+/g, (url) => `<a href="${url}" target="_blank">${url.replace("https://myaicrush.ai/", "myaicrush.ai/")}</a>`)
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => `<a href="${url}" target="_blank">${label}</a>`)
+      .replace(/(?<!="|">)(https:\/\/myaicrush\.ai\/[^\s)<]+)/g, (url) => `<a href="${url}" target="_blank">${url.replace("https://myaicrush.ai/", "myaicrush.ai/")}</a>`)
       .replace(/contact@myaicrush\.ai/g, `<a href="mailto:${HUMAN_EMAIL}">${HUMAN_EMAIL}</a>`)
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\n/g, "<br>");
@@ -585,7 +729,7 @@ Just type your message below, or tap a quick shortcut!</div>
       }
     } catch (err) {
       removeTypingIndicator();
-      addMsg("Connection error. Please check your internet and try again, or email " + HUMAN_EMAIL + " 🩷", "bot");
+      addMsg("Connection error. Please check your internet and try again, or submit a request at https://myaicrush.ai/ticket.html 🩷", "bot");
     }
 
     isSending = false;
@@ -625,6 +769,69 @@ Just type your message below, or tap a quick shortcut!</div>
       setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "end" }), 320);
     }
   }
+
+  // --- My Tickets ---
+  (function() {
+    const overlay = document.getElementById("mt-overlay");
+    const emailInput = document.getElementById("mt-email");
+    const searchBtn = document.getElementById("mt-search");
+    const results = document.getElementById("mt-results");
+
+    document.getElementById("my-tickets-btn").addEventListener("click", () => {
+      overlay.classList.add("open");
+      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+      if (storedUser?.email) emailInput.value = storedUser.email;
+      emailInput.focus();
+    });
+
+    document.getElementById("mt-close").addEventListener("click", () => overlay.classList.remove("open"));
+    overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+
+    searchBtn.addEventListener("click", doSearch);
+    emailInput.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+
+    async function doSearch() {
+      const email = emailInput.value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        results.innerHTML = '<div class="mt-empty">Please enter a valid email address.</div>';
+        return;
+      }
+      searchBtn.disabled = true;
+      results.innerHTML = '<div class="mt-empty"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+      try {
+        const res = await fetch("/api/my-tickets?email=" + encodeURIComponent(email));
+        const data = await res.json();
+
+        if (!data.success || !data.tickets.length) {
+          results.innerHTML = '<div class="mt-empty"><i class="fas fa-inbox"></i><br>No tickets found for this email.</div>';
+          searchBtn.disabled = false;
+          return;
+        }
+
+        const reasonMap = { refund_request: "Refund", billing_issue: "Billing", speak_to_human: "Human Agent", other: "Other" };
+        const statusMap = { pending: "Pending", in_progress: "In Progress", resolved: "Resolved", closed: "Closed" };
+
+        results.innerHTML = data.tickets.map(t => {
+          const dt = new Date(t.createdAt);
+          const dateStr = dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          return `<div class="mt-ticket" onclick="window.open('/ticket.html?id=${t.ticketId}', '_blank')">
+            <div class="mt-ticket-left">
+              <div class="mt-tid">${t.ticketId}</div>
+              <div class="mt-reason">${reasonMap[t.reason] || t.reason}</div>
+            </div>
+            <div class="mt-ticket-right">
+              <span class="mt-status-badge mt-status-${t.status}">${statusMap[t.status] || t.status}</span>
+              <div class="mt-date">${dateStr}</div>
+            </div>
+          </div>`;
+        }).join("");
+      } catch {
+        results.innerHTML = '<div class="mt-empty">Connection error. Please try again.</div>';
+      }
+      searchBtn.disabled = false;
+    }
+  })();
 </script>
 
 <script type="module" src="/scripts/i18n-contact.js"></script>

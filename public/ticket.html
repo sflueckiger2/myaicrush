@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support Request – MyAiCrush</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-FJ5S0H9B1R');
+  </script>
+
+  <style>
+    :root {
+      --pink: #f472b6;
+      --pink-soft: #fce7f3;
+      --pink-dim: rgba(244, 114, 182, 0.18);
+      --bg: #0c0f1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: rgba(244, 114, 182, 0.2);
+      --border-muted: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --radius: 14px;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      background-image: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(244,114,182,0.12) 0%, transparent 60%);
+    }
+
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 3rem 1.25rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .page-header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+
+    .back-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+    }
+    .back-banner i {
+      font-size: 1.4rem;
+      color: var(--pink);
+      flex-shrink: 0;
+    }
+    .back-banner-text {
+      flex: 1;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .back-banner-text strong { color: var(--text); }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .back-btn:hover { opacity: 0.85; }
+    .back-btn:active { transform: scale(0.97); }
+
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(244,114,182,0.06);
+      padding: 2rem 1.75rem;
+    }
+
+    .form-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .form-subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+      line-height: 1.5;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .field {
+      margin-bottom: 1.25rem;
+    }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.02em;
+    }
+    .field label .req {
+      color: var(--pink);
+      margin-left: 2px;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border-muted);
+      border-radius: 10px;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: rgba(244,114,182,0.5);
+    }
+    .field input::placeholder,
+    .field textarea::placeholder { color: #4b5563; }
+    .field select { cursor: pointer; }
+    .field select option { background: var(--surface); color: var(--text); }
+    .field textarea { resize: vertical; min-height: 110px; }
+    .field .char-count {
+      text-align: right;
+      font-size: 0.68rem;
+      color: #4b5563;
+      margin-top: 0.3rem;
+    }
+    .field.error input,
+    .field.error select,
+    .field.error textarea {
+      border-color: var(--danger);
+    }
+    .field .error-msg {
+      font-size: 0.72rem;
+      color: var(--danger);
+      margin-top: 0.3rem;
+      display: none;
+    }
+    .field.error .error-msg { display: block; }
+
+    .checkbox-field {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      cursor: pointer;
+    }
+    .checkbox-field input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--pink);
+      flex-shrink: 0;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+    .checkbox-field span {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover { opacity: 0.9; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .success-card {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    .success-card .icon {
+      font-size: 3rem;
+      margin-bottom: 1.25rem;
+    }
+    .success-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #fff 30%, var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .success-card p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+    .ticket-id-box {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--pink);
+      margin: 1rem 0;
+      user-select: all;
+    }
+    .tracking-link {
+      display: inline-block;
+      margin-top: 0.75rem;
+      color: var(--pink);
+      font-size: 0.82rem;
+      text-decoration: underline dotted;
+      word-break: break-all;
+    }
+
+    /* Tracking page */
+    .tracking-card {
+      padding: 2rem 1.75rem;
+    }
+    .tracking-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-muted);
+    }
+    .tracking-header i {
+      font-size: 1.3rem;
+      color: var(--pink);
+    }
+    .tracking-header h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .tracking-header .tid {
+      font-size: 0.82rem;
+      color: var(--pink);
+      font-weight: 600;
+    }
+    .tracking-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-muted);
+    }
+    .tracking-row:last-child { border-bottom: none; }
+    .tracking-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .tracking-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-align: right;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .status-in_progress { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .status-resolved { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .status-closed { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .admin-reply-box {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .admin-reply-box h3 {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 0.65rem;
+      color: var(--pink);
+    }
+    .admin-reply-box p {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      line-height: 1.65;
+      white-space: pre-line;
+    }
+    .no-reply {
+      margin-top: 1.5rem;
+      text-align: center;
+      padding: 1.25rem;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .tracking-error {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    .tracking-error i {
+      font-size: 2.5rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .tracking-error h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .tracking-error p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-section {
+      margin-top: 3rem;
+      text-align: center;
+      color: #374151;
+      font-size: 0.7rem;
+    }
+    .footer-section a {
+      color: #4b5563;
+      text-decoration: none;
+      margin: 0 8px;
+      transition: color 0.2s;
+    }
+    .footer-section a:hover { color: var(--pink); }
+
+    @media (max-width: 560px) {
+      .page { padding: 1.5rem 1rem 3rem; }
+      .page-header h1 { font-size: 1.4rem; }
+      .page-header p { font-size: 0.8rem; }
+      .form-card, .form-card.success-card { padding: 1.5rem 1.25rem; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .back-banner { flex-direction: column; text-align: center; gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="page-header">
+    <h1>Support Request</h1>
+    <p>Submit a request for issues that require manual handling, such as refunds. Our team will review it and respond as soon as possible.</p>
+  </div>
+
+  <!-- Banner: go back to chat -->
+  <div class="back-banner" id="back-banner">
+    <i class="fas fa-robot"></i>
+    <div class="back-banner-text">
+      <strong>Did you know?</strong> Our AI assistant Juliette can resolve most issues instantly — including cancellations, account fixes, and token issues. Only refunds require this form.
+    </div>
+    <a href="/contact.html" class="back-btn"><i class="fas fa-arrow-left"></i> Go to chat</a>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div class="form-card" id="form-view">
+    <div class="form-title">Submit a support request</div>
+    <div class="form-subtitle">All fields are required. Please provide accurate information so we can process your request quickly.</div>
+
+    <form id="ticket-form" novalidate>
+      <div class="form-row">
+        <div class="field" id="f-firstName">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" name="firstName" placeholder="John" required />
+          <div class="error-msg">Please enter your first name</div>
+        </div>
+        <div class="field" id="f-lastName">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" name="lastName" placeholder="Doe" required />
+          <div class="error-msg">Please enter your last name</div>
+        </div>
+      </div>
+
+      <div class="field" id="f-email">
+        <label>Account Email <span class="req">*</span></label>
+        <input type="email" name="email" placeholder="your@email.com" required />
+        <div class="error-msg">Please enter a valid email address</div>
+      </div>
+
+      <div class="form-row">
+        <div class="field" id="f-phone">
+          <label>Phone Number <span class="req">*</span></label>
+          <input type="tel" name="phone" placeholder="+1 234 567 8900" required />
+          <div class="error-msg">Please enter your phone number</div>
+        </div>
+        <div class="field" id="f-orderId">
+          <label>Order Number <span class="req">*</span></label>
+          <input type="text" name="orderId" placeholder="e.g. 94866025" required />
+          <div class="error-msg">Please enter your order number (from your receipt)</div>
+        </div>
+      </div>
+
+      <div class="field" id="f-reason">
+        <label>Reason <span class="req">*</span></label>
+        <select name="reason" required>
+          <option value="" disabled selected>Select a reason...</option>
+          <option value="refund_request">Refund request</option>
+          <option value="billing_issue">Billing issue</option>
+          <option value="speak_to_human">Speak to a human</option>
+          <option value="other">Other</option>
+        </select>
+        <div class="error-msg">Please select a reason</div>
+      </div>
+
+      <div class="field" id="f-description">
+        <label>Detailed Description <span class="req">*</span></label>
+        <textarea name="description" placeholder="Please describe your issue in detail. Include any relevant information such as dates, amounts, and what you've already tried..." required minlength="50"></textarea>
+        <div class="char-count"><span id="desc-count">0</span> / 50 min characters</div>
+        <div class="error-msg">Please provide at least 50 characters of description</div>
+      </div>
+
+      <label class="checkbox-field" id="f-confirm">
+        <input type="checkbox" name="confirmedChatAttempt" required />
+        <span>I confirm that I have already tried to resolve this issue via the AI chat assistant and it could not help me. <span class="req">*</span></span>
+      </label>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <i class="fas fa-paper-plane"></i>&nbsp; Submit Request
+      </button>
+    </form>
+  </div>
+
+  <!-- SUCCESS VIEW -->
+  <div class="form-card success-card" id="success-view" style="display:none">
+    <div class="icon">&#10003;</div>
+    <h2>Request Submitted</h2>
+    <p>Your support request has been received. Our team will review it and respond as soon as possible.</p>
+    <p>Your ticket ID:</p>
+    <div class="ticket-id-box" id="success-ticket-id"></div>
+    <p style="font-size:0.78rem; color:#64748b; margin-top:0.75rem">Save this link to check the status of your request anytime:</p>
+    <a class="tracking-link" id="success-tracking-link" href="#"></a>
+    <div style="margin-top:2rem">
+      <a href="/contact.html" class="back-btn"><i class="fas fa-comments"></i>&nbsp; Back to Chat</a>
+    </div>
+  </div>
+
+  <!-- TRACKING VIEW -->
+  <div class="form-card tracking-card" id="tracking-view" style="display:none">
+    <div class="tracking-header">
+      <i class="fas fa-ticket-alt"></i>
+      <div>
+        <h2>Request Status</h2>
+        <div class="tid" id="tracking-tid"></div>
+      </div>
+    </div>
+    <div id="tracking-details"></div>
+  </div>
+
+  <div class="footer-section">
+    <p style="margin-bottom:0.5rem">&copy; 2026 MyAICrush – All rights reserved</p>
+    <a href="https://myaicrush.ai/privacy-policy.html">Privacy Policy</a> |
+    <a href="https://myaicrush.ai/terms-and-conditions.html">Terms & Conditions</a>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const form = document.getElementById('ticket-form');
+  const formView = document.getElementById('form-view');
+  const successView = document.getElementById('success-view');
+  const trackingView = document.getElementById('tracking-view');
+  const backBanner = document.getElementById('back-banner');
+  const descTextarea = form.querySelector('textarea[name="description"]');
+  const descCount = document.getElementById('desc-count');
+
+  descTextarea.addEventListener('input', () => {
+    descCount.textContent = descTextarea.value.length;
+    descCount.style.color = descTextarea.value.length >= 50 ? '#4ade80' : '#4b5563';
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const trackId = params.get('id');
+  if (trackId) {
+    formView.style.display = 'none';
+    backBanner.style.display = 'none';
+    loadTicketStatus(trackId);
+    return;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const data = {
+      firstName: val('firstName'),
+      lastName: val('lastName'),
+      email: val('email'),
+      phone: val('phone'),
+      orderId: val('orderId'),
+      reason: val('reason'),
+      description: val('description'),
+      confirmedChatAttempt: form.querySelector('[name="confirmedChatAttempt"]').checked
+    };
+
+    let hasError = false;
+    if (!data.firstName.trim()) { setError('f-firstName'); hasError = true; }
+    if (!data.lastName.trim()) { setError('f-lastName'); hasError = true; }
+    if (!data.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { setError('f-email'); hasError = true; }
+    if (!data.phone.trim()) { setError('f-phone'); hasError = true; }
+    if (!data.orderId.trim()) { setError('f-orderId'); hasError = true; }
+    if (!data.reason) { setError('f-reason'); hasError = true; }
+    if (data.description.trim().length < 50) { setError('f-description'); hasError = true; }
+    if (!data.confirmedChatAttempt) {
+      document.getElementById('f-confirm').querySelector('span').style.color = '#ef4444';
+      hasError = true;
+    }
+
+    if (hasError) {
+      const first = document.querySelector('.field.error');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; Submitting...';
+
+    try {
+      const res = await fetch('/api/support-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        alert(result.error || 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i>&nbsp; Submit Request';
+        return;
+      }
+
+      formView.style.display = 'none';
+      successView.style.display = 'block';
+      document.getElementById('success-ticket-id').textContent = result.ticketId;
+      const trackUrl = window.location.origin + '/ticket.html?id=' + result.ticketId;
+      const linkEl = document.getElementById('success-tracking-link');
+      linkEl.href = trackUrl;
+      linkEl.textContent = trackUrl;
+    } catch (err) {
+      alert('Connection error. Please try again.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>&nbsp; Submit Request';
+    }
+  });
+
+  function val(name) {
+    const el = form.querySelector(`[name="${name}"]`);
+    return el ? el.value : '';
+  }
+  function setError(id) { document.getElementById(id).classList.add('error'); }
+  function clearErrors() {
+    document.querySelectorAll('.field.error').forEach(f => f.classList.remove('error'));
+    const confirmSpan = document.getElementById('f-confirm').querySelector('span');
+    confirmSpan.style.color = '';
+  }
+
+  async function loadTicketStatus(id) {
+    trackingView.style.display = 'block';
+    document.getElementById('tracking-tid').textContent = id;
+    const details = document.getElementById('tracking-details');
+    details.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+    try {
+      const res = await fetch('/api/support-ticket/' + encodeURIComponent(id));
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        details.innerHTML = `
+          <div class="tracking-error">
+            <i class="fas fa-search"></i>
+            <h2>Ticket not found</h2>
+            <p>We couldn't find a ticket with ID "${id}". Please double-check the link.</p>
+          </div>`;
+        return;
+      }
+
+      const t = data.ticket;
+      const statusClass = 'status-' + t.status;
+      const statusLabel = { pending: 'Pending', in_progress: 'In Progress', resolved: 'Resolved', closed: 'Closed' }[t.status] || t.status;
+
+      let html = `
+        <div class="tracking-row">
+          <span class="tracking-label">Status</span>
+          <span class="tracking-value"><span class="status-badge ${statusClass}">${statusLabel}</span></span>
+        </div>
+        <div class="tracking-row">
+          <span class="tracking-label">Submitted</span>
+          <span class="tracking-value">${formatDate(t.createdAt)}</span>
+        </div>
+        <div class="tracking-row">
+          <span class="tracking-label">Last Updated</span>
+          <span class="tracking-value">${formatDate(t.updatedAt)}</span>
+        </div>
+        <div class="tracking-row">
+          <span class="tracking-label">Reason</span>
+          <span class="tracking-value">${formatReason(t.reason)}</span>
+        </div>
+        <div class="tracking-row">
+          <span class="tracking-label">Email</span>
+          <span class="tracking-value">${t.email}</span>
+        </div>`;
+
+      if (t.adminReply) {
+        html += `
+          <div class="admin-reply-box">
+            <h3><i class="fas fa-reply"></i>&nbsp; Response from our team</h3>
+            <p>${escapeHtml(t.adminReply)}</p>
+          </div>`;
+      } else {
+        html += `
+          <div class="no-reply">
+            <i class="fas fa-clock"></i>&nbsp; No response yet. Our team will review your request shortly.
+          </div>`;
+      }
+
+      details.innerHTML = html;
+    } catch (err) {
+      details.innerHTML = `
+        <div class="tracking-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h2>Connection error</h2>
+          <p>Unable to load ticket status. Please try again later.</p>
+        </div>`;
+    }
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + ' at '
+      + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatReason(r) {
+    const map = { refund_request: 'Refund Request', billing_issue: 'Billing Issue', speak_to_human: 'Speak to a Human', other: 'Other' };
+    return map[r] || r;
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+})();
+</script>
+
+</body>
+</html>
