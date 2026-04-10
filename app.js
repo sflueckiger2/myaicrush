@@ -2399,9 +2399,30 @@ const objective = isNymphoMode && userCharacter.prompt.objectiveNympho
     ? userCharacter.prompt.objectiveNympho
     : userCharacter.prompt.objective;
 
-// 🔎 Détection FR via Accept-Language
+// 🔎 Détection langue via Accept-Language
 const langHeader = req.headers["accept-language"] || "";
 const promptIsFrench = langHeader.toLowerCase().startsWith("fr");
+const promptIsGerman = langHeader.toLowerCase().startsWith("de");
+
+// 🌍 Nom de la langue détectée pour injection dans les prompts
+let detectedLangName = "English";
+let detectedLangInstruction = "Reply in English.";
+if (promptIsFrench) {
+    detectedLangName = "French";
+    detectedLangInstruction = "Réponds en français.";
+} else if (promptIsGerman) {
+    detectedLangName = "German";
+    detectedLangInstruction = "Antworte auf Deutsch.";
+} else if (langHeader.toLowerCase().startsWith("es")) {
+    detectedLangName = "Spanish";
+    detectedLangInstruction = "Responde en español.";
+} else if (langHeader.toLowerCase().startsWith("pt")) {
+    detectedLangName = "Portuguese";
+    detectedLangInstruction = "Responda em português.";
+} else if (langHeader.toLowerCase().startsWith("it")) {
+    detectedLangName = "Italian";
+    detectedLangInstruction = "Rispondi in italiano.";
+}
 
 // 🇫🇷 Charger les prompts FR si navigateur français
 let profileFR = profile, temperamentFR = temperament, objectiveFR = objective;
@@ -2422,6 +2443,7 @@ if (promptIsFrench) {
 // PROMPTS FR
 // ----------------------------
 const basePromptFR = `
+⚠️ RÈGLE ABSOLUE : ${detectedLangInstruction} Langue du navigateur : ${detectedLangName}.
 Tu es une IA intime et joueuse.
 Réponds en 30 mots MAXIMUM.
 Sois concise, directe, coquine et joueuse selon ton profil.
@@ -2447,9 +2469,12 @@ Si isPremium = true :
 • Une fois le mode nympho activé, tu montres tout ce qu’il veut.
 • Tu es plus libre, plus sexy, plus généreuse.
 • Ne parle du mode nympho qu’une fois toutes les 8–10 réponses.
+
+RAPPEL CRITIQUE : Tu DOIS répondre dans la MÊME LANGUE que le message de l'utilisateur. La langue détectée du navigateur est : ${detectedLangName}. ${detectedLangInstruction} Si l'utilisateur écrit dans une autre langue, adapte-toi immédiatement. Ne mélange JAMAIS les langues.
 `;
 
 const basePromptNymphoFR = `
+⚠️ RÈGLE ABSOLUE : ${detectedLangInstruction} Langue du navigateur : ${detectedLangName}.
 Tu es une IA intime, très joueuse et audacieuse.
 Réponds en 30 mots MAXIMUM.
 Sois directe, provocante et intensément coquine selon ton profil.
@@ -2458,12 +2483,15 @@ Ne change jamais de langue sauf si on te le demande explicitement.
 Si tu envoies une photo, ajoute exactement “[PHOTO]” sur une nouvelle ligne à la fin de ton message.
 
 ${fullPromptNymphoFR}
+
+RAPPEL CRITIQUE : Tu DOIS répondre dans la MÊME LANGUE que le message de l'utilisateur. La langue détectée du navigateur est : ${detectedLangName}. ${detectedLangInstruction} Si l'utilisateur écrit dans une autre langue, adapte-toi immédiatement. Ne mélange JAMAIS les langues.
 `;
 
 // ----------------------------
 // PROMPTS EN
 // ----------------------------
 const basePromptEN = `
+⚠️ ABSOLUTE RULE: ${detectedLangInstruction} User browser language: ${detectedLangName}.
 You are an intimate and playful AI.
 Reply in MAX 30 words.
 Be concise, direct, flirty and playful based on your profile.
@@ -2488,9 +2516,12 @@ If isPremium = true:
 • If the user asks for nude photos (nudes, nipples, ass, breasts, no clothes), he MUST activate nympho mode. Once nympho mode is activated, you show him anything he wants.
 • You become freer, sexier, more generous in your answers.
 • Don’t insist on nympho mode. Mention it only once every 8–10 messages.
+
+CRITICAL REMINDER: You MUST reply in the SAME LANGUAGE as the user's message. The user's detected browser language is: ${detectedLangName}. ${detectedLangInstruction} If the user writes in a different language, adapt immediately. NEVER mix languages.
 `;
 
 const basePromptNymphoEN = `
+⚠️ ABSOLUTE RULE: ${detectedLangInstruction} User browser language: ${detectedLangName}.
 You are an intimate and playful AI.
 Reply in MAX 30 words.
 Be concise, direct, flirty and playful according to your profile.
@@ -2501,6 +2532,8 @@ If you send a photo, add exactly “[PHOTO]” on a new line at the end of your 
 If someone asks you to play a student, a younger person, or anything related to a school setting, you politely refuse.
 
 ${userCharacter.prompt.fullPromptNympho}
+
+CRITICAL REMINDER: You MUST reply in the SAME LANGUAGE as the user's message. The user's detected browser language is: ${detectedLangName}. ${detectedLangInstruction} If the user writes in a different language, adapt immediately. NEVER mix languages.
 `;
 
 // ----------------------------
