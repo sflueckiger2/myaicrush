@@ -118,7 +118,7 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
     const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user || !user.email) {
-        alert("Tu dois être connecté pour activer ce mode.");
+        alert(_fr ? "Tu dois être connecté pour activer ce mode." : _de ? "Du musst angemeldet sein." : "You must be logged in to enable this mode.");
         toggleMode.checked = false;
         return;
     }
@@ -146,7 +146,7 @@ if (toggleMode) { // ✅ Vérifie que l'élément existe avant de modifier ses p
     } catch (error) {
         console.error("Erreur lors de la vérification du statut premium :", error);
         toggleMode.checked = false;
-        alert("Erreur lors de la vérification du compte. Merci de réessayer.");
+        alert(_fr ? "Erreur lors de la vérification du compte. Merci de réessayer." : _de ? "Fehler bei der Kontoverifizierung. Bitte erneut versuchen." : "Error checking your account. Please try again.");
     }
 });
 
@@ -200,7 +200,7 @@ if (nymphoToggle) {
 
     if (nymphoToggle.checked) {
       if (!alreadyUnlocked) {
-        const confirmation = confirm("Activer le mode Nymphomane sur cette I.A coûte 25 jetons. Es-tu sûr ? (valable 1h)");
+        const confirmation = confirm(_fr ? "Activer le mode Nymphomane sur cette I.A coûte 25 jetons. Es-tu sûr ? (valable 1h)" : _de ? "Den Nympho-Modus aktivieren kostet 25 Token. Bist du sicher? (1 Stunde gültig)" : "Activating Nympho mode costs 25 tokens. Are you sure? (valid for 1 hour)");
         if (!confirmation) {
           nymphoToggle.checked = false;
           return;
@@ -237,7 +237,7 @@ if (nymphoToggle) {
 
       } catch (err) {
         console.error("❌ Erreur API nympho :", err);
-        alert("Erreur lors de l’activation.");
+        alert(_fr ? "Erreur lors de l'activation." : _de ? "Fehler bei der Aktivierung." : "Error during activation.");
         nymphoToggle.checked = false;
       }
     } else {
@@ -373,7 +373,7 @@ fetch(`${BASE_URL}/message`, {
         console.error("❌ Réponse non OK du serveur /message :", res.status, txt);
         hideTypingIndicator();
         addBotMessage(
-          "Petit bug serveur, réessaie dans quelques secondes 😅",
+          _fr ? "Petit bug serveur, réessaie dans quelques secondes 😅" : _de ? "Kleiner Serverfehler, versuche es in ein paar Sekunden erneut 😅" : "Small server issue, try again in a few seconds 😅",
           messagesContainer
         );
         throw new Error(`HTTP ${res.status}`);
@@ -465,7 +465,7 @@ fetch(`${BASE_URL}/message`, {
 .catch(error => {
     console.error("❌ Erreur lors de l'envoi du message:", error);
     hideTypingIndicator();
-    addBotMessage('Désolé, une erreur est survenue. Merci de réessayer.', messagesContainer);
+    addBotMessage(_fr ? 'Désolé, une erreur est survenue. Merci de réessayer.' : _de ? 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.' : 'Sorry, an error occurred. Please try again.', messagesContainer);
 });
 
 
@@ -474,7 +474,7 @@ fetch(`${BASE_URL}/message`, {
         .catch(error => {
             console.error('❌ Erreur lors de la vérification premium :', error);
             hideTypingIndicator();
-            addBotMessage('Erreur lors de la vérification du statut premium. Merci de réessayer.', messagesContainer);
+            addBotMessage(_fr ? 'Erreur lors de la vérification du statut premium. Merci de réessayer.' : _de ? 'Fehler bei der Überprüfung des Premium-Status. Bitte versuche es erneut.' : 'Error checking premium status. Please try again.', messagesContainer);
         });
     }
 }
@@ -1461,7 +1461,7 @@ if (imageInput) {
         if (!messagesContainer) return;
 
         const tempImageElement = document.createElement("div");
-        tempImageElement.innerHTML = `<p>📤 Envoi en cours...</p>`;
+        tempImageElement.innerHTML = `<p>📤 ${_fr ? "Envoi en cours..." : _de ? "Senden..." : "Uploading..."}</p>`;
         messagesContainer.appendChild(tempImageElement);
         scrollToBottom(messagesContainer);
 
@@ -1539,7 +1539,7 @@ if (imageInput) {
 
                 scrollToBottom(messagesContainer);
             } else {
-                tempImageElement.innerHTML = `<p>❌ Échec de l’envoi</p>`;
+                tempImageElement.innerHTML = `<p>❌ ${_fr ? "Échec de l'envoi" : _de ? "Senden fehlgeschlagen" : "Upload failed"}</p>`;
             }
         } catch (error) {
             console.error("❌ Erreur lors de l'envoi de l'image :", error);
@@ -1547,7 +1547,7 @@ if (imageInput) {
         
             // ✅ Vérifier si la réponse contient réellement une erreur
             if (!data || !data.imageUrl) {
-                tempImageElement.innerHTML = `<p>❌ Erreur lors de l'envoi</p>`;
+                tempImageElement.innerHTML = `<p>❌ ${_fr ? "Erreur lors de l'envoi" : _de ? "Fehler beim Senden" : "Error during upload"}</p>`;
             } else {
                 tempImageElement.innerHTML = ""; // ✅ Ne rien afficher si tout est OK
             }

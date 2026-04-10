@@ -328,7 +328,7 @@ const seuilSexy = 0.97;   // Avant : 0.95
 
 app.post('/upload-image', upload.single('image'), async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ message: "Aucune image envoyée" });
+        return res.status(400).json({ message: (req.headers["accept-language"] || "").toLowerCase().startsWith("fr") ? "Aucune image envoyée" : "No image uploaded" });
     }
 
     try {
@@ -2306,7 +2306,8 @@ app.post('/message', async (req, res) => {
 
         if (!message || !email) {
             console.error("❌ Erreur : message ou email manquant !");
-            return res.status(400).json({ reply: "Votre message ou votre email est manquant." });
+            const _isFr = (req.headers["accept-language"] || "").toLowerCase().startsWith("fr");
+            return res.status(400).json({ reply: _isFr ? "Votre message ou votre email est manquant." : "Your message or email is missing." });
         }
 
         console.log("💬 Message utilisateur :", message);
@@ -2352,7 +2353,7 @@ if (!userCharacter) {
 
     if (!userCharacter) {
         console.error(`❌ Impossible de récupérer un personnage pour ${email}`);
-        return res.status(400).json({ reply: "Aucun personnage sélectionné." });
+        return res.status(400).json({ reply: (req.headers["accept-language"] || "").toLowerCase().startsWith("fr") ? "Aucun personnage sélectionné." : "No character selected." });
     }
 }
 
@@ -2670,7 +2671,7 @@ console.log("💬 Réponse finale envoyée :", botReply);
 
 
         if (!botReply) {
-            return res.status(500).json({ reply: "Désolé, la réponse n'a pas pu être obtenue." });
+            return res.status(500).json({ reply: promptIsFrench ? "Désolé, la réponse n'a pas pu être obtenue." : "Sorry, the response could not be obtained." });
         }
 
         console.log("🤖 Réponse reçue d'OpenAI :", botReply);
@@ -2759,7 +2760,7 @@ responseData.isBlurred = isPremium ? false : imageResult.isBlurred;
 
             else {
                 console.error("⚠️ Aucune image trouvée !");
-                responseData.reply += " (Désolé, aucune image disponible)";
+                responseData.reply += promptIsFrench ? " (Désolé, aucune image disponible)" : " (Sorry, no image available)";
             }
         }
 
@@ -2768,7 +2769,7 @@ responseData.isBlurred = isPremium ? false : imageResult.isBlurred;
 
     } catch (error) {
         console.error("❌ ERREUR dans l'endpoint /message :", error);
-        res.status(500).json({ reply: "Erreur interne du serveur." });
+        res.status(500).json({ reply: (req.headers["accept-language"] || "").toLowerCase().startsWith("fr") ? "Erreur interne du serveur." : "Internal server error." });
     }
 });
 
