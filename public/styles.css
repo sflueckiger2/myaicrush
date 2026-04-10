@@ -1665,46 +1665,63 @@ input:checked + .slider:before {
 }
 
 .voice-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 5px;
-  padding: 4px 10px;
-  font-size: 12px;  /* 🔹 Taille réduite */
-  font-weight: bold;
-  background-color: transparent;
-  border: 1px solid;
-  border-image: linear-gradient(to right, #dd4d9d, #8a2be2);
-  border-image-slice: 1;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 20px;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  text-align: center;
+  transition: all 0.2s ease;
+  color: #c4b5d0;
+  backdrop-filter: blur(4px);
   width: fit-content;
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
-  background-image: linear-gradient(to right, #dd4d9d, #8a2be2);
-  -webkit-text-fill-color: transparent;
 }
 
 .voice-button:hover {
-  background-image: linear-gradient(to right, #dd4d9d, #8a2be2);
-  color: white;
-  -webkit-text-fill-color: white;
+  background: rgba(221, 77, 157, 0.15);
+  color: #e8a0c9;
 }
 
 .voice-button:active {
   transform: scale(0.95);
 }
 
-/* 🔊 Icône FontAwesome */
+.voice-button.is-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.voice-button.is-playing {
+  background: rgba(221, 77, 157, 0.2);
+  color: #f0a0d0;
+}
+
 .voice-button i {
+  font-size: 13px;
+}
+
+.voice-button .voice-label {
   font-size: 12px;
-  margin-right: 6px;
-  background: linear-gradient(to right, #dd4d9d, #8a2be2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+}
+
+.voice-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(221, 77, 157, 0.3);
+  border-top-color: #dd4d9d;
+  border-radius: 50%;
+  animation: voice-spin 0.6s linear infinite;
+}
+
+@keyframes voice-spin {
+  to { transform: rotate(360deg); }
 }
 
 

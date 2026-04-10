@@ -66,10 +66,6 @@ if (character.hasNymphoMode) {
     badgesToShow.push({ text: "🥵 Nympho", class: "nympho-badge" });
 }
 
-if (character.hasAudioCall) {
-    badgesToShow.push({ text: _fr ? "📞 Appel" : _de ? "📞 Anruf" : "📞 Call", class: "call-audio-badge" });
-}
-
 // Bordure prioritaire (vert > rouge > violet)
 if (character.hasVideos) {
     card.classList.add("hasVideos");

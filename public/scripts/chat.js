@@ -494,36 +494,11 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
     const messageContent = document.createElement('span');
     messageContent.innerHTML = botReply;
 
-    // === 🔊 Bouton audio (sans texte) ===
+    // === Bouton audio style WhatsApp ===
     const voiceButton = document.createElement('button');
-    voiceButton.classList.add('voice-button'); 
-    const icon = document.createElement('i');
-    icon.classList.add('fas', 'fa-volume-up');
-    voiceButton.appendChild(icon);
-
-    // === 🔍 Vérif premium ===
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user && user.email) {
-        fetch("/api/is-premium", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: user.email }),
-        })
-        .then(res => res.json())
-        .then(({ isPremium }) => {
-            voiceButton.innerHTML = ""; 
-            voiceButton.appendChild(icon);
-
-            if (isPremium) {
-                voiceButton.onclick = () => speakMessage(botReply);
-            } else {
-                voiceButton.onclick = () => window.location.href = "premium.html";
-            }
-        })
-        .catch(err => console.error("❌ Erreur API premium :", err));
-    } else {
-        voiceButton.onclick = () => window.location.href = "premium.html";
-    }
+    voiceButton.classList.add('voice-button');
+    voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+    voiceButton.onclick = function() { speakMessage(botReply, this); };
 
     // === Structure affichage ===
     messageElement.appendChild(messageContent);
@@ -558,34 +533,13 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     const messageContent = document.createElement('span');
     messageContent.textContent = botReply;
 
-    // ✅ Ajouter un bouton " Écouter le message vocal"
+    // Bouton audio style WhatsApp
     const voiceButton = document.createElement('button');
     voiceButton.classList.add('voice-button');
+    voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+    voiceButton.onclick = function() { speakMessage(botReply, this); };
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user && user.email) {
-        fetch("/api/is-premium", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: user.email }),
-        })
-        .then(response => response.json())
-        .then(({ isPremium }) => {
-            if (isPremium) {
-                voiceButton.innerHTML = '<i class="fas fa-volume-up"></i>';
-                voiceButton.onclick = () => speakMessage(botReply);
-            } else {
-                voiceButton.innerHTML = '<i class="fas fa-volume-up"></i>';
-                voiceButton.onclick = () => window.location.href = "premium.html";
-            }
-        })
-        .catch(error => console.error("❌ Erreur vérification premium :", error));
-    } else {
-        voiceButton.innerHTML = '<i class="fas fa-volume-up"></i>';
-        voiceButton.onclick = () => window.location.href = "premium.html";
-    }
-
-    // ✅ Ajouter le texte + le bouton dans le message
+    // Ajouter le texte + le bouton dans le message
 messageElement.appendChild(messageContent);
 
 const buttonContainer = document.createElement('div');
@@ -1555,7 +1509,9 @@ if (imageInput) {
 
                 imageInput.value = "";
 
-                // 🔥 🔥 Envoyer un message spécial au serveur pour informer l’IA
+                showTypingIndicator(messagesContainer);
+
+                // Envoyer un message spécial au serveur pour informer l’IA
                 const iaResponse = await fetch(`${BASE_URL}/message`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1567,6 +1523,8 @@ if (imageInput) {
 
                 const iaData = await iaResponse.json();
                 console.log("🔍 Réponse IA après envoi d’image :", iaData);
+
+                hideTypingIndicator();
                 
                 // ✅ AFFICHER D'ABORD LA POP-UP DE PASSAGE DE NIVEAU AVANT LA RÉPONSE IA
                 if (iaData.levelUpdateMessage && iaData.levelUpdateType) {
@@ -1585,6 +1543,7 @@ if (imageInput) {
             }
         } catch (error) {
             console.error("❌ Erreur lors de l'envoi de l'image :", error);
+            hideTypingIndicator();
         
             // ✅ Vérifier si la réponse contient réellement une erreur
             if (!data || !data.imageUrl) {
@@ -1630,7 +1589,7 @@ function optimizeImage(file, maxWidth = 320, quality = 0.7) {
 
 
 // Fonction pour lire un message avec une voix française sexy
-async function speakMessage(text) {
+async function speakMessage(text, btn) {
     const activeCharacterName = localStorage.getItem("activeCharacter");
 
     if (!activeCharacterName) {
@@ -1645,13 +1604,15 @@ async function speakMessage(text) {
         return;
     }
 
-    console.log("📢 Vérification du statut premium...");
-
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user || !user.email) {
-        console.error("❌ Utilisateur non connecté !");
         window.location.href = "profile.html";
         return;
+    }
+
+    if (btn) {
+        btn.classList.add('is-loading');
+        btn.innerHTML = '<span class="voice-spinner"></span>';
     }
 
     try {
@@ -1664,12 +1625,10 @@ async function speakMessage(text) {
         const { isPremium } = await response.json();
         
         if (!isPremium) {
-            console.warn("🚫 Accès refusé : l'utilisateur n'est pas premium.");
+            if (btn) { btn.classList.remove('is-loading'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
             window.location.href = "premium.html";
             return;
         }
-
-        console.log("✅ L'utilisateur est premium, lecture du message...");
 
         const ttsResponse = await fetch("/api/tts", {
             method: "POST",
@@ -1690,14 +1649,14 @@ async function speakMessage(text) {
         if (!ttsResponse.ok) {
             const errorData = await ttsResponse.json();
 
-            // ✅ Affiche la popup si éligible au 1C
+            if (btn) { btn.classList.remove('is-loading'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
+
             if (errorData.popup) {
-                openJetonsPopup(); // 👈 fonction déjà utilisée pour les contenus privés
+                openJetonsPopup();
                 return;
             }
 
             if (errorData.redirect) {
-                console.warn("🚨 Limite atteinte, redirection vers", errorData.redirect);
                 window.location.href = errorData.redirect;
                 return;
             }
@@ -1708,11 +1667,25 @@ async function speakMessage(text) {
         const audioBlob = await ttsResponse.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
+
+        if (btn) {
+            btn.classList.remove('is-loading');
+            btn.classList.add('is-playing');
+            btn.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+
         audio.play();
 
-        console.log("🔊 Lecture EvenLabs en cours...");
+        audio.onended = () => {
+            if (btn) {
+                btn.classList.remove('is-playing');
+                btn.innerHTML = '<i class="fas fa-microphone"></i>';
+            }
+        };
+
     } catch (error) {
         console.error("❌ Erreur avec l'API TTS :", error);
+        if (btn) { btn.classList.remove('is-loading'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
     }
 }
 

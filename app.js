@@ -403,7 +403,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
             const openaiResponse = await axios.post(
                 "https://api.openai.com/v1/chat/completions",
                 {
-                    model: "gpt-4-turbo",
+                    model: "gpt-4o-mini",
                     messages: [
                         { role: "system", content: "Décris cette image. Si tu vois une image explicite, décris la avec le mot *inappropriée*. Le tout en moins de 100 tokens." },
                         {
@@ -423,8 +423,8 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
                     headers: {
                         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
                         "Content-Type": "application/json"
-                    }
-                    
+                    },
+                    timeout: 15000
                 }
             );
 
@@ -447,7 +447,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Erreur lors du traitement de l'image :", error);
+        console.error("❌ Erreur lors du traitement de l'image :", error?.response?.status, error?.response?.data || error.message);
         res.status(500).json({ message: "Erreur lors de l'analyse de l'image." });
     }
 });
