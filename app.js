@@ -1531,7 +1531,21 @@ const userPhotoStatus = new Map();
 
 // Fonction pour supprimer les accents
 function removeAccents(str) {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Supprime les accents
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function findCharacterByName(name) {
+  let character = charactersEN.find(c => c.name === name);
+  if (character) return character;
+
+  const frMatch = charactersFR.find(c => c.name === name);
+  if (frMatch) {
+    const idx = charactersFR.indexOf(frMatch);
+    if (charactersEN[idx]) return charactersEN[idx];
+  }
+
+  const norm = removeAccents(name.toLowerCase());
+  return charactersEN.find(c => removeAccents(c.name.toLowerCase()) === norm) || null;
 }
 
 // Fonction pour changer le personnage actif
@@ -1543,7 +1557,7 @@ app.post('/setCharacter', async (req, res) => {
         return res.status(400).json({ success: false, message: "Email et personnage requis." });
     }
   
-    const character = characters.find(c => c.name === name);
+    let character = findCharacterByName(name);
     if (!character) {
         return res.status(400).json({ success: false, message: "Personnage inconnu." });
     }
@@ -2205,7 +2219,7 @@ app.post("/quick-replies", async (req, res) => {
       return res.json({ quickReplies: pickFallbacks(3) });
     }
 
-    const userCharacter = characters.find(c => c.name === characterName);
+    const userCharacter = findCharacterByName(characterName);
     if (!userCharacter) {
       return res.json({ quickReplies: pickFallbacks(3) });
     }
@@ -2325,7 +2339,7 @@ if (!userCharacter) {
         const user = await users.findOne({ email });
 
         if (user && user.selectedCharacter) {
-            const storedCharacter = characters.find(c => c.name === user.selectedCharacter);
+            const storedCharacter = findCharacterByName(user.selectedCharacter);
             if (storedCharacter) {
                 userCharacters.set(email, storedCharacter);
                 console.log(`✅ Personnage restauré depuis MongoDB : ${storedCharacter.name}`);
