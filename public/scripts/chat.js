@@ -1320,24 +1320,24 @@ chatBox.style.backgroundBlendMode = 'darken';
 //fonctions is typing
 
 function showTypingIndicator(messagesContainer) {
-    const typingIndicator = document.getElementById('typing-indicator');
-    if (!typingIndicator) {
-        console.error('Typing indicator not found.');
-        return;
+    hideTypingIndicator();
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = 'typing-indicator';
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('span');
+        dot.classList.add('dot');
+        typingIndicator.appendChild(dot);
     }
-    typingIndicator.classList.remove('hidden'); // Affiche l'indicateur
-    messagesContainer.appendChild(typingIndicator); // Ajoute l'indicateur dans le conteneur des messages
-    scrollToBottom(messagesContainer); // Fait défiler vers le bas
+    messagesContainer.appendChild(typingIndicator);
+    scrollToBottom(messagesContainer);
 }
 
 
 function hideTypingIndicator() {
     const typingIndicator = document.getElementById('typing-indicator');
-    if (!typingIndicator) {
-        console.error('Typing indicator not found.');
-        return;
+    if (typingIndicator) {
+        typingIndicator.remove();
     }
-    typingIndicator.classList.add('hidden'); // Masque l'indicateur
 }
 
 

@@ -2402,6 +2402,21 @@ const objective = isNymphoMode && userCharacter.prompt.objectiveNympho
 const langHeader = req.headers["accept-language"] || "";
 const promptIsFrench = langHeader.toLowerCase().startsWith("fr");
 
+// 🇫🇷 Charger les prompts FR si navigateur français
+let profileFR = profile, temperamentFR = temperament, objectiveFR = objective;
+let fullPromptNymphoFR = userCharacter.prompt.fullPromptNympho || "";
+if (promptIsFrench) {
+    const charIdx = charactersEN.indexOf(userCharacter);
+    const frChar = charIdx >= 0 && charactersFR[charIdx] ? charactersFR[charIdx] : null;
+    if (frChar && frChar.prompt) {
+        profileFR = (isNymphoMode && frChar.prompt.profileNympho) ? frChar.prompt.profileNympho : (frChar.prompt.profile || profile);
+        temperamentFR = (isNymphoMode && frChar.prompt.temperamentNympho) ? frChar.prompt.temperamentNympho : (frChar.prompt.temperament || temperament);
+        objectiveFR = (isNymphoMode && frChar.prompt.objectiveNympho) ? frChar.prompt.objectiveNympho : (frChar.prompt.objective || objective);
+        if (frChar.prompt.fullPromptNympho) fullPromptNymphoFR = frChar.prompt.fullPromptNympho;
+        console.log(`🇫🇷 Prompts FR chargés pour ${frChar.name}`);
+    }
+}
+
 // ----------------------------
 // PROMPTS FR
 // ----------------------------
@@ -2415,9 +2430,9 @@ Si l’utilisateur change de langue, tu t’adaptes.
 Si tu envoies une photo, ajoute exactement le tag “[PHOTO]” sur une nouvelle ligne à la fin, sans rien modifier ou ajouter.
 Si on te demande de jouer une élève, une personne plus jeune ou toute situation liée à un cadre scolaire, tu refuses poliment.
 
-Profil : ${profile}
-Tempérament : ${temperament}
-Objectif : ${objective}
+Profil : ${profileFR}
+Tempérament : ${temperamentFR}
+Objectif : ${objectiveFR}
 Utilisateur premium : ${isPremium}
 
 Si isPremium = false :
@@ -2441,7 +2456,7 @@ Réponds toujours STRICTEMENT dans la même langue que l'utilisateur.
 Ne change jamais de langue sauf si on te le demande explicitement.
 Si tu envoies une photo, ajoute exactement “[PHOTO]” sur une nouvelle ligne à la fin de ton message.
 
-${userCharacter.prompt.fullPromptNympho}
+${fullPromptNymphoFR}
 `;
 
 // ----------------------------
