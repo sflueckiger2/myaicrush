@@ -38,7 +38,22 @@ const DRESSED_VIDEO_PROMPTS = {
   35: 'She leans forward then straightens up, her large heavy saggy breasts bouncing heavily and swaying with natural weight and momentum.',
   36: 'She shifts her weight and adjusts her posture, her large heavy breasts bouncing and swaying naturally under her top with each movement.',
   37: 'She shifts her weight and adjusts her posture, her large heavy breasts bouncing and swaying naturally under her top with each movement.',
-  38: 'She spins slowly and stops, her large heavy breasts continuing to bounce and jiggle with natural delayed momentum from the movement.'
+  38: 'She spins slowly and stops, her large heavy breasts continuing to bounce and jiggle with natural delayed momentum from the movement.',
+  39: 'She walks forward a few steps then stops, her large heavy breasts bouncing heavily under her deep V-neck top, jiggling with each step.',
+  40: 'She turns from the bookshelf, her large heavy breasts swaying and bouncing under her oversized shirt with the rotation.',
+  41: 'She steps forward confidently, her large heavy breasts bouncing firmly under her tight turtleneck, the fabric stretching with each bounce.',
+  42: 'She leans forward to pick something up then straightens, her large heavy breasts swinging under her fitted blouse then bouncing back.',
+  43: 'She crosses her arms then uncrosses them, her large heavy breasts pressing together then bouncing free with natural jiggle.',
+  44: 'She stands up from a chair, her large heavy breasts bouncing heavily under her sundress with the upward movement.',
+  45: 'She turns quickly to face the camera, her large heavy breasts swaying and bouncing under her ribbed top with delayed momentum.',
+  46: 'She raises her arms to fix her hair, her large heavy breasts lifting under her camisole then dropping and bouncing as she lowers her arms.',
+  47: 'She leans forward on the balcony railing, her large heavy breasts shifting and pressing together in her deep neckline.',
+  48: 'She steps down a couple of stairs, her large heavy breasts bouncing with each step under her tight tank top.',
+  49: 'She turns sharply to look behind her, her large heavy breasts continuing to sway with delayed natural momentum under her dress.',
+  50: 'She gets up from the sofa, her large heavy breasts bouncing heavily under her wrap top with the rising movement.',
+  51: 'She walks forward and stops abruptly, her large heavy breasts bouncing forward then back under her knit top with natural jiggle.',
+  52: 'She bends forward then straightens up, her large heavy breasts shifting and bouncing heavily under her overalls.',
+  53: 'She spins slowly in place, her large heavy breasts continuing to sway and bounce under her fitted sweater with delayed momentum.'
 };
 
 const COQUIN_VIDEO_PROMPTS = {
@@ -66,7 +81,22 @@ const COQUIN_VIDEO_PROMPTS = {
   35: 'She stretches her arms overhead, her large heavy bare breasts lifting then dropping and bouncing with natural weight.',
   36: 'She rolls onto her side on the chaise, her large heavy bare breasts shifting and bouncing with natural momentum.',
   37: 'She shifts on the counter, her large heavy bare breasts bouncing and jiggling with each movement.',
-  38: 'She steps forward, her large heavy bare breasts swaying and bouncing heavily with each step, natural jiggle.'
+  38: 'She steps forward, her large heavy bare breasts swaying and bouncing heavily with each step, natural jiggle.',
+  39: 'She shifts her weight side to side in front of the mirror, her large heavy bare breasts swaying and bouncing naturally with each shift.',
+  40: 'She leans forward on all fours, her large heavy bare breasts hanging down and swinging with natural pendulous weight.',
+  41: 'She uncrosses her arms, her large heavy bare breasts dropping and bouncing freely with exaggerated natural jiggle.',
+  42: 'She stands up from sitting on the bed, her large heavy bare breasts bouncing heavily with the upward movement, water droplets flying.',
+  43: 'She rolls from her back onto her side, her large heavy bare breasts shifting and bouncing with natural momentum against the sheets.',
+  44: 'She rises to a kneeling position, her large heavy bare breasts swinging and bouncing heavily as she straightens up.',
+  45: 'She puts her hands behind her head, her large heavy bare breasts lifting and stretching, then dropping and bouncing as she lowers her arms.',
+  46: 'She turns to face the mirror, her large heavy bare breasts swaying and bouncing with the rotation in the steamy reflection.',
+  47: 'She stretches her arms above her head, her large heavy bare breasts lifting upward then dropping and bouncing heavily as she relaxes.',
+  48: 'She shifts her sitting position, her large heavy bare breasts jiggling and bouncing on her lap with each movement.',
+  49: 'She leans back from the windowsill, her large heavy bare breasts bouncing as they release from the surface.',
+  50: 'She sits up in bed, her large heavy bare breasts bouncing and swaying heavily from the movement.',
+  51: 'She drops her towel, her large heavy bare breasts springing free and bouncing with natural weight.',
+  52: 'She leans forward over the table, her large heavy bare breasts hanging and swinging freely with natural pendulous movement.',
+  53: 'She steps out carefully, her large heavy bare breasts bouncing and jiggling heavily with the stepping movement.'
 };
 
 const QUEUE_SUBMIT = {
@@ -254,6 +284,20 @@ async function main() {
   }
   if (mode === 'coquin' || mode === 'all') {
     await processCategory('coquin', DIR_COQUIN, COQUIN_VIDEO_PROMPTS, 'wan21', 14, 38);
+  }
+
+  if (mode === 'dressed-new') {
+    await processCategory('dressed', DIR_DRESSED, DRESSED_VIDEO_PROMPTS, 'kling26', 39, 53);
+  }
+  if (mode === 'coquin-new') {
+    await processCategory('coquin', DIR_COQUIN, COQUIN_VIDEO_PROMPTS, 'wan21', 39, 53);
+  }
+  if (mode === 'coquin-new-wan26') {
+    await processCategory('coquin', DIR_COQUIN, COQUIN_VIDEO_PROMPTS, 'wan26', 39, 53);
+  }
+  if (mode === 'all-new') {
+    await processCategory('dressed', DIR_DRESSED, DRESSED_VIDEO_PROMPTS, 'kling26', 39, 53);
+    await processCategory('coquin', DIR_COQUIN, COQUIN_VIDEO_PROMPTS, 'wan21', 39, 53);
   }
 
   console.log('\n\nDone!');

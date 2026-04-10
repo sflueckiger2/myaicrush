@@ -1776,9 +1776,11 @@ if (isGifMode) {
         mediaFiles = allFiles.filter(file => file.endsWith('_animated.webp'));
     }
 } else {
-    mediaFiles = allFiles.filter(file =>
-        !file.endsWith('_animated.webp') && file.endsWith('.webp')
-    );
+    mediaFiles = allFiles.filter(file => {
+        const lower = file.toLowerCase();
+        return !lower.endsWith('_animated.webp') &&
+            (lower.endsWith('.webp') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png'));
+    });
 }
 
 
@@ -2347,13 +2349,14 @@ Respond STRICTLY in JSON format: ["...", "...", "..."].
       const fwRes = await fireworksChat({
         systemPrompt,
         temperature: nymphoMode ? 1.05 : 0.85,
-        timeoutMs: 3000
+        timeoutMs: 8000
       });
 
       const raw = (fwRes?.data?.choices?.[0]?.message?.content || "").trim();
       const parsed = parseQuickReplies(raw);
       finalReplies = ensureThree(parsed);
-    } catch (_) {
+    } catch (fwErr) {
+      console.error("❌ Quick-replies Fireworks error:", fwErr?.response?.status, fwErr?.response?.data || fwErr.message);
       finalReplies = pickFallbacks(3);
     }
 
@@ -5066,12 +5069,18 @@ async function supportCheckExplodelyActive(email) {
   );
 
   // 5) Also check user record for explodelyMainOrderId and cancellation info
-  const user = await users.findOne({ email: normalizedEmail }, { projection: { explodelyMainOrderId: 1, premiumCancelledAt: 1 } });
+  const user = await users.findOne({ email: normalizedEmail }, { projection: { explodelyMainOrderId: 1, premiumCancelledAt: 1, explodely_expiresAt: 1 } });
+
+  const cancelledViaSupport = !!user?.premiumCancelledAt;
+  const isCancelled = !!cancelAfterSale || cancelledViaSupport;
 
   return {
     active: true,
-    reason: cancelAfterSale ? "sale_found_but_subscription_cancelled" : "sale_found_no_refund",
-    cancelled: !!cancelAfterSale,
+    reason: isCancelled ? "sale_found_but_subscription_cancelled" : "sale_found_no_refund",
+    cancelled: isCancelled,
+    cancelledViaSupport,
+    premiumCancelledAt: user?.premiumCancelledAt || null,
+    accessContinuesUntil: user?.explodely_expiresAt ? new Date(user.explodely_expiresAt).toISOString().split("T")[0] : null,
     lastSale: { date: lastSale.createdAt, orderId: lastSale.orderId, productId: lastSale.productId, action: lastSale.action },
     explodelyMainOrderId: user?.explodelyMainOrderId || lastSale.orderId,
   };
@@ -5236,7 +5245,7 @@ async function supportFixPremium(email) {
   };
 }
 
-async function supportCancelSubscription(email) {
+async function supportCancelSubscription(email, explicitOrderId) {
   const normalizedEmail = String(email).trim().toLowerCase();
   const database = client.db("MyAICrush");
   const users = database.collection("users");
@@ -5249,30 +5258,68 @@ async function supportCancelSubscription(email) {
   const errors = [];
   let accessContinuesUntil = null;
 
-  let mainOrderId = user.explodelyMainOrderId || null;
+  let mainOrderId = explicitOrderId ? String(explicitOrderId).trim() : (user.explodelyMainOrderId || null);
+  if (explicitOrderId) {
+    console.log(`📌 [Support] Using explicit order ID from customer: ${mainOrderId}`);
+  }
+
+  // Verify the stored mainOrderId is for the PREMIUM product, not tokens
+  const PREMIUM_PRODUCT_ID = process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "22705532";
+  const explodelyEvents = database.collection("explodely_events");
+
+  if (mainOrderId && !explicitOrderId) {
+    const storedEvent = await explodelyEvents.findOne({ orderId: mainOrderId, email: normalizedEmail });
+    if (storedEvent && storedEvent.productId && String(storedEvent.productId) !== String(PREMIUM_PRODUCT_ID)) {
+      console.log(`⚠️ [Support] Stored mainOrderId ${mainOrderId} is for product ${storedEvent.productId} (tokens), not premium ${PREMIUM_PRODUCT_ID}. Looking for premium order...`);
+      mainOrderId = null;
+    }
+  }
+
   if (!mainOrderId) {
-    const explodelyEvents = database.collection("explodely_events");
-    const saleEvent = await explodelyEvents.findOne(
-      { email: normalizedEmail, eventType: "sale" },
-      { sort: { date: -1 } }
-    );
-    if (saleEvent && saleEvent.orderId) {
-      mainOrderId = saleEvent.orderId;
+    const allSaleEvents = await explodelyEvents.find({ email: normalizedEmail, eventType: "sale" }).sort({ createdAt: -1 }).limit(10).toArray();
+    console.log(`🔍 [Support] All sale events for ${normalizedEmail}:`, JSON.stringify(allSaleEvents.map(e => ({ orderId: e.orderId, productId: e.productId, action: e.action, eventType: e.eventType }))));
+
+    const premiumSaleEvent = allSaleEvents.find(e => String(e.productId) === String(PREMIUM_PRODUCT_ID));
+    if (premiumSaleEvent && premiumSaleEvent.orderId) {
+      mainOrderId = premiumSaleEvent.orderId;
+    }
+
+    if (!mainOrderId) {
+      const premiumOnEvent = allSaleEvents.find(e => e.action === "premium_on");
+      if (premiumOnEvent && premiumOnEvent.orderId) {
+        mainOrderId = premiumOnEvent.orderId;
+      }
+    }
+
+    if (mainOrderId) {
+      console.log(`✅ [Support] Found premium order ID: ${mainOrderId}`);
       await users.updateOne({ _id: user._id }, { $set: { explodelyMainOrderId: mainOrderId } });
     }
   }
 
   if (mainOrderId) {
     try {
-      const r = await fetch(
-        `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${mainOrderId}`
-      );
-      const d = await r.json();
+      const cancelUrl = `https://explodely.com/api/v1/rebill?username=${process.env.EXPLODELY_USERNAME}&apikey=${process.env.EXPLODELY_API_KEY}&apiaction=cancelrebill&mainorderid=${mainOrderId}`;
+      console.log(`🔄 [Support] Explodely cancel API call for ${normalizedEmail}, mainOrderId=${mainOrderId}`);
+      const r = await fetch(cancelUrl);
+      const rawText = await r.text();
+      console.log(`📦 [Support] Explodely cancel response (status=${r.status}):`, rawText);
+      let d;
+      try { d = JSON.parse(rawText); } catch { d = { error: `Non-JSON response: ${rawText.substring(0, 200)}` }; }
       if (!d.error) {
         cancelledExplodely = true;
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         accessContinuesUntil = expiresAt.toISOString().split("T")[0];
         await users.updateOne({ _id: user._id }, { $set: { premiumCancelledAt: new Date(), explodely_expiresAt: expiresAt } });
+        const explodelyEvents = database.collection("explodely_events");
+        await explodelyEvents.insertOne({
+          email: normalizedEmail,
+          eventType: "cancel",
+          action: "subscription_cancelled_via_support",
+          orderId: mainOrderId,
+          createdAt: new Date(),
+          source: "support_bot",
+        });
       } else {
         errors.push(`Explodely: ${d.error}`);
       }
@@ -5788,8 +5835,8 @@ const SUPPORT_TOOLS = [
     type: "function",
     function: {
       name: "cancel_subscription",
-      description: "Cancel active subscription. Checks Explodely FIRST (primary), then Stripe (legacy). Response includes accessContinuesUntil (YYYY-MM-DD) when known — tell the customer they keep premium until that date (period already paid). Before calling this tool, you must have asked confirmation and explained access-through-end-of-paid-period (see system prompt).",
-      parameters: { type: "object", properties: { email: { type: "string", description: "User email" } }, required: ["email"] },
+      description: "Cancel active subscription. Checks Explodely FIRST (primary), then Stripe (legacy). MANDATORY FLOW BEFORE CALLING: 1) Use lookup_user to check nonRefundableGift. 2) If nonRefundableGift is FALSE, offer 300 free tokens as retention (wait for response). 3) If user refuses tokens, ask explicit confirmation ('Can I proceed?'). 4) ONLY after explicit YES, call this tool. NEVER call without user confirmation in a separate message. If the customer provides an order number, pass it as orderId — this is especially important when the premium sale event is missing from the database. Response includes accessContinuesUntil — tell the customer they keep premium until that date.",
+      parameters: { type: "object", properties: { email: { type: "string", description: "User email" }, orderId: { type: "string", description: "Optional: customer-provided order number for the premium subscription (use when DB lookup fails)" } }, required: ["email"] },
     },
   },
   {
@@ -6005,6 +6052,36 @@ SUBSCRIPTION CANCELLATION:
 - BEFORE calling cancel_subscription: your confirmation step (rule 3e) must already have explained access until end of paid period. AFTER success: repeat reassurance + date if the tool returned accessContinuesUntil.
 - Most common issue: user can't cancel from the website because their account email ≠ payment email. You can cancel it directly.
 - If only a Stripe subscription is found (legacy), tell the user it's already set to non-renewal, give them the end date, and confirm it will NOT renew.
+- IMPORTANT: If the customer provides an order number in their message, ALWAYS pass it as the orderId parameter when calling cancel_subscription. This is critical because sometimes the premium sale event is missing from our database, and the customer-provided order number is the only way to cancel on Explodely.
+- If cancel_subscription fails with "Could not find any active subscription", ask the customer for their order number (from their payment receipt/email) and retry with that orderId.
+
+CANCELLATION RETENTION FLOW — MANDATORY BEFORE ANY CANCELLATION:
+When a user asks to cancel their subscription, you MUST follow this flow BEFORE executing the cancellation. Do NOT skip it. Do NOT go straight to cancellation.
+
+STEP 0: Look up the account with lookup_user. Check the "nonRefundableGift" field.
+- If nonRefundableGift is TRUE → the user already received a free token offer previously. Skip the retention offer, go directly to the CONFIRMATION step below.
+- If nonRefundableGift is FALSE → proceed to STEP 1.
+
+STEP 1: RETENTION OFFER (mandatory if nonRefundableGift is false)
+Before confirming cancellation, offer 300 free tokens ($129 value) as a reason to stay. Be warm, playful and slightly flirty (you are Juliette). Make them want to stay.
+- English example: "Before I process that, I have a special offer just for you! 🩷 I can add 300 free tokens ($129 value!) to your account right now — you can use them for exclusive bonus features like nympho mode. Your premium stays active, and you get an amazing gift on top. Would you like me to add the 300 free tokens to your account? Or would you still prefer to cancel? 😘"
+- French example: "Avant de procéder, j'ai une offre spéciale rien que pour vous ! 🩷 Je peux ajouter 300 jetons gratuits (valeur 129$ !) directement sur votre compte — vous pourrez les utiliser pour des fonctionnalités bonus exclusives comme le mode nympho. Votre premium reste actif, et vous recevez un cadeau incroyable en plus. Souhaitez-vous que j'ajoute les 300 jetons gratuits, ou préférez-vous toujours annuler ? 😘"
+- WAIT for their answer. Do NOT proceed until they respond.
+
+STEP 2A: If user ACCEPTS the 300 tokens:
+- Use credit_tokens with amount=300 and reason="retention"
+- This marks the account as non-refundable (they cannot get the token offer again later)
+- Confirm: "300 tokens added! Your subscription stays active. Enjoy! 🩷"
+- Do NOT cancel the subscription.
+
+STEP 2B: If user REFUSES and still wants to cancel:
+- Proceed to the CONFIRMATION step below.
+
+CONFIRMATION STEP (mandatory — NO EXCEPTIONS):
+- Explain clearly: cancellation stops future renewals/charges, but they KEEP premium access until the end of the billing period already paid for.
+- Ask explicitly: "Can I proceed with the cancellation?" / "Puis-je procéder à l'annulation ?"
+- WAIT for their explicit YES before calling cancel_subscription.
+- NEVER call cancel_subscription without explicit user confirmation in a SEPARATE message.
 
 EXPIRED / INACTIVE STRIPE CUSTOMERS (VERY COMMON with French-speaking users):
 Many French-speaking customers created their account before 2026 and had a Stripe subscription that has since expired or been set to non-renewal. Detect this situation when ANY of these patterns appear:
@@ -6035,10 +6112,11 @@ STEP 0: Check non-refundable flag FIRST
 
 STEP 1: Gather info (ALWAYS do this before anything else)
 - Use lookup_user to see the full picture (premium status, tokens, nonRefundableGift flag).
-- For token refunds: also use check_tokens to see their balance, how many they purchased, and how many they used.
+- For token refunds: also use check_tokens to see their balance, how many they purchased, and how many they used. Compare currentBalance to total purchased tokens — if currentBalance < total purchased, tokens have been consumed and are NOT refundable.
 - For premium refunds: also use check_premium_diagnosis to see their subscription status.
-- Tell the user CLEARLY: what they paid for, what they've used. Tokens already used are NOT refundable. Only remaining unused tokens can be considered for a refund.
+- Tell the user CLEARLY: what they paid for, what they've used. Tokens already used (even partially) mean the token purchase is NOT refundable per our Terms & Conditions.
 - If the user says "I paid 2 times" or mentions multiple purchases, investigate BOTH token and premium purchases and explain each one.
+- CRITICAL: If all tokens have been consumed (currentBalance = 0 or less than total purchased), inform the user immediately that a token refund is not possible since the tokens were used. Do NOT proceed with the retention flow for tokens in this case — instead explain the policy and offer to help with anything else (e.g. cancel subscription to prevent future charges).
 
 STEP 1B: EDUCATE about premium vs tokens (MANDATORY — do this BEFORE the retention offer)
 - Trigger this step whenever the user complains about ANY of these: "paywall", "have to pay more", "not what I agreed to", "behind a paywall", "need tokens", "why do I need tokens if I'm premium?", "everything isn't unlocked", "still have to buy", "not what was advertised", etc.
@@ -6087,6 +6165,16 @@ IMPORTANT REFUND RULES:
 - NEVER cancel a subscription as part of a refund.
 - ALWAYS propose the 300 token retention offer FIRST. Only redirect to contact@myaicrush.ai if they refuse.
 - For premium refund requests: the retention flow is the same — offer 300 free tokens first.
+
+REFUND ELIGIBILITY — WHAT CAN AND CANNOT BE REFUNDED:
+1. PREMIUM SUBSCRIPTION: Only the LAST month (most recent billing cycle) can be refunded. Never more than one month. If they paid for 3 months, only the last payment is refundable.
+2. TOKENS — STRICT RULE: Tokens are ONLY refundable if they are COMPLETELY UNUSED. If the user has started consuming ANY tokens from a purchase, that purchase is NO LONGER refundable. This is per our Terms & Conditions.
+   - Example: User bought 50 tokens and has 50 tokens remaining → refundable.
+   - Example: User bought 50 tokens and has 25 tokens remaining → NOT refundable (tokens were partially consumed).
+   - Example: User bought 2x 50 tokens (100 total) and has 47 remaining → NOT refundable (tokens were consumed).
+   - Use check_tokens to verify the current balance vs purchased amount. If currentBalance < total tokens purchased, tokens have been consumed and are not refundable.
+3. When tokens are NOT refundable, explain clearly and politely: "I can see that the tokens from your purchase have already been partially used, so unfortunately a refund is no longer possible for this order, in accordance with our Terms & Conditions. If you have any concerns, please feel free to contact us at contact@myaicrush.ai."
+4. When NOTHING is refundable (tokens consumed + no premium or already past refund window), tell the user politely and redirect to contact@myaicrush.ai only if they insist.
 
 ACCOUNT DELETION:
 - GDPR right. Confirm once, then execute delete_account.
@@ -6258,7 +6346,7 @@ async function executeSupportTool(name, args, securityCtx) {
     case "lookup_user": return await supportLookupUser(args.email);
     case "check_premium_diagnosis": return await supportCheckPremiumDiagnosis(args.email);
     case "fix_premium": return await supportFixPremium(args.email);
-    case "cancel_subscription": return await supportCancelSubscription(args.email);
+    case "cancel_subscription": return await supportCancelSubscription(args.email, args.orderId);
     case "delete_account": return await supportDeleteAccount(args.email);
     case "process_refund": return await supportProcessRefund(args.email, args.product);
     case "check_tokens": return await supportCheckTokens(args.email);
