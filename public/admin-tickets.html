@@ -329,6 +329,62 @@
       font-size: 0.78rem; color: var(--green);
     }
 
+    .conv-section {
+      margin-bottom: 1.5rem;
+      border-top: 1px solid var(--border-muted);
+      padding-top: 1rem;
+    }
+    .conv-section h3 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      margin-bottom: 0.75rem;
+    }
+    .conv-msg {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      margin-bottom: 0.6rem;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      white-space: pre-line;
+      max-width: 90%;
+    }
+    .conv-msg-admin {
+      background: var(--card);
+      border: 1px solid var(--border-muted);
+      margin-right: auto;
+    }
+    .conv-msg-client {
+      background: rgba(244,114,182,0.08);
+      border: 1px solid rgba(244,114,182,0.2);
+      margin-left: auto;
+    }
+    .conv-msg-sender {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.2rem;
+    }
+    .conv-msg-admin .conv-msg-sender { color: #60a5fa; }
+    .conv-msg-client .conv-msg-sender { color: var(--accent); }
+    .conv-msg-text { color: #cbd5e1; }
+    .conv-msg-date {
+      font-size: 0.63rem;
+      color: var(--dim);
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+    .conv-empty {
+      text-align: center;
+      padding: 0.75rem;
+      color: var(--dim);
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+
     @media (max-width: 700px) {
       .ticket-row {
         grid-template-columns: 1fr;
@@ -542,6 +598,28 @@
   function openDetail(ticket) {
     if (!ticket) return;
     const t = ticket;
+    const messages = t.messages || [];
+
+    let convHtml = '';
+    if (messages.length > 0) {
+      convHtml = messages.map(m => {
+        const isAdmin = m.from === 'admin';
+        return `<div class="conv-msg ${isAdmin ? 'conv-msg-admin' : 'conv-msg-client'}">
+          <div class="conv-msg-sender">${isAdmin ? '<i class="fas fa-headset"></i> Support' : '<i class="fas fa-user"></i> Client'}</div>
+          <div class="conv-msg-text">${esc(m.text)}</div>
+          <div class="conv-msg-date">${longDate(m.date)}</div>
+        </div>`;
+      }).join('');
+    } else if (t.adminReply) {
+      convHtml = `<div class="conv-msg conv-msg-admin">
+        <div class="conv-msg-sender"><i class="fas fa-headset"></i> Support</div>
+        <div class="conv-msg-text">${esc(t.adminReply)}</div>
+        <div class="conv-msg-date">${longDate(t.updatedAt)}</div>
+      </div>`;
+    } else {
+      convHtml = '<div class="conv-empty">No messages yet.</div>';
+    }
+
     detailPanel.innerHTML = `
       <div class="detail-top">
         <div>
@@ -562,6 +640,10 @@
         <label>Description</label>
         <p>${esc(t.description)}</p>
       </div>
+      <div class="conv-section">
+        <h3><i class="fas fa-comments"></i> Conversation (${messages.length} message${messages.length !== 1 ? 's' : ''})</h3>
+        ${convHtml}
+      </div>
       <div class="action-section">
         <h3>Update Ticket</h3>
         <div class="action-row">
@@ -573,8 +655,8 @@
             <option value="closed" ${t.status === "closed" ? "selected" : ""}>Closed</option>
           </select>
         </div>
-        <label style="display:block;font-size:0.75rem;color:var(--dim);font-weight:600;text-transform:uppercase;margin-bottom:0.4rem">Reply to customer</label>
-        <textarea class="reply-textarea" id="d-reply" placeholder="Write your response here... The customer will see this on their tracking page.">${t.adminReply ? esc(t.adminReply) : ""}</textarea>
+        <label style="display:block;font-size:0.75rem;color:var(--dim);font-weight:600;text-transform:uppercase;margin-bottom:0.4rem">New reply to customer</label>
+        <textarea class="reply-textarea" id="d-reply" placeholder="Write a new reply... Leave empty to only update the status."></textarea>
         <div>
           <button class="save-btn" id="d-save" onclick="window._saveTicket('${t.ticketId}')"><i class="fas fa-check"></i> Save Changes</button>
           <span class="save-feedback" id="d-feedback"></span>
@@ -587,15 +669,17 @@
   window._saveTicket = async (ticketId) => {
     const btn = document.getElementById("d-save");
     const feedback = document.getElementById("d-feedback");
+    const replyField = document.getElementById("d-reply");
     btn.disabled = true;
     feedback.textContent = "";
+    const replyText = replyField.value.trim() || null;
     try {
       const res = await fetch("/api/admin/tickets/" + ticketId, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "x-admin-token": token },
         body: JSON.stringify({
           status: document.getElementById("d-status").value,
-          adminReply: document.getElementById("d-reply").value.trim() || null
+          adminReply: replyText
         })
       });
       const data = await res.json();
@@ -603,6 +687,9 @@
         feedback.textContent = "Saved!";
         feedback.style.color = "var(--green)";
         loadTickets();
+        if (data.ticket) {
+          setTimeout(() => openDetail(data.ticket), 300);
+        }
       } else {
         feedback.textContent = data.error || "Error";
         feedback.style.color = "var(--red)";

@@ -364,6 +364,116 @@
       color: var(--muted);
       font-size: 0.82rem;
     }
+
+    .conversation-section {
+      margin-top: 1.5rem;
+    }
+    .conversation-section h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--pink);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .msg-bubble {
+      padding: 0.9rem 1.1rem;
+      border-radius: 14px;
+      margin-bottom: 0.75rem;
+      max-width: 88%;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      white-space: pre-line;
+      position: relative;
+    }
+    .msg-admin {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      margin-right: auto;
+    }
+    .msg-client {
+      background: rgba(244,114,182,0.1);
+      border: 1px solid rgba(244,114,182,0.25);
+      margin-left: auto;
+    }
+    .msg-sender {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.3rem;
+    }
+    .msg-admin .msg-sender { color: #60a5fa; }
+    .msg-client .msg-sender { color: var(--pink); }
+    .msg-date {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+      text-align: right;
+    }
+    .msg-text { color: #cbd5e1; }
+
+    .reply-form-section {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .reply-form-section h3 {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 0.65rem;
+      color: var(--text);
+    }
+    .reply-form-section textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border-muted);
+      border-radius: 10px;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.84rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color 0.2s;
+    }
+    .reply-form-section textarea:focus {
+      border-color: rgba(244,114,182,0.5);
+    }
+    .reply-form-section textarea::placeholder { color: #4b5563; }
+    .reply-form-section .reply-btn {
+      margin-top: 0.75rem;
+      padding: 0.6rem 1.4rem;
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .reply-form-section .reply-btn:hover { opacity: 0.9; }
+    .reply-form-section .reply-btn:active { transform: scale(0.97); }
+    .reply-form-section .reply-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .reply-form-section .reply-feedback {
+      font-size: 0.78rem;
+      margin-left: 0.75rem;
+    }
+    .reply-closed-notice {
+      margin-top: 1.5rem;
+      text-align: center;
+      padding: 1rem;
+      background: rgba(148,163,184,0.08);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
     .tracking-error {
       text-align: center;
       padding: 3rem 2rem;
@@ -674,12 +784,24 @@
           <span class="tracking-value">${t.email}</span>
         </div>`;
 
-      if (t.adminReply) {
-        html += `
-          <div class="admin-reply-box">
-            <h3><i class="fas fa-reply"></i>&nbsp; Response from our team</h3>
-            <p>${escapeHtml(t.adminReply)}</p>
-          </div>`;
+      const messages = t.messages || [];
+
+      if (t.adminReply && messages.length === 0) {
+        messages.unshift({ from: 'admin', text: t.adminReply, date: t.updatedAt });
+      }
+
+      if (messages.length > 0) {
+        html += `<div class="conversation-section"><h3><i class="fas fa-comments"></i> Conversation</h3>`;
+        for (const msg of messages) {
+          const isAdmin = msg.from === 'admin';
+          html += `
+            <div class="msg-bubble ${isAdmin ? 'msg-admin' : 'msg-client'}">
+              <div class="msg-sender">${isAdmin ? '<i class="fas fa-headset"></i> Support Team' : '<i class="fas fa-user"></i> You'}</div>
+              <div class="msg-text">${escapeHtml(msg.text)}</div>
+              <div class="msg-date">${formatDate(msg.date)}</div>
+            </div>`;
+        }
+        html += `</div>`;
       } else {
         html += `
           <div class="no-reply">
@@ -687,7 +809,25 @@
           </div>`;
       }
 
+      if (t.status === 'closed') {
+        html += `<div class="reply-closed-notice"><i class="fas fa-lock"></i>&nbsp; This ticket is closed. No further replies can be sent.</div>`;
+      } else {
+        html += `
+          <div class="reply-form-section" id="client-reply-form">
+            <h3><i class="fas fa-reply"></i>&nbsp; Reply to this ticket</h3>
+            <textarea id="client-reply-text" placeholder="Type your message here..." maxlength="2000"></textarea>
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.5rem">
+              <button class="reply-btn" id="client-reply-btn"><i class="fas fa-paper-plane"></i>&nbsp; Send Reply</button>
+              <span class="reply-feedback" id="client-reply-feedback"></span>
+            </div>
+          </div>`;
+      }
+
       details.innerHTML = html;
+
+      if (t.status !== 'closed') {
+        document.getElementById('client-reply-btn').addEventListener('click', () => sendClientReply(id, t.email));
+      }
     } catch (err) {
       details.innerHTML = `
         <div class="tracking-error">
@@ -714,6 +854,51 @@
     const d = document.createElement('div');
     d.textContent = s;
     return d.innerHTML;
+  }
+
+  async function sendClientReply(ticketId, email) {
+    const textarea = document.getElementById('client-reply-text');
+    const btn = document.getElementById('client-reply-btn');
+    const feedback = document.getElementById('client-reply-feedback');
+    const message = textarea.value.trim();
+
+    feedback.textContent = '';
+    feedback.style.color = '';
+
+    if (!message || message.length < 10) {
+      feedback.textContent = 'Please write at least 10 characters.';
+      feedback.style.color = '#ef4444';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; Sending...';
+
+    try {
+      const res = await fetch('/api/support-ticket/' + encodeURIComponent(ticketId) + '/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, message })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        feedback.textContent = data.error || 'Error sending reply.';
+        feedback.style.color = '#ef4444';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i>&nbsp; Send Reply';
+        return;
+      }
+
+      feedback.textContent = 'Reply sent! Reloading...';
+      feedback.style.color = '#4ade80';
+      setTimeout(() => loadTicketStatus(ticketId), 800);
+    } catch (err) {
+      feedback.textContent = 'Connection error. Please try again.';
+      feedback.style.color = '#ef4444';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>&nbsp; Send Reply';
+    }
   }
 })();
 </script>

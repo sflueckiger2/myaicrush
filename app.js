@@ -156,6 +156,70 @@ async function sendResetEmail(toEmail, resetUrl, lang = "en") {
   console.log(`📧 Password reset email sent to ${toEmail} (${isFr ? "FR" : "EN"})`);
 }
 
+async function sendTicketReplyEmail(toEmail, ticketId, ticketUrl) {
+  const subject = `Your support ticket ${ticketId} has been answered — MyAiCrush`;
+
+  const html = `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#070814;color:#fff;border-radius:12px;">
+  <div style="text-align:center;margin-bottom:18px;">
+    <span style="font-size:1.6rem;font-weight:700;color:#ec4899;">MyAiCrush</span>
+    <span style="font-size:1.1rem;color:#a78bfa;"> Support</span>
+  </div>
+  <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:20px;margin-bottom:18px;">
+    <p style="margin:0 0 10px;font-size:0.95rem;color:#e2e8f0;">Hello,</p>
+    <p style="margin:0 0 14px;font-size:0.95rem;color:#e2e8f0;">Our support team has responded to your ticket <strong style="color:#ec4899;">${ticketId}</strong>.</p>
+    <p style="margin:0 0 14px;font-size:0.95rem;color:#e2e8f0;">Click the button below to view the full response:</p>
+    <div style="text-align:center;margin:20px 0;">
+      <a href="${ticketUrl}" style="display:inline-block;background:linear-gradient(135deg,#ec4899,#c850c0);color:#fff;padding:12px 28px;border-radius:999px;text-decoration:none;font-weight:600;font-size:0.95rem;">View My Ticket</a>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:0.75rem;color:#64748b;margin:0;">This is an automated message from MyAiCrush Support. Please do not reply to this email.</p>
+</div>`;
+
+  const text = `Hello,\n\nOur support team has responded to your ticket ${ticketId}.\n\nView your ticket here: ${ticketUrl}\n\nThis is an automated message from MyAiCrush Support.`;
+
+  await smtpTransporter.sendMail({
+    from: `"${process.env.SMTP_FROM_NAME || "MyAiCrush"}" <${process.env.SMTP_USER || "contact@myaicrush.ai"}>`,
+    to: toEmail,
+    subject,
+    text,
+    html,
+  });
+
+  console.log(`📧 Ticket reply notification sent to ${toEmail} for ${ticketId}`);
+}
+
+async function sendTicketCreatedEmail(toEmail, ticketId, ticketUrl) {
+  const subject = `Your support ticket ${ticketId} has been received — MyAiCrush`;
+
+  const html = `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#070814;color:#fff;border-radius:12px;">
+  <div style="text-align:center;margin-bottom:18px;">
+    <span style="font-size:1.6rem;font-weight:700;color:#ec4899;">MyAiCrush</span>
+    <span style="font-size:1.1rem;color:#a78bfa;"> Support</span>
+  </div>
+  <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:20px;margin-bottom:18px;">
+    <p style="margin:0 0 10px;font-size:0.95rem;color:#e2e8f0;">Hello,</p>
+    <p style="margin:0 0 14px;font-size:0.95rem;color:#e2e8f0;">We have received your support request. Your ticket ID is <strong style="color:#ec4899;">${ticketId}</strong>.</p>
+    <p style="margin:0 0 14px;font-size:0.95rem;color:#e2e8f0;">Our team will review your request and get back to you as soon as possible. You can track the status of your ticket anytime using the link below:</p>
+    <div style="text-align:center;margin:20px 0;">
+      <a href="${ticketUrl}" style="display:inline-block;background:linear-gradient(135deg,#ec4899,#c850c0);color:#fff;padding:12px 28px;border-radius:999px;text-decoration:none;font-weight:600;font-size:0.95rem;">Track My Ticket</a>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:0.75rem;color:#64748b;margin:0;">This is an automated message from MyAiCrush Support. Please do not reply to this email.</p>
+</div>`;
+
+  const text = `Hello,\n\nWe have received your support request. Your ticket ID is ${ticketId}.\n\nTrack your ticket here: ${ticketUrl}\n\nOur team will review your request and get back to you as soon as possible.\n\nThis is an automated message from MyAiCrush Support.`;
+
+  await smtpTransporter.sendMail({
+    from: `"${process.env.SMTP_FROM_NAME || "MyAiCrush"}" <${process.env.SMTP_USER || "contact@myaicrush.ai"}>`,
+    to: toEmail,
+    subject,
+    text,
+    html,
+  });
+
+  console.log(`📧 Ticket created notification sent to ${toEmail} for ${ticketId}`);
+}
+
 //Cookie Pour les AB TEST 
 const cookieParser = require('cookie-parser');
 
@@ -6375,6 +6439,7 @@ app.post("/api/support-ticket", async (req, res) => {
       confirmedChatAttempt: true,
       status: "pending",
       adminReply: null,
+      messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
       ip
@@ -6386,6 +6451,11 @@ app.post("/api/support-ticket", async (req, res) => {
     ticketRateLimits.set(ipKey, recentSubmissions);
 
     console.log(`📩 [Support Ticket] New ticket ${ticketId} from ${ticket.email} — reason: ${reason}`);
+
+    const ticketUrl = `${BASE_URL}/ticket.html?id=${ticketId}`;
+    sendTicketCreatedEmail(ticket.email, ticketId, ticketUrl).catch(err => {
+      console.error(`📧 Failed to send ticket created email to ${ticket.email}:`, err.message);
+    });
 
     return res.json({ success: true, ticketId });
   } catch (err) {
@@ -6415,8 +6485,10 @@ app.get("/api/support-ticket/:id", async (req, res) => {
         ticketId: ticket.ticketId,
         email: ticket.email,
         reason: ticket.reason,
+        description: ticket.description,
         status: ticket.status,
         adminReply: ticket.adminReply,
+        messages: ticket.messages || [],
         createdAt: ticket.createdAt,
         updatedAt: ticket.updatedAt
       }
@@ -6493,27 +6565,92 @@ app.put("/api/admin/tickets/:id", requireAdmin, async (req, res) => {
     if (status) update.$set.status = status;
     if (adminReply !== undefined) update.$set.adminReply = adminReply;
 
+    if (adminReply && adminReply.trim()) {
+      if (!update.$push) update.$push = {};
+      update.$push.messages = { from: "admin", text: adminReply.trim(), date: new Date() };
+    }
+
     if (status === "closed") {
       update.$set.closedAt = new Date();
     } else if (status) {
       update.$unset = { closedAt: "" };
     }
 
-    const result = await tickets.findOneAndUpdate(
+    const rawResult = await tickets.findOneAndUpdate(
       { ticketId },
       update,
       { returnDocument: "after", projection: { ip: 0 } }
     );
+
+    const result = rawResult?.value || rawResult;
 
     if (!result || !result.ticketId) {
       return res.status(404).json({ success: false, error: "Ticket not found" });
     }
 
     console.log(`📝 [Admin] Ticket ${ticketId} updated — status: ${result.status}`);
+
+    if (adminReply && adminReply.trim() && result.email) {
+      const ticketUrl = `${BASE_URL}/ticket.html?id=${ticketId}`;
+      console.log(`📧 Sending ticket reply email to ${result.email}...`);
+      sendTicketReplyEmail(result.email, ticketId, ticketUrl).catch(err => {
+        console.error(`📧 Failed to send ticket reply email to ${result.email}:`, err.message);
+      });
+    }
+
     return res.json({ success: true, ticket: result });
   } catch (err) {
     console.error("Admin ticket update error:", err);
     return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+app.post("/api/support-ticket/:id/reply", async (req, res) => {
+  try {
+    const ticketId = req.params.id;
+    const { email, message } = req.body;
+
+    if (!email || !message || !message.trim()) {
+      return res.status(400).json({ success: false, error: "Email and message are required." });
+    }
+    if (message.trim().length < 10) {
+      return res.status(400).json({ success: false, error: "Message must be at least 10 characters." });
+    }
+    if (message.trim().length > 2000) {
+      return res.status(400).json({ success: false, error: "Message must be under 2000 characters." });
+    }
+
+    const database = client.db("MyAICrush");
+    const tickets = database.collection("support_tickets");
+
+    const ticket = await tickets.findOne({ ticketId });
+    if (!ticket) {
+      return res.status(404).json({ success: false, error: "Ticket not found." });
+    }
+    if (ticket.email !== email.trim().toLowerCase()) {
+      return res.status(403).json({ success: false, error: "Email does not match this ticket." });
+    }
+    if (ticket.status === "closed") {
+      return res.status(400).json({ success: false, error: "This ticket is closed and cannot receive new replies." });
+    }
+
+    const rawResult = await tickets.findOneAndUpdate(
+      { ticketId },
+      {
+        $set: { updatedAt: new Date(), status: "pending" },
+        $push: { messages: { from: "client", text: message.trim(), date: new Date() } },
+        $unset: { closedAt: "" }
+      },
+      { returnDocument: "after", projection: { ip: 0 } }
+    );
+
+    const result = rawResult?.value || rawResult;
+    console.log(`💬 [Client Reply] Ticket ${ticketId} — client replied, status set to pending`);
+
+    return res.json({ success: true, ticket: { ticketId: result.ticketId, status: result.status, messages: result.messages || [], updatedAt: result.updatedAt } });
+  } catch (err) {
+    console.error("Client reply error:", err);
+    return res.status(500).json({ success: false, error: "Internal server error." });
   }
 });
 
