@@ -234,6 +234,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const vcCost = document.querySelector(".vc-promo-cost");
   if (vcCost) vcCost.textContent = "9 jetons par vidéo";
 
+  const vcBenefit = document.querySelector(".vc-benefit-text");
+  if (vcBenefit) { vcBenefit.textContent = "Crée des vidéos de ton crush à partir d'une photo"; vcBenefit.style.background = "linear-gradient(90deg,#f472b6,#a855f7)"; vcBenefit.style.webkitBackgroundClip = "text"; vcBenefit.style.webkitTextFillColor = "transparent"; }
+
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
@@ -468,6 +471,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (vcBtn) vcBtn.textContent = "🎥 Video Creator testen";
   const vcCost = document.querySelector(".vc-promo-cost");
   if (vcCost) vcCost.textContent = "9 Token pro Video";
+
+  const vcBenefit = document.querySelector(".vc-benefit-text");
+  if (vcBenefit) { vcBenefit.textContent = "Erstelle Videos von deinem Crush aus einem Foto"; vcBenefit.style.background = "linear-gradient(90deg,#f472b6,#a855f7)"; vcBenefit.style.webkitBackgroundClip = "text"; vcBenefit.style.webkitTextFillColor = "transparent"; }
 
 }); // Ende DOMContentLoaded
 

@@ -42,6 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const nymphoDesc = document.querySelector(".nympho-item span[style]");
   if (nymphoDesc) nymphoDesc.textContent = "Rend n'importe quelle IA sauvage et sans censure. Même les plus timides.";
 
+  const vcBenefitJ = document.querySelector(".vc-benefit-jetons");
+  if (vcBenefitJ) { vcBenefitJ.textContent = "9 jetons = Vidéo IA à partir de ta photo"; vcBenefitJ.style.background = "linear-gradient(90deg,#f472b6,#a855f7)"; vcBenefitJ.style.webkitBackgroundClip = "text"; vcBenefitJ.style.webkitTextFillColor = "transparent"; }
+  const vcDescJ = vcBenefitJ?.closest("a")?.querySelector("span span:last-child");
+  if (vcDescJ) vcDescJ.textContent = "Uploade une photo, obtiens une vidéo de 10 sec. SFW ou sans censure.";
+
   // ===== TOKEN CARDS — BOUTONS & BADGES =====
   document.querySelectorAll(".token-cta").forEach(btn => {
     if (btn.textContent.trim() === "Buy") btn.textContent = "Acheter";
@@ -247,6 +252,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const nymphoDesc = document.querySelector(".nympho-item span[style]");
   if (nymphoDesc) nymphoDesc.textContent = "Macht jede KI wild und unzensiert. Selbst die Schüchternen.";
+
+  const vcBenefitJ = document.querySelector(".vc-benefit-jetons");
+  if (vcBenefitJ) { vcBenefitJ.textContent = "9 Tokens = KI-Video aus deinem Foto"; vcBenefitJ.style.background = "linear-gradient(90deg,#f472b6,#a855f7)"; vcBenefitJ.style.webkitBackgroundClip = "text"; vcBenefitJ.style.webkitTextFillColor = "transparent"; }
+  const vcDescJ = vcBenefitJ?.closest("a")?.querySelector("span span:last-child");
+  if (vcDescJ) vcDescJ.textContent = "Lade ein Foto hoch, erhalte ein 10-Sek-Video. SFW oder unzensiert.";
 
   // ===== TOKEN CARDS — BUTTONS & BADGES =====
   document.querySelectorAll(".token-cta").forEach(btn => {
