@@ -485,6 +485,15 @@ async function loadTokens() {
   } catch (e) { document.getElementById("tokenCount").textContent = "?"; }
 }
 
+async function loadPremiumStatus() {
+  if (!userEmail) return;
+  try {
+    const res = await fetch("/api/is-premium", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail }) });
+    const data = await res.json();
+    userIsPremium = !!data.isPremium;
+  } catch (e) { userIsPremium = false; }
+}
+
 // Create a job card in the queue
 function createJobCard(jobId, thumbDataUrl, modelName, promptText) {
   const queue = document.getElementById("jobQueue");
@@ -733,11 +742,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const stored = JSON.parse(localStorage.getItem("user") || "null");
   if (stored?.email) {
     userEmail = stored.email;
-    userIsPremium = !!stored.isPremium;
     document.getElementById("loginWall").style.display = "none";
     document.getElementById("creatorForm").style.display = "block";
     loadTokens();
     loadGallery();
+    loadPremiumStatus();
   } else {
     document.getElementById("loginWall").style.display = "";
     document.getElementById("creatorForm").style.display = "none";
