@@ -4648,9 +4648,13 @@ const VIDEO_MODELS = {
     submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
     buildPayload: (prompt, image_url, duration) => ({
       prompt, image_url,
-      num_frames: 100,
+      num_frames: 81,
+      resolution: '720p',
+      num_inference_steps: 40,
+      guide_scale: 5,
+      acceleration: 'none',
       enable_safety_checker: false,
-      negative_prompt: 'blur, distort, low quality, deformed'
+      negative_prompt: 'blur, blurry, distort, low quality, deformed, disfigured, overexposed, bright colors, color artifacts, wrong anatomy, extra fingers, malformed limbs, ugly, worst quality, JPEG compression'
     }),
     extractVideo: (result) => result.video?.url,
     cost5s: 0.50, cost10s: 1.00, cost15s: 1.50
