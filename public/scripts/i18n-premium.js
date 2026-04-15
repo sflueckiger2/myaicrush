@@ -224,6 +224,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
   if (modalCta) modalCta.textContent = "Accès premium — 29 $/mois";
 
+  // Video Creator promo
+  const vcTitle = document.querySelector(".vc-promo-title");
+  if (vcTitle) vcTitle.textContent = "Crée une Vidéo de ton Crush";
+  const vcDesc = document.querySelector(".vc-promo-desc");
+  if (vcDesc) vcDesc.textContent = "Uploade n'importe quelle photo et notre IA la transforme en une vidéo de 10 secondes. Ultra HD ou sans censure — à toi de choisir.";
+  const vcBtn = document.querySelector(".vc-promo-btn");
+  if (vcBtn) vcBtn.textContent = "🎥 Essayer le Video Creator";
+  const vcCost = document.querySelector(".vc-promo-cost");
+  if (vcCost) vcCost.textContent = "9 jetons par vidéo";
+
 }); // fin DOMContentLoaded
 
 } // fin if (isFrench)
@@ -448,6 +458,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
   if (modalCta) modalCta.textContent = "Premium-Zugang — 29 $/Monat";
+
+  // Video Creator promo
+  const vcTitle = document.querySelector(".vc-promo-title");
+  if (vcTitle) vcTitle.textContent = "Erstelle ein Video von deinem Crush";
+  const vcDesc = document.querySelector(".vc-promo-desc");
+  if (vcDesc) vcDesc.textContent = "Lade ein beliebiges Foto hoch und unsere KI verwandelt es in ein 10-Sekunden-Video. Ultra HD oder unzensiert — du entscheidest.";
+  const vcBtn = document.querySelector(".vc-promo-btn");
+  if (vcBtn) vcBtn.textContent = "🎥 Video Creator testen";
+  const vcCost = document.querySelector(".vc-promo-cost");
+  if (vcCost) vcCost.textContent = "9 Token pro Video";
 
 }); // Ende DOMContentLoaded
 

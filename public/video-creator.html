@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Creator – MyAiCrush</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-FJ5S0H9B1R');
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f1a; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; min-height: 100vh; }
+
+    .vc-container { max-width: 600px; margin: 0 auto; padding: 30px 20px 60px; }
+
+    .vc-back { display: inline-flex; align-items: center; gap: 8px; color: #b0b0c3; text-decoration: none; font-size: 0.9rem; margin-bottom: 25px; transition: color 0.2s; }
+    .vc-back:hover { color: #fff; }
+
+    .vc-header { text-align: center; margin-bottom: 35px; }
+    .vc-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 10px; }
+    .vc-gradient { background: linear-gradient(90deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .vc-header p { color: #b0b0c3; font-size: 0.95rem; line-height: 1.5; }
+
+    .vc-tokens-bar { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 10px 20px; margin-bottom: 30px; font-size: 0.9rem; }
+    .vc-tokens-bar i { color: #ffc107; }
+    .vc-tokens-count { font-weight: 700; color: #ffc107; }
+
+    .vc-upload-zone {
+      border: 2px dashed rgba(244, 114, 182, 0.4); border-radius: 20px;
+      padding: 50px 20px; text-align: center; cursor: pointer;
+      transition: all 0.3s ease; background: rgba(255,255,255,0.02);
+      margin-bottom: 25px; position: relative; overflow: hidden;
+    }
+    .vc-upload-zone:hover { border-color: #f472b6; background: rgba(244, 114, 182, 0.05); }
+    .vc-upload-zone.has-image { padding: 0; border-style: solid; border-color: rgba(244, 114, 182, 0.3); }
+    .vc-upload-zone .vc-upload-icon { font-size: 2.5rem; color: #f472b6; margin-bottom: 15px; }
+    .vc-upload-zone .vc-upload-text { color: #b0b0c3; font-size: 0.95rem; }
+    .vc-upload-zone .vc-upload-text strong { color: #f472b6; }
+    .vc-upload-zone .vc-upload-hint { color: #666; font-size: 0.8rem; margin-top: 8px; }
+
+    .vc-preview { width: 100%; max-height: 400px; object-fit: contain; border-radius: 18px; display: block; }
+    .vc-remove-img {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(0,0,0,0.7); border: none; color: #fff;
+      width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    }
+    .vc-remove-img:hover { background: rgba(255, 71, 87, 0.8); }
+
+    .vc-prompt-section { margin-bottom: 25px; }
+    .vc-prompt-section label { display: block; font-size: 0.9rem; color: #d1d1e0; margin-bottom: 8px; font-weight: 600; }
+    .vc-prompt-input {
+      width: 100%; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+      color: #fff; padding: 14px 16px; font-size: 0.9rem;
+      resize: vertical; min-height: 80px; font-family: inherit;
+    }
+    .vc-prompt-input:focus { outline: none; border-color: #f472b6; }
+    .vc-prompt-input::placeholder { color: #666; }
+
+    .vc-mode-section { margin-bottom: 30px; }
+    .vc-mode-section > label { display: block; font-size: 0.9rem; color: #d1d1e0; margin-bottom: 12px; font-weight: 600; }
+    .vc-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .vc-mode-card {
+      background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 20px 16px; cursor: pointer;
+      text-align: center; transition: all 0.3s ease; position: relative;
+    }
+    .vc-mode-card:hover { border-color: rgba(244, 114, 182, 0.4); background: rgba(255,255,255,0.05); }
+    .vc-mode-card.selected { border-color: #f472b6; background: rgba(244, 114, 182, 0.08); box-shadow: 0 0 20px rgba(244, 114, 182, 0.15); }
+    .vc-mode-card .vc-mode-icon { font-size: 2rem; margin-bottom: 10px; }
+    .vc-mode-card .vc-mode-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .vc-mode-card .vc-mode-desc { font-size: 0.75rem; color: #999; line-height: 1.4; }
+    .vc-mode-card .vc-mode-badge { position: absolute; top: -8px; right: -8px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 8px; }
+    .vc-badge-hd { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+    .vc-badge-hot { background: linear-gradient(90deg, #ef4444, #f97316); }
+
+    .vc-cost-info {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2);
+      border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; color: #ffc107;
+    }
+
+    .vc-submit-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(90deg, #f472b6, #a855f7);
+      border: none; border-radius: 14px; color: #fff; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; transition: all 0.3s ease;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .vc-submit-btn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 25px rgba(244, 114, 182, 0.4); }
+    .vc-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .vc-result-section { margin-top: 35px; display: none; }
+    .vc-result-section.visible { display: block; }
+
+    /* Job queue cards */
+    .vc-queue { display: flex; flex-direction: column; gap: 14px; margin-top: 25px; }
+    .vc-job {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 16px; transition: border-color 0.3s;
+    }
+    .vc-job.done { border-color: rgba(22, 202, 0, 0.3); }
+    .vc-job.failed { border-color: rgba(255, 71, 87, 0.3); }
+    .vc-job-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .vc-job-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+    .vc-job-info { flex: 1; min-width: 0; }
+    .vc-job-model { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #f472b6; }
+    .vc-job-prompt { font-size: 0.75rem; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+
+    .vc-progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 15px; }
+    .vc-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #f472b6, #a855f7); border-radius: 3px; transition: width 0.5s ease; }
+
+    .vc-status-text { text-align: center; color: #b0b0c3; font-size: 0.9rem; margin-bottom: 20px; }
+    .vc-status-text i { margin-right: 6px; }
+
+    /* Protected video wrapper — blocks right-click, screenshots, download */
+    .vc-video-wrapper {
+      position: relative; border-radius: 18px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1); background: #000;
+      -webkit-user-select: none; user-select: none;
+    }
+    .vc-video-wrapper video {
+      width: 100%; display: block; border-radius: 18px;
+      pointer-events: none;
+    }
+    .vc-video-shield {
+      position: absolute; inset: 0; z-index: 2; cursor: default;
+    }
+    .vc-video-controls {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    }
+    .vc-video-controls button {
+      background: none; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; padding: 4px;
+    }
+    .vc-video-controls input[type=range] {
+      flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+      background: rgba(255,255,255,0.3); border-radius: 2px; cursor: pointer;
+    }
+    .vc-video-controls input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+      background: #f472b6; cursor: pointer;
+    }
+
+    .vc-personal-notice {
+      text-align: center; font-size: 0.7rem; color: #666; margin-top: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+
+    .vc-error { text-align: center; color: #ff4757; font-size: 0.9rem; margin-top: 15px; display: none; }
+
+    .vc-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: vc-spin 0.6s linear infinite; }
+    @keyframes vc-spin { to { transform: rotate(360deg); } }
+
+    .vc-login-wall {
+      text-align: center; padding: 60px 20px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; margin-top: 20px;
+    }
+    .vc-login-wall i { font-size: 2.5rem; color: #f472b6; margin-bottom: 15px; }
+    .vc-login-wall p { color: #b0b0c3; margin-bottom: 20px; }
+    .vc-login-btn {
+      display: inline-block; padding: 12px 30px;
+      background: linear-gradient(90deg, #f472b6, #a855f7);
+      border-radius: 30px; color: #fff; text-decoration: none; font-weight: 600;
+    }
+    .vc-login-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(244, 114, 182, 0.4); }
+
+    /* Gallery */
+    .vc-gallery { margin-top: 50px; }
+    .vc-gallery-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .vc-gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .vc-gallery-card {
+      position: relative; border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08); background: #000;
+      cursor: pointer; transition: border-color 0.2s;
+      -webkit-user-select: none; user-select: none;
+    }
+    .vc-gallery-card:hover { border-color: rgba(244, 114, 182, 0.4); }
+    .vc-gallery-card video { width: 100%; display: block; aspect-ratio: 9/16; object-fit: cover; pointer-events: none; }
+    .vc-gallery-card .vc-gallery-shield { position: absolute; inset: 0; z-index: 2; }
+    .vc-gallery-meta {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+      padding: 8px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      font-size: 0.7rem; color: #b0b0c3;
+    }
+    .vc-gallery-meta .vc-gallery-model { color: #f472b6; font-weight: 600; text-transform: uppercase; font-size: 0.6rem; }
+    .vc-gallery-empty {
+      text-align: center; padding: 30px; color: #666; font-size: 0.9rem;
+      background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 14px;
+    }
+
+    /* Fullscreen viewer */
+    .vc-viewer-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.95); align-items: center; justify-content: center;
+      flex-direction: column; -webkit-user-select: none; user-select: none;
+    }
+    .vc-viewer-overlay.open { display: flex; }
+    .vc-viewer-overlay video { max-width: 90vw; max-height: 80vh; border-radius: 14px; pointer-events: none; }
+    .vc-viewer-shield { position: absolute; inset: 0; z-index: 1; }
+    .vc-viewer-close {
+      position: absolute; top: 20px; right: 20px; z-index: 3;
+      background: rgba(255,255,255,0.1); border: none; color: #fff;
+      width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
+    }
+    .vc-viewer-close:hover { background: rgba(255,255,255,0.2); }
+    .vc-viewer-controls {
+      z-index: 3; margin-top: 15px; display: flex; align-items: center; gap: 15px;
+    }
+    .vc-viewer-controls button { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; }
+
+    @media (max-width: 400px) {
+      .vc-modes { grid-template-columns: 1fr; }
+      .vc-header h1 { font-size: 1.5rem; }
+      .vc-gallery-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div class="vc-container">
+
+  <a href="index.html" class="vc-back"><i class="fas fa-arrow-left"></i> <span data-i18n="back">Back</span></a>
+
+  <div class="vc-header">
+    <h1>🎬 <span class="vc-gradient" data-i18n="title">Create a Video of Your Crush</span></h1>
+    <p data-i18n="subtitle">Upload a photo, choose a style, and our AI will bring it to life in a stunning 10-second video.</p>
+  </div>
+
+  <div class="vc-tokens-bar">
+    <i class="fas fa-coins"></i>
+    <span data-i18n="your-tokens">Your tokens:</span>
+    <span class="vc-tokens-count" id="tokenCount">—</span>
+    <a href="jetons.html" style="color:#f472b6; font-size:0.8rem; margin-left:6px;" data-i18n="buy-more">Buy more</a>
+  </div>
+
+  <div class="vc-login-wall" id="loginWall" style="display:none;">
+    <i class="fas fa-lock"></i>
+    <p data-i18n="login-required">You need to be logged in to create videos.</p>
+    <a href="index.html" class="vc-login-btn" data-i18n="go-login">Log in</a>
+  </div>
+
+  <div id="creatorForm" style="display:none;">
+
+    <div class="vc-upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <div id="uploadPlaceholder">
+        <div class="vc-upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+        <div class="vc-upload-text" data-i18n="upload-text"><strong>Click</strong> or drag a photo here</div>
+        <div class="vc-upload-hint" data-i18n="upload-hint">JPG, PNG, WebP — max 10 MB</div>
+      </div>
+      <img class="vc-preview" id="imagePreview" style="display:none;" alt="Preview">
+      <button class="vc-remove-img" id="removeBtn" style="display:none;" onclick="event.stopPropagation(); removeImage();"><i class="fas fa-times"></i></button>
+    </div>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+
+    <div class="vc-prompt-section">
+      <label data-i18n="prompt-label"><i class="fas fa-magic"></i> Describe the motion (optional)</label>
+      <textarea class="vc-prompt-input" id="promptInput" placeholder="e.g. She smiles and flips her hair gently..." data-i18n-placeholder="prompt-placeholder"></textarea>
+    </div>
+
+    <div class="vc-mode-section">
+      <label data-i18n="mode-label"><i class="fas fa-film"></i> Choose your style</label>
+      <div class="vc-modes">
+        <div class="vc-mode-card selected" data-mode="kling26" onclick="selectMode(this)">
+          <span class="vc-mode-badge vc-badge-hd">HD</span>
+          <div class="vc-mode-icon">✨</div>
+          <div class="vc-mode-title" data-i18n="mode-hd-title">Ultra Quality</div>
+          <div class="vc-mode-desc" data-i18n="mode-hd-desc">Stunning quality, SFW content. Powered by Kling 2.6</div>
+        </div>
+        <div class="vc-mode-card" data-mode="wan26" onclick="selectMode(this)">
+          <span class="vc-mode-badge vc-badge-hot">18+</span>
+          <div class="vc-mode-icon">🔥</div>
+          <div class="vc-mode-title" data-i18n="mode-nsfw-title">Uncensored</div>
+          <div class="vc-mode-desc" data-i18n="mode-nsfw-desc">NSFW-friendly, no filter. Powered by WAN 2.6</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vc-cost-info">
+      <i class="fas fa-coins"></i>
+      <span data-i18n="cost-info">Cost: <strong>9 tokens</strong> per video (~10 seconds)</span>
+    </div>
+
+    <button class="vc-submit-btn" id="submitBtn" onclick="submitVideo()" disabled>
+      <i class="fas fa-video"></i>
+      <span data-i18n="generate-btn">Generate my video</span>
+    </button>
+
+    <div class="vc-error" id="errorMsg"></div>
+
+    <!-- Job queue -->
+    <div class="vc-queue" id="jobQueue"></div>
+
+    <!-- My Videos Gallery -->
+    <div class="vc-gallery" id="gallerySection" style="display:none;">
+      <div class="vc-gallery-title"><i class="fas fa-photo-video" style="color:#f472b6;"></i> <span data-i18n="my-videos">My Videos</span></div>
+      <div id="galleryGrid" class="vc-gallery-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Fullscreen viewer -->
+<div class="vc-viewer-overlay" id="viewerOverlay" oncontextmenu="return false;">
+  <div class="vc-viewer-shield" onclick="closeViewer()"></div>
+  <button class="vc-viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
+  <video autoplay loop id="viewerVideo" playsinline></video>
+  <div class="vc-viewer-controls">
+    <button onclick="viewerTogglePlay()"><i class="fas fa-pause" id="viewerPlayIcon"></i></button>
+    <button onclick="viewerToggleMute()"><i class="fas fa-volume-mute" id="viewerMuteIcon"></i></button>
+  </div>
+</div>
+
+<script>
+const _lang = navigator.language || "en";
+const _fr = _lang.startsWith("fr");
+const _de = _lang.startsWith("de");
+
+const i18n = {
+  fr: {
+    back: "Retour", title: "Crée une Vidéo de ton Crush",
+    subtitle: "Uploade une photo, choisis un style, et notre IA la transformera en une vidéo de 10 secondes.",
+    "your-tokens": "Tes jetons :", "buy-more": "En acheter",
+    "login-required": "Tu dois être connecté pour créer des vidéos.", "go-login": "Se connecter",
+    "upload-text": "<strong>Clique</strong> ou glisse une photo ici", "upload-hint": "JPG, PNG, WebP — max 10 Mo",
+    "prompt-label": "Décris le mouvement (optionnel)", "prompt-placeholder": "Ex: Elle sourit et passe sa main dans ses cheveux...",
+    "mode-label": "Choisis ton style", "mode-hd-title": "Ultra Qualité",
+    "mode-hd-desc": "Qualité incroyable, contenu SFW. Propulsé par Kling 2.6",
+    "mode-nsfw-title": "Sans Censure", "mode-nsfw-desc": "NSFW, aucun filtre. Propulsé par WAN 2.6",
+    "cost-info": "Coût : <strong>9 jetons</strong> par vidéo (~10 secondes)", "generate-btn": "Générer ma vidéo",
+    "status-queued": "Envoi de ta vidéo...", "status-processing": "Création en cours... cela peut prendre 2–4 min",
+    "status-saving": "Sauvegarde en cours...", "status-done": "Ta vidéo est prête !", "status-failed": "Échec de la génération. Réessaie.",
+    "error-no-image": "Uploade d'abord une photo.", "error-no-tokens": "Pas assez de jetons. Il te faut 9 jetons.",
+    "error-server": "Erreur serveur. Réessaie dans quelques instants.",
+    "error-not-premium": "Cette fonctionnalité est réservée aux membres Premium.",
+    "personal-only": "Usage personnel uniquement. Cette vidéo est sauvegardée sur ton compte.",
+    "my-videos": "Mes Vidéos", "no-videos": "Tes vidéos générées apparaîtront ici.",
+  },
+  de: {
+    back: "Zurück", title: "Erstelle ein Video von deinem Crush",
+    subtitle: "Lade ein Foto hoch, wähle einen Stil, und unsere KI verwandelt es in ein atemberaubendes 10-Sekunden-Video.",
+    "your-tokens": "Deine Token:", "buy-more": "Mehr kaufen",
+    "login-required": "Du musst eingeloggt sein, um Videos zu erstellen.", "go-login": "Einloggen",
+    "upload-text": "<strong>Klicke</strong> oder ziehe ein Foto hierher", "upload-hint": "JPG, PNG, WebP — max 10 MB",
+    "prompt-label": "Beschreibe die Bewegung (optional)", "prompt-placeholder": "Z.B. Sie lächelt und streicht sich durchs Haar...",
+    "mode-label": "Wähle deinen Stil", "mode-hd-title": "Ultra Qualität",
+    "mode-hd-desc": "Beeindruckende Qualität, SFW-Inhalt. Powered by Kling 2.6",
+    "mode-nsfw-title": "Unzensiert", "mode-nsfw-desc": "NSFW-freundlich, kein Filter. Powered by WAN 2.6",
+    "cost-info": "Kosten: <strong>9 Token</strong> pro Video (~10 Sekunden)", "generate-btn": "Mein Video generieren",
+    "status-queued": "Video wird gesendet...", "status-processing": "Erstellung läuft... kann 2–4 Min dauern",
+    "status-saving": "Wird gespeichert...", "status-done": "Dein Video ist fertig!", "status-failed": "Generierung fehlgeschlagen. Versuche es erneut.",
+    "error-no-image": "Lade zuerst ein Foto hoch.", "error-no-tokens": "Nicht genug Token. Du brauchst 9 Token.",
+    "error-server": "Serverfehler. Versuche es in einigen Momenten erneut.",
+    "error-not-premium": "Diese Funktion ist Premium-Mitgliedern vorbehalten.",
+    "personal-only": "Nur für den persönlichen Gebrauch. Dieses Video ist in deinem Konto gespeichert.",
+    "my-videos": "Meine Videos", "no-videos": "Deine generierten Videos werden hier angezeigt.",
+  }
+};
+
+function t(key) { const lang = _fr ? "fr" : _de ? "de" : null; return lang && i18n[lang]?.[key] ? i18n[lang][key] : null; }
+
+function applyI18n() {
+  const lang = _fr ? "fr" : _de ? "de" : null;
+  if (!lang) return;
+  document.querySelectorAll("[data-i18n]").forEach(el => { const v = i18n[lang]?.[el.getAttribute("data-i18n")]; if (v) el.innerHTML = v; });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { const v = i18n[lang]?.[el.getAttribute("data-i18n-placeholder")]; if (v) el.placeholder = v; });
+}
+
+let selectedMode = "kling26", uploadedFile = null, userEmail = null;
+let jobCounter = 0;
+
+function selectMode(card) {
+  document.querySelectorAll(".vc-mode-card").forEach(c => c.classList.remove("selected"));
+  card.classList.add("selected");
+  selectedMode = card.dataset.mode;
+}
+
+function removeImage() {
+  uploadedFile = null;
+  document.getElementById("imagePreview").style.display = "none";
+  document.getElementById("removeBtn").style.display = "none";
+  document.getElementById("uploadPlaceholder").style.display = "";
+  document.getElementById("uploadZone").classList.remove("has-image");
+  document.getElementById("fileInput").value = "";
+  updateSubmitState();
+}
+
+function handleFile(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  if (file.size > 10 * 1024 * 1024) { showError("File too large (max 10 MB)"); return; }
+  uploadedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById("imagePreview").src = e.target.result;
+    document.getElementById("imagePreview").style.display = "block";
+    document.getElementById("removeBtn").style.display = "flex";
+    document.getElementById("uploadPlaceholder").style.display = "none";
+    document.getElementById("uploadZone").classList.add("has-image");
+    updateSubmitState();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSubmitState() { document.getElementById("submitBtn").disabled = !uploadedFile; }
+
+function showError(msg) {
+  const el = document.getElementById("errorMsg");
+  el.textContent = msg; el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 6000);
+}
+
+async function loadTokens() {
+  if (!userEmail) return;
+  try {
+    const res = await fetch("/api/get-user-tokens", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail }) });
+    const data = await res.json();
+    document.getElementById("tokenCount").textContent = data.tokens ?? 0;
+  } catch (e) { document.getElementById("tokenCount").textContent = "?"; }
+}
+
+// Create a job card in the queue
+function createJobCard(jobId, thumbDataUrl, modelName, promptText) {
+  const queue = document.getElementById("jobQueue");
+  const card = document.createElement("div");
+  card.className = "vc-job";
+  card.id = `job-${jobId}`;
+  const safePrompt = (promptText || 'Auto motion').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  card.innerHTML = `
+    <div class="vc-job-header">
+      <img class="vc-job-thumb" src="${thumbDataUrl}" alt="">
+      <div class="vc-job-info">
+        <div class="vc-job-model">${modelName === 'kling26' ? '✨ Ultra HD' : '🔥 Uncensored'}</div>
+        <div class="vc-job-prompt">${safePrompt}</div>
+      </div>
+      <div class="vc-job-status" style="font-size:0.75rem;color:#b0b0c3;white-space:nowrap;">
+        <i class="fas fa-circle-notch fa-spin" style="color:#f472b6;"></i> <span>${t("status-queued") || "Submitting..."}</span>
+      </div>
+    </div>
+    <div class="vc-progress-bar"><div class="vc-progress-fill" id="progress-${jobId}" style="width:10%;"></div></div>
+    <div class="vc-video-wrapper" id="video-wrap-${jobId}" style="display:none; margin-top:10px;">
+      <video loop muted playsinline id="video-${jobId}"></video>
+      <div class="vc-video-shield" onclick="jobTogglePlay('${jobId}')"></div>
+      <div class="vc-video-controls">
+        <button onclick="jobTogglePlay('${jobId}')" id="play-${jobId}"><i class="fas fa-pause"></i></button>
+        <input type="range" min="0" max="100" value="0" id="seek-${jobId}" oninput="jobSeek('${jobId}', this.value)">
+        <button onclick="jobToggleMute('${jobId}')" id="mute-${jobId}"><i class="fas fa-volume-mute"></i></button>
+      </div>
+    </div>
+    <div class="vc-personal-notice" id="notice-${jobId}" style="display:none;">
+      <i class="fas fa-shield-alt"></i> <span>${t("personal-only") || "For personal use only. This video is saved to your account."}</span>
+    </div>
+  `;
+  queue.prepend(card);
+  return card;
+}
+
+function updateJobStatus(jobId, icon, text, cssClass) {
+  const card = document.getElementById(`job-${jobId}`);
+  if (!card) return;
+  const statusEl = card.querySelector(".vc-job-status");
+  statusEl.innerHTML = `${icon} <span>${text}</span>`;
+  if (cssClass) card.classList.add(cssClass);
+}
+
+function updateJobProgress(jobId, pct) {
+  const bar = document.getElementById(`progress-${jobId}`);
+  if (bar) bar.style.width = pct + "%";
+}
+
+function jobTogglePlay(id) {
+  const v = document.getElementById(`video-${id}`);
+  const icon = document.getElementById(`play-${id}`)?.querySelector("i");
+  if (v.paused) { v.play(); if (icon) icon.className = "fas fa-pause"; }
+  else { v.pause(); if (icon) icon.className = "fas fa-play"; }
+}
+function jobToggleMute(id) {
+  const v = document.getElementById(`video-${id}`);
+  v.muted = !v.muted;
+  const icon = document.getElementById(`mute-${id}`)?.querySelector("i");
+  if (icon) icon.className = v.muted ? "fas fa-volume-mute" : "fas fa-volume-up";
+}
+function jobSeek(id, val) {
+  const v = document.getElementById(`video-${id}`);
+  if (v.duration) v.currentTime = (val / 100) * v.duration;
+}
+function jobUpdateSeek(id) {
+  const v = document.getElementById(`video-${id}`);
+  const s = document.getElementById(`seek-${id}`);
+  if (v && s && v.duration) s.value = (v.currentTime / v.duration) * 100;
+}
+
+async function submitVideo() {
+  if (!uploadedFile) return;
+
+  const file = uploadedFile;
+  const prompt = document.getElementById("promptInput").value.trim() || "The person in the image moves naturally, subtle motion, cinematic.";
+  const model = selectedMode;
+  const thumbUrl = document.getElementById("imagePreview").src;
+  const promptDisplay = document.getElementById("promptInput").value.trim();
+
+  document.getElementById("errorMsg").style.display = "none";
+
+  const jobId = "j" + (++jobCounter) + "_" + Date.now();
+  createJobCard(jobId, thumbUrl, model, promptDisplay);
+
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("prompt", prompt);
+  formData.append("model", model);
+  formData.append("email", userEmail);
+
+  (async () => {
+    try {
+      const res = await fetch("/api/video-creator/submit", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        let errText = data.error || "Server error";
+        if (data.needTokens) errText = t("error-no-tokens") || errText;
+        if (data.needPremium) errText = t("error-not-premium") || errText;
+        updateJobStatus(jobId, '<i class="fas fa-times-circle" style="color:#ff4757;"></i>', errText, 'failed');
+        return;
+      }
+
+      loadTokens();
+      updateJobProgress(jobId, 25);
+      updateJobStatus(jobId, '<i class="fas fa-circle-notch fa-spin" style="color:#f472b6;"></i>', t("status-processing") || "Creating... 2–4 min");
+
+      await pollJobStatus(jobId, data.request_id, data.model, prompt);
+    } catch (err) {
+      console.error("Submit error:", err);
+      updateJobStatus(jobId, '<i class="fas fa-times-circle" style="color:#ff4757;"></i>', t("error-server") || "Connection error", 'failed');
+    }
+  })();
+}
+
+async function pollJobStatus(jobId, requestId, model, prompt) {
+  for (let i = 0; i < 200; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`/api/video/status/${model}/${requestId}`);
+      const data = await res.json();
+      updateJobProgress(jobId, Math.min(25 + (i / 200) * 70, 90));
+
+      if (data.video_url) {
+        updateJobProgress(jobId, 95);
+        updateJobStatus(jobId, '<i class="fas fa-circle-notch fa-spin" style="color:#f472b6;"></i>', t("status-saving") || "Saving...");
+
+        const saveRes = await fetch("/api/video-creator/save", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail, videoUrl: data.video_url, model, prompt })
+        });
+        const saveData = await saveRes.json();
+        const localUrl = saveData.localUrl || data.video_url;
+
+        updateJobProgress(jobId, 100);
+        updateJobStatus(jobId, '<i class="fas fa-check-circle" style="color:#16ca00;"></i>', t("status-done") || "Ready!", 'done');
+
+        const videoWrap = document.getElementById(`video-wrap-${jobId}`);
+        const videoEl = document.getElementById(`video-${jobId}`);
+        if (videoWrap && videoEl) {
+          videoEl.src = localUrl;
+          videoEl.muted = false;
+          videoEl.play();
+          videoWrap.style.display = "block";
+          const seekLoop = () => { jobUpdateSeek(jobId); requestAnimationFrame(seekLoop); };
+          seekLoop();
+        }
+        document.getElementById(`notice-${jobId}`).style.display = "flex";
+
+        loadTokens();
+        loadGallery();
+        return;
+      }
+
+      if (data.error) {
+        updateJobStatus(jobId, '<i class="fas fa-times-circle" style="color:#ff4757;"></i>', data.error.substring(0, 60), 'failed');
+        return;
+      }
+    } catch (e) { console.error("Poll error:", e); }
+  }
+  updateJobStatus(jobId, '<i class="fas fa-times-circle" style="color:#ff4757;"></i>', "Timeout", 'failed');
+}
+
+// Gallery
+async function loadGallery() {
+  if (!userEmail) return;
+  try {
+    const res = await fetch("/api/video-creator/my-videos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail }) });
+    const data = await res.json();
+    const grid = document.getElementById("galleryGrid");
+    const section = document.getElementById("gallerySection");
+
+    if (!data.videos || data.videos.length === 0) {
+      grid.innerHTML = `<div class="vc-gallery-empty" style="grid-column:1/-1;">${t("no-videos") || "Your generated videos will appear here."}</div>`;
+      section.style.display = "block";
+      return;
+    }
+
+    section.style.display = "block";
+    grid.innerHTML = data.videos.map(v => `
+      <div class="vc-gallery-card" onclick="openViewer('${v.localUrl}')">
+        <video src="${v.localUrl}" muted playsinline preload="metadata"></video>
+        <div class="vc-gallery-shield"></div>
+        <div class="vc-gallery-meta">
+          <div class="vc-gallery-model">${v.model === 'kling26' ? '✨ Ultra HD' : '🔥 Uncensored'}</div>
+          <div>${new Date(v.createdAt).toLocaleDateString()}</div>
+        </div>
+      </div>
+    `).join("");
+
+    // Hover to play thumbnails
+    grid.querySelectorAll(".vc-gallery-card").forEach(card => {
+      const vid = card.querySelector("video");
+      card.addEventListener("mouseenter", () => vid.play());
+      card.addEventListener("mouseleave", () => { vid.pause(); vid.currentTime = 0; });
+    });
+  } catch (e) { console.error("Gallery load error:", e); }
+}
+
+// Fullscreen viewer
+function openViewer(url) {
+  const video = document.getElementById("viewerVideo");
+  video.src = url; video.muted = false; video.play();
+  document.getElementById("viewerOverlay").classList.add("open");
+  document.getElementById("viewerMuteIcon").className = "fas fa-volume-up";
+  document.getElementById("viewerPlayIcon").className = "fas fa-pause";
+}
+function closeViewer() {
+  document.getElementById("viewerVideo").pause();
+  document.getElementById("viewerOverlay").classList.remove("open");
+}
+function viewerTogglePlay() {
+  const v = document.getElementById("viewerVideo");
+  if (v.paused) { v.play(); document.getElementById("viewerPlayIcon").className = "fas fa-pause"; }
+  else { v.pause(); document.getElementById("viewerPlayIcon").className = "fas fa-play"; }
+}
+function viewerToggleMute() {
+  const v = document.getElementById("viewerVideo");
+  v.muted = !v.muted;
+  document.getElementById("viewerMuteIcon").className = v.muted ? "fas fa-volume-mute" : "fas fa-volume-up";
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeViewer(); });
+
+// Block print-screen & common screenshot shortcuts
+document.addEventListener("keyup", e => {
+  if (e.key === "PrintScreen") { navigator.clipboard.writeText(""); }
+});
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "S" || e.key === "s" || e.key === "3" || e.key === "4")) e.preventDefault();
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) e.preventDefault();
+});
+
+// Drag & drop
+const uploadZone = document.getElementById("uploadZone");
+["dragenter", "dragover"].forEach(ev => uploadZone?.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); uploadZone.style.borderColor = "#f472b6"; }));
+["dragleave", "drop"].forEach(ev => uploadZone?.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); uploadZone.style.borderColor = ""; }));
+uploadZone?.addEventListener("drop", e => handleFile(e.dataTransfer.files[0]));
+document.getElementById("fileInput")?.addEventListener("change", e => handleFile(e.target.files[0]));
+
+// Init
+document.addEventListener("DOMContentLoaded", () => {
+  applyI18n();
+  const stored = JSON.parse(localStorage.getItem("user") || "null");
+  if (stored?.email) {
+    userEmail = stored.email;
+    document.getElementById("loginWall").style.display = "none";
+    document.getElementById("creatorForm").style.display = "block";
+    loadTokens();
+    loadGallery();
+  } else {
+    document.getElementById("loginWall").style.display = "";
+    document.getElementById("creatorForm").style.display = "none";
+  }
+});
+</script>
+
+</body>
+</html>

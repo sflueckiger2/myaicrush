@@ -254,6 +254,16 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 
 
+app.use('/user-videos', express.static(path.join(__dirname, 'public/user-videos'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, no-store');
+  }
+}));
+
 app.use('/images', express.static(path.join(__dirname, 'public/images'), {
   etag: false,
   lastModified: false,
@@ -4635,15 +4645,14 @@ const VIDEO_MODELS = {
     cost5s: 0.35, cost10s: 0.70
   },
   wan26: {
-    submitUrl: 'https://queue.fal.run/wan/v2.6/image-to-video',
+    submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
     buildPayload: (prompt, image_url, duration) => ({
       prompt, image_url,
-      duration: String(duration),
-      resolution: '720p',
-      negative_prompt: 'blur, distort, low quality, deformed',
+      num_frames: 100,
       enable_safety_checker: false,
-      enable_prompt_expansion: false
+      negative_prompt: 'blur, distort, low quality, deformed'
     }),
+    extractVideo: (result) => result.video?.url,
     cost5s: 0.50, cost10s: 1.00, cost15s: 1.50
   },
   wan21: {
@@ -4736,6 +4745,11 @@ app.get('/api/video/status/:model/:requestId', async (req, res) => {
         if (result.detail) {
           const msg = Array.isArray(result.detail) ? result.detail[0]?.msg : result.detail;
           console.log(`[VIDEO:${model}] Content policy error:`, msg);
+          if (stored.creatorEmail) {
+            const database = client.db('MyAICrush');
+            await database.collection('users').updateOne({ email: stored.creatorEmail }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
+            console.log(`[VIDEO-CREATOR] Refunded ${VIDEO_COST_TOKENS} tokens to ${stored.creatorEmail} (content policy)`);
+          }
           videoRequestUrls.delete(requestId);
           return res.json({ status: 'FAILED', error: msg || 'Content policy violation' });
         }
@@ -4748,12 +4762,159 @@ app.get('/api/video/status/:model/:requestId', async (req, res) => {
       }
     }
     if (data.status === 'FAILED') {
+      if (stored.creatorEmail) {
+        const database = client.db('MyAICrush');
+        await database.collection('users').updateOne({ email: stored.creatorEmail }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
+        console.log(`[VIDEO-CREATOR] Refunded ${VIDEO_COST_TOKENS} tokens to ${stored.creatorEmail} (generation failed)`);
+      }
       videoRequestUrls.delete(requestId);
       return res.json({ status: 'FAILED', error: data.error || 'Generation echouee' });
     }
     res.json({ status: data.status || 'IN_PROGRESS' });
   } catch (error) {
     res.json({ status: 'IN_PROGRESS' });
+  }
+});
+
+// =========================
+// VIDEO CREATOR (user-facing: upload photo → video)
+// =========================
+const VIDEO_COST_TOKENS = 9;
+
+app.post('/api/video-creator/submit', upload.single('image'), async (req, res) => {
+  try {
+    const { prompt, model, email } = req.body;
+    if (!email) return res.status(401).json({ error: 'Email requis', needLogin: true });
+    if (!req.file) return res.status(400).json({ error: 'Image requise' });
+
+    const vm = VIDEO_MODELS[model];
+    if (!vm) return res.status(400).json({ error: 'Modèle inconnu: ' + model });
+
+    const falKey = process.env.FAL_KEY;
+    if (!falKey) return res.status(500).json({ error: 'Configuration serveur manquante' });
+
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+    const user = await users.findOne({ email: String(email).trim().toLowerCase() });
+    if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    const premiumRes = await fetch(`${BASE_URL}/api/is-premium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const premiumData = await premiumRes.json();
+    if (!premiumData.isPremium) {
+      return res.status(403).json({ error: 'Réservé aux membres Premium', needPremium: true });
+    }
+
+    const tokens = user.creditsPurchased || 0;
+    if (tokens < VIDEO_COST_TOKENS) {
+      return res.status(403).json({ error: `Pas assez de jetons (${tokens}/${VIDEO_COST_TOKENS})`, needTokens: true });
+    }
+
+    // Compress image and convert to data URI for fal (works from any host)
+    const compressed = await sharp(req.file.buffer).resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+    const imageUrl = `data:image/jpeg;base64,${compressed.toString('base64')}`;
+
+    console.log(`[VIDEO-CREATOR] ${email} | model=${model} | tokens=${tokens} → ${tokens - VIDEO_COST_TOKENS} | img=${(compressed.length / 1024).toFixed(0)}KB`);
+
+    // Deduct tokens
+    await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: -VIDEO_COST_TOKENS } });
+
+    // Submit to fal
+    const videoPrompt = prompt || 'The person in the image moves naturally, subtle motion, cinematic lighting.';
+    const submitRes = await fetch(vm.submitUrl, {
+      method: 'POST',
+      headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(vm.buildPayload(videoPrompt, imageUrl, '10'))
+    });
+
+    const raw = await submitRes.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      console.error('[VIDEO-CREATOR] Invalid fal response:', raw.substring(0, 300));
+      await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
+      return res.status(500).json({ error: 'Erreur de génération vidéo' });
+    }
+
+    if (data.detail || data.error) {
+      console.error('[VIDEO-CREATOR] fal error:', data.detail || data.error);
+      await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
+      return res.status(500).json({ error: 'Erreur API vidéo: ' + (data.detail || data.error) });
+    }
+
+    if (!data.request_id) {
+      await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
+      return res.status(500).json({ error: 'Pas de request_id retourné' });
+    }
+
+    videoRequestUrls.set(data.request_id, { statusUrl: data.status_url, responseUrl: data.response_url, model, creatorEmail: String(email).trim().toLowerCase() });
+    console.log(`[VIDEO-CREATOR] Submitted OK → request_id=${data.request_id}`);
+
+    res.json({ request_id: data.request_id, model });
+  } catch (error) {
+    console.error('[VIDEO-CREATOR] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Save completed video: download from fal CDN → local disk + MongoDB
+const userVideosDir = path.join(__dirname, 'public', 'user-videos');
+if (!fs.existsSync(userVideosDir)) fs.mkdirSync(userVideosDir, { recursive: true });
+
+app.post('/api/video-creator/save', async (req, res) => {
+  try {
+    const { email, videoUrl, model, prompt } = req.body;
+    if (!email || !videoUrl) return res.status(400).json({ error: 'email and videoUrl required' });
+
+    const filename = `vc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.mp4`;
+    const filepath = path.join(userVideosDir, filename);
+
+    const videoRes = await fetch(videoUrl);
+    if (!videoRes.ok) {
+      console.error('[VIDEO-CREATOR:SAVE] Failed to download from fal:', videoRes.status);
+      return res.status(500).json({ error: 'Failed to download video' });
+    }
+    const buffer = Buffer.from(await videoRes.arrayBuffer());
+    await fsp.writeFile(filepath, buffer);
+
+    const database = client.db('MyAICrush');
+    const col = database.collection('user_videos');
+    await col.insertOne({
+      email: String(email).trim().toLowerCase(),
+      localUrl: `/user-videos/${filename}`,
+      model: model || 'unknown',
+      prompt: (prompt || '').substring(0, 500),
+      fileSize: buffer.length,
+      createdAt: new Date()
+    });
+
+    console.log(`[VIDEO-CREATOR:SAVE] ${email} → ${filename} (${(buffer.length / 1024 / 1024).toFixed(1)}MB)`);
+    res.json({ saved: true, localUrl: `/user-videos/${filename}` });
+  } catch (error) {
+    console.error('[VIDEO-CREATOR:SAVE] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// List user's saved videos
+app.post('/api/video-creator/my-videos', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ videos: [] });
+
+    const database = client.db('MyAICrush');
+    const col = database.collection('user_videos');
+    const videos = await col.find(
+      { email: String(email).trim().toLowerCase() },
+      { projection: { localUrl: 1, model: 1, prompt: 1, createdAt: 1 } }
+    ).sort({ createdAt: -1 }).limit(50).toArray();
+
+    res.json({ videos });
+  } catch (error) {
+    console.error('[VIDEO-CREATOR:MY-VIDEOS] Error:', error);
+    res.status(500).json({ videos: [] });
   }
 });
 
