@@ -115,6 +115,7 @@
     }
     @keyframes sweep { 0%{transform:translateX(-100%)} 60%,100%{transform:translateX(100%)} }
     .cta-sub { font-size: 0.72rem; color: #6b7280; text-align: center; margin-top: 8px; }
+    .cta-charge-notice { font-size: 0.68rem; color: #4b5563; text-align: center; margin-top: 6px; }
 
     .pricing-block {
       margin: 32px 0;
@@ -286,10 +287,11 @@
   </div>
 
   <div class="fade-up">
-    <a href="https://explodely.com/p/2061057393?ocu=yes" class="cta-primary">
+    <a href="https://explodely.com/p/2061057393?ocu=yes" class="cta-primary" onclick="return showConfirmModal(event)">
       &#128293; YES &mdash; GIVE ME 50% OFF ($174/YEAR)
     </a>
     <p class="cta-sub">&#128179; Secure payment &middot; &#10024; Instant access &middot; &#128260; Cancel anytime</p>
+    <p class="cta-charge-notice">By clicking above, you will be charged $174 USD.</p>
   </div>
 
   <div class="countdown-bar fade-up">
@@ -330,10 +332,11 @@
     </div>
   </div>
 
-  <a href="https://explodely.com/p/2061057393?ocu=yes" class="cta-primary fade-up" style="animation-delay:0.5s">
+  <a href="https://explodely.com/p/2061057393?ocu=yes" class="cta-primary fade-up" style="animation-delay:0.5s" onclick="return showConfirmModal(event)">
     &#128142; GET ANNUAL &mdash; ONLY $174 (50% OFF)
   </a>
-  <p class="cta-sub" style="margin-bottom:28px">That&rsquo;s $14.50/month. $348 value for $174.</p>
+  <p class="cta-sub" style="margin-bottom:4px">That&rsquo;s $14.50/month. $348 value for $174.</p>
+  <p class="cta-charge-notice" style="margin-bottom:28px">By clicking above, you will be charged $174 USD.</p>
 
   <div class="videos-row fade-up">
     <div class="mini-video-wrap">
@@ -386,9 +389,10 @@
   <div class="final-section fade-up">
     <div class="final-eyebrow">&#128274; Last chance</div>
     <div class="final-title">Lock in 50% off &mdash; right now.</div>
-    <a href="https://explodely.com/p/2061057393?ocu=yes" class="cta-primary">
+    <a href="https://explodely.com/p/2061057393?ocu=yes" class="cta-primary" onclick="return showConfirmModal(event)">
       &#128640; YES, I WANT 50% OFF &mdash; $174/YEAR
     </a>
+    <p class="cta-charge-notice">By clicking above, you will be charged $174 USD.</p>
     <a href="https://explodely.com/p/22705532" class="cta-skip">No thanks, I&rsquo;ll pay $348 instead &rarr;</a>
   </div>
 
@@ -432,6 +436,31 @@
     var purchaseEventID = 'purchase_' + Date.now();
     fbq('track', 'Purchase', { value: 49, currency: 'USD' }, { eventID: purchaseEventID });
   </script>
+
+<!-- Confirm purchase modal -->
+<div id="confirmModal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+  <div style="background:linear-gradient(145deg,#1c1c2e,#141420); border:1px solid rgba(244,114,182,0.35); border-radius:24px; padding:36px 28px; max-width:380px; width:100%; text-align:center; position:relative;">
+    <div style="font-size:2.8rem; margin-bottom:14px;">&#128179;</div>
+    <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:6px; font-family:'DM Sans',sans-serif;">Confirm your purchase</h2>
+    <p style="color:#f9a8d4; font-size:0.95rem; font-weight:600; margin-bottom:4px;">MyAiCrush Annual Plan</p>
+    <p style="color:#9ca3af; font-size:0.85rem; line-height:1.5; margin-bottom:24px;">You will be charged <strong style="color:#fff;">$174 USD</strong> for 12 months of Premium access.</p>
+    <a id="confirmModalBtn" href="#" style="display:block; width:100%; padding:16px; background:linear-gradient(90deg,#f472b6,#a855f7); border:none; border-radius:14px; color:#fff; font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:1.5px; text-decoration:none; text-align:center; cursor:pointer;">CONFIRM &mdash; PAY $174</a>
+    <button onclick="closeConfirmModal()" style="display:block; width:100%; margin-top:12px; background:none; border:none; color:#6b7280; font-size:0.85rem; cursor:pointer; padding:10px; font-family:'DM Sans',sans-serif;">Cancel</button>
+  </div>
+</div>
+
+<script>
+  var ANNUAL_URL = 'https://explodely.com/p/2061057393?ocu=yes';
+  function showConfirmModal(e) {
+    e.preventDefault();
+    document.getElementById('confirmModalBtn').href = ANNUAL_URL;
+    document.getElementById('confirmModal').style.display = 'flex';
+    return false;
+  }
+  function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+  }
+</script>
 
 </body>
 </html>
