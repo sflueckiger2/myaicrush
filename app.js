@@ -7279,7 +7279,7 @@ app.get('/t/:token', async (req, res) => {
     res.send(TRANSPARENT_GIF);
 });
 
-const DAILY_EMAIL_CHARACTERS = [
+const DAILY_SFW_CHARACTERS = [
     { name: "Megane", folder: "megane/megane3", ext: "jpg", filter: f => f.includes("dressed") && f.endsWith(".jpg") },
     { name: "Chloe", folder: "chloe/chloe3", ext: "webp" },
     { name: "Lila", folder: "lila/lila3", ext: "webp" },
@@ -7436,7 +7436,7 @@ schedule.scheduleJob('0 18 * * *', async () => {
             }
 
             // Pick today's character
-            const char = DAILY_EMAIL_CHARACTERS[Math.floor(Math.random() * DAILY_EMAIL_CHARACTERS.length)];
+            const char = DAILY_SFW_CHARACTERS[Math.floor(Math.random() * DAILY_SFW_CHARACTERS.length)];
             const imageUrl = pickDailyCharImage(char);
 
             // Find eligible users
