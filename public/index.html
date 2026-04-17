@@ -500,22 +500,6 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
         window.location.href = "contenu-prive.html";
       });
 
-      // Video Creator mini-banner for premium users
-      const _fr = (navigator.language || "").startsWith("fr");
-      const _de = (navigator.language || "").startsWith("de");
-      const vcBanner = document.createElement("a");
-      vcBanner.href = "video-creator.html";
-      vcBanner.style.cssText = "display:flex;align-items:center;gap:12px;margin:12px auto 0;max-width:700px;padding:14px 18px;background:linear-gradient(135deg,rgba(244,114,182,0.12),rgba(168,85,247,0.12));border:1px solid rgba(244,114,182,0.25);border-radius:16px;text-decoration:none;color:#fff;transition:all 0.3s ease;";
-      vcBanner.innerHTML = `<span style="font-size:1.6rem;">🎬</span><span style="flex:1;"><span style="font-weight:700;font-size:0.9rem;">${_fr ? "Video Creator" : _de ? "Video Creator" : "Video Creator"}</span><br><span style="font-size:0.75rem;color:#b0b0c3;">${_fr ? "Transforme une photo en vidéo IA" : _de ? "Verwandle ein Foto in ein KI-Video" : "Turn any photo into an AI video"}</span></span><span style="background:linear-gradient(90deg,#f472b6,#a855f7);font-size:0.55rem;padding:3px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;">NEW</span>`;
-      vcBanner.onmouseover = () => { vcBanner.style.background = "linear-gradient(135deg,rgba(244,114,182,0.2),rgba(168,85,247,0.2))"; };
-      vcBanner.onmouseout = () => { vcBanner.style.background = "linear-gradient(135deg,rgba(244,114,182,0.12),rgba(168,85,247,0.12))"; };
-      sliderSection.insertAdjacentElement("afterend", vcBanner);
-
-      const vcBannerObs = new MutationObserver(() => {
-        vcBanner.style.display = (chatBoxEl.style.display === "flex") ? "none" : "flex";
-      });
-      vcBannerObs.observe(chatBoxEl, { attributes: true, attributeFilter: ['style'] });
-
     } catch (err) {
       console.error("❌ Erreur vérification premium :", err);
     }
@@ -523,6 +507,35 @@ sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style']
 
 
 
+  </script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const chatBoxEl = document.getElementById("chat-box");
+    const header = document.getElementById("cheaper-plan-dynamic-banner");
+    if (!header || !chatBoxEl) return;
+
+    const _fr = (navigator.language || "").startsWith("fr");
+    const _de = (navigator.language || "").startsWith("de");
+    const vcBanner = document.createElement("a");
+    vcBanner.href = "video-creator.html";
+    vcBanner.style.cssText = "display:flex;align-items:center;gap:12px;margin:12px auto 0;max-width:700px;padding:14px 18px;background:linear-gradient(135deg,rgba(244,114,182,0.12),rgba(168,85,247,0.12));border:1px solid rgba(244,114,182,0.25);border-radius:16px;text-decoration:none;color:#fff;transition:all 0.3s ease;";
+    vcBanner.innerHTML = `<span style="font-size:1.6rem;">🎬</span><span style="flex:1;"><span style="font-weight:700;font-size:0.9rem;">Video Creator</span><br><span style="font-size:0.75rem;color:#b0b0c3;">${_fr ? "Transforme une photo en vidéo IA" : _de ? "Verwandle ein Foto in ein KI-Video" : "Turn any photo into an AI video"}</span></span><span style="background:linear-gradient(90deg,#f472b6,#a855f7);font-size:0.55rem;padding:3px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;">NEW</span>`;
+    vcBanner.onmouseover = () => { vcBanner.style.background = "linear-gradient(135deg,rgba(244,114,182,0.2),rgba(168,85,247,0.2))"; };
+    vcBanner.onmouseout = () => { vcBanner.style.background = "linear-gradient(135deg,rgba(244,114,182,0.12),rgba(168,85,247,0.12))"; };
+
+    const existingSlider = document.querySelector(".private-slider-section");
+    if (existingSlider) {
+      existingSlider.insertAdjacentElement("afterend", vcBanner);
+    } else {
+      header.insertAdjacentElement("afterend", vcBanner);
+    }
+
+    const vcBannerObs = new MutationObserver(() => {
+      vcBanner.style.display = (chatBoxEl.style.display === "flex") ? "none" : "flex";
+    });
+    vcBannerObs.observe(chatBoxEl, { attributes: true, attributeFilter: ['style'] });
+  });
   </script>
 
 

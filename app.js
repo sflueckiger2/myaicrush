@@ -6929,14 +6929,72 @@ app.get("/api/support-ticket/:id", async (req, res) => {
 // --- Admin Ticket Management ---
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "aic_adm_2026_sK7xP9mQ";
+const ADMIN_EMAILS = ["sflueckiger.pro@gmail.com"];
 
 function requireAdmin(req, res, next) {
   const token = req.headers["x-admin-token"];
-  if (!token || token !== ADMIN_SECRET) {
-    return res.status(401).json({ success: false, error: "Unauthorized" });
-  }
-  next();
+  if (token && token === ADMIN_SECRET) return next();
+
+  const adminEmail = (req.headers["x-admin-email"] || "").trim().toLowerCase();
+  if (adminEmail && ADMIN_EMAILS.includes(adminEmail)) return next();
+
+  return res.status(401).json({ success: false, error: "Unauthorized" });
 }
+
+app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
+  try {
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+
+    const now = new Date();
+    const h24 = new Date(now - 24 * 3600 * 1000);
+    const d7 = new Date(now - 7 * 24 * 3600 * 1000);
+    const d30 = new Date(now - 30 * 24 * 3600 * 1000);
+
+    const [
+      totalUsers,
+      premiumUsers,
+      dailyEligible,
+      unsubscribed,
+      autoCleaned,
+      openedLast24h,
+      openedLast7d,
+      sentLast24h,
+      sentLast7d,
+      newUsersLast24h,
+      newUsersLast7d,
+      newUsersLast30d,
+      recentSignups,
+      recentOpens
+    ] = await Promise.all([
+      users.countDocuments({}),
+      users.countDocuments({ explodelyPremium: true }),
+      users.countDocuments({ dailyEmailEligible: true, unsubscribedEmail: { $ne: true } }),
+      users.countDocuments({ unsubscribedEmail: true }),
+      users.countDocuments({ dailyEmailCleanedAt: { $exists: true } }),
+      users.countDocuments({ lastEmailOpenedAt: { $gte: h24 } }),
+      users.countDocuments({ lastEmailOpenedAt: { $gte: d7 } }),
+      users.countDocuments({ lastDailyEmailSentAt: { $gte: h24 } }),
+      users.countDocuments({ lastDailyEmailSentAt: { $gte: d7 } }),
+      users.countDocuments({ createdAt: { $gte: h24 } }),
+      users.countDocuments({ createdAt: { $gte: d7 } }),
+      users.countDocuments({ createdAt: { $gte: d30 } }),
+      users.find({ createdAt: { $gte: d7 } }, { projection: { email: 1, createdAt: 1, lang: 1 } }).sort({ createdAt: -1 }).limit(20).toArray(),
+      users.find({ lastEmailOpenedAt: { $gte: h24 } }, { projection: { email: 1, lastEmailOpenedAt: 1 } }).sort({ lastEmailOpenedAt: -1 }).limit(20).toArray()
+    ]);
+
+    res.json({
+      timestamp: now.toISOString(),
+      users: { total: totalUsers, premium: premiumUsers, newLast24h: newUsersLast24h, newLast7d: newUsersLast7d, newLast30d: newUsersLast30d },
+      dailyEmails: { eligible: dailyEligible, unsubscribed, autoCleaned, sentLast24h, sentLast7d },
+      engagement: { openedLast24h, openedLast7d },
+      recentSignups,
+      recentOpens
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 app.get("/api/admin/tickets", requireAdmin, async (req, res) => {
   try {

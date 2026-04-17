@@ -441,6 +441,7 @@
 <script>
 (function() {
   let token = sessionStorage.getItem("admin_token") || "";
+  let adminEmail = "";
   let currentStatus = "all";
   let currentSearch = "";
   let currentPage = 1;
@@ -454,9 +455,33 @@
   const detailOverlay = document.getElementById("detail-overlay");
   const detailPanel = document.getElementById("detail-panel");
 
-  if (token) {
-    verifyAndInit();
+  function getAdminHeaders() {
+    if (adminEmail) return { "x-admin-email": adminEmail };
+    if (token) return { "x-admin-token": token };
+    return {};
   }
+
+  (async function tryAutoLogin() {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user && user.email) {
+        const res = await fetch("/api/admin/tickets?limit=1", {
+          headers: { "x-admin-email": user.email }
+        });
+        if (res.ok) {
+          adminEmail = user.email;
+          loginOverlay.style.display = "none";
+          appDiv.classList.remove("hidden");
+          loadTickets();
+          return;
+        }
+      }
+    } catch {}
+
+    if (token) {
+      verifyAndInit();
+    }
+  })();
 
   loginBtn.addEventListener("click", doLogin);
   loginInput.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
@@ -490,7 +515,7 @@
   async function verifyAndInit() {
     try {
       const res = await fetch("/api/admin/tickets?limit=1", {
-        headers: { "x-admin-token": token }
+        headers: getAdminHeaders()
       });
       if (res.ok) {
         loginOverlay.style.display = "none";
@@ -542,7 +567,7 @@
 
     try {
       const res = await fetch("/api/admin/tickets?" + params, {
-        headers: { "x-admin-token": token }
+        headers: getAdminHeaders()
       });
       const data = await res.json();
       if (!data.success) return;
@@ -676,7 +701,7 @@
     try {
       const res = await fetch("/api/admin/tickets/" + ticketId, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        headers: { "Content-Type": "application/json", ...getAdminHeaders() },
         body: JSON.stringify({
           status: document.getElementById("d-status").value,
           adminReply: replyText
