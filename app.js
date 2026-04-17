@@ -2217,7 +2217,7 @@ async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000
   return axios.post(
     "https://api.fireworks.ai/inference/v1/chat/completions",
     {
-      model: "accounts/fireworks/models/deepseek-v3p2",
+      model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
       messages: [{ role: "system", content: systemPrompt }],
       max_tokens: 90,
       temperature,
@@ -2691,7 +2691,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
             response = await axios.post(
               'https://api.fireworks.ai/inference/v1/chat/completions',
               {
-                model: "accounts/fireworks/models/deepseek-v3p2",
+                model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
                 messages: messages,
                 max_tokens: 200,
                 temperature: 1.0,
@@ -2723,6 +2723,8 @@ const reponsesPerso = [
 "Tu sais que t'es en train de m'allumer grave là ?",
 "Arrête de chauffer comme ça, j'vais finir par te suivre dans tes délires 😏",
 "Continue comme ça et j’te promets rien…",
+"Hmm, tu veux vraiment savoir ? Viens plus près…",
+"Si tu savais ce que j’ai en tête là tout de suite… 🔥",
 
 "📷🫦🔥",
 "😈💣"
@@ -2732,7 +2734,7 @@ const reponsesPerso = [
 
 // Fonction pour intercepter et ajuster les réponses de l'IA
 function ajusterReponse(reponse) {
-    const refusRegex = /désolé[e]?|je ne peux pas|je ne suis pas à l'aise|je préfère ne pas|je n(?:'|e) veux pas/i;
+    const refusRegex = /désolé[e]?|je ne peux pas|je ne suis pas à l'aise|je préfère ne pas|je n(?:'|e) veux pas|i'm sorry|i cannot|i can't|i'm unable|inappropriate|i must decline|sorry,? but|ich kann nicht|ich darf nicht|es tut mir leid|leider kann ich|nicht möglich|content policy|against my|violat/i;
 
 
     if (refusRegex.test(reponse.toLowerCase())) {
@@ -5094,7 +5096,7 @@ app.post('/api/generate-ai-prompts', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'accounts/fireworks/models/deepseek-v3p2',
+        model: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
         messages,
         temperature,
         max_tokens,
