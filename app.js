@@ -1099,6 +1099,7 @@ app.post("/webhook/explodely", async (req, res) => {
     };
 
     const premiumId = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "");
+    const annualId = String(process.env.EXPLODELY_ANNUAL_PRODUCT_ID || "");
 
     // -----------------------------
     // Traitement item par item
@@ -1123,6 +1124,7 @@ app.post("/webhook/explodely", async (req, res) => {
       }
 
       const isPremiumProduct = productId === premiumId;
+      const isAnnualProduct = productId === annualId;
       const tokensAmount = tokenMapping[productId];
 
       // Détection refund-like (à confirmer quand tu auras le vrai payload refund)
@@ -1130,13 +1132,71 @@ app.post("/webhook/explodely", async (req, res) => {
 
       // ---- SALE ----
       if (eventType === "sale") {
+        if (isAnnualProduct) {
+          // Fetch existing user to get their monthly orderId
+          const existingUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
+          const oldMonthlyOrderId = existingUser?.explodelyMainOrderId;
+
+          // Cancel existing monthly subscription if it exists
+          if (oldMonthlyOrderId && existingUser?.explodelyPlan !== "annual") {
+            try {
+              const cancelRes = await axios.get("https://explodely.com/api/v1", {
+                params: {
+                  username: process.env.EXPLODELY_USERNAME,
+                  api_key: process.env.EXPLODELY_API_KEY,
+                  action: "cancelrebill",
+                  orderid: oldMonthlyOrderId
+                },
+                timeout: 15000
+              });
+              console.log(`🔄 Mensuel annulé pour ${email} (oldOrderId=${oldMonthlyOrderId}):`, cancelRes.data);
+              await explodelyEvents.insertOne({
+                email, orderId, productId, eventType,
+                action: "monthly_cancelled_for_annual",
+                oldMonthlyOrderId,
+                cancelResponse: cancelRes.data,
+                createdAt: new Date()
+              });
+            } catch (cancelErr) {
+              console.error(`⚠️ Erreur annulation mensuel pour ${email} (oldOrderId=${oldMonthlyOrderId}):`, cancelErr.message);
+              await explodelyEvents.insertOne({
+                email, orderId, productId, eventType,
+                action: "monthly_cancel_failed",
+                oldMonthlyOrderId,
+                error: cancelErr.message,
+                createdAt: new Date()
+              });
+            }
+          }
+
+          await users.updateOne(
+            { email },
+            {
+              $set: {
+                explodelyPremium: true,
+                explodelyMainOrderId: orderId,
+                explodelyPlan: "annual",
+                monthlyCancelledForAnnual: !!oldMonthlyOrderId,
+                annualStartedAt: new Date()
+              },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", createdAt: new Date() });
+          console.log(`✅ Premium Annuel Explodely activé pour ${email} (orderId=${orderId})`);
+          continue;
+        }
+
         if (isPremiumProduct) {
          await users.updateOne(
   { email },
   {
     $set: { 
       explodelyPremium: true,
-      explodelyMainOrderId: orderId  // 👈 à l'intérieur du $set
+      explodelyMainOrderId: orderId,
+      explodelyPlan: "monthly"
     },
     $setOnInsert: buildUserDefaultsFromExplodely(email),
   },
@@ -1177,7 +1237,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
       // ---- REFUND-LIKE ----
       if (isRefundLike) {
-        if (isPremiumProduct) {
+        if (isAnnualProduct || isPremiumProduct) {
           await users.updateOne(
             { email },
             {
@@ -1187,8 +1247,9 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "premium_off", createdAt: new Date() });
-          console.log(`⛔ Premium Explodely désactivé (refund-like) pour ${email} (orderId=${orderId})`);
+          const label = isAnnualProduct ? "annual_premium_off" : "premium_off";
+          await explodelyEvents.insertOne({ ...eventKey, action: label, createdAt: new Date() });
+          console.log(`⛔ Premium Explodely désactivé (refund-like) pour ${email} (orderId=${orderId}, type=${isAnnualProduct ? "annual" : "monthly"})`);
           continue;
         }
 
