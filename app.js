@@ -3295,6 +3295,19 @@ schedule.scheduleJob('0 0 1 * *', async () => {
     console.log(`🔄 Réinitialisation des minutes audio pour ${result.modifiedCount} utilisateurs !`);
 });
 
+// 🎁 Bonus mensuel : +30 jetons pour les abonnés premium actifs (1er du mois à 00:05)
+schedule.scheduleJob('5 0 1 * *', async () => {
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+
+    const result = await users.updateMany(
+        { explodelyPremium: true },
+        { $inc: { creditsPurchased: 30 } }
+    );
+
+    console.log(`🎁 Bonus mensuel : +30 jetons pour ${result.modifiedCount} abonnés premium`);
+});
+
 
 
 // GESTION DES JETONS
