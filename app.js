@@ -117,7 +117,7 @@ async function fwSendModelAlert(failedModel, errorMsg) {
   console.error(`🚨 MODEL ALERT: ${failedModel} failed → fallback: ${fallback}`);
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@send.myaicrush.ai>",
+      from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@myaicrush.ai>",
       to: process.env.ADMIN_EMAIL || "sflueckiger.pro@gmail.com",
       subject: `[MyAiCrush] Fireworks model down: ${failedModel.split("/").pop()}`,
       html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#1a1a2e;color:#e0e0e0;border-radius:12px;overflow:hidden;">
@@ -1222,15 +1222,18 @@ app.post("/webhook/explodely", async (req, res) => {
                 explodelyMainOrderId: orderId,
                 explodelyPlan: "annual",
                 monthlyCancelledForAnnual: !!oldMonthlyOrderId,
-                annualStartedAt: new Date()
+                annualStartedAt: new Date(),
+                lastBonusAt: new Date(),
+                bonusSeenByUser: false
               },
+              $inc: { creditsPurchased: 30 },
               $setOnInsert: buildUserDefaultsFromExplodely(email),
             },
             { upsert: true }
           );
 
           await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", createdAt: new Date() });
-          console.log(`✅ Premium Annuel Explodely activé pour ${email} (orderId=${orderId})`);
+          console.log(`✅ Premium Annuel Explodely activé pour ${email} (+30 jetons) (orderId=${orderId})`);
           continue;
         }
 
@@ -1241,15 +1244,18 @@ app.post("/webhook/explodely", async (req, res) => {
     $set: { 
       explodelyPremium: true,
       explodelyMainOrderId: orderId,
-      explodelyPlan: "monthly"
+      explodelyPlan: "monthly",
+      lastBonusAt: new Date(),
+      bonusSeenByUser: false
     },
+    $inc: { creditsPurchased: 30 },
     $setOnInsert: buildUserDefaultsFromExplodely(email),
   },
   { upsert: true }
 );
 
           await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", createdAt: new Date() });
-          console.log(`✅ Premium Explodely activé pour ${email} (orderId=${orderId})`);
+          console.log(`✅ Premium Explodely activé pour ${email} (+30 jetons) (orderId=${orderId})`);
           continue;
         }
 
@@ -1536,11 +1542,13 @@ app.get('/auth/google/callback', async (req, res) => {
       const isNewUser = !existingUser;
 
       if (!existingUser) {
+        const userLang = (req.headers["accept-language"] || "en").split(",")[0].split("-")[0].toLowerCase();
         await usersCollection.insertOne({ 
           email: userEmail, 
           createdAt: new Date(), 
           audioMinutesUsed: 0, 
-          creditsPurchased: 0
+          creditsPurchased: 0,
+          lang: userLang
         });
 
         console.log(`✅ Nouvel utilisateur Google ajouté avec crédits : ${userEmail}`);
@@ -1550,6 +1558,9 @@ app.get('/auth/google/callback', async (req, res) => {
       }
 
       console.log('Utilisateur Google authentifié :', userEmail);
+
+      const detectedLang = (req.headers["accept-language"] || "en").split(",")[0].split("-")[0].toLowerCase();
+      await usersCollection.updateOne({ email: userEmail }, { $set: { lang: detectedLang, lastLogin: new Date() } });
 
       // Tu peux garder une logique différente pour new/existing si tu veux, là c'est la même :
       const redirectUrl = isNewUser 
@@ -3386,43 +3397,150 @@ schedule.scheduleJob('5 0 1 * *', async () => {
 
     const result = await users.updateMany(
         { explodelyPremium: true },
-        { $inc: { creditsPurchased: 30 } }
+        { $inc: { creditsPurchased: 30 }, $set: { lastBonusAt: new Date(), bonusSeenByUser: false } }
     );
 
     console.log(`🎁 Bonus mensuel : +30 jetons pour ${result.modifiedCount} abonnés premium`);
 
-    // Send email notification to each premium user
+    const SFW_IMAGE_SOURCES = [
+        { char: "megane", folder: "megane/megane3", ext: "jpg", filter: f => f.includes("dressed") && f.endsWith(".jpg") },
+        { char: "chloe", folder: "chloe/chloe3", ext: "webp" },
+        { char: "lila", folder: "lila/lila3", ext: "webp" },
+        { char: "aiko", folder: "aiko/aiko3", ext: "webp" },
+        { char: "amber", folder: "amber/amber3", ext: "webp" },
+        { char: "astrid", folder: "astrid/astrid3", ext: "webp" },
+        { char: "candy", folder: "candy/candy3", ext: "webp" },
+        { char: "emilie", folder: "emilie/emilie3", ext: "webp" },
+        { char: "hanae", folder: "hanae/hanae3", ext: "webp" },
+        { char: "ishani", folder: "ishani/ishani3", ext: "webp" },
+        { char: "jasmine", folder: "jasmine/jasmine3", ext: "webp" },
+        { char: "juliette", folder: "juliette/juliette3", ext: "webp" },
+        { char: "kat", folder: "kat/kat3", ext: "webp" },
+        { char: "kiara", folder: "kiara/kiara3", ext: "webp" },
+        { char: "lea", folder: "lea/lea3", ext: "webp" },
+        { char: "lilith", folder: "lilith/lilith3", ext: "webp" },
+        { char: "magalie", folder: "magalie/magalie3", ext: "webp" },
+        { char: "morgana", folder: "morgana/morgana3", ext: "webp" },
+        { char: "naomi", folder: "naomi/naomi3", ext: "webp" },
+        { char: "nour", folder: "nour/nour3", ext: "webp" },
+        { char: "nova", folder: "nova/nova3", ext: "webp" },
+        { char: "samira", folder: "samira/samira3", ext: "webp" },
+        { char: "angel", folder: "angel/angel3", ext: "webp" },
+    ];
+
+    const CHAR_DISPLAY = {
+        megane: "Megane", chloe: "Chloe", lila: "Lila", aiko: "Aiko", amber: "Amber",
+        astrid: "Astrid", candy: "Candy", emilie: "Emilie", hanae: "Hanae", ishani: "Ishani",
+        jasmine: "Jasmine", juliette: "Juliette", kat: "Kat", kiara: "Kiara", lea: "Lea",
+        lilith: "Lilith", magalie: "Magalie", morgana: "Morgana", naomi: "Naomi", nour: "Nour",
+        nova: "Nova", samira: "Samira", angel: "Angel"
+    };
+
+    const BONUS_I18N = {
+        en: {
+            subject: "Your 30 free monthly tokens are here",
+            greeting: name => `${name} has a gift for you!`,
+            body: "Your monthly <strong>30 bonus tokens</strong> have just been credited to your account.",
+            hint: "Use them to create AI videos, unlock exclusive content, or chat with your favorite characters.",
+            cta: "Use My Tokens",
+            footer: "You receive this email as a Premium member of MyAiCrush.",
+            unsub: "Unsubscribe"
+        },
+        fr: {
+            subject: "Vos 30 jetons gratuits du mois sont arrives",
+            greeting: name => `${name} a un cadeau pour toi !`,
+            body: "Vos <strong>30 jetons bonus</strong> mensuels viennent d'etre credites sur votre compte.",
+            hint: "Utilisez-les pour creer des videos IA, debloquer du contenu exclusif ou discuter avec vos personnages preferes.",
+            cta: "Utiliser Mes Jetons",
+            footer: "Vous recevez cet email car vous etes membre Premium de MyAiCrush.",
+            unsub: "Se desabonner"
+        },
+        de: {
+            subject: "Deine 30 kostenlosen monatlichen Tokens sind da",
+            greeting: name => `${name} hat ein Geschenk fur dich!`,
+            body: "Deine monatlichen <strong>30 Bonus-Tokens</strong> wurden deinem Konto gutgeschrieben.",
+            hint: "Nutze sie, um KI-Videos zu erstellen, exklusive Inhalte freizuschalten oder mit deinen Lieblingscharakteren zu chatten.",
+            cta: "Meine Tokens Nutzen",
+            footer: "Du erhaltst diese E-Mail als Premium-Mitglied von MyAiCrush.",
+            unsub: "Abmelden"
+        },
+        es: {
+            subject: "Tus 30 tokens gratis mensuales estan aqui",
+            greeting: name => `${name} tiene un regalo para ti!`,
+            body: "Tus <strong>30 tokens bonus</strong> mensuales acaban de ser acreditados en tu cuenta.",
+            hint: "Usalos para crear videos con IA, desbloquear contenido exclusivo o chatear con tus personajes favoritos.",
+            cta: "Usar Mis Tokens",
+            footer: "Recibes este email porque eres miembro Premium de MyAiCrush.",
+            unsub: "Cancelar suscripcion"
+        },
+        pt: {
+            subject: "Seus 30 tokens gratuitos mensais chegaram",
+            greeting: name => `${name} tem um presente para voce!`,
+            body: "Seus <strong>30 tokens bonus</strong> mensais acabaram de ser creditados na sua conta.",
+            hint: "Use-os para criar videos com IA, desbloquear conteudo exclusivo ou conversar com seus personagens favoritos.",
+            cta: "Usar Meus Tokens",
+            footer: "Voce recebe este email por ser membro Premium do MyAiCrush.",
+            unsub: "Cancelar inscricao"
+        }
+    };
+
+    function pickRandomSfwImage() {
+        const src = SFW_IMAGE_SOURCES[Math.floor(Math.random() * SFW_IMAGE_SOURCES.length)];
+        const dir = path.join(__dirname, "public/images", src.folder);
+        try {
+            const fs = require("fs");
+            let files = fs.readdirSync(dir).filter(f => f.endsWith(`.${src.ext}`));
+            if (src.filter) files = files.filter(src.filter);
+            if (!files.length) return null;
+            const picked = files[Math.floor(Math.random() * files.length)];
+            const urlPath = `images/${src.folder}/${picked}`;
+            return { url: `https://myaicrush.ai/${urlPath}`, char: src.char };
+        } catch { return null; }
+    }
+
+    function buildBonusEmail(t, charName, imageUrl, userEmail) {
+        const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(userEmail)}`;
+        return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;color:#1a1a1a;">
+  <div style="padding:32px 24px 0;text-align:center;">
+    <p style="font-size:1.3rem;font-weight:700;color:#1a1a1a;margin:0 0 4px;">MyAiCrush</p>
+  </div>
+  ${imageUrl ? `<div style="padding:16px 24px 0;text-align:center;">
+    <img src="${imageUrl}" alt="${charName}" style="max-width:250px;width:100%;height:auto;border-radius:12px;margin-bottom:8px;" />
+    <p style="font-size:0.95rem;color:#7c3aed;font-weight:600;margin:0 0 20px;">${t.greeting(charName)}</p>
+  </div>` : ""}
+  <div style="padding:0 24px 32px;">
+    <p style="font-size:1rem;line-height:1.7;margin:0 0 12px;color:#1a1a1a;">${t.body}</p>
+    <p style="font-size:0.9rem;line-height:1.7;margin:0 0 28px;color:#6b7280;">${t.hint}</p>
+    <div style="text-align:center;margin:0 0 28px;">
+      <a href="https://myaicrush.ai" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:600;font-size:0.95rem;padding:14px 36px;border-radius:8px;text-decoration:none;">${t.cta}</a>
+    </div>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;" />
+    <p style="font-size:0.75rem;color:#9ca3af;text-align:center;margin:0 0 8px;">${t.footer}</p>
+    <p style="text-align:center;margin:0;"><a href="${unsubUrl}" style="font-size:0.7rem;color:#9ca3af;text-decoration:underline;">${t.unsub}</a></p>
+  </div>
+</div>`;
+    }
+
     const premiumUsers = await users.find(
-        { explodelyPremium: true, email: { $exists: true, $ne: "" } },
-        { projection: { email: 1 } }
+        { explodelyPremium: true, email: { $exists: true, $ne: "" }, unsubscribedEmail: { $ne: true } },
+        { projection: { email: 1, lang: 1 } }
     ).toArray();
 
     let sent = 0, errors = 0;
     for (const u of premiumUsers) {
         try {
+            const userLang = (u.lang || "en").substring(0, 2).toLowerCase();
+            const t = BONUS_I18N[userLang] || BONUS_I18N.en;
+
+            const img = pickRandomSfwImage();
+            const charDisplayName = img ? (CHAR_DISPLAY[img.char] || img.char) : "MyAiCrush";
+
             await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@send.myaicrush.ai>",
+                from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@myaicrush.ai>",
                 to: u.email,
                 reply_to: "contact@myaicrush.ai",
-                subject: "Your 30 free monthly tokens are here!",
-                html: `
-                <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:520px;margin:0 auto;background:#0f0f1a;color:#e0e0e0;border-radius:16px;overflow:hidden;">
-                  <div style="background:linear-gradient(135deg,#a855f7,#f472b6);padding:32px 24px;text-align:center;">
-                    <h1 style="margin:0;font-size:1.6rem;color:#fff;">30 Free Tokens!</h1>
-                    <p style="margin:6px 0 0;font-size:0.85rem;color:rgba(255,255,255,0.85);">Your monthly Premium bonus</p>
-                  </div>
-                  <div style="text-align:center;padding:20px 24px 0;">
-                    <img src="https://myaicrush.ai/images/megane/megane3/megane_dressed_30.jpg" alt="Megane" style="width:180px;height:180px;object-fit:cover;border-radius:50%;border:3px solid rgba(168,85,247,0.5);" />
-                  </div>
-                  <div style="padding:20px 24px 28px;">
-                    <p style="font-size:1rem;line-height:1.7;margin:0 0 16px;text-align:center;">Hey! Your monthly <strong>30 bonus tokens</strong> have just been credited to your account.</p>
-                    <p style="font-size:0.95rem;line-height:1.7;margin:0 0 24px;color:#b0b0c3;text-align:center;">Use them to create AI videos, unlock exclusive content, or chat in Nympho mode.</p>
-                    <div style="text-align:center;margin:24px 0;">
-                      <a href="https://myaicrush.ai" style="display:inline-block;background:linear-gradient(135deg,#f472b6,#a855f7);color:#fff;font-weight:700;font-size:0.95rem;padding:14px 36px;border-radius:14px;text-decoration:none;">Use My Tokens</a>
-                    </div>
-                    <p style="font-size:0.8rem;color:#6b7280;text-align:center;margin-top:24px;">You receive this email because you are a Premium member of MyAiCrush.</p>
-                  </div>
-                </div>`
+                subject: t.subject,
+                html: buildBonusEmail(t, charDisplayName, img ? img.url : null, u.email)
             });
             sent++;
         } catch (e) {
@@ -3535,9 +3653,15 @@ app.post('/api/get-user-tokens', async (req, res) => {
     console.log("👤 Utilisateur trouvé, jetons :", user.creditsPurchased || 0);
     console.log("🔓 Contenus débloqués :", user.unlockedContents || []);
 
+    const pendingBonus = user.bonusSeenByUser === false && user.lastBonusAt;
+    if (pendingBonus) {
+      await users.updateOne({ email }, { $set: { bonusSeenByUser: true } });
+    }
+
     res.json({
       tokens: user.creditsPurchased || 0,
-      unlockedContents: user.unlockedContents || []
+      unlockedContents: user.unlockedContents || [],
+      pendingBonus: !!pendingBonus
     });
   } catch (error) {
     console.error("❌ Erreur lors de la récupération des jetons :", error);
@@ -7072,6 +7196,43 @@ If the user writes a different email in any message (account or payment), always
       reply: "I'm having a technical issue right now. Please try again in a moment, or submit a request at https://myaicrush.ai/ticket.html 🩷",
     });
   }
+});
+
+// 🚫 Unsubscribe from marketing emails
+app.get('/unsubscribe', async (req, res) => {
+    const email = (req.query.email || "").trim().toLowerCase();
+    if (!email) return res.status(400).send("Missing email parameter.");
+
+    try {
+        const database = client.db('MyAICrush');
+        const users = database.collection('users');
+        await users.updateOne({ email }, { $set: { unsubscribedEmail: true } });
+
+        const lang = (req.headers["accept-language"] || "").toLowerCase();
+        const isFr = lang.startsWith("fr");
+        const isDe = lang.startsWith("de");
+        const isEs = lang.startsWith("es");
+        const isPt = lang.startsWith("pt");
+
+        const title = isFr ? "Desabonnement confirme" : isDe ? "Abmeldung bestatigt" : isEs ? "Baja confirmada" : isPt ? "Cancelamento confirmado" : "Unsubscribed";
+        const msg = isFr ? "Vous ne recevrez plus d'emails marketing de MyAiCrush."
+            : isDe ? "Sie erhalten keine Marketing-E-Mails mehr von MyAiCrush."
+            : isEs ? "Ya no recibiras correos de marketing de MyAiCrush."
+            : isPt ? "Voce nao recebera mais emails de marketing do MyAiCrush."
+            : "You will no longer receive marketing emails from MyAiCrush.";
+        const back = isFr ? "Retour au site" : isDe ? "Zuruck zur Seite" : isEs ? "Volver al sitio" : isPt ? "Voltar ao site" : "Back to site";
+
+        res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f9fafb;">
+<div style="text-align:center;max-width:400px;padding:40px 24px;">
+<h1 style="font-size:1.5rem;color:#1a1a1a;margin:0 0 12px;">${title}</h1>
+<p style="color:#6b7280;line-height:1.6;margin:0 0 24px;">${msg}</p>
+<a href="https://myaicrush.ai" style="color:#7c3aed;text-decoration:none;font-weight:600;">${back}</a>
+</div></body></html>`);
+    } catch (e) {
+        console.error("[UNSUBSCRIBE] Error:", e.message);
+        res.status(500).send("An error occurred. Please try again.");
+    }
 });
 
 // Connecter à la base de données avant de démarrer le serveur

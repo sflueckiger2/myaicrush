@@ -347,6 +347,10 @@ async function displayUserTokens() {
       if (tokenElement) {
           tokenElement.textContent = `${data.tokens} Jetons disponibles`;
       }
+
+      if (data.pendingBonus) {
+          showBonusPopup(data.tokens);
+      }
   } catch (error) {
       console.error("❌ Erreur lors de la récupération des jetons :", error);
       const tokenElement = document.getElementById('user-tokens');
@@ -522,6 +526,43 @@ async function fetchRequest(url, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+}
+
+function showBonusPopup(totalTokens) {
+  const isFr = (navigator.language || "").startsWith("fr");
+  const isDe = (navigator.language || "").startsWith("de");
+  const isEs = (navigator.language || "").startsWith("es");
+
+  const title = isFr ? "30 jetons offerts !" : isDe ? "30 Gratis-Tokens!" : isEs ? "30 tokens gratis!" : "30 Free Tokens!";
+  const msg = isFr
+    ? "Tes 30 jetons bonus Premium viennent d'etre credites sur ton compte."
+    : isDe ? "Deine 30 Premium-Bonus-Tokens wurden deinem Konto gutgeschrieben."
+    : isEs ? "Tus 30 tokens bonus Premium han sido acreditados en tu cuenta."
+    : "Your 30 Premium bonus tokens have been credited to your account.";
+  const balanceLabel = isFr ? "Solde actuel" : isDe ? "Aktuelles Guthaben" : isEs ? "Saldo actual" : "Current balance";
+  const btnText = isFr ? "Super !" : isDe ? "Super!" : isEs ? "Genial!" : "Awesome!";
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:340px;width:100%;padding:32px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn .3s ease">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🎁</div>
+      <h3 style="margin:0 0 8px;font-size:1.3rem;color:#1a1a1a;font-weight:700;">${title}</h3>
+      <p style="margin:0 0 16px;font-size:0.92rem;color:#4b5563;line-height:1.5;">${msg}</p>
+      <div style="background:#f3f4f6;border-radius:10px;padding:12px;margin-bottom:20px;">
+        <span style="font-size:0.8rem;color:#6b7280;">${balanceLabel}</span><br/>
+        <span style="font-size:1.4rem;font-weight:700;color:#7c3aed;">${totalTokens} tokens</span>
+      </div>
+      <button id="bonus-popup-close" style="background:#7c3aed;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-weight:600;font-size:0.95rem;cursor:pointer;width:100%;">${btnText}</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const style = document.createElement("style");
+  style.textContent = "@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes popIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}";
+  document.head.appendChild(style);
+
+  document.getElementById("bonus-popup-close").addEventListener("click", () => overlay.remove());
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
 }
 
 
