@@ -102,6 +102,48 @@ const PORT = process.env.PORT || 3000;
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ── Fireworks model config with automatic fallback ──
+const FW_PRIMARY_MODEL = "accounts/fireworks/models/llama-v3p3-70b-instruct";
+const FW_FALLBACK_MODEL = "accounts/fireworks/models/minimax-m2p7";
+let fwActiveModel = FW_PRIMARY_MODEL;
+let fwLastAlertSentAt = 0;
+const FW_ALERT_COOLDOWN_MS = 3600_000; // 1 email per hour max
+
+async function fwSendModelAlert(failedModel, errorMsg) {
+  const now = Date.now();
+  if (now - fwLastAlertSentAt < FW_ALERT_COOLDOWN_MS) return;
+  fwLastAlertSentAt = now;
+  const fallback = failedModel === FW_PRIMARY_MODEL ? FW_FALLBACK_MODEL : "none";
+  console.error(`🚨 MODEL ALERT: ${failedModel} failed → fallback: ${fallback}`);
+  try {
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@send.myaicrush.ai>",
+      to: process.env.ADMIN_EMAIL || "sflueckiger.pro@gmail.com",
+      subject: `[MyAiCrush] Fireworks model down: ${failedModel.split("/").pop()}`,
+      html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#1a1a2e;color:#e0e0e0;border-radius:12px;overflow:hidden;">
+        <div style="background:#dc2626;padding:20px 24px;text-align:center;">
+          <h2 style="margin:0;color:#fff;">Model Alert</h2>
+        </div>
+        <div style="padding:20px 24px;">
+          <p><strong>Failed model:</strong> <code>${failedModel}</code></p>
+          <p><strong>Error:</strong> ${errorMsg}</p>
+          <p><strong>Fallback active:</strong> <code>${fallback}</code></p>
+          <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+          <p style="color:#fca5a5;">Action needed: check Fireworks model availability and update if necessary.</p>
+        </div>
+      </div>`
+    });
+    console.log("📧 Model alert email sent");
+  } catch (e) {
+    console.error("❌ Failed to send model alert email:", e.message);
+  }
+}
+
+function isModelGoneError(err) {
+  const status = err?.response?.status || err?.status;
+  return status === 404 || status === 422;
+}
+
 const nodemailer = require("nodemailer");
 const smtpTransporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -2211,13 +2253,12 @@ function cacheSet(key, data, ttlMs) {
 
 // ✅ Axios wrapper avec timeout
 async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000 }) {
-  // Si pas de clé API → fallback direct
   if (!process.env.FIREWORKS_API_KEY) return null;
 
-  return axios.post(
+  const tryModel = (model) => axios.post(
     "https://api.fireworks.ai/inference/v1/chat/completions",
     {
-      model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
+      model,
       messages: [{ role: "system", content: systemPrompt }],
       max_tokens: 90,
       temperature,
@@ -2231,6 +2272,18 @@ async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000
       }
     }
   );
+
+  try {
+    return await tryModel(fwActiveModel);
+  } catch (err) {
+    if (isModelGoneError(err) && fwActiveModel === FW_PRIMARY_MODEL) {
+      fwSendModelAlert(FW_PRIMARY_MODEL, err.response?.data?.error?.message || err.message);
+      fwActiveModel = FW_FALLBACK_MODEL;
+      console.log(`🔄 Fireworks quickReplies → fallback: ${FW_FALLBACK_MODEL}`);
+      return await tryModel(FW_FALLBACK_MODEL);
+    }
+    throw err;
+  }
 }
 
 // ✅ Parse robuste : JSON.parse sinon extraction "..."
@@ -2686,12 +2739,13 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
 
 
         let response;
+        const chatModel = fwActiveModel;
         for (let _attempt = 0; _attempt < 3; _attempt++) {
           try {
             response = await axios.post(
               'https://api.fireworks.ai/inference/v1/chat/completions',
               {
-                model: "accounts/fireworks/models/llama-v3p3-70b-instruct",
+                model: chatModel,
                 messages: messages,
                 max_tokens: 200,
                 temperature: 1.0,
@@ -2709,6 +2763,31 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
             );
             break;
           } catch (fwErr) {
+            if (isModelGoneError(fwErr) && chatModel === FW_PRIMARY_MODEL && _attempt === 0) {
+              fwSendModelAlert(FW_PRIMARY_MODEL, fwErr.response?.data?.error?.message || fwErr.message);
+              fwActiveModel = FW_FALLBACK_MODEL;
+              console.log(`🔄 Fireworks chat → fallback: ${FW_FALLBACK_MODEL}`);
+              response = await axios.post(
+                'https://api.fireworks.ai/inference/v1/chat/completions',
+                {
+                  model: FW_FALLBACK_MODEL,
+                  messages: messages,
+                  max_tokens: 200,
+                  temperature: 1.0,
+                  top_p: 1.0,
+                  frequency_penalty: 0.3,
+                  presence_penalty: 0.8
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
+                    "Content-Type": "application/json"
+                  },
+                  timeout: 15000
+                }
+              );
+              break;
+            }
             console.log(`⚠️ Fireworks tentative ${_attempt + 1}/3 échouée: ${fwErr.code || fwErr.message}`);
             if (_attempt === 2) throw fwErr;
             await new Promise(r => setTimeout(r, 1000));
@@ -5085,24 +5164,28 @@ app.post('/api/save-images', async (req, res) => {
   }
 });
 
-// === PROXY FIREWORKS API (Kimi k2) avec streaming pour éviter la limite 4096 ===
+// === PROXY FIREWORKS API avec streaming + fallback automatique ===
 app.post('/api/generate-ai-prompts', async (req, res) => {
   try {
     const { messages, temperature = 0.95, max_tokens = 8000 } = req.body;
-    const response = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+
+    const callFw = (model) => fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.FIREWORKS_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
-        messages,
-        temperature,
-        max_tokens,
-        stream: true
-      })
+      body: JSON.stringify({ model, messages, temperature, max_tokens, stream: true })
     });
+
+    let response = await callFw(fwActiveModel);
+
+    if ((response.status === 404 || response.status === 422) && fwActiveModel === FW_PRIMARY_MODEL) {
+      fwSendModelAlert(FW_PRIMARY_MODEL, `HTTP ${response.status} on generate-ai-prompts`);
+      fwActiveModel = FW_FALLBACK_MODEL;
+      console.log(`🔄 Fireworks prompts → fallback: ${FW_FALLBACK_MODEL}`);
+      response = await callFw(FW_FALLBACK_MODEL);
+    }
 
     let content = '';
     const text = await response.text();
