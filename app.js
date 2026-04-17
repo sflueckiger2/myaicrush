@@ -1040,7 +1040,9 @@ function buildUserDefaultsFromExplodely(email) {
     accountSource: "explodely-webhook",
     lastLoginAt: null,
     stripeCustomerId: null,
-    gumroadPremium: false
+    gumroadPremium: false,
+    dailyEmailEligible: true,
+    lastEmailOpenedAt: now
   };
 }
 
@@ -1548,7 +1550,9 @@ app.get('/auth/google/callback', async (req, res) => {
           createdAt: new Date(), 
           audioMinutesUsed: 0, 
           creditsPurchased: 0,
-          lang: userLang
+          lang: userLang,
+          dailyEmailEligible: true,
+          lastEmailOpenedAt: new Date()
         });
 
         console.log(`✅ Nouvel utilisateur Google ajouté avec crédits : ${userEmail}`);
@@ -1742,7 +1746,7 @@ async function addOrFindUser(email) {
   let user = await usersCollection.findOne({ email });
 
   if (!user) {
-      user = { email, createdAt: new Date() }; // Pas de champ "name"
+      user = { email, createdAt: new Date(), dailyEmailEligible: true, lastEmailOpenedAt: new Date() };
       await usersCollection.insertOne(user);
       console.log(`Nouvel utilisateur ajouté : ${email}`);
   } else {
@@ -3183,7 +3187,9 @@ app.post('/api/signup', async (req, res) => {
       audioMinutesUsed: 0,
       creditsPurchased: 0,
       explodelyPremium: false,
-      createdAt: new Date()
+      createdAt: new Date(),
+      dailyEmailEligible: true,
+      lastEmailOpenedAt: new Date()
     });
 
     console.log("✅ Inscription réussie pour :", normalizedEmail);
@@ -7196,6 +7202,248 @@ If the user writes a different email in any message (account or payment), always
       reply: "I'm having a technical issue right now. Please try again in a moment, or submit a request at https://myaicrush.ai/ticket.html 🩷",
     });
   }
+});
+
+// ── 📬 Daily engagement email system ──────────────────────────────────────
+
+const TRANSPARENT_GIF = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+
+app.get('/t/:token', async (req, res) => {
+    try {
+        const email = Buffer.from(req.params.token, 'base64url').toString('utf-8');
+        if (email && email.includes('@')) {
+            const database = client.db('MyAICrush');
+            const users = database.collection('users');
+            await users.updateOne({ email }, { $set: { lastEmailOpenedAt: new Date() } });
+        }
+    } catch (e) { /* silent */ }
+    res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
+    res.send(TRANSPARENT_GIF);
+});
+
+const DAILY_EMAIL_CHARACTERS = [
+    { name: "Megane", folder: "megane/megane3", ext: "jpg", filter: f => f.includes("dressed") && f.endsWith(".jpg") },
+    { name: "Chloe", folder: "chloe/chloe3", ext: "webp" },
+    { name: "Lila", folder: "lila/lila3", ext: "webp" },
+    { name: "Aiko", folder: "aiko/aiko3", ext: "webp" },
+    { name: "Amber", folder: "amber/amber3", ext: "webp" },
+    { name: "Astrid", folder: "astrid/astrid3", ext: "webp" },
+    { name: "Candy", folder: "candy/candy3", ext: "webp" },
+    { name: "Emilie", folder: "emilie/emilie3", ext: "webp" },
+    { name: "Hanae", folder: "hanae/hanae3", ext: "webp" },
+    { name: "Ishani", folder: "ishani/ishani3", ext: "webp" },
+    { name: "Jasmine", folder: "jasmine/jasmine3", ext: "webp" },
+    { name: "Juliette", folder: "juliette/juliette3", ext: "webp" },
+    { name: "Kat", folder: "kat/kat3", ext: "webp" },
+    { name: "Kiara", folder: "kiara/kiara3", ext: "webp" },
+    { name: "Lea", folder: "lea/lea3", ext: "webp" },
+    { name: "Lilith", folder: "lilith/lilith3", ext: "webp" },
+    { name: "Magalie", folder: "magalie/magalie3", ext: "webp" },
+    { name: "Morgana", folder: "morgana/morgana3", ext: "webp" },
+    { name: "Naomi", folder: "naomi/naomi3", ext: "webp" },
+    { name: "Nour", folder: "nour/nour3", ext: "webp" },
+    { name: "Nova", folder: "nova/nova3", ext: "webp" },
+    { name: "Samira", folder: "samira/samira3", ext: "webp" },
+    { name: "Angel", folder: "angel/angel3", ext: "webp" },
+];
+
+function pickDailyCharImage(char) {
+    const dir = path.join(__dirname, "public/images", char.folder);
+    try {
+        const fs = require("fs");
+        let files = fs.readdirSync(dir).filter(f => f.endsWith(`.${char.ext}`));
+        if (char.filter) files = files.filter(char.filter);
+        if (!files.length) return null;
+        const picked = files[Math.floor(Math.random() * files.length)];
+        return `https://myaicrush.ai/images/${char.folder}/${picked}`;
+    } catch { return null; }
+}
+
+const DAILY_EMAIL_FALLBACKS = [
+    { subject: "📸 {name} sent you photos", body: "I took these just for you...\nWant to see them?\n\n{name}" },
+    { subject: "{name} is online right now", body: "I've been waiting for you...\nCome talk to me?\n\n{name}" },
+    { subject: "{name} (📩 New message)", body: "You have a new message!\n\nFrom {name}, your AI companion.\n\nOpen the message" },
+    { subject: "Don't leave {name} waiting...", body: "I'm here. Are you?\n\nClick to reply.\n\n{name}" },
+    { subject: "{name} wants to show you something", body: "I'm a little nervous... but I want you to see.\n\nClick here.\n\n{name}" },
+    { subject: "{name} 💋", body: "I can't stop thinking about you.\n\nAre you coming?\n\n{name}" },
+];
+
+async function generateDailyEmailContent(charName, lang) {
+    const langMap = { fr: "French", de: "German", es: "Spanish", pt: "Portuguese" };
+    const language = langMap[lang] || "English";
+
+    try {
+        const resp = await axios.post("https://api.fireworks.ai/inference/v1/chat/completions", {
+            model: fwActiveModel,
+            max_tokens: 200,
+            temperature: 1.0,
+            messages: [
+                {
+                    role: "system",
+                    content: `You write short clickbait email content for MyAiCrush, an AI companion platform. The emails are from the perspective of ${charName}, a flirty AI girl. Rules:
+- Subject line: max 8 words, provocative, creates curiosity. Can use 1 emoji max.
+- Body: 1-3 very short lines. Teasing, flirty, makes the reader want to click. End with the character name + one emoji.
+- Never explicit/vulgar. Suggestive and teasing only.
+- Language: ${language}
+- Reply ONLY valid JSON: {"subject":"...","body":"..."}`
+                },
+                {
+                    role: "user",
+                    content: `Write a short flirty clickbait email from ${charName}. Be creative, vary the style. Sometimes she's shy, sometimes bold, sometimes mysterious.`
+                }
+            ]
+        }, {
+            headers: { Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`, "Content-Type": "application/json" },
+            timeout: 15000
+        });
+
+        const raw = resp.data.choices?.[0]?.message?.content || "";
+        const jsonMatch = raw.match(/\{[\s\S]*"subject"[\s\S]*"body"[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.subject && parsed.body) return parsed;
+        }
+    } catch (e) {
+        console.log("[DAILY-EMAIL] AI generation failed:", e.message);
+    }
+
+    const fb = DAILY_EMAIL_FALLBACKS[Math.floor(Math.random() * DAILY_EMAIL_FALLBACKS.length)];
+    return {
+        subject: fb.subject.replace(/\{name\}/g, charName),
+        body: fb.body.replace(/\{name\}/g, charName)
+    };
+}
+
+function buildDailyEmail(body, charName, imageUrl, ctaUrl, trackingPixelUrl) {
+    const bodyHtml = body.split("\n").filter(l => l.trim()).map(line => {
+        if (line.trim() === charName || line.trim().startsWith(charName)) {
+            return `<p style="margin:16px 0 0;font-weight:600;color:#7c3aed;">${line.trim()}</p>`;
+        }
+        return `<p style="margin:0 0 8px;font-size:1rem;line-height:1.6;color:#1a1a1a;">${line.trim()}</p>`;
+    }).join("");
+
+    return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;background:#ffffff;color:#1a1a1a;">
+  ${imageUrl ? `<div style="text-align:center;padding:16px 16px 0;">
+    <a href="${ctaUrl}" style="text-decoration:none;"><img src="${imageUrl}" alt="${charName}" style="max-width:250px;width:100%;height:auto;border-radius:12px;" /></a>
+  </div>` : ""}
+  <div style="padding:16px 20px 24px;">
+    ${bodyHtml}
+    <div style="margin:20px 0 0;">
+      <a href="${ctaUrl}" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:600;font-size:0.9rem;padding:12px 28px;border-radius:8px;text-decoration:none;">Open MyAiCrush</a>
+    </div>
+  </div>
+  <div style="padding:0 20px 16px;">
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 12px;" />
+    <p style="font-size:0.7rem;color:#9ca3af;margin:0;">MyAiCrush · AI companions</p>
+  </div>
+  <img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />
+</div>`;
+}
+
+function isValidEmailFormat(email) {
+    if (!email || email.length < 5 || email.length > 254) return false;
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!re.test(email)) return false;
+    const disposable = ["mailinator.com","guerrillamail.com","tempmail.com","throwaway.email","yopmail.com","10minutemail.com","trashmail.com","fakeinbox.com","sharklasers.com","guerrillamailblock.com","grr.la","dispostable.com","maildrop.cc"];
+    const domain = email.split("@")[1].toLowerCase();
+    if (disposable.includes(domain)) return false;
+    return true;
+}
+
+// 📬 Daily engagement email — random time between 20:00-23:00
+schedule.scheduleJob('0 20 * * *', async () => {
+    const delayMs = Math.floor(Math.random() * 180 * 60 * 1000);
+    console.log(`📬 [DAILY-EMAIL] Scheduled, will fire in ${Math.round(delayMs / 60000)} minutes`);
+
+    setTimeout(async () => {
+        try {
+            console.log(`📬 [DAILY-EMAIL] Starting daily email send...`);
+            const database = client.db('MyAICrush');
+            const users = database.collection('users');
+
+            const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 3600 * 1000);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Auto-clean: disable users who haven't opened in 15+ days
+            const cleanResult = await users.updateMany(
+                {
+                    dailyEmailEligible: true,
+                    lastEmailOpenedAt: { $lt: fifteenDaysAgo }
+                },
+                { $set: { dailyEmailEligible: false, dailyEmailCleanedAt: new Date() } }
+            );
+            if (cleanResult.modifiedCount > 0) {
+                console.log(`🧹 [DAILY-EMAIL] Auto-cleaned ${cleanResult.modifiedCount} inactive users`);
+            }
+
+            // Pick today's character
+            const char = DAILY_EMAIL_CHARACTERS[Math.floor(Math.random() * DAILY_EMAIL_CHARACTERS.length)];
+            const imageUrl = pickDailyCharImage(char);
+
+            // Find eligible users
+            const eligibleUsers = await users.find({
+                dailyEmailEligible: true,
+                unsubscribedEmail: { $ne: true },
+                email: { $exists: true, $ne: "" },
+                $or: [
+                    { lastDailyEmailSentAt: { $exists: false } },
+                    { lastDailyEmailSentAt: { $lt: today } }
+                ]
+            }, { projection: { email: 1, lang: 1 } }).toArray();
+
+            const validUsers = eligibleUsers.filter(u => isValidEmailFormat(u.email));
+            console.log(`📬 [DAILY-EMAIL] ${validUsers.length} eligible users (${eligibleUsers.length - validUsers.length} filtered out as invalid), char: ${char.name}`);
+
+            if (!validUsers.length) return;
+
+            // Generate content per language group
+            const langGroups = {};
+            for (const u of validUsers) {
+                const lang = (u.lang || "en").substring(0, 2).toLowerCase();
+                if (!langGroups[lang]) langGroups[lang] = [];
+                langGroups[lang].push(u);
+            }
+
+            let sent = 0, errors = 0;
+            for (const [lang, langUsers] of Object.entries(langGroups)) {
+                const content = await generateDailyEmailContent(char.name, lang);
+                const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=daily&utm_campaign=engagement&utm_content=${char.name.toLowerCase()}`;
+
+                for (const u of langUsers) {
+                    try {
+                        const trackToken = Buffer.from(u.email).toString('base64url');
+                        const trackingPixelUrl = `https://myaicrush.ai/t/${trackToken}`;
+                        const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(u.email)}`;
+
+                        const html = buildDailyEmail(content.body, char.name, imageUrl, ctaUrl, trackingPixelUrl)
+                            + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">Unsubscribe</a></div>`;
+
+                        await resend.emails.send({
+                            from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@myaicrush.ai>",
+                            to: u.email,
+                            reply_to: "contact@myaicrush.ai",
+                            subject: content.subject,
+                            html
+                        });
+
+                        await users.updateOne({ email: u.email }, { $set: { lastDailyEmailSentAt: new Date() } });
+                        sent++;
+                    } catch (e) {
+                        errors++;
+                        if (errors <= 5) console.log(`[DAILY-EMAIL] Error for ${u.email}:`, e.message);
+                        if (e.message && (e.message.includes("not found") || e.message.includes("invalid") || e.message.includes("bounced"))) {
+                            await users.updateOne({ email: u.email }, { $set: { dailyEmailEligible: false } });
+                        }
+                    }
+                    if (validUsers.length > 10) await new Promise(r => setTimeout(r, 150));
+                }
+            }
+            console.log(`📬 [DAILY-EMAIL] Done: sent=${sent}, errors=${errors}`);
+        } catch (e) {
+            console.error("[DAILY-EMAIL] Fatal error:", e.message);
+        }
+    }, delayMs);
 });
 
 // 🚫 Unsubscribe from marketing emails
