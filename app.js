@@ -2217,7 +2217,7 @@ async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000
   return axios.post(
     "https://api.fireworks.ai/inference/v1/chat/completions",
     {
-      model: "accounts/fireworks/models/kimi-k2-instruct-0905",
+      model: "accounts/fireworks/models/deepseek-v3p2",
       messages: [{ role: "system", content: systemPrompt }],
       max_tokens: 90,
       temperature,
@@ -2691,7 +2691,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
             response = await axios.post(
               'https://api.fireworks.ai/inference/v1/chat/completions',
               {
-                model: "accounts/fireworks/models/kimi-k2-instruct-0905",
+                model: "accounts/fireworks/models/deepseek-v3p2",
                 messages: messages,
                 max_tokens: 200,
                 temperature: 1.0,
@@ -3320,19 +3320,24 @@ schedule.scheduleJob('5 0 1 * *', async () => {
     for (const u of premiumUsers) {
         try {
             await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <noreply@send.myaicrush.ai>",
+                from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@send.myaicrush.ai>",
                 to: u.email,
-                subject: "🎁 +30 free tokens just added to your account!",
+                reply_to: "contact@myaicrush.ai",
+                subject: "Your 30 free monthly tokens are here!",
                 html: `
                 <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:520px;margin:0 auto;background:#0f0f1a;color:#e0e0e0;border-radius:16px;overflow:hidden;">
                   <div style="background:linear-gradient(135deg,#a855f7,#f472b6);padding:32px 24px;text-align:center;">
-                    <h1 style="margin:0;font-size:1.6rem;color:#fff;">🎁 30 Free Tokens!</h1>
+                    <h1 style="margin:0;font-size:1.6rem;color:#fff;">30 Free Tokens!</h1>
+                    <p style="margin:6px 0 0;font-size:0.85rem;color:rgba(255,255,255,0.85);">Your monthly Premium bonus</p>
                   </div>
-                  <div style="padding:28px 24px;">
-                    <p style="font-size:1rem;line-height:1.7;margin:0 0 16px;">Hey! Your monthly <strong>30 bonus tokens</strong> have just been credited to your account.</p>
-                    <p style="font-size:0.95rem;line-height:1.7;margin:0 0 24px;color:#b0b0c3;">Use them to create AI videos, unlock exclusive content, or chat in Nympho mode.</p>
+                  <div style="text-align:center;padding:20px 24px 0;">
+                    <img src="https://myaicrush.ai/images/megane/megane3/megane_dressed_30.jpg" alt="Megane" style="width:180px;height:180px;object-fit:cover;border-radius:50%;border:3px solid rgba(168,85,247,0.5);" />
+                  </div>
+                  <div style="padding:20px 24px 28px;">
+                    <p style="font-size:1rem;line-height:1.7;margin:0 0 16px;text-align:center;">Hey! Your monthly <strong>30 bonus tokens</strong> have just been credited to your account.</p>
+                    <p style="font-size:0.95rem;line-height:1.7;margin:0 0 24px;color:#b0b0c3;text-align:center;">Use them to create AI videos, unlock exclusive content, or chat in Nympho mode.</p>
                     <div style="text-align:center;margin:24px 0;">
-                      <a href="https://myaicrush.ai/video-creator.html" style="display:inline-block;background:linear-gradient(135deg,#f472b6,#a855f7);color:#fff;font-weight:700;font-size:0.95rem;padding:14px 36px;border-radius:14px;text-decoration:none;">Use My Tokens</a>
+                      <a href="https://myaicrush.ai" style="display:inline-block;background:linear-gradient(135deg,#f472b6,#a855f7);color:#fff;font-weight:700;font-size:0.95rem;padding:14px 36px;border-radius:14px;text-decoration:none;">Use My Tokens</a>
                     </div>
                     <p style="font-size:0.8rem;color:#6b7280;text-align:center;margin-top:24px;">You receive this email because you are a Premium member of MyAiCrush.</p>
                   </div>
@@ -5089,7 +5094,7 @@ app.post('/api/generate-ai-prompts', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'accounts/fireworks/models/kimi-k2-instruct-0905',
+        model: 'accounts/fireworks/models/deepseek-v3p2',
         messages,
         temperature,
         max_tokens,
