@@ -99,6 +99,9 @@ const { connectToDb, getDb } = require('./db');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const PORT = process.env.PORT || 3000;
 
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 const nodemailer = require("nodemailer");
 const smtpTransporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -3306,6 +3309,43 @@ schedule.scheduleJob('5 0 1 * *', async () => {
     );
 
     console.log(`🎁 Bonus mensuel : +30 jetons pour ${result.modifiedCount} abonnés premium`);
+
+    // Send email notification to each premium user
+    const premiumUsers = await users.find(
+        { explodelyPremium: true, email: { $exists: true, $ne: "" } },
+        { projection: { email: 1 } }
+    ).toArray();
+
+    let sent = 0, errors = 0;
+    for (const u of premiumUsers) {
+        try {
+            await resend.emails.send({
+                from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <noreply@send.myaicrush.ai>",
+                to: u.email,
+                subject: "🎁 +30 free tokens just added to your account!",
+                html: `
+                <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:520px;margin:0 auto;background:#0f0f1a;color:#e0e0e0;border-radius:16px;overflow:hidden;">
+                  <div style="background:linear-gradient(135deg,#a855f7,#f472b6);padding:32px 24px;text-align:center;">
+                    <h1 style="margin:0;font-size:1.6rem;color:#fff;">🎁 30 Free Tokens!</h1>
+                  </div>
+                  <div style="padding:28px 24px;">
+                    <p style="font-size:1rem;line-height:1.7;margin:0 0 16px;">Hey! Your monthly <strong>30 bonus tokens</strong> have just been credited to your account.</p>
+                    <p style="font-size:0.95rem;line-height:1.7;margin:0 0 24px;color:#b0b0c3;">Use them to create AI videos, unlock exclusive content, or chat in Nympho mode.</p>
+                    <div style="text-align:center;margin:24px 0;">
+                      <a href="https://myaicrush.ai/video-creator.html" style="display:inline-block;background:linear-gradient(135deg,#f472b6,#a855f7);color:#fff;font-weight:700;font-size:0.95rem;padding:14px 36px;border-radius:14px;text-decoration:none;">Use My Tokens</a>
+                    </div>
+                    <p style="font-size:0.8rem;color:#6b7280;text-align:center;margin-top:24px;">You receive this email because you are a Premium member of MyAiCrush.</p>
+                  </div>
+                </div>`
+            });
+            sent++;
+        } catch (e) {
+            errors++;
+            if (errors <= 3) console.log(`[BONUS-EMAIL] Error sending to ${u.email}:`, e.message);
+        }
+        if (premiumUsers.length > 10) await new Promise(r => setTimeout(r, 100));
+    }
+    console.log(`📧 Bonus emails: sent=${sent}, errors=${errors}`);
 });
 
 
