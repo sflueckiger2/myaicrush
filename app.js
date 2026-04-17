@@ -7350,8 +7350,8 @@ function isValidEmailFormat(email) {
     return true;
 }
 
-// 📬 Daily engagement email — random time between 20:00-23:00
-schedule.scheduleJob('0 20 * * *', async () => {
+// 📬 Daily engagement email — random time between 20:00-23:00 Lausanne (UTC+2)
+schedule.scheduleJob('0 18 * * *', async () => {
     const delayMs = Math.floor(Math.random() * 180 * 60 * 1000);
     console.log(`📬 [DAILY-EMAIL] Scheduled, will fire in ${Math.round(delayMs / 60000)} minutes`);
 
