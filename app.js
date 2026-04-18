@@ -3559,7 +3559,7 @@ schedule.scheduleJob('5 0 1 * *', async () => {
     <p style="font-size:1.3rem;font-weight:700;color:#1a1a1a;margin:0 0 4px;">MyAiCrush</p>
   </div>
   ${imageUrl ? `<div style="padding:16px 24px 0;text-align:center;">
-    <img src="${imageUrl}" alt="${charName}" style="max-width:250px;width:100%;height:auto;border-radius:12px;margin-bottom:8px;" />
+    <a href="https://myaicrush.ai" style="text-decoration:none;"><img src="${imageUrl}" alt="${charName}" style="max-width:250px;width:100%;height:auto;border-radius:12px;margin-bottom:8px;" /></a>
     <p style="font-size:0.95rem;color:#7c3aed;font-weight:600;margin:0 0 20px;">${t.greeting(charName)}</p>
   </div>` : ""}
   <div style="padding:0 24px 32px;">
