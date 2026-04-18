@@ -3590,7 +3590,7 @@ schedule.scheduleJob('5 0 1 * *', async () => {
             const charDisplayName = img ? (CHAR_DISPLAY[img.char] || img.char) : "MyAiCrush";
 
             await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@myaicrush.ai>",
+                from: "MyAiCrush <contact@myaicrush.ai>",
                 to: u.email,
                 reply_to: "contact@myaicrush.ai",
                 subject: t.subject,
@@ -7361,7 +7361,7 @@ function pickDailyCharImage(char) {
         if (char.filter) files = files.filter(char.filter);
         if (!files.length) return null;
         const picked = files[Math.floor(Math.random() * files.length)];
-        return `https://myaicrush.ai/images/${char.folder}/${picked}`;
+        return `https://img.myaicrush.ai/images/${char.folder}/${picked}`;
     } catch { return null; }
 }
 
@@ -7526,7 +7526,7 @@ schedule.scheduleJob('0 18 * * *', async () => {
                             + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">Unsubscribe</a></div>`;
 
                         await resend.emails.send({
-                            from: process.env.RESEND_FROM_EMAIL || "MyAiCrush <contact@myaicrush.ai>",
+                            from: "MyAiCrush <contact@myaicrush.ai>",
                             to: u.email,
                             reply_to: "contact@myaicrush.ai",
                             subject: content.subject,
