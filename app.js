@@ -62,10 +62,10 @@ app.use((req, res, next) => {
 
   const title = isFr ? 'Site fermé' : isDe ? 'Seite geschlossen' : 'Site Closed';
   const msg = isFr
-    ? 'MyAiCrush n\'est plus disponible dans votre région.'
+    ? 'MyAiCrush n\'est plus disponible.'
     : isDe
-    ? 'MyAiCrush ist in Ihrer Region nicht mehr verfügbar.'
-    : 'MyAiCrush is no longer available in your region.';
+    ? 'MyAiCrush ist nicht mehr verfügbar.'
+    : 'MyAiCrush is no longer available.';
   const cancelText = isFr
     ? 'Si vous avez un abonnement actif, vous pouvez l\'annuler ici :'
     : isDe
