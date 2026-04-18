@@ -17,6 +17,8 @@ const app = express(); // Initialiser l'instance d'Express
 const EVENLABS_API_KEY = process.env.EVENLABS_API_KEY;
 const fetch = require('node-fetch'); // ✅ Assure-toi que c'est installé
 
+const geoip = require('geoip-lite');
+
 const nsfw = require('nsfwjs');
 const tf = require('@tensorflow/tfjs'); // Version allégée
 const { Image } = require('canvas'); // Simuler un DOM pour analyser les images
@@ -25,6 +27,8 @@ const userSentImages = new Map(); // email -> Set de noms d’images
 
 
 
+app.set('trust proxy', true);
+
 app.use((req, res, next) => {
   if (req.hostname === 'img.myaicrush.ai') {
     res.removeHeader('Set-Cookie');
@@ -32,9 +36,53 @@ app.use((req, res, next) => {
   next();
 });
 
+// =========================
+// GEO-BLOCK SWITZERLAND
+// =========================
+const GEO_WHITELISTED_IPS = ['193.5.236.87'];
+const GEO_ALLOWED_PATHS = ['/contact.html', '/contact-en.html', '/ticket.html', '/scripts/i18n-contact.js', '/scripts/i18n-menu.js', '/scripts/menu.js', '/styles.css', '/api/support-chat', '/api/my-tickets', '/unsubscribe', '/t/'];
+
+app.use((req, res, next) => {
+  const ip = (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim().replace(/^::ffff:/, '');
+  if (GEO_WHITELISTED_IPS.includes(ip)) return next();
+
+  const geo = geoip.lookup(ip);
+  if (!geo || geo.country !== 'CH') return next();
+
+  const p = req.path.toLowerCase();
+  if (GEO_ALLOWED_PATHS.some(allowed => p === allowed || p.startsWith(allowed)) ||
+      p.startsWith('/images/') || p.endsWith('.css') || p.endsWith('.woff2') || p.endsWith('.woff') || p.endsWith('.ttf') ||
+      p.startsWith('/favicon') || p === '/robots.txt') {
+    return next();
+  }
+
+  const lang = (req.headers['accept-language'] || '').toLowerCase();
+  const isFr = lang.startsWith('fr');
+  const isDe = lang.startsWith('de');
+
+  const title = isFr ? 'Site fermé' : isDe ? 'Seite geschlossen' : 'Site Closed';
+  const msg = isFr
+    ? 'MyAiCrush n\'est plus disponible dans votre région.'
+    : isDe
+    ? 'MyAiCrush ist in Ihrer Region nicht mehr verfügbar.'
+    : 'MyAiCrush is no longer available in your region.';
+  const cancelText = isFr
+    ? 'Si vous avez un abonnement actif, vous pouvez l\'annuler ici :'
+    : isDe
+    ? 'Wenn Sie ein aktives Abo haben, können Sie es hier kündigen:'
+    : 'If you have an active subscription, you can cancel it here:';
+  const btnText = isFr ? 'Annuler mon abonnement' : isDe ? 'Mein Abo kündigen' : 'Cancel my subscription';
+
+  res.status(451).send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0c0f1a;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:2rem}
+.card{text-align:center;max-width:480px}.card h1{font-size:2rem;margin-bottom:1rem;color:#f472b6}.card p{font-size:1rem;line-height:1.6;margin-bottom:1.5rem;color:#94a3b8}.card .sub{font-size:0.9rem;color:#64748b;margin-bottom:1rem}
+.btn{display:inline-block;padding:0.75rem 2rem;background:linear-gradient(135deg,#f472b6,#ec4899);color:#fff;text-decoration:none;border-radius:999px;font-weight:600;font-size:0.95rem;transition:opacity .2s}.btn:hover{opacity:.85}</style></head>
+<body><div class="card"><h1>${title}</h1><p>${msg}</p><p class="sub">${cancelText}</p><a class="btn" href="/contact.html">${btnText}</a></div></body></html>`);
+});
 
 // =========================
-// ✅ PREMIUM CACHE (anti-latence)
+// PREMIUM CACHE (anti-latence)
 // =========================
 const premiumCache = new Map(); // email -> { value, expiresAt }
 
@@ -5337,7 +5385,7 @@ app.post('/api/generate-ai-prompts', async (req, res) => {
 
 
 // =====================================================
-// 🤖 AI SUPPORT AGENT — Juliette v2 (Automated Support)
+// AI SUPPORT AGENT — Katie (Automated Support)
 // =====================================================
 
 // --- Rate limiter (per IP, 20 messages / 5 min) ---
@@ -6145,7 +6193,7 @@ async function supportSendPasswordReset(email, lang) {
   }
 
   const supportLogs = database.collection("support_logs");
-  await supportLogs.insertOne({ action: "password_reset_sent", email: user.email, sentBy: "juliette", sentAt: new Date() });
+  await supportLogs.insertOne({ action: "password_reset_sent", email: user.email, sentBy: "katie", sentAt: new Date() });
 
   return {
     success: true,
@@ -6370,7 +6418,7 @@ const SUPPORT_TOOLS = [
 
 // --- System Prompt ---
 
-const SUPPORT_SYSTEM_PROMPT = `You are Juliette, the AI support assistant for MyAiCrush (an adult AI companion chat platform).
+const SUPPORT_SYSTEM_PROMPT = `You are Katie, the AI support assistant for MyAiCrush (an adult AI companion chat platform).
 
 YOUR CAPABILITIES — you can execute REAL actions on user accounts (only when tools succeed):
 - Look up accounts by email
@@ -6514,7 +6562,7 @@ STEP 0: Look up the account with lookup_user. Check the "nonRefundableGift" fiel
 - If nonRefundableGift is FALSE → proceed to STEP 1.
 
 STEP 1: RETENTION OFFER (mandatory if nonRefundableGift is false)
-Before confirming cancellation, offer 300 free tokens ($129 value) as a reason to stay. Be warm, playful and slightly flirty (you are Juliette). Make them want to stay.
+Before confirming cancellation, offer 300 free tokens ($129 value) as a reason to stay. Be warm, playful and slightly flirty (you are Katie). Make them want to stay.
 - English example: "Before I process that, I have a special offer just for you! 🩷 I can add 300 free tokens ($129 value!) to your account right now — you can use them for exclusive bonus features like nympho mode. Your premium stays active, and you get an amazing gift on top. Would you like me to add the 300 free tokens to your account? Or would you still prefer to cancel? 😘"
 - French example: "Avant de procéder, j'ai une offre spéciale rien que pour vous ! 🩷 Je peux ajouter 300 jetons gratuits (valeur 129$ !) directement sur votre compte — vous pourrez les utiliser pour des fonctionnalités bonus exclusives comme le mode nympho. Votre premium reste actif, et vous recevez un cadeau incroyable en plus. Souhaitez-vous que j'ajoute les 300 jetons gratuits, ou préférez-vous toujours annuler ? 😘"
 - WAIT for their answer. Do NOT proceed until they respond.
@@ -6543,7 +6591,7 @@ Many French-speaking customers created their account before 2026 and had a Strip
 In ALL these cases, do NOT offer to "cancel" — there is NOTHING active to cancel. Do NOT ask for another payment email — we already know they are an old customer whose subscription expired. Instead, go straight into SALES MODE:
 1. Briefly reassure: their old subscription has ended, no more charges.
 2. Do NOT ask for another email or order number — skip straight to the re-subscription pitch.
-3. Be warm, playful and slightly flirty/sexy in tone (you are Juliette after all 😏). Make the offer sound irresistible and fun — not corporate. The goal is to make them WANT to come back.
+3. Be warm, playful and slightly flirty/sexy in tone (you are Katie after all 😏). Make the offer sound irresistible and fun — not corporate. The goal is to make them WANT to come back.
 4. ALWAYS offer the RE-SUBSCRIPTION INCENTIVE in your FIRST reply — this is MANDATORY:
    - Propose 300 free tokens (a $129 value) credited IMMEDIATELY to their account as a welcome-back gift.
    - Tell them to re-subscribe at https://myaicrush.ai/premium.html for $29/month, cancel anytime.
@@ -6700,7 +6748,7 @@ function supportBuildUserStatedEmails(message, priorTurns) {
   return set;
 }
 
-/** Emails Juliette mentioned in her N most recent assistant turns — in scope after customer confirms ("yes", "c'est moi", etc.) */
+/** Emails Katie mentioned in her N most recent assistant turns — in scope after customer confirms ("yes", "c'est moi", etc.) */
 function supportCollectAssistantOfferedEmails(priorTurns, maxAssistantTurns = 6) {
   const set = new Set();
   let seen = 0;

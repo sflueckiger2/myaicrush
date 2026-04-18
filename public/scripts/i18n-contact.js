@@ -12,12 +12,12 @@ if (isFrench) {
     const desc = document.getElementById("page-desc");
     if (desc) {
       desc.textContent =
-        "Discute avec Juliette, notre assistante support IA. Elle peut vérifier ton compte, corriger des problèmes, annuler ton abonnement, traiter des remboursements et plus — directement depuis ce chat.";
+        "Discute avec Katie, notre assistante support IA. Elle peut vérifier ton compte, corriger des problèmes, annuler ton abonnement, traiter des remboursements et plus — directement depuis ce chat.";
     }
 
     // Topbar
     const topbarName = document.getElementById("topbar-name");
-    if (topbarName) topbarName.textContent = "Juliette – Support MyAiCrush";
+    if (topbarName) topbarName.textContent = "Katie – Support MyAiCrush";
 
     const topbarStatus = document.getElementById("topbar-status");
     if (topbarStatus) {
@@ -28,7 +28,7 @@ if (isFrench) {
     const welcomeMsg = document.getElementById("welcome-msg");
     if (welcomeMsg) {
       welcomeMsg.innerHTML =
-        "Coucou 🩷 Je suis Juliette, ton assistante support.\n\n" +
+        "Coucou 🩷 Je suis Katie, ton assistante support.\n\n" +
         "Je peux t'aider directement pour :\n" +
         "• Corriger un problème de Premium\n" +
         "• Annuler ton abonnement\n" +
@@ -135,12 +135,12 @@ if (isGerman) {
     const desc = document.getElementById("page-desc");
     if (desc) {
       desc.textContent =
-        "Chatte mit Juliette, unserer KI-Support-Assistentin. Sie kann dein Konto überprüfen, Probleme beheben, dein Abo kündigen, Rückerstattungen bearbeiten und mehr — direkt hier im Chat.";
+        "Chatte mit Katie, unserer KI-Support-Assistentin. Sie kann dein Konto überprüfen, Probleme beheben, dein Abo kündigen, Rückerstattungen bearbeiten und mehr — direkt hier im Chat.";
     }
 
     // Topbar
     const topbarName = document.getElementById("topbar-name");
-    if (topbarName) topbarName.textContent = "Juliette – Support MyAiCrush";
+    if (topbarName) topbarName.textContent = "Katie – Support MyAiCrush";
 
     const topbarStatus = document.getElementById("topbar-status");
     if (topbarStatus) {
@@ -151,7 +151,7 @@ if (isGerman) {
     const welcomeMsg = document.getElementById("welcome-msg");
     if (welcomeMsg) {
       welcomeMsg.innerHTML =
-        "Hey 🩷 Ich bin Juliette, deine Support-Assistentin.\n\n" +
+        "Hey 🩷 Ich bin Katie, deine Support-Assistentin.\n\n" +
         "Ich kann dir direkt helfen bei:\n" +
         "• Premium-Probleme beheben\n" +
         "• Dein Abo kündigen\n" +
