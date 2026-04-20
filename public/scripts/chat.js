@@ -45,9 +45,9 @@ async function checkOneClickEligibility(email) {
 
 // ==== Historique léger (30 derniers messages) ====
 
-const MAX_HISTORY_MESSAGES = 5;
+const MAX_HISTORY_MESSAGES = 50;
 
-// Une seule conversation "globale" (tu pourras affiner par personnage plus tard si tu veux)
+// Per-character conversation history backed by server
 const HISTORY_KEY = 'myaicrush_light_history';
 
 function loadConversationHistory() {
@@ -66,7 +66,6 @@ let conversationHistory = loadConversationHistory();
 
 function saveConversationHistory() {
   try {
-    // On ne garde que les 30 derniers
     if (conversationHistory.length > MAX_HISTORY_MESSAGES) {
       conversationHistory = conversationHistory.slice(
         conversationHistory.length - MAX_HISTORY_MESSAGES
@@ -81,6 +80,24 @@ function saveConversationHistory() {
 function clearConversationHistory() {
   conversationHistory = [];
   localStorage.removeItem(HISTORY_KEY);
+}
+
+async function loadServerHistory(characterName) {
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user?.email) return [];
+    const res = await fetch('/api/chat-history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, character: characterName, limit: 50 })
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.messages) ? data.messages : [];
+  } catch (e) {
+    console.error('Erreur loadServerHistory:', e);
+    return [];
+  }
 }
 
 
@@ -997,17 +1014,22 @@ window.addEventListener('focusout', applyKeyboardInsets);
 
 
  
-  export function startChat(characterName) {
+  export async function startChat(characterName) {
     if (!isUserLoggedIn()) {
         window.location.href = 'profile.html';
         return;
     }
 
-    // 🧠 Si on change de personnage, on efface l'historique local
+    // Load conversation history from server for this character
     const previousCharacter = localStorage.getItem("activeCharacter");
-    if (previousCharacter && previousCharacter !== characterName) {
-        console.log(`🔄 Changement de personnage : ${previousCharacter} → ${characterName}, on reset l'historique local`);
-        clearConversationHistory(); // remet conversationHistory = [] + supprime du localStorage
+    clearConversationHistory();
+    const serverHistory = await loadServerHistory(characterName);
+    if (serverHistory.length > 0) {
+      conversationHistory = serverHistory.map(m => ({
+        role: m.role, type: m.type || "text", content: m.content || "", imageUrl: m.imageUrl || null
+      }));
+      saveConversationHistory();
+      console.log(`📂 Loaded ${serverHistory.length} messages from server for ${characterName}`);
     }
 
 
@@ -1151,17 +1173,11 @@ if (callButton) {
                     mediaEl.muted = true;
                     mediaEl.playsInline = true;
                     mediaEl.classList.add('chat-video');
-                    mediaEl.style.maxWidth = '100%';
-                    mediaEl.style.height = 'auto';
-                    mediaEl.style.display = 'block';
                 } else {
                     mediaEl = document.createElement('img');
                     mediaEl.src = msg.imageUrl;
                     mediaEl.alt = "Image du chat";
                     mediaEl.classList.add('chat-image');
-                    mediaEl.style.maxWidth = '100%';
-                    mediaEl.style.height = 'auto';
-                    mediaEl.style.display = 'block';
                 }
 
                 messageElement.appendChild(mediaEl);
@@ -1801,6 +1817,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (chatOptions) chatOptions.style.display = "flex";
     if (cards) cards.style.display = "block";
     if (storiesWrapper) storiesWrapper.style.display = "";
+
+    // Remove conversation-mode style override if present
+    const convStyle = document.getElementById("conv-hide-style");
+    if (convStyle) convStyle.remove();
 
     // 🔁 Enlever le plein écran
     if (container) container.classList.remove("fullscreen");

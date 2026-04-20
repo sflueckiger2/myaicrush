@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Conversations</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="/images/market/logo.webp" type="image/jpeg"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
+  <style>
+    .conv-page { max-width: 600px; margin: 0 auto; padding: 20px 16px 80px; }
+    .conv-title { text-align: center; margin-bottom: 8px; }
+    .conv-subtitle { text-align: center; color: #9ca3af; font-size: 0.85rem; margin-bottom: 24px; }
+    .conv-empty { text-align: center; color: #6b7280; margin-top: 60px; }
+    .conv-empty i { font-size: 3rem; color: #374151; margin-bottom: 16px; display: block; }
+    .conv-list { display: flex; flex-direction: column; gap: 10px; }
+    .conv-card {
+      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(145deg, #1c1c1e, #141416);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 14px 16px;
+      cursor: pointer; transition: all 0.25s ease;
+      text-decoration: none; color: inherit;
+    }
+    .conv-card:hover { border-color: #f472b6; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(244,114,182,0.1); }
+    .conv-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      object-fit: cover; flex-shrink: 0;
+      border: 2px solid rgba(244,114,182,0.3);
+    }
+    .conv-info { flex: 1; min-width: 0; }
+    .conv-name { font-weight: 600; font-size: 0.95rem; color: #f1f5f9; margin-bottom: 3px; }
+    .conv-preview {
+      font-size: 0.78rem; color: #9ca3af; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    }
+    .conv-meta { text-align: right; flex-shrink: 0; }
+    .conv-date { font-size: 0.65rem; color: #6b7280; }
+    .conv-count {
+      font-size: 0.6rem; color: #a78bfa; background: rgba(167,139,250,0.1);
+      padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block;
+    }
+    .conv-loader { text-align: center; padding: 40px 0; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container conv-page">
+    <h1 class="p-title conv-title" id="conv-title">My Conversations</h1>
+    <p class="conv-subtitle" id="conv-subtitle">Pick up where you left off</p>
+    <div id="conv-loader" class="conv-loader"><i class="fas fa-spinner fa-spin"></i></div>
+    <div id="conv-list" class="conv-list" style="display:none;"></div>
+    <div id="conv-empty" class="conv-empty" style="display:none;">
+      <i class="fas fa-comments"></i>
+      <p id="conv-empty-text">No conversations yet. Start chatting with a companion!</p>
+      <a href="index.html" class="button" style="margin-top:16px; display:inline-block; text-decoration:none;" id="conv-empty-cta">Pick a companion</a>
+    </div>
+  </div>
+
+  <script>
+    const _fr = navigator.language?.startsWith("fr");
+    const _de = navigator.language?.startsWith("de");
+
+    if (_fr) {
+      document.title = "Mes conversations";
+      const t = document.getElementById("conv-title"); if (t) t.textContent = "Mes conversations";
+      const s = document.getElementById("conv-subtitle"); if (s) s.textContent = "Reprends là où tu t'es arrêté";
+      const e = document.getElementById("conv-empty-text"); if (e) e.textContent = "Aucune conversation. Commence à discuter avec une compagne !";
+      const c = document.getElementById("conv-empty-cta"); if (c) c.textContent = "Choisir une compagne";
+    } else if (_de) {
+      document.title = "Meine Gespräche";
+      const t = document.getElementById("conv-title"); if (t) t.textContent = "Meine Gespräche";
+      const s = document.getElementById("conv-subtitle"); if (s) s.textContent = "Mach weiter, wo du aufgehört hast";
+      const e = document.getElementById("conv-empty-text"); if (e) e.textContent = "Noch keine Gespräche. Fang an, mit einer Begleiterin zu chatten!";
+      const c = document.getElementById("conv-empty-cta"); if (c) c.textContent = "Begleiterin wählen";
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const loader = document.getElementById("conv-loader");
+      const list = document.getElementById("conv-list");
+      const empty = document.getElementById("conv-empty");
+
+      if (!user?.email) {
+        window.location.href = "profile.html";
+        return;
+      }
+
+      try {
+        const [convRes, charRes] = await Promise.all([
+          fetch("/api/conversations-list", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email })
+          }),
+          fetch("/characters.json")
+        ]);
+
+        const { conversations } = await convRes.json();
+        const characters = await charRes.json();
+        const cdnBase = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : 'https://img.myaicrush.ai';
+        const charMap = {};
+        characters.forEach(c => {
+          const bg = c.backgroundPhoto || c.photo;
+          if (bg && !bg.startsWith('http')) {
+            c._avatar = bg.startsWith('images/') ? cdnBase + '/' + bg : bg;
+          } else {
+            c._avatar = bg || '/images/market/logo.webp';
+          }
+          charMap[c.name] = c;
+        });
+
+        loader.style.display = "none";
+
+        if (!conversations || conversations.length === 0) {
+          empty.style.display = "block";
+          return;
+        }
+
+        list.style.display = "flex";
+
+        conversations.forEach(conv => {
+          const char = charMap[conv.character];
+          const photo = char?._avatar || "/images/market/logo.webp";
+          const preview = conv.lastType === "image" ? (_fr ? "📷 Photo" : _de ? "📷 Foto" : "📷 Photo") : (conv.lastMessage || "").slice(0, 60);
+          const date = new Date(conv.lastDate);
+          const timeStr = date.toLocaleDateString(navigator.language, { month: "short", day: "numeric" });
+          const msgLabel = conv.messageCount === 1
+            ? (_fr ? "1 message" : _de ? "1 Nachricht" : "1 message")
+            : (_fr ? `${conv.messageCount} messages` : _de ? `${conv.messageCount} Nachrichten` : `${conv.messageCount} messages`);
+
+          const card = document.createElement("a");
+          card.className = "conv-card";
+          card.href = `index.html?chat=${encodeURIComponent(conv.character)}`;
+          card.innerHTML = `
+            <img class="conv-avatar" src="${photo}" alt="${conv.character}" onerror="this.src='/images/market/logo.webp'"/>
+            <div class="conv-info">
+              <div class="conv-name">${conv.character}</div>
+              <div class="conv-preview">${preview}</div>
+            </div>
+            <div class="conv-meta">
+              <div class="conv-date">${timeStr}</div>
+              <div class="conv-count">${msgLabel}</div>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Error loading conversations:", err);
+        loader.style.display = "none";
+        empty.style.display = "block";
+      }
+    });
+  </script>
+
+  <script type="module" src="/scripts/menu-loader.js"></script>
+  <script type="module" src="/scripts/i18n-menu.js"></script>
+</body>
+</html>

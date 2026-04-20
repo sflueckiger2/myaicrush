@@ -1,4 +1,4 @@
-import { addUserMessage } from './chat.js';
+import { addUserMessage, startChat } from './chat.js';
 import { initializeUIEvents, setupBackButton, generateChatOptions } from './ui.js';
 import { loadCharacters } from './data.js';
 import { openProfileModal, closeProfileModal } from './profile.js';
@@ -32,6 +32,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ✅ Afficher les options de chat avec les bonnes bannières
     generateChatOptions(characters, isPremium);
+
+    // Auto-open chat from ?chat=CharacterName (e.g. from conversations page)
+    const urlChat = new URLSearchParams(window.location.search).get("chat");
+    if (urlChat || window.__chatConvMode) {
+      const chatName = urlChat || localStorage.getItem("__pendingChat");
+      const match = chatName && characters.find(c => c.name === chatName);
+      if (match) {
+        startChat(chatName);
+        window.history.replaceState({}, "", window.location.pathname);
+
+        // Remove loader once chat-box is visible
+        const chatBox = document.getElementById('chat-box');
+        if (chatBox) {
+          const obs = new MutationObserver(() => {
+            if (getComputedStyle(chatBox).display !== 'none') {
+              const ldr = document.getElementById('loader');
+              if (ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.remove(), 300); }
+              obs.disconnect();
+            }
+          });
+          obs.observe(chatBox, { attributes: true, attributeFilter: ['style'] });
+          setTimeout(() => { const ldr = document.getElementById('loader'); if (ldr) { ldr.style.opacity = '0'; setTimeout(() => ldr.remove(), 300); } obs.disconnect(); }, 6000);
+        }
+      }
+    }
 
     // Initialiser les événements UI
     initializeUIEvents(sendBtn, userInput, (message) => {

@@ -44,7 +44,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     <body>
 
     
- <div id="loader">
+ <div id="loader" style="position:fixed;z-index:9999;background:#1e1e2f;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:Arial,sans-serif;transition:opacity 0.3s ease;">
   <div class="heart-loader">
     <div class="heart"></div>
   </div>
@@ -56,6 +56,26 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 
   <p id="loader-text" class="loader-text"></p>
 </div>
+
+<script>
+(function() {
+  var chatParam = new URLSearchParams(window.location.search).get("chat");
+  if (!chatParam) return;
+  var loader = document.getElementById("loader");
+  var lt = document.getElementById("loader-text");
+  if (lt) lt.style.display = "none";
+  var brand = loader && loader.querySelector(".loader-brand");
+  var _l = navigator.language || "";
+  var msg = _l.startsWith("fr") ? "Chargement de la conversation..." : _l.startsWith("de") ? "Gespräch wird geladen..." : "Loading conversation...";
+  if (brand) brand.innerHTML = '<div class="loader-logo" style="font-size:1.1rem;">' + msg + '</div>';
+  // Pre-hide selection UI via style tag to prevent flash
+  var s = document.createElement("style");
+  s.id = "conv-hide-style";
+  s.textContent = ".stories-wrapper,#chat-options,#character-cards-container,#cheaper-plan-dynamic-banner{display:none!important}";
+  document.head.appendChild(s);
+  window.__chatConvMode = true;
+})();
+</script>
 
 
 
@@ -264,6 +284,11 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
   document.addEventListener("DOMContentLoaded", () => {
     const loader = document.getElementById("loader");
     const loaderText = document.getElementById("loader-text");
+
+    // Skip normal loader when opening a conversation directly
+    if (new URLSearchParams(window.location.search).get("chat")) {
+      return;
+    }
 
     const phrases = [
       "No need to be human to make you feel something",

@@ -1839,8 +1839,164 @@ console.log(`🔄 Niveau utilisateur réinitialisé à 1.0 pour ${email}`);
   }
   
 
+// ── AI Memory System ──
+// Compact per-user per-character memory stored in MongoDB
+const memoryCache = new Map(); // "email::character" → { facts: [...], loadedAt }
+const MEMORY_CACHE_TTL = 10 * 60_000; // 10 min
+const MAX_MEMORY_FACTS = 15;
 
-// FONCTION POUR GOOGLE AUTH
+async function loadMemory(email, character) {
+  const key = `${email}::${character}`;
+  const cached = memoryCache.get(key);
+  if (cached && Date.now() - cached.loadedAt < MEMORY_CACHE_TTL) return cached.facts;
+
+  try {
+    const db = client.db("MyAICrush");
+    const doc = await db.collection("user_memories").findOne({ email, character });
+    const facts = doc?.facts || [];
+    memoryCache.set(key, { facts, loadedAt: Date.now() });
+    return facts;
+  } catch (e) {
+    console.error("⚠️ loadMemory error:", e.message);
+    return [];
+  }
+}
+
+async function saveMemory(email, character, facts) {
+  const key = `${email}::${character}`;
+  const trimmed = facts.slice(-MAX_MEMORY_FACTS);
+  memoryCache.set(key, { facts: trimmed, loadedAt: Date.now() });
+
+  try {
+    const db = client.db("MyAICrush");
+    await db.collection("user_memories").updateOne(
+      { email, character },
+      { $set: { facts: trimmed, updatedAt: new Date() } },
+      { upsert: true }
+    );
+  } catch (e) {
+    console.error("⚠️ saveMemory error:", e.message);
+  }
+}
+
+function buildMemoryPrompt(facts) {
+  if (!facts.length) return "";
+  return `\n[MEMORY — Things you remember about this user]\n${facts.map(f => `• ${f}`).join("\n")}\nUse this information naturally. Never say "according to my memory" — just use it as if you naturally remember.`;
+}
+
+async function extractMemoryFacts(userMsg, aiReply, existingFacts, character) {
+  try {
+    const existingStr = existingFacts.length ? existingFacts.join("; ") : "none yet";
+    const resp = await axios.post("https://api.fireworks.ai/inference/v1/chat/completions", {
+      model: FW_PRIMARY_MODEL,
+      max_tokens: 300,
+      temperature: 0,
+      messages: [
+        {
+          role: "system",
+          content: `You extract key personal facts from a chat between a user and "${character}" (AI companion). Output ONLY a JSON array of short fact strings. Rules:
+- Extract: first name, age, location, job, hobbies, preferences, relationship status, pets, important events, things they like/dislike
+- Each fact: max 12 words, lowercase
+- Skip greetings, flirting, small talk with no personal info
+- Include ALL existing facts that are still valid
+- Update facts if new info contradicts old ones (e.g. new job)
+- Max ${MAX_MEMORY_FACTS} facts total
+- If nothing new to extract, return the existing facts unchanged
+- Reply ONLY with a JSON array, no explanation
+
+Existing facts: [${existingStr}]`
+        },
+        {
+          role: "user",
+          content: `User said: "${userMsg.slice(0, 300)}"\nAI replied: "${aiReply.slice(0, 300)}"\n\nExtract/update facts as JSON array:`
+        }
+      ]
+    }, {
+      headers: { Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`, "Content-Type": "application/json" },
+      timeout: 20000
+    });
+
+    const raw = resp.data?.choices?.[0]?.message?.content?.trim() || "[]";
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) return existingFacts;
+    const parsed = JSON.parse(match[0]);
+    if (!Array.isArray(parsed)) return existingFacts;
+    return parsed.filter(f => typeof f === "string" && f.length > 0).slice(0, MAX_MEMORY_FACTS);
+  } catch (e) {
+    console.error("⚠️ extractMemoryFacts error:", e.message);
+    return existingFacts;
+  }
+}
+
+// ── Chat Message Persistence ──
+async function saveChatMessage(email, character, role, type, content, imageUrl) {
+  try {
+    const db = client.db("MyAICrush");
+    await db.collection("chat_messages").insertOne({
+      email, character, role, type: type || "text",
+      content: content || "",
+      imageUrl: imageUrl || null,
+      createdAt: new Date()
+    });
+  } catch (e) {
+    console.error("⚠️ saveChatMessage error:", e.message);
+  }
+}
+
+async function loadChatHistory(email, character, limit = 50) {
+  try {
+    const db = client.db("MyAICrush");
+    const msgs = await db.collection("chat_messages")
+      .find({ email, character })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    return msgs.reverse();
+  } catch (e) {
+    console.error("⚠️ loadChatHistory error:", e.message);
+    return [];
+  }
+}
+
+// API: Get conversation history for a character
+app.post("/api/chat-history", async (req, res) => {
+  const { email, character, limit } = req.body;
+  if (!email || !character) return res.status(400).json({ messages: [] });
+  const messages = await loadChatHistory(email, character, Math.min(limit || 50, 200));
+  res.json({ messages: messages.map(m => ({ role: m.role, type: m.type, content: m.content, imageUrl: m.imageUrl, createdAt: m.createdAt })) });
+});
+
+// API: List all conversations (characters the user has chatted with)
+app.post("/api/conversations-list", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ conversations: [] });
+  try {
+    const db = client.db("MyAICrush");
+    const convos = await db.collection("chat_messages").aggregate([
+      { $match: { email } },
+      { $sort: { createdAt: -1 } },
+      { $group: {
+        _id: "$character",
+        lastMessage: { $first: "$content" },
+        lastType: { $first: "$type" },
+        lastDate: { $first: "$createdAt" },
+        messageCount: { $sum: 1 }
+      }},
+      { $sort: { lastDate: -1 } }
+    ]).toArray();
+    res.json({ conversations: convos.map(c => ({
+      character: c._id,
+      lastMessage: c.lastMessage,
+      lastType: c.lastType,
+      lastDate: c.lastDate,
+      messageCount: c.messageCount
+    }))});
+  } catch (e) {
+    console.error("⚠️ conversations-list error:", e.message);
+    res.json({ conversations: [] });
+  }
+});
+
 async function addOrFindUser(email) {
   const db = getDb();
   const usersCollection = db.collection('users');
@@ -2593,6 +2749,8 @@ if (!userCharacter) {
     }
 }
 
+  saveChatMessage(email, userCharacter.name, "user", "text", message, null);
+
   // ✅ Vérification en base de données du mode Nympho
   const database = client.db("MyAICrush");
   const users = database.collection("users");
@@ -2788,40 +2946,43 @@ if (isNymphoMode && userCharacter.prompt.fullPromptNympho) {
 
 console.log("✅ Prompt final généré (avec ou sans nympho) prêt !");
 
-            
-        // Construire le contexte du chat pour OpenAI
-        // 👉 On privilégie l'historique "light" envoyé par le frontend (30 derniers messages)
+// ── Inject AI Memory into system prompt ──
+const charNameForMemory = userCharacter.name;
+const memoryFacts = await loadMemory(email, charNameForMemory);
+const memoryBlock = buildMemoryPrompt(memoryFacts);
+if (memoryBlock) {
+  systemPrompt += memoryBlock;
+  console.log(`🧠 ${memoryFacts.length} memory facts injected for ${email} / ${charNameForMemory}`);
+}
+
+
+        // Construire le contexte du chat — source: MongoDB (persistant)
         const messages = [
             { role: "system", content: systemPrompt },
         ];
 
-        const MAX_HISTORY_MESSAGES = 10;      // ✅ gros gain vitesse (teste 8 à 14)
-const MAX_MSG_CHARS = 240;            // ✅ évite les pavés dans l’historique
+        const MAX_HISTORY_MESSAGES = 20;
+        const MAX_MSG_CHARS = 500;
 
-if (Array.isArray(history) && history.length) {
-  history
-    .slice(-MAX_HISTORY_MESSAGES)
-    .forEach(entry => {
-      if (!entry || typeof entry.content !== "string") return;
-      const role = entry.role === "assistant" ? "assistant" : "user";
+        const dbHistory = await loadChatHistory(email, charNameForMemory, MAX_HISTORY_MESSAGES);
 
-      // ✅ crop contenu (réduit tokens)
-      const content = entry.content.replace(/\s+/g, " ").trim().slice(0, MAX_MSG_CHARS);
-      if (!content) return;
-
-      messages.push({ role, content });
-    });
-} else {
-  const conversationHistory = userConversationHistory.get(email) || [];
-  conversationHistory
-    .slice(-MAX_HISTORY_MESSAGES)
-    .forEach(m => {
-      if (!m || typeof m.content !== "string") return;
-      const content = m.content.replace(/\s+/g, " ").trim().slice(0, MAX_MSG_CHARS);
-      if (!content) return;
-      messages.push({ role: m.role, content });
-    });
-}
+        if (dbHistory.length > 0) {
+          dbHistory.forEach(entry => {
+            if (!entry.content || entry.type !== "text") return;
+            const role = entry.role === "assistant" ? "assistant" : "user";
+            const content = entry.content.replace(/\s+/g, " ").trim().slice(0, MAX_MSG_CHARS);
+            if (!content) return;
+            messages.push({ role, content });
+          });
+        } else if (Array.isArray(history) && history.length) {
+          history.slice(-MAX_HISTORY_MESSAGES).forEach(entry => {
+            if (!entry || typeof entry.content !== "string") return;
+            const role = entry.role === "assistant" ? "assistant" : "user";
+            const content = entry.content.replace(/\s+/g, " ").trim().slice(0, MAX_MSG_CHARS);
+            if (!content) return;
+            messages.push({ role, content });
+          });
+        }
 
 
         
@@ -2974,6 +3135,23 @@ console.log("💬 Réponse finale envoyée :", botReply);
         console.log("🤖 Réponse reçue d'OpenAI :", botReply);
 
         addMessageToHistory(email, "assistant", botReply);
+        saveChatMessage(email, charNameForMemory, "assistant", "text", botReply, null);
+        const _memCharName = charNameForMemory;
+        const _memUserMsg = message;
+        const _memAiReply = botReply;
+        const _memEmail = email;
+        const _memExisting = memoryFacts;
+        setImmediate(async () => {
+          try {
+            const newFacts = await extractMemoryFacts(_memUserMsg, _memAiReply, _memExisting, _memCharName);
+            if (JSON.stringify(newFacts) !== JSON.stringify(_memExisting)) {
+              await saveMemory(_memEmail, _memCharName, newFacts);
+              console.log(`🧠 Memory updated for ${_memEmail} / ${_memCharName}: ${newFacts.length} facts`);
+            }
+          } catch (e) {
+            console.error("⚠️ Async memory extraction failed:", e.message);
+          }
+        });
 
         // Extraire le niveau de confort et ajuster le niveau utilisateur
         const comfortLevel = extractComfortLevel(botReply);
@@ -3062,6 +3240,12 @@ responseData.isBlurred = isPremium ? false : imageResult.isBlurred;
         }
 
         console.log("🚀 Réponse envoyée :", responseData);
+
+        // Save AI image to chat history if present
+        if (responseData.imageUrl) {
+          saveChatMessage(email, charNameForMemory, "assistant", responseData.mediaType || "image", botReply, responseData.imageUrl);
+        }
+
         res.json(responseData);
 
     } catch (error) {
@@ -7657,6 +7841,22 @@ connectToDb().then(async () => {
     console.log("✅ TTL index on support_tickets.closedAt (15 days)");
   } catch (e) {
     console.warn("TTL index setup:", e.message);
+  }
+
+  try {
+    const database = client.db("MyAICrush");
+    await database.collection("user_memories").createIndex({ email: 1, character: 1 }, { unique: true });
+    console.log("✅ Unique index on user_memories (email + character)");
+  } catch (e) {
+    console.warn("user_memories index setup:", e.message);
+  }
+
+  try {
+    const database = client.db("MyAICrush");
+    await database.collection("chat_messages").createIndex({ email: 1, character: 1, createdAt: -1 });
+    console.log("✅ Index on chat_messages (email + character + createdAt)");
+  } catch (e) {
+    console.warn("chat_messages index setup:", e.message);
   }
 
   app.listen(PORT, () => {

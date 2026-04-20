@@ -12,6 +12,7 @@ if (isFrench) {
     { href: "premium.html",        text: "Premium" },
     { href: "contact.html",        text: "Contact" },
     { href: "contenu-prive.html",  text: "Contenu privé" },
+    { href: "conversations.html",  text: "Mes conversations" },
   ];
 
   function traduireMenu() {
@@ -55,6 +56,7 @@ if (isGerman) {
     { href: "premium.html",        text: "Premium" },
     { href: "contact.html",        text: "Kontakt" },
     { href: "contenu-prive.html",  text: "Exklusiver Content" },
+    { href: "conversations.html",  text: "Meine Gespräche" },
   ];
 
   function traduireMenuDE() {
