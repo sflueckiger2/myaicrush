@@ -158,8 +158,8 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Fireworks model config with automatic fallback ──
-const FW_PRIMARY_MODEL = "accounts/fireworks/models/llama-v3p3-70b-instruct";
-const FW_FALLBACK_MODEL = "accounts/fireworks/models/minimax-m2p7";
+const FW_PRIMARY_MODEL = "accounts/fireworks/models/qwen3-vl-30b-a3b-instruct";
+const FW_FALLBACK_MODEL = "accounts/fireworks/models/llama-v3p3-70b-instruct";
 let fwActiveModel = FW_PRIMARY_MODEL;
 let fwLastAlertSentAt = 0;
 const FW_ALERT_COOLDOWN_MS = 3600_000; // 1 email per hour max

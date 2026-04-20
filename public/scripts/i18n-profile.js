@@ -144,6 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (icon) rechargeBtn.prepend(icon);
   }
 
+  const bonusInfo = document.getElementById("bonus-tokens-info");
+  if (bonusInfo) bonusInfo.textContent = "🎁 Les abonnés Premium reçoivent 30 jetons gratuits chaque mois";
+
   // ===== SECTION ABONNEMENT =====
   const subscriptionTitle = document.querySelector(".profile-sectionv2 h2");
   if (subscriptionTitle) subscriptionTitle.textContent = "Mon abonnement";
@@ -384,6 +387,9 @@ document.addEventListener("DOMContentLoaded", () => {
     rechargeBtn.textContent = " Tokens aufladen";
     if (icon) rechargeBtn.prepend(icon);
   }
+
+  const bonusInfo = document.getElementById("bonus-tokens-info");
+  if (bonusInfo) bonusInfo.textContent = "🎁 Premium-Abonnenten erhalten jeden Monat 30 Gratis-Tokens";
 
   // ===== ABO-BEREICH =====
   const subscriptionTitle = document.querySelector(".profile-sectionv2 h2");

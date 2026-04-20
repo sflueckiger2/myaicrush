@@ -182,6 +182,9 @@ async function checkPremiumStatus() {
         </div>
       `;
 
+      const bonusInfo = document.getElementById("bonus-tokens-info");
+      if (bonusInfo) bonusInfo.style.display = "block";
+
       if (!isCancelled) {
         document.getElementById("cancel-sub-btn")?.addEventListener("click", () => {
           const modal = document.getElementById("cancel-warning-modal");
