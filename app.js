@@ -40,7 +40,7 @@ app.use((req, res, next) => {
 // GEO-BLOCK SWITZERLAND
 // =========================
 const GEO_WHITELISTED_IPS = ['193.5.236.87', '185.43.244.250'];
-const GEO_BYPASS_SECRET = 'aic2026ch';
+const GEO_BYPASS_SECRET = 'go';
 const GEO_ALLOWED_PATHS = ['/contact.html', '/contact-en.html', '/ticket.html', '/scripts/i18n-contact.js', '/scripts/i18n-menu.js', '/scripts/menu.js', '/styles.css', '/api/support-chat', '/api/my-tickets', '/unsubscribe', '/t/'];
 
 app.use((req, res, next) => {
