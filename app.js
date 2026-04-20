@@ -1340,6 +1340,14 @@ app.post("/webhook/explodely", async (req, res) => {
       // ---- REFUND-LIKE ----
       if (isRefundLike) {
         if (isAnnualProduct || isPremiumProduct) {
+          const currentUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
+
+          if (currentUser && currentUser.explodelyMainOrderId && currentUser.explodelyMainOrderId !== orderId) {
+            await explodelyEvents.insertOne({ ...eventKey, action: "refund_ignored_different_order", currentOrderId: currentUser.explodelyMainOrderId, createdAt: new Date() });
+            console.log(`⏭️ Refund ignoré pour ${email}: ancien orderId=${orderId}, client a un abo actif différent (orderId=${currentUser.explodelyMainOrderId})`);
+            continue;
+          }
+
           await users.updateOne(
             { email },
             {
@@ -1396,6 +1404,14 @@ app.post("/webhook/explodely", async (req, res) => {
       // ---- CANCEL (subscription stopped, but access continues until end of period) ----
       if (isCancelEvent) {
         if (isAnnualProduct || isPremiumProduct) {
+          const currentUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
+
+          if (currentUser && currentUser.explodelyMainOrderId && currentUser.explodelyMainOrderId !== orderId && currentUser.explodelyPlan === "annual") {
+            await explodelyEvents.insertOne({ ...eventKey, action: "cancel_ignored_user_upgraded_annual", currentOrderId: currentUser.explodelyMainOrderId, createdAt: new Date() });
+            console.log(`⏭️ Cancel ignoré pour ${email}: ancien orderId=${orderId}, client déjà sur plan annuel (orderId=${currentUser.explodelyMainOrderId})`);
+            continue;
+          }
+
           const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
           await users.updateOne(
             { email },
