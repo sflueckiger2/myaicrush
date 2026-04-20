@@ -7431,12 +7431,17 @@ const DAILY_EMAIL_FALLBACKS = [
 async function generateDailyEmailContent(charName, lang) {
     const langMap = { fr: "French", de: "German", es: "Spanish", pt: "Portuguese" };
     const language = langMap[lang] || "English";
+    const today = new Date().toISOString().split("T")[0];
+    const moods = ["shy and nervous", "bold and confident", "mysterious and secretive", "playful and teasing", "jealous and possessive", "sad and missing you", "excited about something", "sleepy and cute", "provocative and daring", "sweet and romantic"];
+    const mood = moods[Math.floor(Math.random() * moods.length)];
+    const formats = ["a notification style (like 'New message from...')", "a personal message directly from her", "a question that makes the reader curious", "a confession she's making", "a dare or challenge"];
+    const format = formats[Math.floor(Math.random() * formats.length)];
 
     try {
         const resp = await axios.post("https://api.fireworks.ai/inference/v1/chat/completions", {
             model: fwActiveModel,
             max_tokens: 200,
-            temperature: 1.0,
+            temperature: 1.2,
             messages: [
                 {
                     role: "system",
@@ -7449,7 +7454,7 @@ async function generateDailyEmailContent(charName, lang) {
                 },
                 {
                     role: "user",
-                    content: `Write a short flirty clickbait email from ${charName}. Be creative, vary the style. Sometimes she's shy, sometimes bold, sometimes mysterious.`
+                    content: `Date: ${today}. Mood: ${charName} is feeling ${mood}. Format: ${format}. Write a UNIQUE short flirty clickbait email from ${charName}. It must be completely different from any previous email.`
                 }
             ]
         }, {
