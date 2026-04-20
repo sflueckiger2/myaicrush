@@ -1223,7 +1223,8 @@ app.post("/webhook/explodely", async (req, res) => {
       const tokensAmount = tokenMapping[productId];
 
       // Détection refund-like (à confirmer quand tu auras le vrai payload refund)
-      const isRefundLike = ["refund", "refunded", "chargeback", "reversal", "cancel", "canceled"].includes(eventType);
+      const isRefundLike = ["refund", "refunded", "chargeback", "reversal"].includes(eventType);
+      const isCancelEvent = ["cancel", "canceled"].includes(eventType);
 
       // ---- SALE ----
       if (eventType === "sale") {
@@ -1389,6 +1390,30 @@ app.post("/webhook/explodely", async (req, res) => {
 
         await explodelyEvents.insertOne({ ...eventKey, action: "unknown_product_refund", createdAt: new Date() });
         console.log("🟡 Produit non mappé (refund-like):", { email, productId, orderId, eventType });
+        continue;
+      }
+
+      // ---- CANCEL (subscription stopped, but access continues until end of period) ----
+      if (isCancelEvent) {
+        if (isAnnualProduct || isPremiumProduct) {
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await users.updateOne(
+            { email },
+            {
+              $set: { premiumCancelledAt: new Date(), explodely_expiresAt: expiresAt },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
+            { upsert: true }
+          );
+
+          const label = isAnnualProduct ? "annual_cancel_keep_access" : "monthly_cancel_keep_access";
+          await explodelyEvents.insertOne({ ...eventKey, action: label, accessUntil: expiresAt, createdAt: new Date() });
+          console.log(`⏸️ Abo Explodely annulé pour ${email}, accès maintenu jusqu'au ${expiresAt.toISOString().split("T")[0]} (orderId=${orderId})`);
+          continue;
+        }
+
+        await explodelyEvents.insertOne({ ...eventKey, action: "cancel_non_premium_ignored", createdAt: new Date() });
+        console.log("ℹ️ Cancel event pour produit non-premium ignoré:", { email, productId, orderId });
         continue;
       }
 
