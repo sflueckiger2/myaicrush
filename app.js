@@ -1272,6 +1272,9 @@ app.post("/webhook/explodely", async (req, res) => {
             }
           }
 
+          const existingForBonus = await users.findOne({ email }, { projection: { explodelyPremium: 1 } });
+          const alreadyPremium = existingForBonus?.explodelyPremium === true;
+
           await users.updateOne(
             { email },
             {
@@ -1284,36 +1287,39 @@ app.post("/webhook/explodely", async (req, res) => {
                 lastBonusAt: new Date(),
                 bonusSeenByUser: false
               },
-              $inc: { creditsPurchased: 30 },
+              ...(alreadyPremium ? {} : { $inc: { creditsPurchased: 30 } }),
               $setOnInsert: buildUserDefaultsFromExplodely(email),
             },
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", createdAt: new Date() });
-          console.log(`✅ Premium Annuel Explodely activé pour ${email} (+30 jetons) (orderId=${orderId})`);
+          await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
+          console.log(`✅ Premium Annuel Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
           continue;
         }
 
         if (isPremiumProduct) {
-         await users.updateOne(
-  { email },
-  {
-    $set: { 
-      explodelyPremium: true,
-      explodelyMainOrderId: orderId,
-      explodelyPlan: "monthly",
-      lastBonusAt: new Date(),
-      bonusSeenByUser: false
-    },
-    $inc: { creditsPurchased: 30 },
-    $setOnInsert: buildUserDefaultsFromExplodely(email),
-  },
-  { upsert: true }
-);
+          const existingForBonus = await users.findOne({ email }, { projection: { explodelyPremium: 1 } });
+          const alreadyPremium = existingForBonus?.explodelyPremium === true;
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", createdAt: new Date() });
-          console.log(`✅ Premium Explodely activé pour ${email} (+30 jetons) (orderId=${orderId})`);
+          await users.updateOne(
+            { email },
+            {
+              $set: { 
+                explodelyPremium: true,
+                explodelyMainOrderId: orderId,
+                explodelyPlan: "monthly",
+                lastBonusAt: new Date(),
+                bonusSeenByUser: false
+              },
+              ...(alreadyPremium ? {} : { $inc: { creditsPurchased: 30 } }),
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
+          console.log(`✅ Premium Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
           continue;
         }
 
