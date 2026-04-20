@@ -39,10 +39,17 @@ app.use((req, res, next) => {
 // =========================
 // GEO-BLOCK SWITZERLAND
 // =========================
-const GEO_WHITELISTED_IPS = ['193.5.236.87'];
+const GEO_WHITELISTED_IPS = ['193.5.236.87', '185.43.244.250'];
+const GEO_BYPASS_SECRET = 'aic2026ch';
 const GEO_ALLOWED_PATHS = ['/contact.html', '/contact-en.html', '/ticket.html', '/scripts/i18n-contact.js', '/scripts/i18n-menu.js', '/scripts/menu.js', '/styles.css', '/api/support-chat', '/api/my-tickets', '/unsubscribe', '/t/'];
 
 app.use((req, res, next) => {
+  if (req.query.bypass === GEO_BYPASS_SECRET) {
+    res.cookie('geo_bypass', GEO_BYPASS_SECRET, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true });
+    return next();
+  }
+  if (req.cookies?.geo_bypass === GEO_BYPASS_SECRET) return next();
+
   const ip = (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim().replace(/^::ffff:/, '');
   if (GEO_WHITELISTED_IPS.includes(ip)) return next();
 
