@@ -7743,19 +7743,18 @@ schedule.scheduleJob('0 18 * * *', async () => {
             const database = client.db('MyAICrush');
             const users = database.collection('users');
 
-            const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 3600 * 1000);
+            const tenDaysAgo = new Date(Date.now() - 10 * 24 * 3600 * 1000);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Auto-clean: disable users who haven't opened in 15+ days
-            // Uses lastEmailOpenedAt if set, otherwise falls back to dailyEmailEligibleSince (signup date)
+            // Auto-clean: disable users who haven't opened in 10+ days
             const cleanResult = await users.updateMany(
                 {
                     dailyEmailEligible: true,
                     $or: [
-                        { lastEmailOpenedAt: { $lt: fifteenDaysAgo } },
-                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $lt: fifteenDaysAgo } },
-                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $exists: false }, createdAt: { $lt: fifteenDaysAgo } }
+                        { lastEmailOpenedAt: { $lt: tenDaysAgo } },
+                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $lt: tenDaysAgo } },
+                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $exists: false }, createdAt: { $lt: tenDaysAgo } }
                     ]
                 },
                 { $set: { dailyEmailEligible: false, dailyEmailCleanedAt: new Date() } }
