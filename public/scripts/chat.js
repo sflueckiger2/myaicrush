@@ -410,7 +410,14 @@ fetch(`${BASE_URL}/message`, {
     }
 
     // Message texte ou image
-    if (data.imageUrl) {
+    if (data.replies && data.replies.length > 1) {
+        addBotBubbles(data.replies, messagesContainer, data.imageUrl ? {
+            url: data.imageUrl,
+            isPremium,
+            isBlurred: data.isBlurred,
+            mediaType: data.mediaType
+        } : null);
+    } else if (data.imageUrl) {
         addBotImageMessage(
             data.reply,
             data.imageUrl,
@@ -419,8 +426,6 @@ fetch(`${BASE_URL}/message`, {
             data.isBlurred,
             data.mediaType
         );
-    } else if (data.replies && data.replies.length > 1) {
-        addBotBubbles(data.replies, messagesContainer);
     } else {
         addBotMessage(data.reply, messagesContainer);
     }
@@ -512,22 +517,14 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
 
     const messageContent = document.createElement('span');
     messageContent.innerHTML = botReply;
-
-    // === Bouton audio style WhatsApp ===
-    const voiceButton = document.createElement('button');
-    voiceButton.classList.add('voice-button');
-    voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
-    voiceButton.onclick = function() { speakMessage(botReply, this); };
-
-    // === Structure affichage ===
     messageElement.appendChild(messageContent);
 
-    const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add('voice-button-container');
-    buttonContainer.appendChild(voiceButton);
-
     if (!isWarning) {
-        messagesContainer.appendChild(buttonContainer);
+        const voiceButton = document.createElement('button');
+        voiceButton.classList.add('voice-button');
+        voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+        voiceButton.onclick = function() { speakMessage(botReply, this); };
+        messageElement.appendChild(voiceButton);
     }
 
     messagesContainer.appendChild(messageElement);
@@ -535,7 +532,7 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
     scrollToBottom(messagesContainer);
 }
 
-export function addBotBubbles(bubbles, messagesContainer) {
+export function addBotBubbles(bubbles, messagesContainer, imageData) {
     let delay = 0;
     bubbles.forEach((bubble, i) => {
         const typingTime = Math.min(Math.max(bubble.length * 35, 400), 1800);
@@ -548,6 +545,9 @@ export function addBotBubbles(bubbles, messagesContainer) {
             setTimeout(() => {
                 if (i > 0) hideTypingIndicator();
                 addBotMessage(bubble, messagesContainer);
+                if (imageData && i === bubbles.length - 1) {
+                    addBotImageMessage('', imageData.url, imageData.isPremium, messagesContainer, imageData.isBlurred, imageData.mediaType);
+                }
             }, typeDelay);
         }, delay);
 
@@ -578,16 +578,13 @@ export function addBotImageMessage(botReply, imageUrl, isPremium, messagesContai
     voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
     voiceButton.onclick = function() { speakMessage(botReply, this); };
 
-    // Ajouter le texte + le bouton dans le message
-messageElement.appendChild(messageContent);
+    messageElement.appendChild(messageContent);
 
-const buttonContainer = document.createElement('div');
-buttonContainer.classList.add('voice-button-container');
-buttonContainer.appendChild(voiceButton);
+    if (botReply && botReply.trim()) {
+        messageElement.appendChild(voiceButton);
+    }
 
-// 🔥 Le bouton au-dessus du message IA
-messagesContainer.appendChild(buttonContainer);
-messagesContainer.appendChild(messageElement);
+    messagesContainer.appendChild(messageElement);
 
 
 
