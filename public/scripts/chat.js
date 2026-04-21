@@ -419,6 +419,8 @@ fetch(`${BASE_URL}/message`, {
             data.isBlurred,
             data.mediaType
         );
+    } else if (data.replies && data.replies.length > 1) {
+        addBotBubbles(data.replies, messagesContainer);
     } else {
         addBotMessage(data.reply, messagesContainer);
     }
@@ -531,6 +533,26 @@ export function addBotMessage(botReply, messagesContainer, isWarning = false) {
     messagesContainer.appendChild(messageElement);
 
     scrollToBottom(messagesContainer);
+}
+
+export function addBotBubbles(bubbles, messagesContainer) {
+    let delay = 0;
+    bubbles.forEach((bubble, i) => {
+        const typingTime = Math.min(Math.max(bubble.length * 35, 400), 1800);
+        delay += (i === 0) ? 0 : typingTime;
+
+        setTimeout(() => {
+            if (i > 0) showTypingIndicator(messagesContainer);
+            const typeDelay = (i === 0) ? 0 : Math.min(Math.max(bubble.length * 30, 300), 1200);
+
+            setTimeout(() => {
+                if (i > 0) hideTypingIndicator();
+                addBotMessage(bubble, messagesContainer);
+            }, typeDelay);
+        }, delay);
+
+        delay += (i === 0) ? 0 : Math.min(Math.max(bubble.length * 30, 300), 1200);
+    });
 }
 
 
@@ -1549,7 +1571,11 @@ if (imageInput) {
                 }
                 
                 // ✅ Toujours afficher le message de l'IA (texte et/ou image)
-                if (iaData.reply) addBotMessage(iaData.reply, messagesContainer);
+                if (iaData.replies && iaData.replies.length > 1) {
+                    addBotBubbles(iaData.replies, messagesContainer);
+                } else if (iaData.reply) {
+                    addBotMessage(iaData.reply, messagesContainer);
+                }
                 if (iaData.imageUrl) addBotImageMessage(iaData.reply, iaData.imageUrl, isPremium, messagesContainer, iaData.isBlurred);
                 
 
