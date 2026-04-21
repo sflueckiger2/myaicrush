@@ -1704,6 +1704,7 @@ async function speakMessage(text, btn) {
         }
 
         const audioBlob = await ttsResponse.blob();
+        console.log("🔊 Audio blob reçu:", audioBlob.size, "bytes, type:", audioBlob.type);
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
 
@@ -1713,9 +1714,22 @@ async function speakMessage(text, btn) {
             btn.innerHTML = '<i class="fas fa-pause"></i>';
         }
 
-        audio.play();
+        try {
+            await audio.play();
+            console.log("▶️ Audio en lecture");
+        } catch (playErr) {
+            console.error("⛔ Lecture audio bloquée:", playErr);
+        }
 
         audio.onended = () => {
+            if (btn) {
+                btn.classList.remove('is-playing');
+                btn.innerHTML = '<i class="fas fa-microphone"></i>';
+            }
+        };
+
+        audio.onerror = (e) => {
+            console.error("❌ Erreur audio element:", e);
             if (btn) {
                 btn.classList.remove('is-playing');
                 btn.innerHTML = '<i class="fas fa-microphone"></i>';
