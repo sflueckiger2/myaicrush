@@ -1097,7 +1097,7 @@ function buildUserDefaultsFromExplodely(email) {
     stripeCustomerId: null,
     gumroadPremium: false,
     dailyEmailEligible: true,
-    lastEmailOpenedAt: now
+    dailyEmailEligibleSince: now
   };
 }
 
@@ -1621,7 +1621,7 @@ app.get('/auth/google/callback', async (req, res) => {
           creditsPurchased: 0,
           lang: userLang,
           dailyEmailEligible: true,
-          lastEmailOpenedAt: new Date()
+          dailyEmailEligibleSince: new Date()
         });
 
         console.log(`✅ Nouvel utilisateur Google ajouté avec crédits : ${userEmail}`);
@@ -1971,7 +1971,7 @@ async function addOrFindUser(email) {
   let user = await usersCollection.findOne({ email });
 
   if (!user) {
-      user = { email, createdAt: new Date(), dailyEmailEligible: true, lastEmailOpenedAt: new Date() };
+      user = { email, createdAt: new Date(), dailyEmailEligible: true, dailyEmailEligibleSince: new Date() };
       await usersCollection.insertOne(user);
       console.log(`Nouvel utilisateur ajouté : ${email}`);
   } else {
@@ -3442,7 +3442,7 @@ app.post('/api/signup', async (req, res) => {
       explodelyPremium: false,
       createdAt: new Date(),
       dailyEmailEligible: true,
-      lastEmailOpenedAt: new Date()
+      dailyEmailEligibleSince: new Date()
     });
 
     console.log("✅ Inscription réussie pour :", normalizedEmail);
@@ -7227,8 +7227,8 @@ app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
       users.countDocuments({ dailyEmailEligible: true, unsubscribedEmail: { $ne: true } }),
       users.countDocuments({ unsubscribedEmail: true }),
       users.countDocuments({ dailyEmailCleanedAt: { $exists: true } }),
-      users.countDocuments({ lastEmailOpenedAt: { $gte: h24 } }),
-      users.countDocuments({ lastEmailOpenedAt: { $gte: d7 } }),
+      users.countDocuments({ lastEmailOpenedAt: { $gte: h24 }, lastDailyEmailSentAt: { $exists: true } }),
+      users.countDocuments({ lastEmailOpenedAt: { $gte: d7 }, lastDailyEmailSentAt: { $exists: true } }),
       users.countDocuments({ lastEmailClickedAt: { $gte: h24 } }),
       users.countDocuments({ lastEmailClickedAt: { $gte: d7 } }),
       users.countDocuments({ lastDailyEmailSentAt: { $gte: h24 } }),
@@ -7237,7 +7237,7 @@ app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
       users.countDocuments({ createdAt: { $gte: d7 } }),
       users.countDocuments({ createdAt: { $gte: d30 } }),
       users.find({ createdAt: { $gte: d7 } }, { projection: { email: 1, createdAt: 1, lang: 1 } }).sort({ createdAt: -1 }).limit(20).toArray(),
-      users.find({ lastEmailOpenedAt: { $gte: h24 } }, { projection: { email: 1, lastEmailOpenedAt: 1 } }).sort({ lastEmailOpenedAt: -1 }).limit(20).toArray()
+      users.find({ lastEmailOpenedAt: { $gte: h24 }, lastDailyEmailSentAt: { $exists: true } }, { projection: { email: 1, lastEmailOpenedAt: 1 } }).sort({ lastEmailOpenedAt: -1 }).limit(20).toArray()
     ]);
 
     const openRate24h = sentLast24h > 0 ? Math.min(100, (openedLast24h / sentLast24h) * 100).toFixed(1) : "0.0";
@@ -7748,10 +7748,15 @@ schedule.scheduleJob('0 18 * * *', async () => {
             today.setHours(0, 0, 0, 0);
 
             // Auto-clean: disable users who haven't opened in 15+ days
+            // Uses lastEmailOpenedAt if set, otherwise falls back to dailyEmailEligibleSince (signup date)
             const cleanResult = await users.updateMany(
                 {
                     dailyEmailEligible: true,
-                    lastEmailOpenedAt: { $lt: fifteenDaysAgo }
+                    $or: [
+                        { lastEmailOpenedAt: { $lt: fifteenDaysAgo } },
+                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $lt: fifteenDaysAgo } },
+                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $exists: false }, createdAt: { $lt: fifteenDaysAgo } }
+                    ]
                 },
                 { $set: { dailyEmailEligible: false, dailyEmailCleanedAt: new Date() } }
             );
