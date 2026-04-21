@@ -3554,6 +3554,9 @@ await users.updateOne({ email }, {
 
         console.log("📡 Envoi de la requête TTS à ElevenLabs :", { text, voice_id, voice_settings });
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/stream`, {
             method: "POST",
             headers: {
@@ -3564,8 +3567,11 @@ await users.updateOne({ email }, {
                 text,
                 model_id: "eleven_multilingual_v2",
                 voice_settings
-            })
+            }),
+            signal: controller.signal
         });
+
+        clearTimeout(timeout);
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -3573,13 +3579,19 @@ await users.updateOne({ email }, {
             throw new Error(`Erreur API ElevenLabs : ${JSON.stringify(errorData)}`);
         }
 
+        console.log("✅ Audio TTS reçu de ElevenLabs");
         const audioBuffer = await response.arrayBuffer();
         res.setHeader("Content-Type", "audio/mpeg");
         res.send(Buffer.from(audioBuffer));
 
     } catch (error) {
-        console.error("❌ Erreur avec ElevenLabs :", error);
-        res.status(500).json({ error: "Erreur avec ElevenLabs" });
+        if (error.name === 'AbortError') {
+            console.error("⏰ Timeout ElevenLabs TTS (15s)");
+            res.status(504).json({ error: "Timeout ElevenLabs" });
+        } else {
+            console.error("❌ Erreur avec ElevenLabs :", error.message || error);
+            res.status(500).json({ error: "Erreur avec ElevenLabs" });
+        }
     }
 });
 
