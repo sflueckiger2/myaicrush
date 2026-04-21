@@ -399,7 +399,7 @@
       &#128640; YES, LIFETIME ACCESS &mdash; $174
     </a>
     <p class="cta-charge-notice">One-time payment of $174 USD. No recurring charges.</p>
-    <a href="https://myaicrush.ai/confirmation.html" class="cta-skip">No thanks, I&rsquo;ll keep paying monthly &rarr;</a>
+    <a href="https://myaicrush.ai/confirmation.html?amount=0" class="cta-skip">No thanks, I&rsquo;ll keep paying monthly &rarr;</a>
   </div>
 
   <div class="disclaimer-toggle" onclick="this.nextElementSibling.classList.toggle('open')">Legal &amp; Support &#9662;</div>
@@ -440,8 +440,8 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '1493017195692168');
     var purchaseEventID = 'purchase_' + Date.now();
-    var _fbAmount = parseFloat(new URLSearchParams(window.location.search).get('amount')) || 174;
-    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
+    var _fbAmount = parseFloat(new URLSearchParams(window.location.search).get('amount')) || 0;
+    if (_fbAmount > 0) { fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID }); }
   </script>
 
 <!-- Confirm purchase modal -->
