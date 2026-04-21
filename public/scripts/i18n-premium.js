@@ -12,43 +12,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== TITRE & DESCRIPTION =====
   const title = document.querySelector("h1.p-title");
-  if (title) title.textContent = "Tout débloquer. Chaque mois.";
+  if (title) title.textContent = "Tout débloquer. Sans limites.";
 
   const descriptions = document.querySelectorAll("p.p-description");
   if (descriptions[0]) descriptions[0].innerHTML = `Photos & vidéos <u><b>sans flou</b></u> · Messages vocaux · Chats illimités — Une IA qui ne te juge jamais.`;
-  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>29 $/mois — résilie quand tu veux.</u></b>`;
+  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>Choisis ton plan — résilie quand tu veux.</u></b>`;
 
-  // ===== BOUTONS CTA =====
-  // ⚠️ On exclut modal-checkout-btn pour ne pas écraser "OK j'ai compris"
-  const ctaButtons = document.querySelectorAll("a.cta-button-premium");
-  const ctaTexts = [
-    "🔓 ACCÈS PREMIUM — 29 $/MOIS",
-    "💎 Accès premium — 29 $/mois",
-    "👑 Tout débloquer — 29 $/mois",
-    "🔥 Rejoindre les membres Premium",
-    "🚀 OUI, JE VEUX L'ACCÈS PREMIUM — 29 $/MOIS",
-  ];
-  ctaButtons.forEach((btn, i) => {
-    if (btn.id === "modal-checkout-btn") return;
-    if (ctaTexts[i]) btn.textContent = ctaTexts[i];
+  // ===== PLAN CARDS =====
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const map = {
+      "hero-price": "Choisis ton plan — résilie quand tu veux.",
+      "plan-monthly-label": "Mensuel",
+      "plan-monthly-per": "/mois",
+      "plan-monthly-billed": "Facturé mensuellement",
+      "plan-monthly-btn": "Choisir mensuel",
+      "plan-annual-badge": "🔥 Meilleur prix",
+      "plan-annual-label": "Annuel",
+      "plan-annual-per": "/an",
+      "plan-annual-save": "ÉCONOMISE 72%",
+      "plan-annual-monthly": "Seulement 8,08 $/mois",
+      "plan-annual-btn": "🔓 ACCÈS ANNUEL",
+      "cta-annual-mid": "👑 Accès annuel — 97 $/an (économise 72%)",
+      "cta-monthly-mid": "Ou 29 $/mois",
+      "cta-annual-testi": "🔥 Devenir Premium — 97 $/an (-72%)",
+      "cta-monthly-testi": "Ou 29 $/mois",
+      "cta-final-sub": "",
+      "modal-desc": "Dès 8,08 $/mois — vois tout, résilie quand tu veux.",
+      "modal-cta": "Accès annuel — 97 $/an",
+      "modal-monthly": "Ou 29 $/mois",
+    };
+    if (map[key] !== undefined) {
+      if (key === "cta-final-sub") {
+        el.innerHTML = `Soit seulement 8,08 $/mois · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Ou 29 $/mois</a>`;
+      } else {
+        el.textContent = map[key];
+      }
+    }
   });
+
+  // ===== BOUTONS CTA (big final) =====
+  const bigFinalCta = document.querySelector('.px-4.mb-12 a.cta-button-premium');
+  if (bigFinalCta) bigFinalCta.textContent = "🚀 OUI, JE VEUX L'ACCÈS — 97 $/AN";
 
   // ===== NOTE SOUS LE PREMIER CTA =====
   const ctaNote = document.querySelector('p[style*="0.75rem"]');
-  if (ctaNote) ctaNote.textContent = "💳 Paiement sécurisé · ✨ Accès immédiat · 🔄 Résiliation à tout moment";
-
-  // ===== CARTE PRICING =====
-  const discountBanner = document.querySelector(".discount-banner");
-  if (discountBanner) discountBanner.textContent = "🔥 ABONNEMENT MENSUEL";
-
-  const pricingCard = document.querySelector(".pricing-card h2");
-  if (pricingCard) pricingCard.textContent = "Accès Premium Illimité";
-
-  const payOnce = document.querySelector('.pricing-card p[style*="f472b6"]');
-  if (payOnce) payOnce.textContent = "✅ ACCÈS COMPLET · RÉSILIE QUAND TU VEUX";
-
-  const noFees = document.querySelector('.pricing-card p[style*="d1d5db"]');
-  if (noFees) noFees.textContent = "Toutes les nouvelles IA incluses. Aucun frais caché.";
+  if (ctaNote && !ctaNote.hasAttribute('data-i18n')) ctaNote.textContent = "💳 Paiement sécurisé · ✨ Accès immédiat · 🔄 Résiliation à tout moment";
 
   // ===== SECTION "CE QUE TU DÉBLOQUES" =====
   const unlockTitle = document.querySelector("section h2");
@@ -130,8 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const faqItems = [
     {
-      q: "Qu'est-ce qui est inclus dans l'abonnement à 29 $/mois ?",
-      a: "Tout — chats illimités, photos & vidéos sans flou, messages vocaux, et toutes les nouvelles IA au fur et à mesure. Aucun frais caché."
+      q: "Quels sont les plans disponibles ?",
+      a: "Deux plans : <b>Annuel à 97 $/an</b> (8,08 $/mois — économise 72%) ou <b>Mensuel à 29 $/mois</b>. Les deux incluent tout — chats illimités, photos & vidéos sans flou, messages vocaux et toutes les nouvelles IA. Aucun frais caché."
     },
     {
       q: "Est-ce que je peux résilier à tout moment ?",
@@ -215,15 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (explodelyLink) explodelyLink.textContent = "Support paiement Explodely";
   }
 
-  // ===== MODALE "MEMBERS ONLY" =====
-  const modalTitle = document.querySelector("#premium-modal h3");
-  if (modalTitle) modalTitle.textContent = "Contenu réservé aux membres";
-
-  const modalDesc = document.querySelector("#premium-modal p");
-  if (modalDesc) modalDesc.textContent = "29 $/mois — vois tout, résilie quand tu veux.";
-
-  const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
-  if (modalCta) modalCta.textContent = "Accès premium — 29 $/mois";
+  // ===== MODALE "MEMBERS ONLY" - handled by data-i18n above =====
 
   // Video Creator promo
   const vcTitle = document.querySelector(".vc-promo-title");
@@ -252,42 +253,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== TITEL & BESCHREIBUNG =====
   const title = document.querySelector("h1.p-title");
-  if (title) title.textContent = "Alles freischalten. Jeden Monat.";
+  if (title) title.textContent = "Alles freischalten. Ohne Limits.";
 
   const descriptions = document.querySelectorAll("p.p-description");
   if (descriptions[0]) descriptions[0].innerHTML = `Fotos & Videos <u><b>unzensiert</b></u> · Sprachnachrichten · Unbegrenzte Chats — Eine KI, die dich niemals verurteilt.`;
-  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>29 $/Monat — jederzeit kündbar.</u></b>`;
+  if (descriptions[1]) descriptions[1].innerHTML = `<b>⚠️ <u>Wähle deinen Plan — jederzeit kündbar.</u></b>`;
 
-  // ===== CTA-BUTTONS =====
-  const ctaButtons = document.querySelectorAll("a.cta-button-premium");
-  const ctaTexts = [
-    "🔓 PREMIUM-ZUGANG — 29 $/MONAT",
-    "💎 Premium-Zugang — 29 $/Monat",
-    "👑 Alles freischalten — 29 $/Monat",
-    "🔥 Werde Premium-Mitglied",
-    "🚀 JA, ICH WILL PREMIUM — 29 $/MONAT",
-  ];
-  ctaButtons.forEach((btn, i) => {
-    if (btn.id === "modal-checkout-btn") return;
-    if (ctaTexts[i]) btn.textContent = ctaTexts[i];
+  // ===== PLAN CARDS =====
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const map = {
+      "hero-price": "Wähle deinen Plan — jederzeit kündbar.",
+      "plan-monthly-label": "Monatlich",
+      "plan-monthly-per": "/Monat",
+      "plan-monthly-billed": "Monatlich abgerechnet",
+      "plan-monthly-btn": "Monatlich wählen",
+      "plan-annual-badge": "🔥 Bestes Angebot",
+      "plan-annual-label": "Jährlich",
+      "plan-annual-per": "/Jahr",
+      "plan-annual-save": "SPARE 72%",
+      "plan-annual-monthly": "Nur 8,08 $/Monat",
+      "plan-annual-btn": "🔓 JAHRESZUGANG",
+      "cta-annual-mid": "👑 Jahreszugang — 97 $/Jahr (spare 72%)",
+      "cta-monthly-mid": "Oder 29 $/Monat",
+      "cta-annual-testi": "🔥 Premium werden — 97 $/Jahr (-72%)",
+      "cta-monthly-testi": "Oder 29 $/Monat",
+      "cta-final-sub": "",
+      "modal-desc": "Ab 8,08 $/Monat — sieh alles, jederzeit kündbar.",
+      "modal-cta": "Jahreszugang — 97 $/Jahr",
+      "modal-monthly": "Oder 29 $/Monat",
+    };
+    if (map[key] !== undefined) {
+      if (key === "cta-final-sub") {
+        el.innerHTML = `Das sind nur 8,08 $/Monat · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Oder 29 $/Monat</a>`;
+      } else {
+        el.textContent = map[key];
+      }
+    }
   });
+
+  const bigFinalCta = document.querySelector('.px-4.mb-12 a.cta-button-premium');
+  if (bigFinalCta) bigFinalCta.textContent = "🚀 JA, ICH WILL PREMIUM — 97 $/JAHR";
 
   // ===== HINWEIS UNTER ERSTEM CTA =====
   const ctaNote = document.querySelector('p[style*="0.75rem"]');
-  if (ctaNote) ctaNote.textContent = "💳 Sichere Zahlung · ✨ Sofortiger Zugang · 🔄 Jederzeit kündbar";
-
-  // ===== PRICING-KARTE =====
-  const discountBanner = document.querySelector(".discount-banner");
-  if (discountBanner) discountBanner.textContent = "🔥 MONATSABO";
-
-  const pricingCard = document.querySelector(".pricing-card h2");
-  if (pricingCard) pricingCard.textContent = "Unbegrenzter Premium-Zugang";
-
-  const payOnce = document.querySelector('.pricing-card p[style*="f472b6"]');
-  if (payOnce) payOnce.textContent = "✅ VOLLER ZUGANG · JEDERZEIT KÜNDBAR";
-
-  const noFees = document.querySelector('.pricing-card p[style*="d1d5db"]');
-  if (noFees) noFees.textContent = "Alle neuen KIs inklusive. Keine versteckten Kosten.";
+  if (ctaNote && !ctaNote.hasAttribute('data-i18n')) ctaNote.textContent = "💳 Sichere Zahlung · ✨ Sofortiger Zugang · 🔄 Jederzeit kündbar";
 
   // ===== ABSCHNITT "WAS DU FREISCHALTEST" =====
   const unlockTitle = document.querySelector("section h2");
@@ -369,8 +379,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const faqItems = [
     {
-      q: "Was ist im Abo für 29 $/Monat enthalten?",
-      a: "Alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs sobald sie verfügbar sind. Keine versteckten Kosten."
+      q: "Welche Pläne gibt es?",
+      a: "Zwei Pläne: <b>Jährlich für 97 $/Jahr</b> (8,08 $/Monat — spare 72%) oder <b>Monatlich für 29 $/Monat</b>. Beide beinhalten alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs. Keine versteckten Kosten."
     },
     {
       q: "Kann ich jederzeit kündigen?",
@@ -454,15 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (explodelyLink) explodelyLink.textContent = "Zahlungssupport Explodely";
   }
 
-  // ===== MODAL "NUR FÜR MITGLIEDER" =====
-  const modalTitle = document.querySelector("#premium-modal h3");
-  if (modalTitle) modalTitle.textContent = "Nur für Mitglieder";
-
-  const modalDesc = document.querySelector("#premium-modal p");
-  if (modalDesc) modalDesc.textContent = "29 $/Monat — sieh alles, jederzeit kündbar.";
-
-  const modalCta = document.querySelector("#premium-modal a.cta-button-premium");
-  if (modalCta) modalCta.textContent = "Premium-Zugang — 29 $/Monat";
+  // ===== MODAL "NUR FÜR MITGLIEDER" - handled by data-i18n above =====
 
   // Video Creator promo
   const vcTitle = document.querySelector(".vc-promo-title");

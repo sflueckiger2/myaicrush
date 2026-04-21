@@ -26,15 +26,15 @@
       .cta-button-premium:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(244, 114, 182, 0.5); }
 
       .cta-secondary {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.15);
           transition: all 0.3s ease;
           display: block;
           text-align: center;
-          color: white !important;
+          color: #9ca3af !important;
           text-decoration: none !important;
       }
-      .cta-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+      .cta-secondary:hover { background: rgba(255, 255, 255, 0.12); color: white !important; }
 
       .pulse-pink { animation: pulse 2s infinite; }
       @keyframes pulse { 
@@ -50,6 +50,61 @@
       .disclaimer-btn { width: 100%; text-align: center; color: #4b5563; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; padding: 15px; cursor: pointer; }
       .disclaimer-content { max-height: 0; overflow: hidden; transition: all 0.4s ease; background: rgba(0,0,0,0.2); font-size: 0.75rem; color: #9ca3af; line-height: 1.5; text-align: left; }
       .disclaimer-content.open { max-height: 2000px; padding: 25px; }
+
+      .plan-card {
+        position: relative;
+        border-radius: 20px;
+        padding: 28px 24px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .plan-card-monthly {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .plan-card-annual {
+        background: linear-gradient(135deg, rgba(244,114,182,0.12), rgba(168,85,247,0.12));
+        border: 2px solid rgba(244,114,182,0.5);
+        transform: scale(1.03);
+      }
+      .plan-card-annual:hover { border-color: rgba(244,114,182,0.8); }
+      .plan-badge-best {
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(90deg, #f472b6, #a855f7);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 5px 18px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+      .plan-save-badge {
+        display: inline-block;
+        background: rgba(52, 211, 153, 0.15);
+        color: #34d399;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 3px 12px;
+        border-radius: 10px;
+        margin-top: 8px;
+      }
+      .plan-price-old {
+        text-decoration: line-through;
+        color: #6b7280;
+        font-size: 1rem;
+        font-weight: 400;
+      }
+      .plan-per-month {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        margin-top: 4px;
+      }
   </style>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
@@ -70,16 +125,16 @@
     s.parentNode.insertBefore(t,s)}(window,document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '1493017195692168');
-    fbq('track', 'InitiateCheckout', { value: 29.00, currency: 'USD' });
+    fbq('track', 'InitiateCheckout', { value: 97.00, currency: 'USD' });
   </script>
 </head>
 <body>
   <div class="container premium-page">
-    <h1 class="p-title">Unlock everything. Monthly.</h1>
+    <h1 class="p-title">Unlock everything. No limits.</h1>
     <p class="p-description">
       <u><b>Unblurred</b></u> photos &amp; videos · Voice messages · Unlimited chats — <span style="font-family:'Times New Roman', Times, serif;">A.I</span> that never judges.
     </p>
-    <p class="p-description"><b>⚠️ <u>$29/month — cancel anytime.</u></b></p>
+    <p class="p-description"><b>⚠️ <u data-i18n="hero-price">Choose your plan — cancel anytime.</u></b></p>
    
     <div class="hero-media">
         <video class="hero-video" autoplay muted loop playsinline>
@@ -88,27 +143,35 @@
         <span class="vignette" aria-hidden="true"></span>
     </div>
 
-    <a href="https://explodely.com/p/22705532" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block mt-6">
-        🔓 GET ACCESS — $29/MONTH
-    </a>
+    <!-- ===== PRICING PLANS ===== -->
+    <div id="pricing-plans" style="display:flex; gap:14px; margin-top:24px; align-items:stretch; flex-wrap:wrap; justify-content:center;">
+
+      <!-- MONTHLY (decoy) -->
+      <div class="plan-card plan-card-monthly" style="flex:1; min-width:160px; max-width:260px;" onclick="window.location.href='https://explodely.com/p/22705532'">
+        <p style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:#6b7280; font-weight:700; margin-bottom:12px;" data-i18n="plan-monthly-label">Monthly</p>
+        <p style="font-size:2.4rem; font-weight:800; color:#fff; line-height:1;" class="plan-monthly-price">$29</p>
+        <p style="font-size:0.85rem; color:#9ca3af; margin-top:2px;" data-i18n="plan-monthly-per">/month</p>
+        <p style="font-size:0.75rem; color:#6b7280; margin-top:12px;" data-i18n="plan-monthly-billed">Billed monthly</p>
+        <a href="https://explodely.com/p/22705532" class="cta-secondary w-full py-3 rounded-xl font-bold uppercase text-sm mt-4" style="font-size:0.8rem;" data-i18n="plan-monthly-btn">Select Monthly</a>
+      </div>
+
+      <!-- ANNUAL (recommended) -->
+      <div class="plan-card plan-card-annual" style="flex:1; min-width:200px; max-width:320px;" onclick="window.location.href='https://explodely.com/p/2061057393'">
+        <div class="plan-badge-best" data-i18n="plan-annual-badge">🔥 Best value</div>
+        <p style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:#f472b6; font-weight:700; margin-bottom:12px; margin-top:6px;" data-i18n="plan-annual-label">Annual</p>
+        <p style="margin-bottom:2px;"><span class="plan-price-old">$348</span></p>
+        <p style="font-size:2.8rem; font-weight:800; color:#fff; line-height:1;" class="plan-annual-price">$97</p>
+        <p style="font-size:0.85rem; color:#d1d5db; margin-top:2px;" data-i18n="plan-annual-per">/year</p>
+        <div class="plan-save-badge" data-i18n="plan-annual-save">SAVE 72%</div>
+        <p class="plan-per-month" data-i18n="plan-annual-monthly">Only $8.08/month</p>
+        <a href="https://explodely.com/p/2061057393" class="cta-button-premium pulse-pink w-full py-3 rounded-xl font-bold uppercase text-sm mt-4" style="font-size:0.85rem;" data-i18n="plan-annual-btn">🔓 GET ANNUAL ACCESS</a>
+      </div>
+
+    </div>
 
     <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 1rem; text-align: center;">
       💳 Secure payment · ✨ Instant access · 🔄 Cancel anytime
     </p>
-
-    <div id="pricing-container" class="pricing-section">
-      <div class="pricing-card popular" style="max-width: 500px; margin: 0 auto;">
-        <div class="discount-banner">🔥 MONTHLY SUBSCRIPTION</div>
-        <h2>Unlimited Premium Access</h2>
-        <p class="price">$29<span style="font-size:1rem;font-weight:normal;">/month</span></p>
-        <p style="font-size: 0.9rem; color: #f472b6; font-weight: bold; margin-top: 0.5rem;">✅ FULL ACCESS · CANCEL ANYTIME</p>
-        <p style="font-size: 0.85rem; color: #d1d5db; margin-top: 0.5rem;">All new AIs included. No hidden fees.</p>
-      </div>
-    </div>
-
-    <a href="https://explodely.com/p/22705532" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        💎 Get access — $29/month
-    </a>
 
     <section class="mb-24 px-4 mt-12 text-left">
         <h2 class="text-3xl font-bold text-center mb-12 uppercase tracking-tight" style="color: white;">What you <span class="gradient-text">unlock</span></h2>
@@ -185,9 +248,14 @@
         </div>
     </section>
 
-    <a href="https://explodely.com/p/22705532" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        👑 Unlock everything — $29/month
-    </a>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:32px; margin-bottom:48px;">
+      <a href="https://explodely.com/p/2061057393" class="cta-button-premium pulse-pink w-full py-4 rounded-xl font-bold uppercase" data-i18n="cta-annual-mid">
+          👑 Annual access — $97/year (save 72%)
+      </a>
+      <a href="https://explodely.com/p/22705532" class="cta-secondary w-full py-3 rounded-xl font-bold uppercase text-sm" data-i18n="cta-monthly-mid">
+          Or $29/month
+      </a>
+    </div>
 
     <div class="testimonial-section">
       <h2 class="testimonial-title">They tried it. They stayed.</h2>
@@ -235,9 +303,14 @@
       </div>
     </div>
 
-    <a href="https://explodely.com/p/22705532" class="cta-button-premium w-full py-4 rounded-xl font-bold uppercase block mt-8 mb-12">
-        🔥 Join Premium members
-    </a>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:32px; margin-bottom:48px;">
+      <a href="https://explodely.com/p/2061057393" class="cta-button-premium pulse-pink w-full py-4 rounded-xl font-bold uppercase" data-i18n="cta-annual-testi">
+          🔥 Join Premium — $97/year (72% off)
+      </a>
+      <a href="https://explodely.com/p/22705532" class="cta-secondary w-full py-3 rounded-xl font-bold uppercase text-sm" data-i18n="cta-monthly-testi">
+          Or $29/month
+      </a>
+    </div>
 
     <!-- Video Creator Promo -->
     <div id="video-creator-promo" style="margin:40px 0; background:linear-gradient(135deg, rgba(244,114,182,0.12), rgba(168,85,247,0.12)); border:1px solid rgba(244,114,182,0.25); border-radius:20px; padding:30px 24px; text-align:center; position:relative; overflow:hidden;">
@@ -252,9 +325,9 @@
     <div class="faq-section">
       <h2 class="faq-title">FAQ</h2>
       <div class="faq-item">
-        <button class="faq-question">What's included in the $29/month plan?</button>
+        <button class="faq-question">What plans are available?</button>
         <div class="faq-answer">
-          <p>Everything — unlimited chats, unblurred photos &amp; videos, voice messages, and all new AIs as they're added. No hidden fees.</p>
+          <p>Two plans: <b>Annual at $97/year</b> ($8.08/month — save 72%) or <b>Monthly at $29/month</b>. Both include everything — unlimited chats, unblurred photos &amp; videos, voice messages, and all new AIs. No hidden fees.</p>
         </div>
       </div>
       <div class="faq-item">
@@ -285,9 +358,10 @@
   </div>
 
   <div class="px-4 mb-12">
-      <a href="https://explodely.com/p/22705532" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block">
-          🚀 YES, I WANT ACCESS — $29/MONTH
+      <a href="https://explodely.com/p/2061057393" class="cta-button-premium pulse-pink w-full py-6 rounded-2xl font-black text-xl uppercase block">
+          🚀 YES, I WANT ACCESS — $97/YEAR
       </a>
+      <p style="text-align:center; margin-top:8px; font-size:0.8rem; color:#6b7280;" data-i18n="cta-final-sub">That's only $8.08/month · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Or $29/month</a></p>
   </div>
 
   <div class="security-section">
@@ -337,8 +411,9 @@
           <button onclick="closePremiumModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">✕</button>
           <div class="text-4xl mb-4">🚫🔞</div>
           <h3 class="text-2xl font-bold mb-2 text-white">Members-Only Content</h3>
-          <p class="text-gray-300 mb-6 text-sm">$29/month — see everything, cancel anytime.</p>
-          <a href="https://explodely.com/p/22705532" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white">Get access — $29/month</a>
+          <p class="text-gray-300 mb-6 text-sm" data-i18n="modal-desc">From $8.08/month — see everything, cancel anytime.</p>
+          <a href="https://explodely.com/p/2061057393" class="cta-button-premium py-3 px-6 rounded-xl font-bold uppercase text-sm block shadow-lg text-white" data-i18n="modal-cta">Get annual access — $97/year</a>
+          <a href="https://explodely.com/p/22705532" style="display:block; margin-top:8px; font-size:0.75rem; color:#9ca3af; text-decoration:underline;" data-i18n="modal-monthly">Or $29/month</a>
       </div>
   </div>
 

@@ -1236,41 +1236,8 @@ app.post("/webhook/explodely", async (req, res) => {
       // ---- SALE ----
       if (eventType === "sale") {
         if (isAnnualProduct) {
-          // Fetch existing user to get their monthly orderId
-          const existingUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
-          const oldMonthlyOrderId = existingUser?.explodelyMainOrderId;
-
-          // Cancel existing monthly subscription if it exists
-          if (oldMonthlyOrderId && existingUser?.explodelyPlan !== "annual") {
-            try {
-              const cancelRes = await axios.get("https://explodely.com/api/v1", {
-                params: {
-                  username: process.env.EXPLODELY_USERNAME,
-                  api_key: process.env.EXPLODELY_API_KEY,
-                  action: "cancelrebill",
-                  orderid: oldMonthlyOrderId
-                },
-                timeout: 15000
-              });
-              console.log(`🔄 Mensuel annulé pour ${email} (oldOrderId=${oldMonthlyOrderId}):`, cancelRes.data);
-              await explodelyEvents.insertOne({
-                email, orderId, productId, eventType,
-                action: "monthly_cancelled_for_annual",
-                oldMonthlyOrderId,
-                cancelResponse: cancelRes.data,
-                createdAt: new Date()
-              });
-            } catch (cancelErr) {
-              console.error(`⚠️ Erreur annulation mensuel pour ${email} (oldOrderId=${oldMonthlyOrderId}):`, cancelErr.message);
-              await explodelyEvents.insertOne({
-                email, orderId, productId, eventType,
-                action: "monthly_cancel_failed",
-                oldMonthlyOrderId,
-                error: cancelErr.message,
-                createdAt: new Date()
-              });
-            }
-          }
+          // Auto-cancel of monthly disabled — let both subs coexist
+          const oldMonthlyOrderId = null;
 
           const existingForBonus = await users.findOne({ email }, { projection: { explodelyPremium: 1 } });
           const alreadyPremium = existingForBonus?.explodelyPremium === true;
@@ -7245,6 +7212,8 @@ app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
       autoCleaned,
       openedLast24h,
       openedLast7d,
+      clickedLast24h,
+      clickedLast7d,
       sentLast24h,
       sentLast7d,
       newUsersLast24h,
@@ -7260,6 +7229,8 @@ app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
       users.countDocuments({ dailyEmailCleanedAt: { $exists: true } }),
       users.countDocuments({ lastEmailOpenedAt: { $gte: h24 } }),
       users.countDocuments({ lastEmailOpenedAt: { $gte: d7 } }),
+      users.countDocuments({ lastEmailClickedAt: { $gte: h24 } }),
+      users.countDocuments({ lastEmailClickedAt: { $gte: d7 } }),
       users.countDocuments({ lastDailyEmailSentAt: { $gte: h24 } }),
       users.countDocuments({ lastDailyEmailSentAt: { $gte: d7 } }),
       users.countDocuments({ createdAt: { $gte: h24 } }),
@@ -7269,14 +7240,47 @@ app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
       users.find({ lastEmailOpenedAt: { $gte: h24 } }, { projection: { email: 1, lastEmailOpenedAt: 1 } }).sort({ lastEmailOpenedAt: -1 }).limit(20).toArray()
     ]);
 
+    const openRate24h = sentLast24h > 0 ? Math.min(100, (openedLast24h / sentLast24h) * 100).toFixed(1) : "0.0";
+    const openRate7d = sentLast7d > 0 ? Math.min(100, (openedLast7d / sentLast7d) * 100).toFixed(1) : "0.0";
+    const clickRate24h = sentLast24h > 0 ? Math.min(100, (clickedLast24h / sentLast24h) * 100).toFixed(1) : "0.0";
+    const clickRate7d = sentLast7d > 0 ? Math.min(100, (clickedLast7d / sentLast7d) * 100).toFixed(1) : "0.0";
+
     res.json({
       timestamp: now.toISOString(),
       users: { total: totalUsers, premium: premiumUsers, newLast24h: newUsersLast24h, newLast7d: newUsersLast7d, newLast30d: newUsersLast30d },
       dailyEmails: { eligible: dailyEligible, unsubscribed, autoCleaned, sentLast24h, sentLast7d },
-      engagement: { openedLast24h, openedLast7d },
+      engagement: { openedLast24h, openedLast7d, clickedLast24h, clickedLast7d, openRate24h, openRate7d, clickRate24h, clickRate7d },
       recentSignups,
       recentOpens
     });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/admin/email-campaigns", requireAdmin, async (req, res) => {
+  try {
+    const database = client.db('MyAICrush');
+    const campaigns = database.collection('daily_email_campaigns');
+    const results = await campaigns.find({})
+      .sort({ sentAt: -1 })
+      .limit(50)
+      .toArray();
+
+    const formatted = results.map(c => ({
+      id: c._id.toString(),
+      sentAt: c.sentAt,
+      subject: c.subject,
+      character: c.character,
+      language: c.language || "en",
+      sentCount: c.sentCount || 0,
+      openCount: c.openCount || 0,
+      clickCount: c.clickCount || 0,
+      openRate: c.sentCount > 0 ? ((c.openCount / c.sentCount) * 100).toFixed(1) : "0.0",
+      clickRate: c.sentCount > 0 ? ((c.clickCount / c.sentCount) * 100).toFixed(1) : "0.0"
+    }));
+
+    res.json({ campaigns: formatted });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -7554,15 +7558,40 @@ const TRANSPARENT_GIF = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAA
 
 app.get('/t/:token', async (req, res) => {
     try {
-        const email = Buffer.from(req.params.token, 'base64url').toString('utf-8');
+        const decoded = Buffer.from(req.params.token, 'base64url').toString('utf-8');
+        const [email, campaignId] = decoded.split('|');
         if (email && email.includes('@')) {
             const database = client.db('MyAICrush');
-            const users = database.collection('users');
-            await users.updateOne({ email }, { $set: { lastEmailOpenedAt: new Date() } });
+            await database.collection('users').updateOne({ email }, { $set: { lastEmailOpenedAt: new Date() } });
+            if (campaignId) {
+                await database.collection('daily_email_campaigns').updateOne(
+                    { _id: new (require('mongodb').ObjectId)(campaignId) },
+                    { $inc: { openCount: 1 } }
+                );
+            }
         }
     } catch (e) { /* silent */ }
     res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     res.send(TRANSPARENT_GIF);
+});
+
+app.get('/c/:token', async (req, res) => {
+    const dest = req.query.r || 'https://myaicrush.ai';
+    try {
+        const decoded = Buffer.from(req.params.token, 'base64url').toString('utf-8');
+        const [email, campaignId] = decoded.split('|');
+        if (email && email.includes('@')) {
+            const database = client.db('MyAICrush');
+            await database.collection('users').updateOne({ email }, { $set: { lastEmailClickedAt: new Date() } });
+            if (campaignId) {
+                await database.collection('daily_email_campaigns').updateOne(
+                    { _id: new (require('mongodb').ObjectId)(campaignId) },
+                    { $inc: { clickCount: 1 } }
+                );
+            }
+        }
+    } catch (e) { /* silent */ }
+    res.redirect(302, dest);
 });
 
 const DAILY_SFW_CHARACTERS = [
@@ -7755,17 +7784,34 @@ schedule.scheduleJob('0 18 * * *', async () => {
             }
 
             let sent = 0, errors = 0;
+            const allSubjects = [];
             for (const [lang, langUsers] of Object.entries(langGroups)) {
                 const content = await generateDailyEmailContent(char.name, lang);
                 const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=daily&utm_campaign=engagement&utm_content=${char.name.toLowerCase()}`;
 
+                // Create campaign record for this language batch
+                const campaigns = database.collection('daily_email_campaigns');
+                const campaignDoc = await campaigns.insertOne({
+                    sentAt: new Date(),
+                    subject: content.subject,
+                    character: char.name,
+                    language: lang,
+                    sentCount: 0,
+                    openCount: 0,
+                    clickCount: 0
+                });
+                const campaignId = campaignDoc.insertedId.toString();
+                allSubjects.push(content.subject);
+
+                let langSent = 0;
                 for (const u of langUsers) {
                     try {
-                        const trackToken = Buffer.from(u.email).toString('base64url');
+                        const trackToken = Buffer.from(`${u.email}|${campaignId}`).toString('base64url');
                         const trackingPixelUrl = `https://myaicrush.ai/t/${trackToken}`;
+                        const clickTrackUrl = `https://myaicrush.ai/c/${trackToken}?r=${encodeURIComponent(ctaUrl)}`;
                         const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(u.email)}`;
 
-                        const html = buildDailyEmail(content.body, char.name, imageUrl, ctaUrl, trackingPixelUrl)
+                        const html = buildDailyEmail(content.body, char.name, imageUrl, clickTrackUrl, trackingPixelUrl)
                             + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">Unsubscribe</a></div>`;
 
                         await resend.emails.send({
@@ -7778,6 +7824,7 @@ schedule.scheduleJob('0 18 * * *', async () => {
 
                         await users.updateOne({ email: u.email }, { $set: { lastDailyEmailSentAt: new Date() } });
                         sent++;
+                        langSent++;
                     } catch (e) {
                         errors++;
                         if (errors <= 5) console.log(`[DAILY-EMAIL] Error for ${u.email}:`, e.message);
@@ -7787,6 +7834,8 @@ schedule.scheduleJob('0 18 * * *', async () => {
                     }
                     if (validUsers.length > 10) await new Promise(r => setTimeout(r, 150));
                 }
+                // Update campaign sentCount
+                await campaigns.updateOne({ _id: campaignDoc.insertedId }, { $set: { sentCount: langSent } });
             }
             console.log(`📬 [DAILY-EMAIL] Done: sent=${sent}, errors=${errors}`);
         } catch (e) {

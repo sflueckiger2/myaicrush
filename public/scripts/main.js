@@ -33,6 +33,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ✅ Afficher les options de chat avec les bonnes bannières
     generateChatOptions(characters, isPremium);
 
+    // Cleanup: remove any leftover conv-hide-style from previous navigation
+    const staleStyle = document.getElementById("conv-hide-style");
+    if (staleStyle && !new URLSearchParams(window.location.search).get("chat")) {
+      staleStyle.remove();
+    }
+
     // Auto-open chat from ?chat=CharacterName (e.g. from conversations page)
     const urlChat = new URLSearchParams(window.location.search).get("chat");
     if (urlChat || window.__chatConvMode) {
