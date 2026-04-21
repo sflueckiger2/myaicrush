@@ -7560,17 +7560,19 @@ app.get('/t/:token', async (req, res) => {
     try {
         const decoded = Buffer.from(req.params.token, 'base64url').toString('utf-8');
         const [email, campaignId] = decoded.split('|');
+        console.log(`📨 [OPEN-TRACK] email=${email}, campaignId=${campaignId}`);
         if (email && email.includes('@')) {
             const database = client.db('MyAICrush');
             await database.collection('users').updateOne({ email }, { $set: { lastEmailOpenedAt: new Date() } });
             if (campaignId) {
-                await database.collection('daily_email_campaigns').updateOne(
+                const result = await database.collection('daily_email_campaigns').updateOne(
                     { _id: new (require('mongodb').ObjectId)(campaignId) },
                     { $inc: { openCount: 1 } }
                 );
+                console.log(`📨 [OPEN-TRACK] campaign update matched=${result.matchedCount} modified=${result.modifiedCount}`);
             }
         }
-    } catch (e) { /* silent */ }
+    } catch (e) { console.error('❌ [OPEN-TRACK] error:', e.message); }
     res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     res.send(TRANSPARENT_GIF);
 });
@@ -7580,17 +7582,19 @@ app.get('/c/:token', async (req, res) => {
     try {
         const decoded = Buffer.from(req.params.token, 'base64url').toString('utf-8');
         const [email, campaignId] = decoded.split('|');
+        console.log(`🖱️ [CLICK-TRACK] email=${email}, campaignId=${campaignId}`);
         if (email && email.includes('@')) {
             const database = client.db('MyAICrush');
             await database.collection('users').updateOne({ email }, { $set: { lastEmailClickedAt: new Date() } });
             if (campaignId) {
-                await database.collection('daily_email_campaigns').updateOne(
+                const result = await database.collection('daily_email_campaigns').updateOne(
                     { _id: new (require('mongodb').ObjectId)(campaignId) },
                     { $inc: { clickCount: 1 } }
                 );
+                console.log(`🖱️ [CLICK-TRACK] campaign update matched=${result.matchedCount} modified=${result.modifiedCount}`);
             }
         }
-    } catch (e) { /* silent */ }
+    } catch (e) { console.error('❌ [CLICK-TRACK] error:', e.message); }
     res.redirect(302, dest);
 });
 
