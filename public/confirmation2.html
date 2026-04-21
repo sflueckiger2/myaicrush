@@ -670,8 +670,8 @@
 
   var purchaseEventID = 'purchase_' + Date.now();
 
-  // 🔥 Valeur FIXE : 49 USD
-  fbq('track', 'Purchase', { value: 49, currency: 'USD' }, { eventID: purchaseEventID });
+  var _fbAmount = parseFloat(new URLSearchParams(window.location.search).get('amount')) || 29;
+  fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
 </script>
 
   <!-- TrafficJunky -->

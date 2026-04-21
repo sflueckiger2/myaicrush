@@ -491,7 +491,8 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '1493017195692168');
     var purchaseEventID = 'purchase_' + Date.now();
-    fbq('track', 'Purchase', { value: 179, currency: 'USD' }, { eventID: purchaseEventID });
+    var _fbAmount = parseFloat(new URLSearchParams(window.location.search).get('amount')) || 29;
+    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
   </script>
 
   <!-- TrafficJunky -->
