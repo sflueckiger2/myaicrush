@@ -30,21 +30,21 @@ document.addEventListener("DOMContentLoaded", () => {
       "plan-annual-badge": "🔥 Meilleur prix",
       "plan-annual-label": "Annuel",
       "plan-annual-per": "/an",
-      "plan-annual-save": "ÉCONOMISE 72%",
-      "plan-annual-monthly": "Seulement 8,08 $/mois",
+      "plan-annual-save": "ÉCONOMISE 74%",
+      "plan-annual-monthly": "Seulement 7,42 $/mois",
       "plan-annual-btn": "🔓 ACCÈS ANNUEL",
-      "cta-annual-mid": "👑 Accès annuel — 97 $/an (économise 72%)",
+      "cta-annual-mid": "👑 Accès annuel — 89 $/an (économise 74%)",
       "cta-monthly-mid": "Ou 29 $/mois",
-      "cta-annual-testi": "🔥 Devenir Premium — 97 $/an (-72%)",
+      "cta-annual-testi": "🔥 Devenir Premium — 89 $/an (-74%)",
       "cta-monthly-testi": "Ou 29 $/mois",
       "cta-final-sub": "",
-      "modal-desc": "Dès 8,08 $/mois — vois tout, résilie quand tu veux.",
-      "modal-cta": "Accès annuel — 97 $/an",
+      "modal-desc": "Dès 7,42 $/mois — vois tout, résilie quand tu veux.",
+      "modal-cta": "Accès annuel — 89 $/an",
       "modal-monthly": "Ou 29 $/mois",
     };
     if (map[key] !== undefined) {
       if (key === "cta-final-sub") {
-        el.innerHTML = `Soit seulement 8,08 $/mois · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Ou 29 $/mois</a>`;
+        el.innerHTML = `Soit seulement 7,42 $/mois · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Ou 29 $/mois</a>`;
       } else {
         el.textContent = map[key];
       }
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== BOUTONS CTA (big final) =====
   const bigFinalCta = document.querySelector('.px-4.mb-12 a.cta-button-premium');
-  if (bigFinalCta) bigFinalCta.textContent = "🚀 OUI, JE VEUX L'ACCÈS — 97 $/AN";
+  if (bigFinalCta) bigFinalCta.textContent = "🚀 OUI, JE VEUX L'ACCÈS — 89 $/AN";
 
   // ===== NOTE SOUS LE PREMIER CTA =====
   const ctaNote = document.querySelector('p[style*="0.75rem"]');
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const faqItems = [
     {
       q: "Quels sont les plans disponibles ?",
-      a: "Deux plans : <b>Annuel à 97 $/an</b> (8,08 $/mois — économise 72%) ou <b>Mensuel à 29 $/mois</b>. Les deux incluent tout — chats illimités, photos & vidéos sans flou, messages vocaux et toutes les nouvelles IA. Aucun frais caché."
+      a: "Deux plans : <b>Annuel à 89 $/an</b> (7,42 $/mois — économise 74%) ou <b>Mensuel à 29 $/mois</b>. Les deux incluent tout — chats illimités, photos & vidéos sans flou, messages vocaux et toutes les nouvelles IA. Aucun frais caché."
     },
     {
       q: "Est-ce que je peux résilier à tout moment ?",
@@ -271,21 +271,21 @@ document.addEventListener("DOMContentLoaded", () => {
       "plan-annual-badge": "🔥 Bestes Angebot",
       "plan-annual-label": "Jährlich",
       "plan-annual-per": "/Jahr",
-      "plan-annual-save": "SPARE 72%",
-      "plan-annual-monthly": "Nur 8,08 $/Monat",
+      "plan-annual-save": "SPARE 74%",
+      "plan-annual-monthly": "Nur 7,42 $/Monat",
       "plan-annual-btn": "🔓 JAHRESZUGANG",
-      "cta-annual-mid": "👑 Jahreszugang — 97 $/Jahr (spare 72%)",
+      "cta-annual-mid": "👑 Jahreszugang — 89 $/Jahr (spare 74%)",
       "cta-monthly-mid": "Oder 29 $/Monat",
-      "cta-annual-testi": "🔥 Premium werden — 97 $/Jahr (-72%)",
+      "cta-annual-testi": "🔥 Premium werden — 89 $/Jahr (-74%)",
       "cta-monthly-testi": "Oder 29 $/Monat",
       "cta-final-sub": "",
-      "modal-desc": "Ab 8,08 $/Monat — sieh alles, jederzeit kündbar.",
-      "modal-cta": "Jahreszugang — 97 $/Jahr",
+      "modal-desc": "Ab 7,42 $/Monat — sieh alles, jederzeit kündbar.",
+      "modal-cta": "Jahreszugang — 89 $/Jahr",
       "modal-monthly": "Oder 29 $/Monat",
     };
     if (map[key] !== undefined) {
       if (key === "cta-final-sub") {
-        el.innerHTML = `Das sind nur 8,08 $/Monat · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Oder 29 $/Monat</a>`;
+        el.innerHTML = `Das sind nur 7,42 $/Monat · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Oder 29 $/Monat</a>`;
       } else {
         el.textContent = map[key];
       }
@@ -293,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const bigFinalCta = document.querySelector('.px-4.mb-12 a.cta-button-premium');
-  if (bigFinalCta) bigFinalCta.textContent = "🚀 JA, ICH WILL PREMIUM — 97 $/JAHR";
+  if (bigFinalCta) bigFinalCta.textContent = "🚀 JA, ICH WILL PREMIUM — 89 $/JAHR";
 
   // ===== HINWEIS UNTER ERSTEM CTA =====
   const ctaNote = document.querySelector('p[style*="0.75rem"]');
@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const faqItems = [
     {
       q: "Welche Pläne gibt es?",
-      a: "Zwei Pläne: <b>Jährlich für 97 $/Jahr</b> (8,08 $/Monat — spare 72%) oder <b>Monatlich für 29 $/Monat</b>. Beide beinhalten alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs. Keine versteckten Kosten."
+      a: "Zwei Pläne: <b>Jährlich für 89 $/Jahr</b> (7,42 $/Monat — spare 74%) oder <b>Monatlich für 29 $/Monat</b>. Beide beinhalten alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs. Keine versteckten Kosten."
     },
     {
       q: "Kann ich jederzeit kündigen?",
