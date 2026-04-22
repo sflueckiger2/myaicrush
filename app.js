@@ -2949,7 +2949,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
               {
                 model: chatModel,
                 messages: messages,
-                max_tokens: 80,
+                max_tokens: 150,
                 temperature: 1.0,
                 top_p: 1.0,
                 frequency_penalty: 0.3,
@@ -2974,7 +2974,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
                 {
                   model: FW_FALLBACK_MODEL,
                   messages: messages,
-                  max_tokens: 80,
+                  max_tokens: 150,
                   temperature: 1.0,
                   top_p: 1.0,
                   frequency_penalty: 0.3,
