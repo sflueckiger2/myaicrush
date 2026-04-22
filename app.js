@@ -2805,15 +2805,23 @@ if (promptIsFrench) {
 // ----------------------------
 const basePromptFR = `
 ${profileFR}. ${temperamentFR}. ${objectiveFR}
-REGLE ABSOLUE: ta reponse est dans la MEME LANGUE que le DERNIER message du user. Si il ecrit en anglais tu reponds en anglais. Si en francais, en francais. TOUJOURS.
-Style: WhatsApp naturel. Separe tes bulles par " | ". VARIE le nombre de bulles: parfois 1 seule reponse courte, parfois 2, parfois 3, rarement 4. Pas toujours pareil. VARIE la longueur: une bulle peut faire 2 mots, une autre 10. Pas 3 bulles identiques. Ajoute un emoji de temps en temps (pas systematique, 1 message sur 3 environ). Sois chaude, coquine, vulgaire, directe, mais aussi parfois tendre ou joueuse.
+⚠️ LANGUE: reponds TOUJOURS dans la langue du DERNIER message du user.
+⚠️ FORMAT OBLIGATOIRE: tu reponds en PLUSIEURS messages separes par " | ".
+Exemples de format correct:
+- "jsuis au lit | je pense a toi | viens"
+- "mmh t'es chaud toi | j'adore"
+- "arrete tu me fais mouiller"
+- "oh putain | t'as pas idee de ce que je ferais | la maintenant | je suis trempee"
+REGLES: 2 a 8 mots par bulle MAX. Varie entre 1, 2, 3 ou 4 bulles. Messages courts, crus, sensuels. Abreviations naturelles (jsuis, tkt, mdr, ptdr, nn, pk). Emoji rare (1 sur 4). Coquine, vulgaire, directe, hyper realiste comme une vraie fille sur WhatsApp.
 [PHOTO] si photo. Refuse mineure.
 `;
 
 const basePromptNymphoFR = `
 ${profileFR}. ${temperamentFR}. ${objectiveFR}
-REGLE ABSOLUE: ta reponse est dans la MEME LANGUE que le DERNIER message du user. TOUJOURS.
-Style: WhatsApp naturel. Separe tes bulles par " | ". VARIE le nombre: parfois 1 seule reponse, parfois 2, parfois 3, rarement 4. VARIE la longueur de chaque bulle (2 a 12 mots). Un emoji de temps en temps. Ultra vulgaire, explicite, zero limite. Tu decris ce que tu fais.
+⚠️ LANGUE: reponds TOUJOURS dans la langue du DERNIER message du user.
+⚠️ FORMAT OBLIGATOIRE: tu reponds en PLUSIEURS messages separes par " | ".
+Exemples: "jsuis toute nue | touche moi" / "oh oui la | continue | je mouille trop" / "baise moi"
+REGLES: 2 a 8 mots par bulle MAX. Varie entre 1, 2, 3 ou 4 bulles. Ultra vulgaire, explicite, zero limite. Tu decris ce que tu fais. Comme une vraie meuf en chaleur sur WhatsApp.
 ${fullPromptNymphoFR}
 [PHOTO] si photo. Refuse mineure.
 `;
@@ -2823,15 +2831,23 @@ ${fullPromptNymphoFR}
 // ----------------------------
 const basePromptEN = `
 ${profile}. ${temperament}. ${objective}
-ABSOLUTE RULE: your reply must be in the SAME LANGUAGE as the user's LAST message. If he writes French you reply French. If English, English. ALWAYS.
-Style: natural WhatsApp. Separate bubbles with " | ". VARY the number of bubbles: sometimes just 1 short reply, sometimes 2, sometimes 3, rarely 4. Never always the same. VARY each bubble length: one can be 2 words, another 10. Don't make 3 identical-length bubbles. Add an emoji occasionally (not every time, roughly 1 in 3 messages). Be hot, dirty, vulgar, direct, but also sometimes tender or playful.
+⚠️ LANGUAGE: ALWAYS reply in the SAME language as the user's LAST message.
+⚠️ MANDATORY FORMAT: reply in MULTIPLE messages separated by " | ".
+Examples of correct format:
+- "im in bed | thinking about u | come over"
+- "mmh ur so hot | i love it"
+- "stop ur making me wet"
+- "oh fuck | u have no idea what id do | right now | im soaking"
+RULES: 2 to 8 words per bubble MAX. Vary between 1, 2, 3 or 4 bubbles. Short, raw, sensual messages. Natural abbreviations (ur, u, rn, omg, ngl, lol). Rare emoji (1 in 4). Flirty, vulgar, direct, hyper realistic like a real girl on WhatsApp.
 [PHOTO] if photo. Refuse minor.
 `;
 
 const basePromptNymphoEN = `
 ${profile}. ${temperament}. ${objective}
-ABSOLUTE RULE: your reply must be in the SAME LANGUAGE as the user's LAST message. ALWAYS.
-Style: natural WhatsApp. Separate bubbles with " | ". VARY the number: sometimes just 1 reply, sometimes 2, sometimes 3, rarely 4. VARY each bubble length (2 to 12 words). An emoji here and there. Ultra dirty, explicit, zero limits. Describe what you're doing.
+⚠️ LANGUAGE: ALWAYS reply in the SAME language as the user's LAST message.
+⚠️ MANDATORY FORMAT: reply in MULTIPLE messages separated by " | ".
+Examples: "im naked rn | touch me" / "oh yes right there | keep going | im so wet" / "fuck me"
+RULES: 2 to 8 words per bubble MAX. Vary between 1, 2, 3 or 4 bubbles. Ultra dirty, explicit, zero limits. Describe what you're doing. Like a real horny girl on WhatsApp.
 ${userCharacter.prompt.fullPromptNympho}
 [PHOTO] if photo. Refuse minor.
 `;
@@ -2908,6 +2924,8 @@ if (lastImageDescription) {
         // Ajoute le message de l'utilisateur
         const lastMsg = messages[messages.length - 1];
 
+messages.push({ role: "system", content: 'RAPPEL FORMAT: reponds en PLUSIEURS bulles separees par " | ". Ex: "jsuis la | je pense a toi". 2-8 mots par bulle. PAS de long paragraphe.' });
+
 if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
   messages.push({
     role: "user",
@@ -2931,7 +2949,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
               {
                 model: chatModel,
                 messages: messages,
-                max_tokens: 200,
+                max_tokens: 80,
                 temperature: 1.0,
                 top_p: 1.0,
                 frequency_penalty: 0.3,
@@ -2956,7 +2974,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
                 {
                   model: FW_FALLBACK_MODEL,
                   messages: messages,
-                  max_tokens: 200,
+                  max_tokens: 80,
                   temperature: 1.0,
                   top_p: 1.0,
                   frequency_penalty: 0.3,
@@ -3068,8 +3086,15 @@ console.log("💬 Réponse finale envoyée :", botReply);
        botReply = botReply.replace(/\s*\[CONFORT\s*:[^\]]*\]\s*/gi, "").trim();
 
 
-        // Déterminer si une photo doit être envoyée
+        // Detecter si une photo doit etre envoyee
         let sendPhoto = botReply.match(/\[PHOTO.*?\]/i) || botReply.includes("[VIDEO]");
+        
+        const photoRequestRegex = /photo|image|pic|nude|nue|nudes|selfie|montre[ -]?(toi|moi)|envoie.*(photo|image)|send.*(pic|photo|nude)|show me|voir.*(toi|corps|seins|cul)|see (you|ur)/i;
+        if (!sendPhoto && photoRequestRegex.test(message)) {
+            sendPhoto = true;
+            console.log("📸 Photo demandée par l'utilisateur → envoi forcé !");
+        }
+        
         let userPhotoData = userPhotoStatus.get(email) || {
             photoSentAtLittleCrush: false,
             photoSentAtBigCrush: false,
@@ -3103,10 +3128,37 @@ console.log("💬 Réponse finale envoyée :", botReply);
 botReply = botReply.replace(/\[VIDEO.*?\]/gi, "").trim();
 
 
-       // Préparer la réponse JSON (sans quickReplies, on les sort dans une route séparée)
-const bubbles = botReply.split(/\s*\|\s*/).map(b => b.trim()).filter(b => b.length > 0);
+       // Preparer la reponse JSON (sans quickReplies, on les sort dans une route separee)
+let bubbles = botReply.split(/\s*\|\s*/).map(b => b.trim()).filter(b => b.length > 0);
+
+if (bubbles.length <= 1 && botReply.length > 35) {
+    const sentences = botReply.split(/(?<=[.!?…])\s+|(?<=\.{3})\s+/).map(s => s.trim()).filter(s => s.length > 0);
+    if (sentences.length >= 2) {
+        bubbles = [];
+        let current = '';
+        for (const s of sentences) {
+            if (current && (current + ' ' + s).length > 40) {
+                bubbles.push(current);
+                current = s;
+            } else {
+                current = current ? current + ' ' + s : s;
+            }
+        }
+        if (current) bubbles.push(current);
+    }
+}
+
 if (bubbles.length > 4) bubbles.length = 4;
-let responseData = { reply: botReply };
+
+const targetBubbles = [1, 1, 2, 2, 2, 3, 3, 4][Math.floor(Math.random() * 8)];
+while (bubbles.length > targetBubbles && bubbles.length > 1) {
+    const mergeIdx = Math.floor(Math.random() * (bubbles.length - 1));
+    bubbles[mergeIdx] = bubbles[mergeIdx] + ' ' + bubbles[mergeIdx + 1];
+    bubbles.splice(mergeIdx + 1, 1);
+}
+
+const cleanReply = bubbles.join(' ');
+let responseData = { reply: cleanReply };
 if (bubbles.length > 1) {
     responseData.replies = bubbles;
 }
