@@ -7740,14 +7740,10 @@ function isValidEmailFormat(email) {
     return true;
 }
 
-// 📬 Daily engagement email — random time between 20:00-23:00 Lausanne (UTC+2)
-schedule.scheduleJob('0 18 * * *', async () => {
-    const delayMs = Math.floor(Math.random() * 180 * 60 * 1000);
-    console.log(`📬 [DAILY-EMAIL] Scheduled, will fire in ${Math.round(delayMs / 60000)} minutes`);
-
-    setTimeout(async () => {
-        try {
-            console.log(`📬 [DAILY-EMAIL] Starting daily email send...`);
+// 📬 Daily engagement email — 15:30 Lausanne (UTC+2) = 13:30 UTC
+schedule.scheduleJob('30 13 * * *', async () => {
+    try {
+        console.log(`📬 [DAILY-EMAIL] Starting daily email send...`);
             const database = client.db('MyAICrush');
             const users = database.collection('users');
 
@@ -7857,7 +7853,6 @@ schedule.scheduleJob('0 18 * * *', async () => {
         } catch (e) {
             console.error("[DAILY-EMAIL] Fatal error:", e.message);
         }
-    }, delayMs);
 });
 
 // 🚫 Unsubscribe from marketing emails
