@@ -7606,31 +7606,101 @@ app.get('/c/:token', async (req, res) => {
     res.redirect(302, dest);
 });
 
-const DAILY_SFW_CHARACTERS = [
-    { name: "Megane", folder: "megane/megane3", ext: "jpg", filter: f => f.includes("dressed") && f.endsWith(".jpg") },
-    { name: "Chloe", folder: "chloe/chloe3", ext: "webp" },
-    { name: "Lila", folder: "lila/lila3", ext: "webp" },
-    { name: "Aiko", folder: "aiko/aiko3", ext: "webp" },
-    { name: "Amber", folder: "amber/amber3", ext: "webp" },
-    { name: "Astrid", folder: "astrid/astrid3", ext: "webp" },
-    { name: "Candy", folder: "candy/candy3", ext: "webp" },
-    { name: "Emilie", folder: "emilie/emilie3", ext: "webp" },
-    { name: "Hanae", folder: "hanae/hanae3", ext: "webp" },
-    { name: "Ishani", folder: "ishani/ishani3", ext: "webp" },
-    { name: "Jasmine", folder: "jasmine/jasmine3", ext: "webp" },
-    { name: "Juliette", folder: "juliette/juliette3", ext: "webp" },
-    { name: "Kat", folder: "kat/kat3", ext: "webp" },
-    { name: "Kiara", folder: "kiara/kiara3", ext: "webp" },
-    { name: "Lea", folder: "lea/lea3", ext: "webp" },
-    { name: "Lilith", folder: "lilith/lilith3", ext: "webp" },
-    { name: "Magalie", folder: "magalie/magalie3", ext: "webp" },
-    { name: "Morgana", folder: "morgana/morgana3", ext: "webp" },
-    { name: "Naomi", folder: "naomi/naomi3", ext: "webp" },
-    { name: "Nour", folder: "nour/nour3", ext: "webp" },
-    { name: "Nova", folder: "nova/nova3", ext: "webp" },
-    { name: "Samira", folder: "samira/samira3", ext: "webp" },
-    { name: "Angel", folder: "angel/angel3", ext: "webp" },
-];
+// Daily email rotation pool is auto-derived from characters.json.
+// Every character with a parseable backgroundPhoto participates, except those in
+// DAILY_EMAIL_EXCLUDED_NAMES. For .jpg folders, only "dressed" images are picked
+// (SFW). For .webp folders, any image qualifies.
+const DAILY_EMAIL_EXCLUDED_NAMES = ["Chen", "Malik"];
+
+function getDailyRotationPool() {
+    try {
+        const fs = require("fs");
+        const raw = fs.readFileSync(path.join(__dirname, "characters.json"), "utf-8");
+        const allChars = JSON.parse(raw);
+        const pool = [];
+        for (const c of allChars) {
+            if (DAILY_EMAIL_EXCLUDED_NAMES.includes(c.name)) continue;
+            const cfg = deriveCharConfigFromJson(c);
+            if (cfg) pool.push(cfg);
+        }
+        return pool;
+    } catch (e) {
+        console.error("[DAILY-EMAIL] Could not build rotation pool:", e.message);
+        return [];
+    }
+}
+
+// Featured character: any character with `new: true` in characters.json gets featured
+// for FEATURED_EMAIL_COUNT consecutive daily emails, then rotation goes back to normal.
+// Tracking is stored in MongoDB collection `featured_email_tracking` (one doc per char name).
+const FEATURED_EMAIL_COUNT = 5;
+
+function deriveCharConfigFromJson(charJson) {
+    const bgPhoto = charJson.backgroundPhoto || "";
+    const match = bgPhoto.match(/^images\/([^/]+\/[^/]+)\/.*\.(webp|jpg|jpeg|png)$/i);
+    if (!match) return null;
+    const folder = match[1];
+    const ext = match[2].toLowerCase();
+    const cfg = { name: charJson.name, folder, ext };
+    // For .jpg/.jpeg folders we typically only want "dressed" SFW images for emails
+    if (ext === "jpg" || ext === "jpeg") {
+        cfg.filter = f => f.includes("dressed") && (f.endsWith(".jpg") || f.endsWith(".jpeg"));
+    }
+    return cfg;
+}
+
+async function getAndConsumeFeaturedNewCharacter(database) {
+    try {
+        const fs = require("fs");
+        const raw = fs.readFileSync(path.join(__dirname, "characters.json"), "utf-8");
+        const allChars = JSON.parse(raw);
+        const newChars = allChars.filter(c => c && c.new === true && c.name);
+        if (!newChars.length) return null;
+
+        const tracking = database.collection("featured_email_tracking");
+        // Look at all new chars and pick the one with the smallest emailsSent < limit
+        // (oldest pending first, FIFO). Ties broken by tracking.firstFeaturedAt ASC, then by name.
+        const candidates = [];
+        for (const c of newChars) {
+            const rec = await tracking.findOne({ name: c.name });
+            const sent = rec ? (rec.emailsSent || 0) : 0;
+            if (sent < FEATURED_EMAIL_COUNT) {
+                candidates.push({ char: c, sent, firstFeaturedAt: rec ? rec.firstFeaturedAt : null });
+            }
+        }
+        if (!candidates.length) return null;
+
+        candidates.sort((a, b) => {
+            const aT = a.firstFeaturedAt ? new Date(a.firstFeaturedAt).getTime() : Infinity;
+            const bT = b.firstFeaturedAt ? new Date(b.firstFeaturedAt).getTime() : Infinity;
+            if (aT !== bT) return aT - bT; // oldest tracked first
+            return a.char.name.localeCompare(b.char.name);
+        });
+
+        const picked = candidates[0];
+        const cfg = deriveCharConfigFromJson(picked.char);
+        if (!cfg) {
+            console.warn(`[FEATURED] Could not derive folder/ext for ${picked.char.name}, skipping`);
+            return null;
+        }
+
+        const newSent = picked.sent + 1;
+        await tracking.updateOne(
+            { name: picked.char.name },
+            {
+                $set: { name: picked.char.name, emailsSent: newSent, lastFeaturedAt: new Date() },
+                $setOnInsert: { firstFeaturedAt: new Date() }
+            },
+            { upsert: true }
+        );
+
+        console.log(`📬 [FEATURED] Selected ${picked.char.name} (email ${newSent}/${FEATURED_EMAIL_COUNT})`);
+        return cfg;
+    } catch (e) {
+        console.error("[FEATURED] Error picking featured char:", e.message);
+        return null;
+    }
+}
 
 function pickDailyCharImage(char) {
     const dir = path.join(__dirname, "public/images", char.folder);
@@ -7767,9 +7837,36 @@ schedule.scheduleJob('30 13 * * *', async () => {
                 console.log(`🧹 [DAILY-EMAIL] Auto-cleaned ${cleanResult.modifiedCount} inactive users`);
             }
 
-            // Pick today's character
-            const char = DAILY_SFW_CHARACTERS[Math.floor(Math.random() * DAILY_SFW_CHARACTERS.length)];
-            const imageUrl = pickDailyCharImage(char);
+            // Pick today's character: any IA flagged `new: true` in characters.json gets
+            // featured for FEATURED_EMAIL_COUNT consecutive emails, otherwise random rotation
+            // built dynamically from characters.json (all IAs participate).
+            const featured = await getAndConsumeFeaturedNewCharacter(database);
+            let char = null;
+            let imageUrl = null;
+            if (featured) {
+                char = featured;
+                imageUrl = pickDailyCharImage(char);
+            }
+            if (!imageUrl) {
+                // Random pick from the rotation pool, retry up to 5 times if image folder is empty
+                const pool = getDailyRotationPool();
+                if (!pool.length) {
+                    console.error("[DAILY-EMAIL] Empty rotation pool, aborting");
+                    return;
+                }
+                const tried = new Set();
+                for (let i = 0; i < 5 && !imageUrl; i++) {
+                    const candidate = pool[Math.floor(Math.random() * pool.length)];
+                    if (tried.has(candidate.name)) continue;
+                    tried.add(candidate.name);
+                    const url = pickDailyCharImage(candidate);
+                    if (url) { char = candidate; imageUrl = url; }
+                }
+                if (!imageUrl) {
+                    console.error("[DAILY-EMAIL] No usable image found after 5 retries, aborting");
+                    return;
+                }
+            }
 
             // Find eligible users
             const eligibleUsers = await users.find({
