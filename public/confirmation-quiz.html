@@ -45,15 +45,15 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const amount = parseFloat(urlParams.get('amount')) || 0;
+        const rawAmount = urlParams.get('amount');
+        let amount = parseFloat(rawAmount);
+        if (!amount || isNaN(amount) || amount <= 0) { amount = 29; }
 
-        if (amount > 0) {
-            fbq('track', 'Purchase', {
-                value: amount,
-                currency: 'USD'
-            });
-            console.log("🎯 FB Purchase sent:", amount + "$");
-        }
+        fbq('track', 'Purchase', {
+            value: amount,
+            currency: 'USD'
+        });
+        console.log("🎯 FB Purchase sent:", amount + "$ (fromUrl:", rawAmount + ")");
     });
     </script>
 

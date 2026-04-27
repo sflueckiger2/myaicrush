@@ -490,8 +490,11 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '1493017195692168');
     var purchaseEventID = 'purchase_' + Date.now();
-    var _fbAmount = parseFloat(new URLSearchParams(window.location.search).get('amount')) || 0;
-    if (_fbAmount > 0) { fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID }); }
+    var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
+    var _fbAmount = parseFloat(_fbAmountRaw);
+    if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 29; }
+    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
+    console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
 
   <!-- TrafficJunky -->
