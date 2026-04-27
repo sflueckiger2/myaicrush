@@ -80,5 +80,5 @@ const { getUserSubscription } = require('./public/scripts/stripe.js');
 
 // Démarrer le serveur
 app.listen(PORT, () => {
-    console.log(Server is running on http://localhost:${PORT});
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
