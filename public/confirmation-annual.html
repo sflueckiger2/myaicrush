@@ -447,6 +447,24 @@
     console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
 
+  <!-- Double-activation: backup mechanism in case Explodely webhook is delayed or fails -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user?.email) return;
+        await fetch("/api/activate-premium-on-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+        console.log('[PREMIUM] Activation backup call sent for', user.email);
+      } catch (err) {
+        console.error("Erreur activation premium confirmation-annual:", err);
+      }
+    });
+  </script>
+
 <!-- Confirm purchase modal -->
 <div id="confirmModal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; padding:20px;">
   <div style="background:linear-gradient(145deg,#1c1c2e,#141420); border:1px solid rgba(244,114,182,0.35); border-radius:24px; padding:36px 28px; max-width:380px; width:100%; text-align:center; position:relative;">

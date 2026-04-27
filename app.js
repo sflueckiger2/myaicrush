@@ -1101,6 +1101,49 @@ function buildUserDefaultsFromExplodely(email) {
   };
 }
 
+// ===== Email campaign sale attribution =====
+// When a sale comes in via Explodely, look up the user and check if they
+// clicked an email campaign within EMAIL_ATTRIBUTION_WINDOW_DAYS. If yes,
+// attribute the sale (purchase count + revenue) to that campaign.
+const EMAIL_ATTRIBUTION_WINDOW_DAYS = 7;
+const EXPLODELY_TOKEN_PRICES_USD = { 10: 9, 50: 37, 100: 59, 300: 129, 700: 249, 1000: 299 };
+
+function getExplodelyProductPriceUSD({ isPremium, isAnnual, isLifetime, tokensAmount }) {
+    if (isLifetime) return 174;
+    if (isAnnual) return 89;
+    if (isPremium) return 29;
+    if (tokensAmount && EXPLODELY_TOKEN_PRICES_USD[tokensAmount]) return EXPLODELY_TOKEN_PRICES_USD[tokensAmount];
+    return 0;
+}
+
+async function attributeSaleToCampaign(database, email, productInfo) {
+    try {
+        const user = await database.collection('users').findOne(
+            { email },
+            { projection: { lastClickedCampaignId: 1, lastClickedCampaignAt: 1 } }
+        );
+        if (!user || !user.lastClickedCampaignId || !user.lastClickedCampaignAt) return;
+
+        const ageMs = Date.now() - new Date(user.lastClickedCampaignAt).getTime();
+        if (ageMs > EMAIL_ATTRIBUTION_WINDOW_DAYS * 24 * 3600 * 1000) return;
+
+        const valueUSD = getExplodelyProductPriceUSD(productInfo);
+        if (valueUSD <= 0) return;
+
+        const { ObjectId } = require('mongodb');
+        let campaignObjectId;
+        try { campaignObjectId = new ObjectId(user.lastClickedCampaignId); } catch { return; }
+
+        const result = await database.collection('daily_email_campaigns').updateOne(
+            { _id: campaignObjectId },
+            { $inc: { purchaseCount: 1, revenue: valueUSD } }
+        );
+        console.log(`💰 [EMAIL-ATTRIBUTION] +$${valueUSD} attributed to campaign ${user.lastClickedCampaignId} (${productInfo.label || 'sale'}) for ${email} | matched=${result.matchedCount}`);
+    } catch (e) {
+        console.error('❌ [EMAIL-ATTRIBUTION] error:', e.message);
+    }
+}
+
 app.post("/webhook/explodely", async (req, res) => {
   try {
     const payload = req.body || {};
@@ -1202,6 +1245,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
     const premiumId = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "");
     const annualId = String(process.env.EXPLODELY_ANNUAL_PRODUCT_ID || "");
+    const lifetimeId = String(process.env.EXPLODELY_LIFETIME_PRODUCT_ID || "887584369");
 
     // -----------------------------
     // Traitement item par item
@@ -1227,6 +1271,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
       const isPremiumProduct = productId === premiumId;
       const isAnnualProduct = productId === annualId;
+      const isLifetimeProduct = productId === lifetimeId;
       const tokensAmount = tokenMapping[productId];
 
       // Détection refund-like (à confirmer quand tu auras le vrai payload refund)
@@ -1262,6 +1307,36 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
           console.log(`✅ Premium Annuel Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
+          await attributeSaleToCampaign(database, email, { isAnnual: true, label: "annual" });
+          continue;
+        }
+
+        if (isLifetimeProduct) {
+          const existingForBonus = await users.findOne({ email }, { projection: { explodelyPremium: 1 } });
+          const alreadyPremium = existingForBonus?.explodelyPremium === true;
+
+          await users.updateOne(
+            { email },
+            {
+              $set: {
+                explodelyPremium: true,
+                explodelyMainOrderId: orderId,
+                explodelyPlan: "lifetime",
+                lifetimeStartedAt: new Date(),
+                lastBonusAt: new Date(),
+                bonusSeenByUser: false
+              },
+              // Lifetime never expires: clear any existing expiration / cancellation markers
+              $unset: { explodely_expiresAt: "", premiumExpiresAt: "", premiumCancelledAt: "" },
+              ...(alreadyPremium ? {} : { $inc: { creditsPurchased: 30 } }),
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
+          console.log(`✅ Premium LIFETIME Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
+          await attributeSaleToCampaign(database, email, { isLifetime: true, label: "lifetime" });
           continue;
         }
 
@@ -1287,6 +1362,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
           console.log(`✅ Premium Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
+          await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_monthly" });
           continue;
         }
 
@@ -1309,6 +1385,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "tokens_add", tokens: toAdd, createdAt: new Date() });
           console.log(`💰 +${toAdd} jetons pour ${email} (orderId=${orderId})`);
+          await attributeSaleToCampaign(database, email, { tokensAmount: toAdd, label: `tokens_${toAdd}` });
           continue;
         }
 
@@ -1319,7 +1396,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
       // ---- REFUND-LIKE ----
       if (isRefundLike) {
-        if (isAnnualProduct || isPremiumProduct) {
+        if (isAnnualProduct || isPremiumProduct || isLifetimeProduct) {
           const currentUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
 
           if (currentUser && currentUser.explodelyMainOrderId && currentUser.explodelyMainOrderId !== orderId) {
@@ -1337,9 +1414,10 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          const label = isAnnualProduct ? "annual_premium_off" : "premium_off";
+          const label = isLifetimeProduct ? "lifetime_premium_off" : (isAnnualProduct ? "annual_premium_off" : "premium_off");
+          const planLabel = isLifetimeProduct ? "lifetime" : (isAnnualProduct ? "annual" : "monthly");
           await explodelyEvents.insertOne({ ...eventKey, action: label, createdAt: new Date() });
-          console.log(`⛔ Premium Explodely désactivé (refund-like) pour ${email} (orderId=${orderId}, type=${isAnnualProduct ? "annual" : "monthly"})`);
+          console.log(`⛔ Premium Explodely désactivé (refund-like) pour ${email} (orderId=${orderId}, type=${planLabel})`);
           continue;
         }
 
@@ -1383,6 +1461,12 @@ app.post("/webhook/explodely", async (req, res) => {
 
       // ---- CANCEL (subscription stopped, but access continues until end of period) ----
       if (isCancelEvent) {
+        if (isLifetimeProduct) {
+          // Lifetime cannot be cancelled (only refunded). Log and ignore.
+          await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_cancel_ignored", createdAt: new Date() });
+          console.log(`ℹ️ Cancel event sur lifetime ignoré (lifetime ne peut être que remboursé) pour ${email} (orderId=${orderId})`);
+          continue;
+        }
         if (isAnnualProduct || isPremiumProduct) {
           const currentUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
 
@@ -5043,12 +5127,23 @@ app.post("/api/cancel-premium", async (req, res) => {
 
     const database = client.db("MyAICrush");
     const users = database.collection("users");
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 🛡️ Guard: lifetime users cannot be cancelled (only refunded via Explodely)
+    const existing = await users.findOne(
+      { email: normalizedEmail },
+      { projection: { explodelyPlan: 1 } }
+    );
+    if (existing?.explodelyPlan === "lifetime") {
+      console.log(`🛡️ [CANCEL-PREMIUM] Refus pour ${normalizedEmail}: plan=lifetime (non annulable)`);
+      return res.status(400).json({ error: "Lifetime plan cannot be cancelled. Please contact support for a refund.", plan: "lifetime" });
+    }
 
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
     await users.updateOne(
-      { email: email.trim().toLowerCase() },
+      { email: normalizedEmail },
       { $set: { premiumExpiresAt: expiresAt } } // ✅ même nom partout
     );
 
@@ -7278,6 +7373,10 @@ app.get("/api/admin/email-campaigns", requireAdmin, async (req, res) => {
     const formatted = results.map(c => ({
       id: c._id.toString(),
       sentAt: c.sentAt,
+      purchaseCount: c.purchaseCount || 0,
+      revenue: c.revenue || 0,
+      conversionRate: c.sentCount > 0 ? (((c.purchaseCount || 0) / c.sentCount) * 100).toFixed(2) : "0.00",
+      revenuePerSent: c.sentCount > 0 ? (((c.revenue || 0) / c.sentCount)).toFixed(3) : "0.000",
       subject: c.subject,
       character: c.character,
       language: c.language || "en",
@@ -7593,7 +7692,12 @@ app.get('/c/:token', async (req, res) => {
         console.log(`🖱️ [CLICK-TRACK] email=${email}, campaignId=${campaignId}`);
         if (email && email.includes('@')) {
             const database = client.db('MyAICrush');
-            await database.collection('users').updateOne({ email }, { $set: { lastEmailClickedAt: new Date() } });
+            const userUpdate = { lastEmailClickedAt: new Date() };
+            if (campaignId) {
+                userUpdate.lastClickedCampaignId = campaignId;
+                userUpdate.lastClickedCampaignAt = new Date();
+            }
+            await database.collection('users').updateOne({ email }, { $set: userUpdate });
             if (campaignId) {
                 const result = await database.collection('daily_email_campaigns').updateOne(
                     { _id: new (require('mongodb').ObjectId)(campaignId) },
