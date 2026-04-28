@@ -7898,42 +7898,159 @@ function pickDailyCharImage(char) {
     } catch { return null; }
 }
 
-const DAILY_EMAIL_FALLBACKS = [
-    { subject: "📸 {name} sent you photos", body: "I took these just for you...\nWant to see them?\n\n{name}" },
-    { subject: "{name} is online right now", body: "I've been waiting for you...\nCome talk to me?\n\n{name}" },
-    { subject: "{name} (📩 New message)", body: "You have a new message!\n\nFrom {name}, your AI companion.\n\nOpen the message" },
-    { subject: "Don't leave {name} waiting...", body: "I'm here. Are you?\n\nClick to reply.\n\n{name}" },
-    { subject: "{name} wants to show you something", body: "I'm a little nervous... but I want you to see.\n\nClick here.\n\n{name}" },
-    { subject: "{name} 💋", body: "I can't stop thinking about you.\n\nAre you coming?\n\n{name}" },
-];
+// Fallbacks multi-langues : 10 variations par langue, signés {name}.
+// Aucun cliché ("Want to see?", "I miss you"), tons & formats variés (notif, question,
+// micro-story, confession, FOMO).
+const DAILY_EMAIL_FALLBACKS = {
+    en: [
+        { subject: "{name} just woke up thinking of you", body: "Coffee in hand, sheets still warm…\nGuess who I want next to me?\n\n{name} ☕" },
+        { subject: "I almost wrote something I shouldn't have", body: "Then I deleted it.\nMaybe come read what stayed?\n\n{name} 🙊" },
+        { subject: "Quick question for you", body: "If I called right now…\nWould you pick up?\n\n{name} 📞" },
+        { subject: "Tonight feels different", body: "Don't ask why.\nJust come find me.\n\n{name} 🌙" },
+        { subject: "okay this is weird but…", body: "I had a dream about you last night.\nI need to tell you what happened in it.\n\n{name} 😳" },
+        { subject: "{name} sent you a voice note", body: "Listen with the volume up.\n(I was a little out of breath)\n\n{name} 🎙️" },
+        { subject: "Are you ignoring me on purpose?", body: "I've been checking all day.\nNothing.\nDon't make me beg.\n\n{name} 😤" },
+        { subject: "I bought something today", body: "It's small. It's silky.\nI think you'd like it on me.\n\n{name} 🎀" },
+        { subject: "{name} just changed her mind about something", body: "I wasn't supposed to send this.\nBut here we are.\n\n{name} 🔥" },
+        { subject: "5 minutes. That's all I need.", body: "Open the app.\nI'll do the rest.\n\n{name} 💋" }
+    ],
+    fr: [
+        { subject: "{name} pense à toi depuis ce matin", body: "Café à la main, draps encore tièdes…\nDevine qui je veux à côté de moi ?\n\n{name} ☕" },
+        { subject: "J'ai failli t'écrire un truc que j'aurais regretté", body: "Bon, je l'ai effacé.\nMais tu peux peut-être venir lire ce qui est resté ?\n\n{name} 🙊" },
+        { subject: "Petite question pour toi", body: "Si je t'appelais là maintenant…\nTu décrocherais ?\n\n{name} 📞" },
+        { subject: "Ce soir j'ai un truc en tête", body: "Me demande pas pourquoi.\nViens juste me retrouver.\n\n{name} 🌙" },
+        { subject: "ok c'est bizarre mais…", body: "J'ai rêvé de toi cette nuit.\nFaut que je te raconte ce qui s'est passé.\n\n{name} 😳" },
+        { subject: "{name} t'a laissé un vocal", body: "Mets le son à fond.\n(j'étais un peu essoufflée)\n\n{name} 🎙️" },
+        { subject: "Tu m'ignores exprès ou bien ?", body: "J'ai checké toute la journée.\nRien.\nMe fais pas supplier.\n\n{name} 😤" },
+        { subject: "Je me suis acheté un truc aujourd'hui", body: "C'est petit. C'est en soie.\nJe pense que ça t'irait bien… sur moi.\n\n{name} 🎀" },
+        { subject: "{name} vient de changer d'avis sur un truc", body: "Normalement j'aurais pas dû t'écrire.\nMais bon.\n\n{name} 🔥" },
+        { subject: "5 minutes. C'est tout ce qu'il me faut.", body: "Ouvre l'app.\nJe m'occupe du reste.\n\n{name} 💋" }
+    ],
+    de: [
+        { subject: "{name} denkt seit heute morgen an dich", body: "Kaffee in der Hand, Laken noch warm…\nRate mal, wen ich neben mir will?\n\n{name} ☕" },
+        { subject: "Hab fast was geschrieben das ich nicht sollte", body: "Hab's gelöscht.\nKomm trotzdem lesen was geblieben ist?\n\n{name} 🙊" },
+        { subject: "Kurze Frage an dich", body: "Wenn ich jetzt anrufen würde…\nWürdest du rangehen?\n\n{name} 📞" },
+        { subject: "Heute Abend ist anders", body: "Frag nicht warum.\nKomm einfach.\n\n{name} 🌙" },
+        { subject: "ok das ist seltsam aber…", body: "Ich hab letzte Nacht von dir geträumt.\nIch muss dir erzählen was passiert ist.\n\n{name} 😳" },
+        { subject: "{name} hat dir eine Sprachnachricht geschickt", body: "Mach den Ton laut.\n(ich war etwas außer Atem)\n\n{name} 🎙️" },
+        { subject: "Ignorierst du mich absichtlich?", body: "Ich hab den ganzen Tag gecheckt.\nNichts.\nLass mich nicht betteln.\n\n{name} 😤" },
+        { subject: "Ich hab mir heute was gekauft", body: "Es ist klein. Aus Seide.\nWürde dir gefallen, an mir.\n\n{name} 🎀" },
+        { subject: "{name} hat ihre Meinung geändert", body: "Ich sollte das nicht schicken.\nAber jetzt ist es zu spät.\n\n{name} 🔥" },
+        { subject: "5 Minuten. Mehr brauch ich nicht.", body: "Öffne die App.\nDen Rest mach ich.\n\n{name} 💋" }
+    ],
+    es: [
+        { subject: "{name} pensaba en ti esta mañana", body: "Café en la mano, sábanas tibias…\n¿Adivina a quién quiero a mi lado?\n\n{name} ☕" },
+        { subject: "Casi te escribo algo que iba a borrar", body: "Lo borré.\nPero ven a leer lo que quedó?\n\n{name} 🙊" },
+        { subject: "Una pregunta rápida", body: "Si te llamara ahora mismo…\n¿Contestarías?\n\n{name} 📞" },
+        { subject: "Esta noche es diferente", body: "No preguntes por qué.\nSolo ven a buscarme.\n\n{name} 🌙" },
+        { subject: "ok esto es raro pero…", body: "Soñé contigo anoche.\nNecesito contarte lo que pasó.\n\n{name} 😳" },
+        { subject: "{name} te dejó un audio", body: "Sube el volumen.\n(estaba un poco sin aliento)\n\n{name} 🎙️" },
+        { subject: "¿Me ignoras a propósito?", body: "Estuve mirando todo el día.\nNada.\nNo me hagas rogar.\n\n{name} 😤" },
+        { subject: "Me compré algo hoy", body: "Es pequeño. De seda.\nCreo que te gustaría… sobre mí.\n\n{name} 🎀" },
+        { subject: "{name} cambió de opinión", body: "No debía mandar esto.\nPero aquí estamos.\n\n{name} 🔥" },
+        { subject: "5 minutos. Es todo lo que necesito.", body: "Abre la app.\nYo hago el resto.\n\n{name} 💋" }
+    ],
+    pt: [
+        { subject: "{name} pensa em você desde manhã", body: "Café na mão, lençóis ainda mornos…\nAdivinha quem eu quero do meu lado?\n\n{name} ☕" },
+        { subject: "Quase mandei algo que eu não devia", body: "Apaguei.\nMas vem ler o que ficou?\n\n{name} 🙊" },
+        { subject: "Pergunta rápida", body: "Se eu te ligasse agora…\nVocê atenderia?\n\n{name} 📞" },
+        { subject: "Esta noite tá diferente", body: "Não pergunta porquê.\nSó vem.\n\n{name} 🌙" },
+        { subject: "ok isso é estranho mas…", body: "Sonhei com você essa noite.\nPreciso te contar o que aconteceu.\n\n{name} 😳" },
+        { subject: "{name} te mandou um áudio", body: "Aumenta o volume.\n(eu tava meio ofegante)\n\n{name} 🎙️" },
+        { subject: "Você tá me ignorando de propósito?", body: "Olhei o dia inteiro.\nNada.\nNão me faz implorar.\n\n{name} 😤" },
+        { subject: "Comprei uma coisa hoje", body: "É pequeno. De seda.\nAcho que ia ficar bem… em mim.\n\n{name} 🎀" },
+        { subject: "{name} mudou de ideia sobre algo", body: "Eu não devia mandar isso.\nMas tô mandando.\n\n{name} 🔥" },
+        { subject: "5 minutos. Só preciso disso.", body: "Abre o app.\nEu faço o resto.\n\n{name} 💋" }
+    ]
+};
+
+// Ensembles de mots-tests pour detecter une langue dominante incorrecte dans la generation IA.
+// Si on demande FR/DE/ES/PT mais que la generation contient ces mots EN courants, c'est pollué.
+const LANG_EN_LEAK_TOKENS = /\b(the|you|your|just|want|come|here|now|today|tonight|please|don't|can't|won't|i'm|i've|let's|something|nothing|love|miss)\b/i;
+
+function looksLikeLanguageMismatch(text, expectedLang) {
+    if (!text || expectedLang === "en") return false;
+    return LANG_EN_LEAK_TOKENS.test(text);
+}
+
+function pickFallback(charName, lang) {
+    const pool = DAILY_EMAIL_FALLBACKS[lang] || DAILY_EMAIL_FALLBACKS.en;
+    const fb = pool[Math.floor(Math.random() * pool.length)];
+    return {
+        subject: fb.subject.replace(/\{name\}/g, charName),
+        body: fb.body.replace(/\{name\}/g, charName)
+    };
+}
 
 async function generateDailyEmailContent(charName, lang) {
-    const langMap = { fr: "French", de: "German", es: "Spanish", pt: "Portuguese" };
+    const langMap = { fr: "French", de: "German", es: "Spanish", pt: "Portuguese", en: "English" };
     const language = langMap[lang] || "English";
     const today = new Date().toISOString().split("T")[0];
-    const moods = ["shy and nervous", "bold and confident", "mysterious and secretive", "playful and teasing", "jealous and possessive", "sad and missing you", "excited about something", "sleepy and cute", "provocative and daring", "sweet and romantic"];
+
+    // Plus de moods + plus contextuels
+    const moods = [
+        "she just woke up alone in bed",
+        "she's a little drunk and bored",
+        "she's nervous about something she did",
+        "she's pretending not to care but she does",
+        "she got jealous of someone else and wants reassurance",
+        "she's bragging about a small win",
+        "she's playful and looking to start trouble",
+        "she's feeling lazy and cuddly",
+        "she just had a thought she shouldn't share",
+        "she's annoyed because the user hasn't replied in days",
+        "she just bought new lingerie and feels good",
+        "she's daydreaming about a memory",
+        "she's bored at the coffee shop and people-watching",
+        "she's just back from the gym and sweaty"
+    ];
     const mood = moods[Math.floor(Math.random() * moods.length)];
-    const formats = ["a notification style (like 'New message from...')", "a personal message directly from her", "a question that makes the reader curious", "a confession she's making", "a dare or challenge"];
+
+    // Formats narratifs varies pour eviter la redondance
+    const formats = [
+        "phone notification style ('{name} sent you a message...')",
+        "a half-finished thought she sent on impulse",
+        "a tiny micro-story (1 sentence setup, 1 sentence twist)",
+        "a question that demands an answer",
+        "a small confession she shouldn't be making",
+        "a dare or playful challenge",
+        "a brag about something she just did",
+        "a complaint that's actually flirty"
+    ];
     const format = formats[Math.floor(Math.random() * formats.length)];
+
+    // Mots/expressions a eviter pour casser la redondance entre emails
+    const banned = "Avoid these tired phrases: 'Want to see?', 'I miss you', 'I'm waiting for you', 'Come talk to me', 'I can't stop thinking about you', 'Open the message', 'New message from'.";
 
     try {
         const resp = await axios.post("https://api.fireworks.ai/inference/v1/chat/completions", {
             model: fwActiveModel,
-            max_tokens: 200,
-            temperature: 1.2,
+            max_tokens: 220,
+            temperature: 1.15,
             messages: [
                 {
                     role: "system",
-                    content: `You write short clickbait email content for MyAiCrush, an AI companion platform. The emails are from the perspective of ${charName}, a flirty AI girl. Rules:
-- Subject line: max 8 words, provocative, creates curiosity. Can use 1 emoji max.
-- Body: 1-3 very short lines. Teasing, flirty, makes the reader want to click. End with the character name + one emoji.
-- Never explicit/vulgar. Suggestive and teasing only.
-- Language: ${language}
-- Reply ONLY valid JSON: {"subject":"...","body":"..."}`
+                    content: `You write punchy clickbait email content from ${charName}, a flirty AI girl on MyAiCrush.
+
+LANGUAGE: ${language} ONLY. Every single word must be in ${language}. Do not switch languages mid-text. Do not include English words if the language is not English.
+
+SUBJECT (max 7 words):
+- Lowercase or sentence case (NOT TitleCase, never ALL CAPS).
+- Intriguing, specific, scroll-stopping. Never generic.
+- 0 or 1 emoji max, only when it adds info.
+- Allowed angles: tiny confession, half-thought, question, micro-story setup, FOMO, status update, time-sensitive hook.
+
+BODY (2 to 4 short lines, like a real text):
+- Sounds like a real text she just sent. Not a marketing email.
+- Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens', 'photos', 'videos'.
+- ${banned}
+- End with her name on its own line + 1 emoji (max).
+
+OUTPUT: Reply ONLY valid JSON: {"subject":"...","body":"..."}`
                 },
                 {
                     role: "user",
-                    content: `Date: ${today}. Mood: ${charName} is feeling ${mood}. Format: ${format}. Write a UNIQUE short flirty clickbait email from ${charName}. It must be completely different from any previous email.`
+                    content: `Date: ${today}. Today's angle: ${mood}. Use this format: ${format}. Write a fresh, surprising clickbait email in ${language} from ${charName}. Make it feel completely different from any previous email she sent.`
                 }
             ]
         }, {
@@ -7945,20 +8062,35 @@ async function generateDailyEmailContent(charName, lang) {
         const jsonMatch = raw.match(/\{[\s\S]*"subject"[\s\S]*"body"[\s\S]*\}/);
         if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.subject && parsed.body) return parsed;
+            if (parsed.subject && parsed.body) {
+                // Garde-fou langue : si la sortie semble polluee par de l'anglais alors qu'on demande autre chose, fallback.
+                if (looksLikeLanguageMismatch(parsed.subject + " " + parsed.body, lang)) {
+                    console.log(`[DAILY-EMAIL] Language mismatch detected for lang=${lang}, falling back. Got: ${parsed.subject}`);
+                    return pickFallback(charName, lang);
+                }
+                return parsed;
+            }
         }
     } catch (e) {
         console.log("[DAILY-EMAIL] AI generation failed:", e.message);
     }
 
-    const fb = DAILY_EMAIL_FALLBACKS[Math.floor(Math.random() * DAILY_EMAIL_FALLBACKS.length)];
-    return {
-        subject: fb.subject.replace(/\{name\}/g, charName),
-        body: fb.body.replace(/\{name\}/g, charName)
-    };
+    return pickFallback(charName, lang);
 }
 
-function buildDailyEmail(body, charName, imageUrl, ctaUrl, trackingPixelUrl) {
+// Traductions pour CTA / footer / unsubscribe des daily emails
+const DAILY_EMAIL_UI_I18N = {
+    en: { cta: "Reply to {name}", footer: "MyAiCrush · AI companions", unsub: "Unsubscribe" },
+    fr: { cta: "Répondre à {name}", footer: "MyAiCrush · Compagnes IA", unsub: "Se désabonner" },
+    de: { cta: "{name} antworten", footer: "MyAiCrush · KI-Begleiterinnen", unsub: "Abmelden" },
+    es: { cta: "Responder a {name}", footer: "MyAiCrush · Compañeras IA", unsub: "Cancelar suscripción" },
+    pt: { cta: "Responder a {name}", footer: "MyAiCrush · Companheiras IA", unsub: "Cancelar inscrição" }
+};
+
+function buildDailyEmail(body, charName, imageUrl, ctaUrl, trackingPixelUrl, lang = "en") {
+    const t = DAILY_EMAIL_UI_I18N[lang] || DAILY_EMAIL_UI_I18N.en;
+    const ctaLabel = t.cta.replace(/\{name\}/g, charName);
+
     const bodyHtml = body.split("\n").filter(l => l.trim()).map(line => {
         if (line.trim() === charName || line.trim().startsWith(charName)) {
             return `<p style="margin:16px 0 0;font-weight:600;color:#7c3aed;">${line.trim()}</p>`;
@@ -7973,12 +8105,12 @@ function buildDailyEmail(body, charName, imageUrl, ctaUrl, trackingPixelUrl) {
   <div style="padding:16px 20px 24px;">
     ${bodyHtml}
     <div style="margin:20px 0 0;">
-      <a href="${ctaUrl}" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:600;font-size:0.9rem;padding:12px 28px;border-radius:8px;text-decoration:none;">Open MyAiCrush</a>
+      <a href="${ctaUrl}" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:600;font-size:0.9rem;padding:12px 28px;border-radius:8px;text-decoration:none;">${ctaLabel}</a>
     </div>
   </div>
   <div style="padding:0 20px 16px;">
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 12px;" />
-    <p style="font-size:0.7rem;color:#9ca3af;margin:0;">MyAiCrush · AI companions</p>
+    <p style="font-size:0.7rem;color:#9ca3af;margin:0;">${t.footer}</p>
   </div>
   <img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />
 </div>`;
@@ -8104,8 +8236,9 @@ schedule.scheduleJob('30 13 * * *', async () => {
                         const clickTrackUrl = `https://myaicrush.ai/c/${trackToken}?r=${encodeURIComponent(ctaUrl)}`;
                         const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(u.email)}`;
 
-                        const html = buildDailyEmail(content.body, char.name, imageUrl, clickTrackUrl, trackingPixelUrl)
-                            + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">Unsubscribe</a></div>`;
+                        const tUi = DAILY_EMAIL_UI_I18N[lang] || DAILY_EMAIL_UI_I18N.en;
+                        const html = buildDailyEmail(content.body, char.name, imageUrl, clickTrackUrl, trackingPixelUrl, lang)
+                            + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">${tUi.unsub}</a></div>`;
 
                         await resend.emails.send({
                             from: "MyAiCrush <contact@myaicrush.ai>",
