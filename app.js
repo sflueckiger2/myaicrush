@@ -1328,22 +1328,20 @@ app.post("/webhook/explodely", async (req, res) => {
               },
               // Lifetime never expires: clear any existing expiration / cancellation markers
               $unset: { explodely_expiresAt: "", premiumExpiresAt: "", premiumCancelledAt: "" },
-              ...(alreadyPremium ? {} : { $inc: { creditsPurchased: 30 } }),
+              ...(alreadyPremium ? {} : { $inc: { creditsPurchased: 100 } }),
               $setOnInsert: buildUserDefaultsFromExplodely(email),
             },
             { upsert: true }
           );
 
           await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
-          console.log(`✅ Premium LIFETIME Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
+          console.log(`✅ Premium LIFETIME Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 100 jetons ignoré)' : '(+100 jetons)'} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isLifetime: true, label: "lifetime" });
           continue;
         }
 
         if (isPremiumProduct) {
-          const existingForBonus = await users.findOne({ email }, { projection: { explodelyPremium: 1 } });
-          const alreadyPremium = existingForBonus?.explodelyPremium === true;
-
+          // Monthly plan: NO bonus tokens (per pricing strategy — tokens reserved for annual/lifetime)
           await users.updateOne(
             { email },
             {
@@ -1354,14 +1352,13 @@ app.post("/webhook/explodely", async (req, res) => {
                 lastBonusAt: new Date(),
                 bonusSeenByUser: false
               },
-              ...(alreadyPremium ? {} : { $inc: { creditsPurchased: 30 } }),
               $setOnInsert: buildUserDefaultsFromExplodely(email),
             },
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
-          console.log(`✅ Premium Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
+          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: true, createdAt: new Date() });
+          console.log(`✅ Premium Mensuel Explodely activé pour ${email} (pas de bonus jetons sur le mensuel) (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_monthly" });
           continue;
         }
@@ -3741,17 +3738,36 @@ schedule.scheduleJob('0 0 1 * *', async () => {
     console.log(`🔄 Réinitialisation des minutes audio pour ${result.modifiedCount} utilisateurs !`);
 });
 
-// 🎁 Bonus mensuel : +30 jetons pour les abonnés premium actifs (1er du mois à 00:05)
+// 🎁 Bonus mensuel : différencié par plan (1er du mois à 00:05)
+//    - Mensuel  : 0 jetons (pas de bonus, stratégie "cash + tokens upsell")
+//    - Annuel   : +30 jetons / mois
+//    - Lifetime : +100 jetons / mois
+//    - Legacy (sans explodelyPlan) : +30 jetons / mois (préservation du comportement historique)
 schedule.scheduleJob('5 0 1 * *', async () => {
     const database = client.db('MyAICrush');
     const users = database.collection('users');
 
-    const result = await users.updateMany(
-        { explodelyPremium: true },
-        { $inc: { creditsPurchased: 30 }, $set: { lastBonusAt: new Date(), bonusSeenByUser: false } }
+    // Annuel : +30 jetons
+    const annualResult = await users.updateMany(
+        { explodelyPremium: true, explodelyPlan: "annual" },
+        { $inc: { creditsPurchased: 30 }, $set: { lastBonusAt: new Date(), bonusSeenByUser: false, lastBonusAmount: 30 } }
     );
 
-    console.log(`🎁 Bonus mensuel : +30 jetons pour ${result.modifiedCount} abonnés premium`);
+    // Lifetime : +100 jetons
+    const lifetimeResult = await users.updateMany(
+        { explodelyPremium: true, explodelyPlan: "lifetime" },
+        { $inc: { creditsPurchased: 100 }, $set: { lastBonusAt: new Date(), bonusSeenByUser: false, lastBonusAmount: 100 } }
+    );
+
+    // Legacy (premium actif sans plan field connu) : +30 jetons (safe fallback)
+    const legacyResult = await users.updateMany(
+        { explodelyPremium: true, explodelyPlan: { $exists: false } },
+        { $inc: { creditsPurchased: 30 }, $set: { lastBonusAt: new Date(), bonusSeenByUser: false, lastBonusAmount: 30 } }
+    );
+
+    const totalCount = annualResult.modifiedCount + lifetimeResult.modifiedCount + legacyResult.modifiedCount;
+    console.log(`🎁 Bonus mensuel : +30 pour ${annualResult.modifiedCount} annuels, +100 pour ${lifetimeResult.modifiedCount} lifetime, +30 pour ${legacyResult.modifiedCount} legacy (total ${totalCount})`);
+    const result = { modifiedCount: totalCount };
 
     const SFW_IMAGE_SOURCES = [
         { char: "megane", folder: "megane/megane3", ext: "jpg", filter: f => f.includes("dressed") && f.endsWith(".jpg") },
@@ -3787,47 +3803,48 @@ schedule.scheduleJob('5 0 1 * *', async () => {
         nova: "Nova", samira: "Samira", angel: "Angel"
     };
 
+    // Templates parametres par montant (30 pour annuel/legacy, 100 pour lifetime)
     const BONUS_I18N = {
         en: {
-            subject: "Your 30 free monthly tokens are here",
+            subject: n => `Your ${n} free monthly tokens are here`,
             greeting: name => `${name} has a gift for you!`,
-            body: "Your monthly <strong>30 bonus tokens</strong> have just been credited to your account.",
+            body: n => `Your monthly <strong>${n} bonus tokens</strong> have just been credited to your account.`,
             hint: "Use them to create AI videos, unlock exclusive content, or chat with your favorite characters.",
             cta: "Use My Tokens",
             footer: "You receive this email as a Premium member of MyAiCrush.",
             unsub: "Unsubscribe"
         },
         fr: {
-            subject: "Vos 30 jetons gratuits du mois sont arrives",
+            subject: n => `Vos ${n} jetons gratuits du mois sont arrives`,
             greeting: name => `${name} a un cadeau pour toi !`,
-            body: "Vos <strong>30 jetons bonus</strong> mensuels viennent d'etre credites sur votre compte.",
+            body: n => `Vos <strong>${n} jetons bonus</strong> mensuels viennent d'etre credites sur votre compte.`,
             hint: "Utilisez-les pour creer des videos IA, debloquer du contenu exclusif ou discuter avec vos personnages preferes.",
             cta: "Utiliser Mes Jetons",
             footer: "Vous recevez cet email car vous etes membre Premium de MyAiCrush.",
             unsub: "Se desabonner"
         },
         de: {
-            subject: "Deine 30 kostenlosen monatlichen Tokens sind da",
+            subject: n => `Deine ${n} kostenlosen monatlichen Tokens sind da`,
             greeting: name => `${name} hat ein Geschenk fur dich!`,
-            body: "Deine monatlichen <strong>30 Bonus-Tokens</strong> wurden deinem Konto gutgeschrieben.",
+            body: n => `Deine monatlichen <strong>${n} Bonus-Tokens</strong> wurden deinem Konto gutgeschrieben.`,
             hint: "Nutze sie, um KI-Videos zu erstellen, exklusive Inhalte freizuschalten oder mit deinen Lieblingscharakteren zu chatten.",
             cta: "Meine Tokens Nutzen",
             footer: "Du erhaltst diese E-Mail als Premium-Mitglied von MyAiCrush.",
             unsub: "Abmelden"
         },
         es: {
-            subject: "Tus 30 tokens gratis mensuales estan aqui",
+            subject: n => `Tus ${n} tokens gratis mensuales estan aqui`,
             greeting: name => `${name} tiene un regalo para ti!`,
-            body: "Tus <strong>30 tokens bonus</strong> mensuales acaban de ser acreditados en tu cuenta.",
+            body: n => `Tus <strong>${n} tokens bonus</strong> mensuales acaban de ser acreditados en tu cuenta.`,
             hint: "Usalos para crear videos con IA, desbloquear contenido exclusivo o chatear con tus personajes favoritos.",
             cta: "Usar Mis Tokens",
             footer: "Recibes este email porque eres miembro Premium de MyAiCrush.",
             unsub: "Cancelar suscripcion"
         },
         pt: {
-            subject: "Seus 30 tokens gratuitos mensais chegaram",
+            subject: n => `Seus ${n} tokens gratuitos mensais chegaram`,
             greeting: name => `${name} tem um presente para voce!`,
-            body: "Seus <strong>30 tokens bonus</strong> mensais acabaram de ser creditados na sua conta.",
+            body: n => `Seus <strong>${n} tokens bonus</strong> mensais acabaram de ser creditados na sua conta.`,
             hint: "Use-os para criar videos com IA, desbloquear conteudo exclusivo ou conversar com seus personagens favoritos.",
             cta: "Usar Meus Tokens",
             footer: "Voce recebe este email por ser membro Premium do MyAiCrush.",
@@ -3849,7 +3866,7 @@ schedule.scheduleJob('5 0 1 * *', async () => {
         } catch { return null; }
     }
 
-    function buildBonusEmail(t, charName, imageUrl, userEmail) {
+    function buildBonusEmail(t, charName, imageUrl, userEmail, amount) {
         const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(userEmail)}`;
         return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;color:#1a1a1a;">
   <div style="padding:32px 24px 0;text-align:center;">
@@ -3860,7 +3877,7 @@ schedule.scheduleJob('5 0 1 * *', async () => {
     <p style="font-size:0.95rem;color:#7c3aed;font-weight:600;margin:0 0 20px;">${t.greeting(charName)}</p>
   </div>` : ""}
   <div style="padding:0 24px 32px;">
-    <p style="font-size:1rem;line-height:1.7;margin:0 0 12px;color:#1a1a1a;">${t.body}</p>
+    <p style="font-size:1rem;line-height:1.7;margin:0 0 12px;color:#1a1a1a;">${t.body(amount)}</p>
     <p style="font-size:0.9rem;line-height:1.7;margin:0 0 28px;color:#6b7280;">${t.hint}</p>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="https://myaicrush.ai" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:600;font-size:0.95rem;padding:14px 36px;border-radius:8px;text-decoration:none;">${t.cta}</a>
@@ -3872,9 +3889,20 @@ schedule.scheduleJob('5 0 1 * *', async () => {
 </div>`;
     }
 
+    // Récupère les premium qui doivent recevoir un email bonus
+    // Exclut les "monthly" (qui n'ont plus de bonus dans la nouvelle stratégie)
     const premiumUsers = await users.find(
-        { explodelyPremium: true, email: { $exists: true, $ne: "" }, unsubscribedEmail: { $ne: true } },
-        { projection: { email: 1, lang: 1 } }
+        {
+            explodelyPremium: true,
+            email: { $exists: true, $ne: "" },
+            unsubscribedEmail: { $ne: true },
+            $or: [
+                { explodelyPlan: "annual" },
+                { explodelyPlan: "lifetime" },
+                { explodelyPlan: { $exists: false } } // legacy = recoit comme avant
+            ]
+        },
+        { projection: { email: 1, lang: 1, explodelyPlan: 1 } }
     ).toArray();
 
     let sent = 0, errors = 0;
@@ -3882,6 +3910,7 @@ schedule.scheduleJob('5 0 1 * *', async () => {
         try {
             const userLang = (u.lang || "en").substring(0, 2).toLowerCase();
             const t = BONUS_I18N[userLang] || BONUS_I18N.en;
+            const bonusAmount = u.explodelyPlan === "lifetime" ? 100 : 30;
 
             const img = pickRandomSfwImage();
             const charDisplayName = img ? (CHAR_DISPLAY[img.char] || img.char) : "MyAiCrush";
@@ -3890,8 +3919,8 @@ schedule.scheduleJob('5 0 1 * *', async () => {
                 from: "MyAiCrush <contact@myaicrush.ai>",
                 to: u.email,
                 reply_to: "contact@myaicrush.ai",
-                subject: t.subject,
-                html: buildBonusEmail(t, charDisplayName, img ? img.url : null, u.email)
+                subject: t.subject(bonusAmount),
+                html: buildBonusEmail(t, charDisplayName, img ? img.url : null, u.email, bonusAmount)
             });
             sent++;
         } catch (e) {

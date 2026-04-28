@@ -69,6 +69,43 @@
         transform: scale(1.03);
       }
       .plan-card-annual:hover { border-color: rgba(244,114,182,0.8); }
+      .plan-card-lifetime {
+        background: linear-gradient(135deg, rgba(250,204,21,0.10), rgba(168,85,247,0.10));
+        border: 1px solid rgba(250,204,21,0.35);
+      }
+      .plan-card-lifetime:hover { border-color: rgba(250,204,21,0.65); }
+      .plan-badge-lifetime {
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(90deg, #facc15, #f97316);
+        color: #1a1a1a;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 5px 18px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+      .plan-tokens-bullet {
+        margin-top: 10px;
+        font-size: 0.78rem;
+        color: #fde68a;
+        font-weight: 600;
+        background: rgba(250,204,21,0.10);
+        border: 1px solid rgba(250,204,21,0.25);
+        border-radius: 10px;
+        padding: 6px 10px;
+      }
+      .plan-tokens-bullet-empty {
+        margin-top: 10px;
+        font-size: 0.72rem;
+        color: #6b7280;
+        font-weight: 500;
+        padding: 6px 10px;
+      }
       .plan-badge-best {
         position: absolute;
         top: -14px;
@@ -143,20 +180,21 @@
         <span class="vignette" aria-hidden="true"></span>
     </div>
 
-    <!-- ===== PRICING PLANS ===== -->
+    <!-- ===== PRICING PLANS (3 tiers) ===== -->
     <div id="pricing-plans" style="display:flex; gap:14px; margin-top:24px; align-items:stretch; flex-wrap:wrap; justify-content:center;">
 
       <!-- MONTHLY (decoy) -->
-      <div class="plan-card plan-card-monthly" style="flex:1; min-width:160px; max-width:260px;" onclick="window.location.href='https://explodely.com/p/22705532'">
+      <div class="plan-card plan-card-monthly" style="flex:1; min-width:150px; max-width:240px;" onclick="window.location.href='https://explodely.com/p/22705532'">
         <p style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:#6b7280; font-weight:700; margin-bottom:12px;" data-i18n="plan-monthly-label">Monthly</p>
         <p style="font-size:2.4rem; font-weight:800; color:#fff; line-height:1;" class="plan-monthly-price">$29</p>
         <p style="font-size:0.85rem; color:#9ca3af; margin-top:2px;" data-i18n="plan-monthly-per">/month</p>
         <p style="font-size:0.75rem; color:#6b7280; margin-top:12px;" data-i18n="plan-monthly-billed">Billed monthly</p>
+        <p class="plan-tokens-bullet-empty" data-i18n="plan-monthly-tokens">No bonus tokens</p>
         <a href="https://explodely.com/p/22705532" class="cta-secondary w-full py-3 rounded-xl font-bold uppercase text-sm mt-4" style="font-size:0.8rem;" data-i18n="plan-monthly-btn">Select Monthly</a>
       </div>
 
       <!-- ANNUAL (recommended) -->
-      <div class="plan-card plan-card-annual" style="flex:1; min-width:200px; max-width:320px;" onclick="window.location.href='https://explodely.com/p/2061057393'">
+      <div class="plan-card plan-card-annual" style="flex:1; min-width:200px; max-width:300px;" onclick="window.location.href='https://explodely.com/p/2061057393'">
         <div class="plan-badge-best" data-i18n="plan-annual-badge">🔥 Best value</div>
         <p style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:#f472b6; font-weight:700; margin-bottom:12px; margin-top:6px;" data-i18n="plan-annual-label">Annual</p>
         <p style="margin-bottom:4px;"><span class="plan-price-old"><span data-i18n="plan-annual-old-price">$29/mo</span></span></p>
@@ -164,7 +202,19 @@
         <p style="font-size:0.85rem; color:#d1d5db; margin-top:2px;" data-i18n="plan-annual-per">/month</p>
         <div class="plan-save-badge" data-i18n="plan-annual-save">SAVE 74%</div>
         <p class="plan-per-month" data-i18n="plan-annual-monthly">Billed $89/year</p>
+        <p class="plan-tokens-bullet" data-i18n="plan-annual-tokens">🎁 +30 tokens / month</p>
         <a href="https://explodely.com/p/2061057393" class="cta-button-premium pulse-pink w-full py-3 rounded-xl font-bold uppercase text-sm mt-4" style="font-size:0.85rem;" data-i18n="plan-annual-btn">🔓 GET ANNUAL ACCESS</a>
+      </div>
+
+      <!-- LIFETIME (cash-first, no recurring) -->
+      <div class="plan-card plan-card-lifetime" style="flex:1; min-width:170px; max-width:260px;" onclick="window.location.href='https://explodely.com/p/887584369'">
+        <div class="plan-badge-lifetime" data-i18n="plan-lifetime-badge">💎 Pay once</div>
+        <p style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:#facc15; font-weight:700; margin-bottom:12px; margin-top:6px;" data-i18n="plan-lifetime-label">Lifetime</p>
+        <p style="font-size:2.6rem; font-weight:800; color:#fff; line-height:1;" class="plan-lifetime-price">$174</p>
+        <p style="font-size:0.85rem; color:#d1d5db; margin-top:2px;" data-i18n="plan-lifetime-per">one-time</p>
+        <p style="font-size:0.7rem; color:#9ca3af; margin-top:8px; line-height:1.4;" data-i18n="plan-lifetime-sub">Forever access · No recurring billing</p>
+        <p class="plan-tokens-bullet" style="background:rgba(250,204,21,0.18); border-color:rgba(250,204,21,0.45);" data-i18n="plan-lifetime-tokens">🎁 +100 tokens / month</p>
+        <a href="https://explodely.com/p/887584369" class="cta-secondary w-full py-3 rounded-xl font-bold uppercase text-sm mt-4" style="font-size:0.8rem; background:linear-gradient(90deg,#facc15,#f97316); color:#1a1a1a; border:none;" data-i18n="plan-lifetime-btn">💎 GET LIFETIME</a>
       </div>
 
     </div>
