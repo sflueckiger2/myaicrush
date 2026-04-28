@@ -274,8 +274,8 @@
                 <div id="character-slider" class="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black/50 mt-1 border border-white/10">
                     <div id="slider-content" class="w-full h-full object-cover transition-opacity duration-500"></div>
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
-                    <div class="absolute bottom-3 left-0 right-0 text-center pointer-events-none">
-                        <span id="slider-name" class="text-xs font-bold uppercase tracking-widest text-pink-300 drop-shadow-md">Discover them</span>
+                    <div class="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
+                        <span id="slider-name" class="inline-block px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm text-sm font-bold uppercase tracking-widest text-pink-200 drop-shadow-lg border border-pink-400/30">Discover them</span>
                     </div>
                 </div>
             </div>
@@ -502,56 +502,137 @@
       setTimeout(() => premiumModal.classList.add('hidden'), 300);
     }
 
-    // ── Character slider ──────────────────────────────────────
-    const sliderMedia = [
-      "https://img.myaicrush.ai/images/morgana/morgana1/kling_20251024_Image_to_Video_d_boutonne_5722_0.mp4",
-      "https://img.myaicrush.ai/images/emilie/emilie3/emilie-shirt-assis.mp4",
-      "https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4",
-      "https://img.myaicrush.ai/images/alex/alex3/kling_20250915_Image_to_Video_se_penche__5870_0.mp4",
-      "https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4",
-      "https://img.myaicrush.ai/images/asha/asha1/kling_20251002_Image_to_Video_Elle_fait__6084_0.mp4",
-      "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4",
-      "https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4",
-      "https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4",
-      "https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4",
-      "https://img.myaicrush.ai/images/astrid/astrid1/98de09250bf1e8f5a6c96b251115fdf3.mp4",
-      "https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4",
-      "https://img.myaicrush.ai/images/kala/kala1/bf4d04b94ca42dbb83e4af34cde8a3fa.mp4",
-      "https://img.myaicrush.ai/images/candy/candy3/candy-pic-profil-new.mp4",
-      "https://img.myaicrush.ai/images/lilith/lilith1/4415becf487350f73ec34b207e3621be.mp4",
-      "https://img.myaicrush.ai/images/lea/lea1/Lea-photo-profil-vdef.mp4",
-      "https://img.myaicrush.ai/images/juliette/juliette1/0b14bcf77865abdb5d951dce26e501ce.webp",
-      "https://img.myaicrush.ai/images/elvara/elvara1/0aee9d2dcfb049c4106817827ca8792b.webp",
-      "https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp",
-      "https://img.myaicrush.ai/images/kat/kat1/bac3a1e4fa72577bee127e2d50912.webp",
-      "https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp",
-      "https://img.myaicrush.ai/images/ishani/ishani1/9a02df9043621301db46165400fcfd91.webp",
-      "https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp",
-      "https://img.myaicrush.ai/images/nova/nova1/39550f5dca22e73e16b570fb55781e0a.webp"
+    // ── Character slider (dynamic from characters.json) ─────────
+    const SLIDER_CDN_BASE = "https://img.myaicrush.ai/";
+    // Personnages exclus du slider (style incohérent ou retirés)
+    const SLIDER_EXCLUDED = new Set(["Chen", "Malik"]);
+    // Fallback statique si le fetch echoue
+    const SLIDER_FALLBACK = [
+      { name: "Pauline", url: "https://img.myaicrush.ai/images/pauline/pauline3/pauline-clean.mp4" },
+      { name: "Megane",  url: "https://img.myaicrush.ai/images/megane/megane3/megane_dressed_video_01.mp4" },
+      { name: "Chloe",   url: "https://img.myaicrush.ai/images/chloe/chloe3/chloe-video-intro.mp4" },
+      { name: "Lila",    url: "https://img.myaicrush.ai/images/lila/lila3/lila-video-intro.mp4" },
+      { name: "Magalie", url: "https://img.myaicrush.ai/images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4" },
+      { name: "Nour",    url: "https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4" },
+      { name: "Aiko",    url: "https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4" },
+      { name: "Amber",   url: "https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4" },
+      { name: "Naomi",   url: "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4" }
     ];
 
-    function initSlider() {
+    async function loadSliderMedia() {
+      try {
+        const res = await fetch("/characters.json", { cache: "no-cache" });
+        if (!res.ok) throw new Error("characters.json fetch failed");
+        const chars = await res.json();
+        const items = [];
+        for (const c of chars) {
+          if (!c?.name || SLIDER_EXCLUDED.has(c.name)) continue;
+          const path = c.photo || c.introVideo || c.backgroundPhoto;
+          if (!path) continue;
+          const posterPath = c.backgroundPhoto && /\.(jpe?g|png|webp)$/i.test(c.backgroundPhoto)
+            ? c.backgroundPhoto
+            : null;
+          items.push({
+            name: c.name,
+            url: SLIDER_CDN_BASE + path.replace(/^\/+/, ""),
+            poster: posterPath ? SLIDER_CDN_BASE + posterPath.replace(/^\/+/, "") : null
+          });
+        }
+        // Shuffle pour varier l'ordre
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        return items.length ? items : SLIDER_FALLBACK;
+      } catch (e) {
+        console.warn("[slider] using fallback:", e.message);
+        return SLIDER_FALLBACK;
+      }
+    }
+
+    function preloadSlide(item) {
+      if (!item) return;
+      try {
+        if (/\.(mp4|webm|mov)(\?|$)/i.test(item.url)) {
+          const v = document.createElement('video');
+          v.preload = 'auto';
+          v.muted = true;
+          v.src = item.url;
+        } else {
+          const img = new Image();
+          img.src = item.url;
+        }
+        if (item.poster) { const p = new Image(); p.src = item.poster; }
+      } catch (_) { /* ignore */ }
+    }
+
+    async function initSlider() {
       const container = document.getElementById('slider-content');
+      const nameEl = document.getElementById('slider-name');
       if (!container) return;
+
+      const media = await loadSliderMedia();
+      if (!media.length) return;
+
       let index = 0;
+      let consecutiveErrors = 0;
+      const SLIDE_DURATION_MS = 4000;
+      const FADE_MS = 300;
+
+      function isVideo(url) { return /\.(mp4|webm|mov)(\?|$)/i.test(url); }
+
+      function renderEnd() {
+        container.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4">
+            <span class="text-4xl mb-2 animate-bounce">💖</span>
+            <span class="text-xl font-bold uppercase italic gradient-text">And many more...</span>
+          </div>`;
+        if (nameEl) nameEl.textContent = "And many more";
+      }
+
+      function renderSlide(item) {
+        const url = item.url;
+        const posterAttr = item.poster ? ` poster="${item.poster}"` : '';
+        const errorHandler = `window.__sliderMediaFailed && window.__sliderMediaFailed();`;
+        if (isVideo(url)) {
+          container.innerHTML = `<video src="${url}"${posterAttr} autoplay loop muted playsinline preload="auto" class="w-full h-full object-cover" onerror="${errorHandler}"></video>`;
+        } else {
+          container.innerHTML = `<img src="${url}" alt="${item.name}" class="w-full h-full object-cover" onerror="${errorHandler}">`;
+        }
+        if (nameEl) nameEl.textContent = item.name;
+        // Précharge les 2 prochaines slides pour éviter l'écran noir
+        preloadSlide(media[index % media.length]);
+        preloadSlide(media[(index + 1) % media.length]);
+      }
+
+      window.__sliderMediaFailed = function () {
+        consecutiveErrors++;
+        if (consecutiveErrors > media.length) return;
+        clearTimeout(window.__sliderTick);
+        showSlide();
+      };
+
       function showSlide() {
         container.style.opacity = '0';
+        clearTimeout(window.__sliderTick);
         setTimeout(() => {
-          if (index >= sliderMedia.length) {
-            container.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-pink-600/20 text-center p-4"><span class="text-4xl mb-2 animate-bounce">💖</span><span class="text-xl font-bold uppercase italic gradient-text">And many more...</span></div>`;
+          if (index >= media.length) {
+            renderEnd();
             index = 0;
           } else {
-            const url = sliderMedia[index];
-            container.innerHTML = url.endsWith('.mp4')
-              ? `<video src="${url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`
-              : `<img src="${url}" class="w-full h-full object-cover">`;
+            renderSlide(media[index]);
             index++;
+            consecutiveErrors = 0;
           }
           container.style.opacity = '1';
-        }, 300);
+          window.__sliderTick = setTimeout(showSlide, SLIDE_DURATION_MS);
+        }, FADE_MS);
       }
+
+      // Précharge les 2 premières avant de démarrer
+      preloadSlide(media[0]);
+      preloadSlide(media[1]);
       showSlide();
-      setInterval(showSlide, 2500);
     }
     document.addEventListener('DOMContentLoaded', initSlider);
   </script>
