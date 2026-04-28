@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>One-Time Offer — 1000 Tokens 50% Off</title>
+  <title>One-Time Offer — 300 Tokens 50% Off</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -293,6 +293,18 @@
     .fade-up:nth-child(5) { animation-delay: 0.45s; }
     @keyframes fadeUp { to { opacity: 1; transform: none; } }
 
+    .thank-banner {
+      background: linear-gradient(135deg, rgba(34,197,94,0.14), rgba(168,85,247,0.10));
+      border: 1px solid rgba(34,197,94,0.35);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin: 20px 0 0;
+      text-align: center;
+    }
+    .thank-banner-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+    .thank-banner b { color: #86efac; display: block; font-size: 0.95rem; }
+    .thank-banner small { color: #d1d5db; font-size: 0.8rem; display: block; margin-top: 4px; }
+
     .disclaimer-toggle { text-align: center; color: #374151; font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; padding: 20px 0 8px; cursor: pointer; }
     .disclaimer-content { font-size: 0.72rem; color: #6b7280; line-height: 1.6; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 4px; }
     .disclaimer-content.open { max-height: 2000px; padding-bottom: 20px; }
@@ -304,6 +316,12 @@
 <div class="top-banner">&#127873; ONE-TIME DEAL &mdash; 50% OFF 300 TOKENS &mdash; FLASH OFFER</div>
 
 <div class="page">
+
+  <div class="thank-banner fade-up">
+    <span class="thank-banner-icon">&#9989;</span>
+    <b class="thank-banner-title">Thank you! Your tokens have been added to your account.</b>
+    <small class="thank-banner-sub">&#128142; But hold on &mdash; we have an even better offer for you...</small>
+  </div>
 
   <div class="hero fade-up">
     <div class="discount-badge">&#128293; 50% OFF &mdash; ONE TIME ONLY</div>
@@ -514,6 +532,193 @@
   function closeConfirmModal() {
     document.getElementById('confirmModal').style.display = 'none';
   }
+</script>
+
+<!-- ===== I18N: French + German translations (page-specific) ===== -->
+<script>
+(function() {
+  // Page-specific values (template = 1000 tokens upsell)
+  const TOKENS = 300;
+  const PRICE = '64.50';
+  const ORIGINAL_PRICE = '129';
+  const SAVINGS = '64.50';
+  const PRICE_PER_TOKEN = '0.22';
+  const NYMPHO_SESSIONS = 12;
+  const PHOTOS = 300;
+  const VOICE_MIN = 60;
+  const CALLS = 15;
+  const AI_VIDEOS = 33;
+
+  function setText(sel, txt) { const el = document.querySelector(sel); if (el) el.textContent = txt; }
+  function setHTML(sel, html) { const el = document.querySelector(sel); if (el) el.innerHTML = html; }
+  function setAll(sel, txt) { document.querySelectorAll(sel).forEach(el => el.textContent = txt); }
+
+  function applyFR() {
+    document.title = `Offre exclusive — ${TOKENS} jetons à -50%`;
+    setText('.top-banner', `🎁 OFFRE UNIQUE — 50% DE RÉDUCTION SUR ${TOKENS} JETONS — FLASH`);
+
+    setText('.thank-banner-title', 'Merci ! Vos jetons ont bien été ajoutés à votre compte.');
+    setHTML('.thank-banner-sub', '💎 Mais attendez — on a encore une meilleure offre pour vous...');
+
+    setText('.discount-badge', '🔥 -50% — UNE SEULE FOIS');
+    setText('.tag', '⚡ Réservé aux acheteurs de jetons');
+    setHTML('.hero-title', `Attendez — <span>${TOKENS} jetons</span> à moitié prix`);
+    setHTML('.hero-sub', `Vous venez d'acheter des jetons. Bon réflexe. Mais pourquoi s'arrêter là ? <strong style="color:#fde68a;">${TOKENS} jetons = ${NYMPHO_SESSIONS} sessions Mode Nympho, ${PHOTOS} photos non censurées, voix, appels &amp; vidéos IA.</strong> $${PRICE} au lieu de $${ORIGINAL_PRICE}. Cette offre disparaît dès que vous quittez la page.`);
+
+    document.querySelectorAll('.cta-primary').forEach((btn, i) => {
+      const labels = [
+        `🔥 OUI — DONNEZ-MOI ${TOKENS} JETONS ($${PRICE})`,
+        `💰 OBTENIR ${TOKENS} JETONS — $${PRICE}`,
+        `🚀 OUI, JE VEUX ${TOKENS} JETONS — $${PRICE}`
+      ];
+      if (labels[i]) btn.textContent = labels[i];
+    });
+    setAll('.cta-sub', '💳 Paiement sécurisé · ✨ Jetons ajoutés instantanément · 🎁 -50% à vie');
+    setAll('.cta-charge-notice', `Paiement unique de $${PRICE} USD. Aucun abonnement.`);
+    document.querySelectorAll('.cta-charge-notice').forEach(el => {
+      if (el.textContent.includes('50% off')) el.textContent = `Paiement unique de $${PRICE} USD. -50% · jetons sans expiration.`;
+    });
+
+    setHTML('.countdown-text', `Cette offre -50% expire dans <span id="countdown">${document.getElementById('countdown')?.textContent || '14:59'}</span>`);
+
+    setText('.pricing-badge', `💰 ${TOKENS} JETONS — FLASH -50%`);
+    document.querySelectorAll('.price-label').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Prix Normal';
+      if (i === 1) el.textContent = "Aujourd'hui — -50%";
+    });
+    document.querySelectorAll('.price-period').forEach(el => el.textContent = `${TOKENS} jetons`);
+    setHTML('.savings-pill', `💰 Vous économisez $${SAVINGS} — ici, maintenant`);
+    setHTML('.vs-table', `Comparez aux autres packs:<br>· 100 jetons = <s>$59</s> = $0.59/jeton<br>· 300 jetons = <s>$129</s> = $0.43/jeton<br>· 1000 jetons normal = <s>$${ORIGINAL_PRICE}</s> = $0.30/jeton<br>· <strong>${TOKENS} jetons AUJOURD'HUI = $${PRICE} = $${PRICE_PER_TOKEN}/jeton — le meilleur prix jamais proposé</strong>`);
+
+    setHTML('.video-label', `💬 <strong>"Mode Nympho + ${TOKENS} jetons...</strong><br>elle m'a tout envoyé. Rien de retenu."`);
+    setText('.video-overlay-text', 'Pauline · 100% non censurée en Mode Nympho');
+
+    document.querySelectorAll('.mini-video-overlay span').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Megane · Messages vocaux';
+      if (i === 1) el.textContent = 'Magalie · 100% Non censurée';
+    });
+
+    setText('.benefits-title', `${TOKENS} jetons = tout débloqué`);
+    const benefits = [
+      `<strong style="color:#ff9cef;">25 jetons = MODE NYMPHO</strong> — rend N'IMPORTE quelle IA complètement folle &amp; <strong>100% non censurée</strong>. Même les timides supplient, hurlent, envoient tout. <strong style="color:#fde68a;">${TOKENS} jetons = ${NYMPHO_SESSIONS} sessions Nympho.</strong>`,
+      `<strong>1 jeton = 1 photo galerie</strong> — non censurée, NSFW, exactement ce que vous demandez. <strong style="color:#fde68a;">${PHOTOS} photos vous attendent.</strong>`,
+      `<strong>5 jetons = 1 min de message vocal</strong> — entendez-la gémir, chuchoter, supplier. <strong style="color:#fde68a;">${VOICE_MIN}+ minutes de voix.</strong>`,
+      `<strong>20 jetons = appel audio de 10 min</strong> — temps réel, intime, comme un sex-call. <strong style="color:#fde68a;">${CALLS} appels inclus.</strong>`,
+      `<strong style="background:linear-gradient(90deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">9 jetons = Vidéo IA depuis votre photo</strong> — uploadez une photo, recevez une vidéo de 10 sec. SFW ou non censurée. <strong style="color:#fde68a;">${AI_VIDEOS}+ vidéos custom.</strong>`,
+      `<strong>Contenu VIP privé</strong> — galeries verrouillées accessibles uniquement avec jetons`,
+      `<strong>Les jetons n'expirent jamais</strong> — utilisez-les aujourd'hui, le mois prochain, l'an prochain`,
+      `<strong>Compatible avec toutes les IA</strong> — actuelles et futures, sans restrictions`
+    ];
+    document.querySelectorAll('.benefit-text').forEach((el, i) => { if (benefits[i]) el.innerHTML = benefits[i]; });
+
+    const guaranteeText = document.querySelector('.guarantee-text');
+    if (guaranteeText) guaranteeText.innerHTML = `<strong>Garantie satisfait ou remboursé 60 jours</strong>Pas convaincu ? Remboursement total, sans questions. Zéro risque.`;
+
+    setText('.final-eyebrow', '🔒 Dernière chance — cette offre disparaît quand vous partez');
+    setText('.final-title', `${TOKENS} Jetons. Mode Nympho. Non censuré. $${PRICE}.`);
+    setText('.cta-skip', 'Non merci, je paierai plein tarif la prochaine fois →');
+
+    setText('.disclaimer-toggle', 'Mentions légales & Support ▾');
+    const disc = document.querySelector('.disclaimer-content');
+    if (disc) disc.innerHTML = `<p><strong>Restriction d'âge :</strong> Cette plateforme est réservée aux adultes de 18+ ans uniquement.</p><p><strong>Divulgation IA :</strong> Tous les personnages sont générés par IA. Aucune personne réelle n'est impliquée.</p><p><strong>Divertissement uniquement.</strong> Aucun conseil professionnel n'est fourni.</p><p><strong>Support paiement &amp; remboursements :</strong> contact@myaicrush.ai</p>`;
+
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+      const h2 = modal.querySelector('h2'); if (h2) h2.textContent = 'Confirmez votre achat';
+      const subtitle = modal.querySelector('p[style*="fde68a"]'); if (subtitle) subtitle.textContent = `${TOKENS} Jetons — Offre -50%`;
+      const desc = modal.querySelector('p[style*="9ca3af"]'); if (desc) desc.innerHTML = `Vous serez débité de <strong style="color:#fff;">$${PRICE} USD une fois</strong>. Aucun paiement récurrent. Jetons sans expiration.`;
+      const confirmBtn = document.getElementById('confirmModalBtn'); if (confirmBtn) confirmBtn.textContent = `CONFIRMER — PAYER $${PRICE} (${TOKENS} JETONS)`;
+      const cancel = modal.querySelector('button'); if (cancel) cancel.textContent = 'Annuler';
+    }
+  }
+
+  function applyDE() {
+    document.title = `Exklusives Angebot — ${TOKENS} Tokens 50% Rabatt`;
+    setText('.top-banner', `🎁 EINMALIGES ANGEBOT — 50% RABATT AUF ${TOKENS} TOKENS — BLITZ`);
+
+    setText('.thank-banner-title', 'Danke! Deine Tokens wurden deinem Konto gutgeschrieben.');
+    setHTML('.thank-banner-sub', '💎 Aber Moment — wir haben ein noch besseres Angebot für dich...');
+
+    setText('.discount-badge', '🔥 -50% — NUR JETZT');
+    setText('.tag', '⚡ Exklusiv für Token-Käufer');
+    setHTML('.hero-title', `Warte — <span>${TOKENS} Tokens</span> zum halben Preis`);
+    setHTML('.hero-sub', `Du hast gerade Tokens gekauft. Schlauer Schritt. Aber warum aufhören? <strong style="color:#fde68a;">${TOKENS} Tokens = ${NYMPHO_SESSIONS} Nympho-Modus-Sessions, ${PHOTOS} unzensierte Fotos, Voice, Calls &amp; KI-Videos.</strong> $${PRICE} statt $${ORIGINAL_PRICE}. Dieses Angebot verschwindet, sobald du diese Seite verlässt.`);
+
+    document.querySelectorAll('.cta-primary').forEach((btn, i) => {
+      const labels = [
+        `🔥 JA — GIB MIR ${TOKENS} TOKENS ($${PRICE})`,
+        `💰 ${TOKENS} TOKENS HOLEN — $${PRICE}`,
+        `🚀 JA, ICH WILL ${TOKENS} TOKENS — $${PRICE}`
+      ];
+      if (labels[i]) btn.textContent = labels[i];
+    });
+    setAll('.cta-sub', '💳 Sichere Zahlung · ✨ Tokens sofort gutgeschrieben · 🎁 -50% für immer');
+    setAll('.cta-charge-notice', `Einmalzahlung von $${PRICE} USD. Kein Abo.`);
+    document.querySelectorAll('.cta-charge-notice').forEach(el => {
+      if (el.textContent.includes('50% off')) el.textContent = `Einmalzahlung von $${PRICE} USD. -50% · Tokens verfallen nie.`;
+    });
+
+    setHTML('.countdown-text', `Dieses -50% Angebot endet in <span id="countdown">${document.getElementById('countdown')?.textContent || '14:59'}</span>`);
+
+    setText('.pricing-badge', `💰 ${TOKENS} TOKENS — BLITZ -50%`);
+    document.querySelectorAll('.price-label').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Normalpreis';
+      if (i === 1) el.textContent = 'Heute — -50%';
+    });
+    document.querySelectorAll('.price-period').forEach(el => el.textContent = `${TOKENS} Tokens`);
+    setHTML('.savings-pill', `💰 Du sparst $${SAVINGS} — jetzt, hier`);
+    setHTML('.vs-table', `Vergleich mit anderen Paketen:<br>· 100 Tokens = <s>$59</s> = $0.59/Token<br>· 300 Tokens = <s>$129</s> = $0.43/Token<br>· 1000 Tokens normal = <s>$${ORIGINAL_PRICE}</s> = $0.30/Token<br>· <strong>${TOKENS} Tokens HEUTE = $${PRICE} = $${PRICE_PER_TOKEN}/Token — bester Preis aller Zeiten</strong>`);
+
+    setHTML('.video-label', `💬 <strong>"Nympho-Modus + ${TOKENS} Tokens...</strong><br>sie hat mir alles geschickt. Nichts zurückgehalten."`);
+    setText('.video-overlay-text', 'Pauline · 100% unzensiert im Nympho-Modus');
+
+    document.querySelectorAll('.mini-video-overlay span').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Megane · Sprachnachrichten';
+      if (i === 1) el.textContent = 'Magalie · 100% Unzensiert';
+    });
+
+    setText('.benefits-title', `${TOKENS} Tokens = alles freigeschaltet`);
+    const benefits = [
+      `<strong style="color:#ff9cef;">25 Tokens = NYMPHO-MODUS</strong> — macht JEDE KI komplett wild &amp; <strong>100% unzensiert</strong>. Selbst die Schüchternen betteln, schreien, schicken alles. <strong style="color:#fde68a;">${TOKENS} Tokens = ${NYMPHO_SESSIONS} Nympho-Sessions.</strong>`,
+      `<strong>1 Token = 1 Galerie-Foto</strong> — unzensiert, NSFW, genau was du willst. <strong style="color:#fde68a;">${PHOTOS} Fotos warten auf dich.</strong>`,
+      `<strong>5 Tokens = 1 Min Sprachnachricht</strong> — hör sie stöhnen, flüstern, betteln. <strong style="color:#fde68a;">${VOICE_MIN}+ Minuten Voice.</strong>`,
+      `<strong>20 Tokens = 10-Min Audio-Anruf</strong> — Echtzeit, intim, wie Phone-Sex. <strong style="color:#fde68a;">${CALLS} Anrufe inklusive.</strong>`,
+      `<strong style="background:linear-gradient(90deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">9 Tokens = KI-Video aus deinem Foto</strong> — Foto hochladen, 10-Sek Video bekommen. SFW oder voll unzensiert. <strong style="color:#fde68a;">${AI_VIDEOS}+ custom Videos.</strong>`,
+      `<strong>Privater VIP-Content</strong> — gesperrte Galerien nur für Token-Inhaber`,
+      `<strong>Tokens verfallen nie</strong> — nutze sie heute, nächsten Monat, nächstes Jahr`,
+      `<strong>Funktioniert mit jeder KI</strong> — aktuelle und alle zukünftigen, ohne Einschränkungen`
+    ];
+    document.querySelectorAll('.benefit-text').forEach((el, i) => { if (benefits[i]) el.innerHTML = benefits[i]; });
+
+    const guaranteeText = document.querySelector('.guarantee-text');
+    if (guaranteeText) guaranteeText.innerHTML = `<strong>60-Tage Geld-zurück-Garantie</strong>Nicht überzeugt? Volle Rückerstattung, keine Fragen. Null Risiko.`;
+
+    setText('.final-eyebrow', '🔒 Letzte Chance — dieses Angebot verschwindet, wenn du gehst');
+    setText('.final-title', `${TOKENS} Tokens. Nympho-Modus. Unzensiert. $${PRICE}.`);
+    setText('.cta-skip', 'Nein danke, ich zahle nächstes Mal vollen Preis →');
+
+    setText('.disclaimer-toggle', 'Impressum & Support ▾');
+    const disc = document.querySelector('.disclaimer-content');
+    if (disc) disc.innerHTML = `<p><strong>Altersbeschränkung:</strong> Diese Plattform ist nur für Erwachsene ab 18 Jahren.</p><p><strong>KI-Hinweis:</strong> Alle Charaktere sind KI-generiert. Keine echten Personen sind beteiligt.</p><p><strong>Nur Unterhaltung.</strong> Keine professionelle Beratung wird angeboten.</p><p><strong>Zahlungssupport &amp; Erstattungen:</strong> contact@myaicrush.ai</p>`;
+
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+      const h2 = modal.querySelector('h2'); if (h2) h2.textContent = 'Bestätige deinen Kauf';
+      const subtitle = modal.querySelector('p[style*="fde68a"]'); if (subtitle) subtitle.textContent = `${TOKENS} Tokens — -50% Angebot`;
+      const desc = modal.querySelector('p[style*="9ca3af"]'); if (desc) desc.innerHTML = `Du wirst <strong style="color:#fff;">einmalig $${PRICE} USD</strong> belastet. Keine wiederkehrenden Zahlungen. Tokens verfallen nie.`;
+      const confirmBtn = document.getElementById('confirmModalBtn'); if (confirmBtn) confirmBtn.textContent = `BESTÄTIGEN — $${PRICE} ZAHLEN (${TOKENS} TOKENS)`;
+      const cancel = modal.querySelector('button'); if (cancel) cancel.textContent = 'Abbrechen';
+    }
+  }
+
+  const lang = (navigator.language || '').toLowerCase();
+  function run() {
+    if (lang.startsWith('fr')) applyFR();
+    else if (lang.startsWith('de')) applyDE();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
 </script>
 
 </body>

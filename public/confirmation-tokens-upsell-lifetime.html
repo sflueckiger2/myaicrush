@@ -266,6 +266,18 @@
     .fade-up:nth-child(5) { animation-delay: 0.45s; }
     @keyframes fadeUp { to { opacity: 1; transform: none; } }
 
+    .thank-banner {
+      background: linear-gradient(135deg, rgba(34,197,94,0.14), rgba(168,85,247,0.10));
+      border: 1px solid rgba(34,197,94,0.35);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin: 20px 0 0;
+      text-align: center;
+    }
+    .thank-banner-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+    .thank-banner b { color: #86efac; display: block; font-size: 0.95rem; }
+    .thank-banner small { color: #d1d5db; font-size: 0.8rem; display: block; margin-top: 4px; }
+
     .disclaimer-toggle { text-align: center; color: #374151; font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; padding: 20px 0 8px; cursor: pointer; }
     .disclaimer-content { font-size: 0.72rem; color: #6b7280; line-height: 1.6; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 4px; }
     .disclaimer-content.open { max-height: 2000px; padding-bottom: 20px; }
@@ -277,6 +289,12 @@
 <div class="top-banner">&#128142; LAST CHANCE &mdash; LIFETIME ACCESS &mdash; PAY ONCE, KEEP FOREVER</div>
 
 <div class="page">
+
+  <div class="thank-banner fade-up">
+    <span class="thank-banner-icon">&#9989;</span>
+    <b class="thank-banner-title">Thank you! Your tokens have been added to your account.</b>
+    <small class="thank-banner-sub">&#128081; We've saved the best for last &mdash; one final offer below...</small>
+  </div>
 
   <div class="hero fade-up">
     <div class="tag">&#128293; You're a top fan now</div>
@@ -493,6 +511,189 @@
       console.error("Erreur activation premium tokens-upsell-lifetime:", err);
     }
   });
+</script>
+
+<!-- ===== I18N: French + German translations ===== -->
+<script>
+(function() {
+  function setText(sel, txt) { const el = document.querySelector(sel); if (el) el.textContent = txt; }
+  function setHTML(sel, html) { const el = document.querySelector(sel); if (el) el.innerHTML = html; }
+  function setAll(sel, txt) { document.querySelectorAll(sel).forEach(el => el.textContent = txt); }
+
+  function applyFR() {
+    document.title = "Offre unique — Accès à vie ($174)";
+    setText('.top-banner', '💎 DERNIÈRE CHANCE — ACCÈS À VIE — PAYEZ UNE FOIS, GARDEZ POUR TOUJOURS');
+
+    setText('.thank-banner-title', 'Merci ! Vos jetons ont bien été ajoutés à votre compte.');
+    setHTML('.thank-banner-sub', '👑 On a gardé le meilleur pour la fin — une dernière offre ci-dessous...');
+
+    setText('.tag', '🔥 Vous êtes un top fan maintenant');
+    setHTML('.hero-title', `Pourquoi continuer à payer ? <span>Passez à vie</span> pour $174`);
+    setHTML('.hero-sub', `Vous venez de faire le plein de jetons. Vous êtes clairement accro. <strong style="color:#f9a8d4;">Ajoutez l'Accès à Vie ($174 une fois)</strong> et vous ne verrez plus jamais de facture mensuelle. En plus, vous gardez vos jetons pour toujours.`);
+
+    document.querySelectorAll('.cta-primary').forEach((btn, i) => {
+      const labels = [
+        '🔥 OUI — ACCÈS À VIE ($174)',
+        '💎 OBTENIR L\'ACCÈS À VIE — $174',
+        '🚀 OUI, ACCÈS À VIE — $174'
+      ];
+      if (labels[i]) btn.textContent = labels[i];
+    });
+    setAll('.cta-sub', '💳 Paiement sécurisé · ✨ Accès instantané · ♾️ Plus jamais à payer');
+    document.querySelectorAll('.cta-charge-notice').forEach(el => {
+      el.textContent = 'Paiement unique de $174 USD. Aucun paiement récurrent.';
+    });
+
+    setHTML('.countdown-text', `Cette offre expire dans <span id="countdown">${document.getElementById('countdown')?.textContent || '14:59'}</span>`);
+
+    setText('.pricing-badge', '💎 PLAN À VIE — PAYEZ UNE FOIS, POUR TOUJOURS');
+    document.querySelectorAll('.price-label').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Mensuel';
+      if (i === 1) el.textContent = 'À VIE ← MEILLEURE OFFRE';
+    });
+    document.querySelectorAll('.price-period').forEach((el, i) => {
+      if (i === 0) el.textContent = 'par mois';
+      if (i === 1) el.textContent = 'unique · pour toujours';
+    });
+    const monthlyExtra = document.querySelector('.price-option.monthly div[style*="6b7280"]');
+    if (monthlyExtra) monthlyExtra.innerHTML = '$348/an<br>$1,740 sur 5 ans';
+    const lifetimeExtra = document.querySelector('.price-option.lifetime div[style*="34d399"]');
+    if (lifetimeExtra) lifetimeExtra.textContent = 'Plus jamais à payer';
+    setText('.savings-pill', '💰 Rentabilisé en seulement 6 mois');
+
+    setHTML('.video-label', `💬 <strong>"J'ai acheté des jetons, puis pris l'upgrade à vie...</strong><br>meilleure décision. Plus de stress mensuel."`);
+    setText('.video-overlay-text', 'Chloé · Membre à vie');
+
+    document.querySelectorAll('.mini-video-overlay span').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Pauline · Illimité';
+      if (i === 1) el.textContent = 'Megane · Non censurée';
+    });
+
+    setText('.benefits-title', 'Jetons + À Vie = la combinaison ultime');
+    const benefits = [
+      `<strong style="color:#86efac;">Gardez tous vos jetons</strong> — l'accès à vie ne les remplace pas, il s'ajoute. Vous gardez tout ce que vous venez d'acheter.`,
+      `<strong>Plus de factures mensuelles</strong> — payez une fois, fini pour toujours`,
+      `<strong>Chats illimités</strong> — elle est toujours là, sans limite`,
+      `<strong>Photos &amp; vidéos non floutées</strong> — zéro censure partout`,
+      `<strong>Messages vocaux</strong> — entendez-la parler, gémir, chuchoter`,
+      `<strong>+30 jetons bonus / mois</strong> — auto-crédités chaque mois, en plus de votre stock`,
+      `<strong>Toutes les futures IA incluses</strong> — chaque nouvelle, pour toujours`,
+      `<strong>Aucun historique stocké</strong> — confidentialité totale`
+    ];
+    document.querySelectorAll('.benefit-text').forEach((el, i) => { if (benefits[i]) el.innerHTML = benefits[i]; });
+
+    const guaranteeText = document.querySelector('.guarantee-text');
+    if (guaranteeText) guaranteeText.innerHTML = `<strong>Garantie satisfait ou remboursé 60 jours</strong>Pas convaincu ? Remboursement total, sans questions. Zéro risque.`;
+
+    setText('.final-eyebrow', '🔒 Dernière chance');
+    setText('.final-title', 'Payez une fois. Accès pour toujours.');
+    setText('.cta-skip', 'Non merci, je continue à payer mensuellement →');
+
+    setText('.disclaimer-toggle', 'Mentions légales & Support ▾');
+    const disc = document.querySelector('.disclaimer-content');
+    if (disc) disc.innerHTML = `<p><strong>Restriction d'âge :</strong> Cette plateforme est réservée aux adultes de 18+ ans uniquement.</p><p><strong>Divulgation IA :</strong> Tous les personnages sont générés par IA. Aucune personne réelle n'est impliquée.</p><p><strong>Divertissement uniquement.</strong> Aucun conseil professionnel n'est fourni.</p><p><strong>Support paiement &amp; remboursements :</strong> contact@myaicrush.ai</p>`;
+
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+      const h2 = modal.querySelector('h2'); if (h2) h2.textContent = 'Confirmez votre achat';
+      const subtitle = modal.querySelector('p[style*="f9a8d4"]'); if (subtitle) subtitle.textContent = 'MyAiCrush Accès à Vie';
+      const desc = modal.querySelector('p[style*="9ca3af"]'); if (desc) desc.innerHTML = `Vous serez débité de <strong style="color:#fff;">$174 USD une fois</strong>. Aucun paiement récurrent. Accès pour toujours.`;
+      const confirmBtn = document.getElementById('confirmModalBtn'); if (confirmBtn) confirmBtn.textContent = 'CONFIRMER — PAYER $174 (À VIE)';
+      const cancel = modal.querySelector('button'); if (cancel) cancel.textContent = 'Annuler';
+    }
+  }
+
+  function applyDE() {
+    document.title = "Einmaliges Angebot — Lifetime-Zugang ($174)";
+    setText('.top-banner', '💎 LETZTE CHANCE — LIFETIME-ZUGANG — EINMAL ZAHLEN, FÜR IMMER BEHALTEN');
+
+    setText('.thank-banner-title', 'Danke! Deine Tokens wurden deinem Konto gutgeschrieben.');
+    setHTML('.thank-banner-sub', '👑 Wir haben das Beste zum Schluss aufgehoben — ein letztes Angebot unten...');
+
+    setText('.tag', '🔥 Du bist jetzt ein Top-Fan');
+    setHTML('.hero-title', `Warum weiter zahlen? <span>Hol dir Lifetime</span> für $174`);
+    setHTML('.hero-sub', `Du hast gerade Tokens nachgefüllt. Du bist eindeutig süchtig. <strong style="color:#f9a8d4;">Hol dir Lifetime-Zugang ($174 einmalig)</strong> und du wirst nie wieder eine monatliche Rechnung sehen. Außerdem behältst du alle deine Tokens für immer.`);
+
+    document.querySelectorAll('.cta-primary').forEach((btn, i) => {
+      const labels = [
+        '🔥 JA — LIFETIME-ZUGANG ($174)',
+        '💎 LIFETIME-ZUGANG HOLEN — $174',
+        '🚀 JA, LIFETIME-ZUGANG — $174'
+      ];
+      if (labels[i]) btn.textContent = labels[i];
+    });
+    setAll('.cta-sub', '💳 Sichere Zahlung · ✨ Sofortzugang · ♾️ Nie wieder zahlen');
+    document.querySelectorAll('.cta-charge-notice').forEach(el => {
+      el.textContent = 'Einmalzahlung von $174 USD. Keine wiederkehrenden Gebühren.';
+    });
+
+    setHTML('.countdown-text', `Dieses Angebot endet in <span id="countdown">${document.getElementById('countdown')?.textContent || '14:59'}</span>`);
+
+    setText('.pricing-badge', '💎 LIFETIME-PLAN — EINMAL ZAHLEN, FÜR IMMER');
+    document.querySelectorAll('.price-label').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Monatlich';
+      if (i === 1) el.textContent = 'LIFETIME ← BESTES ANGEBOT';
+    });
+    document.querySelectorAll('.price-period').forEach((el, i) => {
+      if (i === 0) el.textContent = 'pro Monat';
+      if (i === 1) el.textContent = 'einmalig · für immer';
+    });
+    const monthlyExtra = document.querySelector('.price-option.monthly div[style*="6b7280"]');
+    if (monthlyExtra) monthlyExtra.innerHTML = '$348/Jahr<br>$1.740 über 5 Jahre';
+    const lifetimeExtra = document.querySelector('.price-option.lifetime div[style*="34d399"]');
+    if (lifetimeExtra) lifetimeExtra.textContent = 'Nie wieder zahlen';
+    setText('.savings-pill', '💰 Amortisiert sich in nur 6 Monaten');
+
+    setHTML('.video-label', `💬 <strong>"Ich hab Tokens gekauft, dann das Lifetime-Upgrade genommen...</strong><br>beste Entscheidung. Kein monatlicher Stress mehr."`);
+    setText('.video-overlay-text', 'Chloé · Lifetime-Mitglied');
+
+    document.querySelectorAll('.mini-video-overlay span').forEach((el, i) => {
+      if (i === 0) el.textContent = 'Pauline · Unbegrenzt';
+      if (i === 1) el.textContent = 'Megane · Unzensiert';
+    });
+
+    setText('.benefits-title', 'Tokens + Lifetime = das ultimative Setup');
+    const benefits = [
+      `<strong style="color:#86efac;">Behalte all deine Tokens</strong> — Lifetime ersetzt sie nicht, sondern kommt obendrauf. Du behältst alles, was du gerade gekauft hast.`,
+      `<strong>Keine monatlichen Rechnungen mehr</strong> — einmal zahlen, für immer fertig`,
+      `<strong>Unbegrenzte Chats</strong> — sie ist immer da, ohne Limit`,
+      `<strong>Unverpixelte Fotos &amp; Videos</strong> — null Zensur überall`,
+      `<strong>Sprachnachrichten</strong> — hör sie sprechen, stöhnen, flüstern`,
+      `<strong>+30 Bonus-Tokens / Monat</strong> — automatisch jeden Monat gutgeschrieben, zusätzlich zu deinem Vorrat`,
+      `<strong>Alle zukünftigen KIs inklusive</strong> — jede neue, für immer`,
+      `<strong>Keine Historie gespeichert</strong> — totale Privatsphäre`
+    ];
+    document.querySelectorAll('.benefit-text').forEach((el, i) => { if (benefits[i]) el.innerHTML = benefits[i]; });
+
+    const guaranteeText = document.querySelector('.guarantee-text');
+    if (guaranteeText) guaranteeText.innerHTML = `<strong>60-Tage Geld-zurück-Garantie</strong>Nicht überzeugt? Volle Rückerstattung, keine Fragen. Null Risiko.`;
+
+    setText('.final-eyebrow', '🔒 Letzte Chance');
+    setText('.final-title', 'Einmal zahlen. Zugang für immer.');
+    setText('.cta-skip', 'Nein danke, ich zahle weiter monatlich →');
+
+    setText('.disclaimer-toggle', 'Impressum & Support ▾');
+    const disc = document.querySelector('.disclaimer-content');
+    if (disc) disc.innerHTML = `<p><strong>Altersbeschränkung:</strong> Diese Plattform ist nur für Erwachsene ab 18 Jahren.</p><p><strong>KI-Hinweis:</strong> Alle Charaktere sind KI-generiert. Keine echten Personen sind beteiligt.</p><p><strong>Nur Unterhaltung.</strong> Keine professionelle Beratung wird angeboten.</p><p><strong>Zahlungssupport &amp; Erstattungen:</strong> contact@myaicrush.ai</p>`;
+
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+      const h2 = modal.querySelector('h2'); if (h2) h2.textContent = 'Bestätige deinen Kauf';
+      const subtitle = modal.querySelector('p[style*="f9a8d4"]'); if (subtitle) subtitle.textContent = 'MyAiCrush Lifetime-Zugang';
+      const desc = modal.querySelector('p[style*="9ca3af"]'); if (desc) desc.innerHTML = `Du wirst <strong style="color:#fff;">einmalig $174 USD</strong> belastet. Keine wiederkehrenden Zahlungen. Zugang für immer.`;
+      const confirmBtn = document.getElementById('confirmModalBtn'); if (confirmBtn) confirmBtn.textContent = 'BESTÄTIGEN — $174 ZAHLEN (LIFETIME)';
+      const cancel = modal.querySelector('button'); if (cancel) cancel.textContent = 'Abbrechen';
+    }
+  }
+
+  const lang = (navigator.language || '').toLowerCase();
+  function run() {
+    if (lang.startsWith('fr')) applyFR();
+    else if (lang.startsWith('de')) applyDE();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
 </script>
 
 </body>
