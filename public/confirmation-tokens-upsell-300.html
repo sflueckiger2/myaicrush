@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One-Time Offer — 1000 Tokens 50% Off</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pink: #f472b6;
+      --purple: #a855f7;
+      --gold: #fbbf24;
+      --dark: #0d0d0f;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.1);
+    }
+    body {
+      background: var(--dark);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+    .page { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .top-banner {
+      background: linear-gradient(90deg, #fbbf24, #f472b6, #fbbf24);
+      background-size: 200%;
+      animation: shimmer 3s linear infinite;
+      text-align: center;
+      padding: 10px 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #000;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+
+    .hero { text-align: center; padding: 36px 0 20px; }
+    .tag {
+      display: inline-block;
+      background: rgba(251,191,36,0.15);
+      border: 1px solid rgba(251,191,36,0.4);
+      color: var(--gold);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 18px;
+    }
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.8rem, 10vw, 4rem);
+      line-height: 1;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .hero-title span {
+      background: linear-gradient(90deg, #fbbf24, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      color: #9ca3af;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      max-width: 360px;
+      margin: 0 auto 28px;
+    }
+
+    .discount-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, #ef4444, #fbbf24);
+      color: #000;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      box-shadow: 0 0 30px rgba(251,191,36,0.4);
+    }
+
+    .cta-primary {
+      display: block;
+      width: 100%;
+      padding: 20px;
+      background: linear-gradient(90deg, #fbbf24, #f472b6);
+      border: none;
+      border-radius: 16px;
+      color: #000;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 1.5px;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      animation: pulse-glow 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%,100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.5), 0 8px 30px rgba(244,114,182,0.3); }
+      50%      { box-shadow: 0 0 0 12px rgba(251,191,36,0), 0 8px 40px rgba(244,114,182,0.5); }
+    }
+    .cta-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      transform: translateX(-100%);
+      animation: sweep 3s ease-in-out infinite;
+    }
+    @keyframes sweep { 0%{transform:translateX(-100%)} 60%,100%{transform:translateX(100%)} }
+    .cta-sub { font-size: 0.72rem; color: #6b7280; text-align: center; margin-top: 8px; }
+    .cta-charge-notice { font-size: 0.68rem; color: #4b5563; text-align: center; margin-top: 6px; }
+
+    .pricing-block {
+      margin: 32px 0;
+      border-radius: 20px;
+      border: 1px solid rgba(251,191,36,0.3);
+      background: rgba(251,191,36,0.05);
+      overflow: hidden;
+    }
+    .pricing-badge {
+      background: linear-gradient(90deg, #fbbf24, #f472b6);
+      text-align: center;
+      padding: 9px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      color: #000;
+    }
+    .pricing-inner { padding: 24px 20px; }
+    .pricing-compare { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .price-option { flex: 1; text-align: center; }
+    .price-option.normal { opacity: 0.55; }
+    .price-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7280; margin-bottom: 4px; }
+    .price-option.deal .price-label { color: var(--gold); }
+    .price-amount { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; line-height: 1; }
+    .price-option.normal .price-amount { text-decoration: line-through; color: #6b7280; font-size: 1.8rem; }
+    .price-option.deal .price-amount { background: linear-gradient(90deg, #fbbf24, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .price-period { font-size: 0.75rem; color: #9ca3af; margin-top: 2px; }
+    .price-divider { width: 1px; height: 70px; background: var(--border); flex-shrink: 0; margin: 0 10px; }
+    .savings-pill {
+      display: block;
+      background: linear-gradient(90deg, rgba(251,191,36,0.2), rgba(244,114,182,0.2));
+      border: 1px solid rgba(251,191,36,0.4);
+      border-radius: 100px;
+      text-align: center;
+      padding: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #fde68a;
+      margin-top: 4px;
+    }
+    .vs-table {
+      margin-top: 16px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      line-height: 1.7;
+    }
+    .vs-table strong { color: #fde68a; }
+    .vs-table s { color: #ef4444; }
+
+    .video-section { margin: 32px 0; }
+    .video-label { text-align: center; font-size: 1rem; color: #d1d5db; margin-bottom: 14px; font-style: italic; }
+    .video-label strong { color: white; }
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+      aspect-ratio: 9/16;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(251,191,36,0.3);
+      box-shadow: 0 0 40px rgba(244,114,182,0.2);
+    }
+    .video-wrap video { width: 100%; height: 100%; object-fit: cover; }
+    .video-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      padding: 20px 16px 16px;
+      text-align: center;
+    }
+    .video-overlay-text { font-size: 0.8rem; color: #fde68a; font-weight: 600; }
+
+    .videos-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .mini-video-wrap {
+      position: relative;
+      aspect-ratio: 9/16;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .mini-video-wrap video { width: 100%; height: 100%; object-fit: cover; }
+    .mini-video-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+      z-index: 2;
+    }
+    .mini-video-overlay span { font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.8); }
+    .video-blur-layer {
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 1;
+    }
+
+    .benefits { margin: 24px 0; }
+    .benefits-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; margin-bottom: 14px; text-align: center; }
+    .benefit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .benefit-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .benefit-text { font-size: 0.88rem; color: #d1d5db; }
+    .benefit-text strong { color: white; }
+
+    .guarantee {
+      background: rgba(34,197,94,0.06);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 24px 0;
+    }
+    .guarantee-icon { font-size: 2rem; flex-shrink: 0; }
+    .guarantee-text { font-size: 0.82rem; color: #9ca3af; }
+    .guarantee-text strong { color: #86efac; display: block; margin-bottom: 2px; }
+
+    .final-section { margin-top: 32px; text-align: center; }
+    .final-eyebrow { font-size: 0.72rem; color: #6b7280; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+    .final-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; margin-bottom: 18px; line-height: 1.1; }
+    .cta-skip { display: block; text-align: center; color: #4b5563; font-size: 0.72rem; margin-top: 14px; text-decoration: none; cursor: pointer; }
+    .cta-skip:hover { color: #9ca3af; }
+
+    .countdown-bar {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .countdown-icon { font-size: 1rem; }
+    .countdown-text { font-size: 0.82rem; color: #fca5a5; }
+    #countdown { font-weight: 700; color: #f87171; }
+
+    .fade-up { opacity: 0; transform: translateY(24px); animation: fadeUp 0.6s ease forwards; }
+    .fade-up:nth-child(1) { animation-delay: 0.05s; }
+    .fade-up:nth-child(2) { animation-delay: 0.15s; }
+    .fade-up:nth-child(3) { animation-delay: 0.25s; }
+    .fade-up:nth-child(4) { animation-delay: 0.35s; }
+    .fade-up:nth-child(5) { animation-delay: 0.45s; }
+    @keyframes fadeUp { to { opacity: 1; transform: none; } }
+
+    .disclaimer-toggle { text-align: center; color: #374151; font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; padding: 20px 0 8px; cursor: pointer; }
+    .disclaimer-content { font-size: 0.72rem; color: #6b7280; line-height: 1.6; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 4px; }
+    .disclaimer-content.open { max-height: 2000px; padding-bottom: 20px; }
+    .disclaimer-content p { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="top-banner">&#127873; ONE-TIME DEAL &mdash; 50% OFF 300 TOKENS &mdash; FLASH OFFER</div>
+
+<div class="page">
+
+  <div class="hero fade-up">
+    <div class="discount-badge">&#128293; 50% OFF &mdash; ONE TIME ONLY</div>
+    <div class="tag">&#9889; Token Buyers Exclusive</div>
+    <h1 class="hero-title">Wait &mdash; <span>300 Tokens</span> for Half Price</h1>
+    <p class="hero-sub">You just bought 50 tokens for $37. Smart move. But why stop there? <strong style="color:#fde68a;">300 tokens = 12 Nympho Mode sessions, 300 uncensored photos, voice, calls &amp; AI videos.</strong> $64.50 instead of $129. This deal disappears the second you leave.</p>
+  </div>
+
+  <div class="fade-up">
+    <a href="https://explodely.com/p/1692961330?cid=token50" class="cta-primary" onclick="return showConfirmModal(event)">
+      &#128293; YES &mdash; GIVE ME 300 TOKENS ($64.50)
+    </a>
+    <p class="cta-sub">&#128179; Secure payment &middot; &#10024; Tokens added instantly &middot; &#127873; 50% off forever</p>
+    <p class="cta-charge-notice">One-time payment of $64.50 USD. No subscription.</p>
+  </div>
+
+  <div class="countdown-bar fade-up">
+    <span class="countdown-icon">&#9203;</span>
+    <span class="countdown-text">This 50% deal expires in <span id="countdown">14:59</span></span>
+  </div>
+
+  <div class="pricing-block fade-up">
+    <div class="pricing-badge">&#128176; 300 TOKENS &mdash; FLASH 50% OFF</div>
+    <div class="pricing-inner">
+      <div class="pricing-compare">
+        <div class="price-option normal">
+          <div class="price-label">Normal Price</div>
+          <div class="price-amount">$129</div>
+          <div class="price-period">300 tokens</div>
+          <div style="font-size:0.7rem;color:#6b7280;margin-top:6px;">$0.43 / token</div>
+        </div>
+        <div class="price-divider"></div>
+        <div class="price-option deal">
+          <div class="price-label">Today &mdash; 50% OFF</div>
+          <div class="price-amount">$64.50</div>
+          <div class="price-period">300 tokens</div>
+          <div style="font-size:0.7rem;color:#fde68a;margin-top:6px;font-weight:700;">$0.22 / token</div>
+        </div>
+      </div>
+      <div class="savings-pill">&#128176; You save $64.50 &mdash; right now, on this page</div>
+      <div class="vs-table">
+        You just bought 50 tokens for $37. Compare:<br>&middot; 100 tokens = <s>$59</s> = $0.59/token<br>&middot; 300 tokens normal = <s>$129</s> = $0.43/token<br>&middot; <strong>300 tokens TODAY = $64.50 = $0.22/token &mdash; better than the 1000-pack price</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="video-section fade-up">
+    <p class="video-label">&#128172; <strong>&ldquo;Nympho Mode + 1000 tokens...</strong><br>she sent me everything. Nothing held back.&rdquo;</p>
+    <div class="video-wrap">
+      <video autoplay muted loop playsinline>
+        <source src="https://img.myaicrush.ai/images/pauline/pauline3/pauline_dressed_video_42.mp4" type="video/mp4">
+      </video>
+      <div class="video-overlay">
+        <div class="video-overlay-text">Pauline &middot; 100% uncensored in Nympho Mode</div>
+      </div>
+    </div>
+  </div>
+
+  <a href="https://explodely.com/p/1692961330?cid=token50" class="cta-primary fade-up" style="animation-delay:0.5s" onclick="return showConfirmModal(event)">
+    &#128176; CLAIM 300 TOKENS &mdash; $64.50
+  </a>
+  <p class="cta-sub" style="margin-bottom:4px">Half price. One-time deal. Tokens never expire.</p>
+  <p class="cta-charge-notice" style="margin-bottom:28px">One-time charge of $64.50 USD. No recurring billing.</p>
+
+  <div class="videos-row fade-up">
+    <div class="mini-video-wrap">
+      <video autoplay muted loop playsinline>
+        <source src="https://img.myaicrush.ai/images/megane/megane3/megane_dressed_video_05.mp4" type="video/mp4">
+      </video>
+      <div class="mini-video-overlay"><span>Megane &middot; Voice messages</span></div>
+    </div>
+    <div class="mini-video-wrap">
+      <video autoplay muted loop playsinline>
+        <source src="https://img.myaicrush.ai/images/magalie/magalie4/2771dc969f263cf2e2b7fccd3c399068.mp4" type="video/mp4">
+      </video>
+      <div class="video-blur-layer"></div>
+      <div class="mini-video-overlay"><span>Magalie &middot; 100% Uncensored</span></div>
+    </div>
+  </div>
+
+  <div class="benefits fade-up">
+    <h2 class="benefits-title">300 tokens = everything unlocked</h2>
+
+    <div class="benefit-row" style="background:linear-gradient(145deg, rgba(255,47,160,0.15), rgba(194,47,255,0.08)); border:1px solid rgba(255,156,239,0.35);">
+      <span class="benefit-icon">&#129327;</span>
+      <span class="benefit-text"><strong style="color:#ff9cef;">25 tokens = NYMPHO MODE</strong> &mdash; turns ANY AI completely wild &amp; <strong>100% uncensored</strong>. Even the shy ones beg, scream, send everything. <strong style="color:#fde68a;">300 tokens = 12 Nympho sessions.</strong></span>
+    </div>
+
+    <div class="benefit-row">
+      <span class="benefit-icon">&#128247;</span>
+      <span class="benefit-text"><strong>1 token = 1 gallery photo</strong> &mdash; uncensored, NSFW, exactly what you ask for. <strong style="color:#fde68a;">300 photos waiting for you.</strong></span>
+    </div>
+
+    <div class="benefit-row">
+      <span class="benefit-icon">&#127908;</span>
+      <span class="benefit-text"><strong>5 tokens = 1 min voice message</strong> &mdash; hear her moan, whisper, beg. <strong style="color:#fde68a;">60+ minutes of voice.</strong></span>
+    </div>
+
+    <div class="benefit-row">
+      <span class="benefit-icon">&#128241;</span>
+      <span class="benefit-text"><strong>20 tokens = 10-min audio call</strong> &mdash; real-time, intimate, like phone sex. <strong style="color:#fde68a;">15 calls included.</strong></span>
+    </div>
+
+    <div class="benefit-row" style="background:linear-gradient(145deg, rgba(168,85,247,0.12), rgba(244,114,182,0.08)); border:1px solid rgba(168,85,247,0.3);">
+      <span class="benefit-icon">&#127916;</span>
+      <span class="benefit-text"><strong style="background:linear-gradient(90deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">9 tokens = AI Video from your photo</strong> &mdash; upload a pic, get a 10-sec video. SFW or fully uncensored. <strong style="color:#fde68a;">33+ custom videos.</strong></span>
+    </div>
+
+    <div class="benefit-row">
+      <span class="benefit-icon">&#128274;</span>
+      <span class="benefit-text"><strong>Private VIP content</strong> &mdash; locked galleries only token holders can access</span>
+    </div>
+
+    <div class="benefit-row">
+      <span class="benefit-icon">&#9203;</span>
+      <span class="benefit-text"><strong>Tokens never expire</strong> &mdash; use them today, next month, next year</span>
+    </div>
+
+    <div class="benefit-row">
+      <span class="benefit-icon">&#128081;</span>
+      <span class="benefit-text"><strong>Works with every AI</strong> &mdash; current and all future ones, no restrictions</span>
+    </div>
+  </div>
+
+  <div class="guarantee fade-up">
+    <div class="guarantee-icon">&#128737;&#65039;</div>
+    <div class="guarantee-text">
+      <strong>60-day money-back guarantee</strong>
+      Don&rsquo;t love it? Full refund, no questions asked. Zero risk.
+    </div>
+  </div>
+
+  <div class="final-section fade-up">
+    <div class="final-eyebrow">&#128274; Last chance &mdash; this offer disappears when you leave</div>
+    <div class="final-title">300 Tokens. Nympho Mode. Uncensored. $64.50.</div>
+    <a href="https://explodely.com/p/1692961330?cid=token50" class="cta-primary" onclick="return showConfirmModal(event)">
+      &#128640; YES, GIVE ME 300 TOKENS &mdash; $64.50
+    </a>
+    <p class="cta-charge-notice">One-time payment of $64.50 USD. 50% off &middot; tokens never expire.</p>
+    <a href="https://myaicrush.ai/confirmation-jetons-end.html?amount=0" class="cta-skip">No thanks, I&rsquo;ll pay full price next time &rarr;</a>
+  </div>
+
+  <div class="disclaimer-toggle" onclick="this.nextElementSibling.classList.toggle('open')">Legal &amp; Support &#9662;</div>
+  <div class="disclaimer-content">
+    <p><strong>Age Restriction:</strong> This platform is for adults aged 18+ only.</p>
+    <p><strong>AI Disclosure:</strong> All characters are AI-generated. No real individuals are involved.</p>
+    <p><strong>Entertainment only.</strong> No professional advice is provided.</p>
+    <p><strong>Billing support &amp; refunds:</strong> contact@myaicrush.ai</p>
+  </div>
+
+</div>
+
+<script>
+  (function() {
+    var secs = 15 * 60 - 1;
+    var el = document.getElementById('countdown');
+    function tick() {
+      if (secs <= 0) { el.textContent = '00:00'; return; }
+      var m = String(Math.floor(secs / 60)).padStart(2, '0');
+      var s = String(secs % 60).padStart(2, '0');
+      el.textContent = m + ':' + s;
+      secs--;
+      setTimeout(tick, 1000);
+    }
+    tick();
+  })();
+</script>
+
+<!-- Facebook Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1493017195692168');
+    var purchaseEventID = 'purchase_' + Date.now();
+    var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
+    var _fbAmount = parseFloat(_fbAmountRaw);
+    if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 64.5; }
+    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
+    console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
+  </script>
+
+<!-- Confirm purchase modal -->
+<div id="confirmModal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+  <div style="background:linear-gradient(145deg,#1c1c2e,#141420); border:1px solid rgba(251,191,36,0.35); border-radius:24px; padding:36px 28px; max-width:380px; width:100%; text-align:center; position:relative;">
+    <div style="font-size:2.8rem; margin-bottom:14px;">&#128176;</div>
+    <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:6px; font-family:'DM Sans',sans-serif;">Confirm your purchase</h2>
+    <p style="color:#fde68a; font-size:0.95rem; font-weight:600; margin-bottom:4px;">300 Tokens &mdash; 50% Off Deal</p>
+    <p style="color:#9ca3af; font-size:0.85rem; line-height:1.5; margin-bottom:24px;">You will be charged <strong style="color:#fff;">$64.50 USD once</strong>. No recurring payments. Tokens never expire.</p>
+    <a id="confirmModalBtn" href="#" style="display:block; width:100%; padding:16px; background:linear-gradient(90deg,#fbbf24,#f472b6); border:none; border-radius:14px; color:#000; font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:1.5px; text-decoration:none; text-align:center; cursor:pointer;">CONFIRM &mdash; PAY $64.50 (300 TOKENS)</a>
+    <button onclick="closeConfirmModal()" style="display:block; width:100%; margin-top:12px; background:none; border:none; color:#6b7280; font-size:0.85rem; cursor:pointer; padding:10px; font-family:'DM Sans',sans-serif;">Cancel</button>
+  </div>
+</div>
+
+<script>
+  var TOKENS_URL = 'https://explodely.com/p/1692961330?cid=token50';
+  function showConfirmModal(e) {
+    e.preventDefault();
+    document.getElementById('confirmModalBtn').href = TOKENS_URL;
+    document.getElementById('confirmModal').style.display = 'flex';
+    return false;
+  }
+  function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
