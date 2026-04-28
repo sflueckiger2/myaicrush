@@ -120,6 +120,7 @@ async function checkPremiumStatus() {
       let cancelledBanner = "";
       let isCancelled = false;
       let expiryFormatted = "";
+      let userPlan = null;
 
       try {
         const userRes = await fetch("/api/get-user-info", {
@@ -128,6 +129,7 @@ async function checkPremiumStatus() {
           body: JSON.stringify({ email: user.email })
         });
         const userData = await userRes.json();
+        userPlan = userData.explodelyPlan || null;
 
         if (userData.premiumExpiresAt) {
           const date = new Date(userData.premiumExpiresAt);
@@ -182,8 +184,46 @@ async function checkPremiumStatus() {
         </div>
       `;
 
+      // Bonus tokens info: adapt text based on plan (0 monthly / 30 annual / 100 lifetime)
       const bonusInfo = document.getElementById("bonus-tokens-info");
-      if (bonusInfo) bonusInfo.style.display = "block";
+      if (bonusInfo) {
+        const _bl = navigator.language || "";
+        if (userPlan === "monthly") {
+          bonusInfo.style.display = "none";
+        } else if (userPlan === "lifetime") {
+          let txt = "🎁 Lifetime members get 100 free tokens every month";
+          if (_bl.startsWith("fr")) txt = "🎁 Les membres à vie reçoivent 100 jetons gratuits chaque mois";
+          else if (_bl.startsWith("de")) txt = "🎁 Lifetime-Mitglieder erhalten 100 kostenlose Tokens pro Monat";
+          bonusInfo.textContent = txt;
+          bonusInfo.style.display = "block";
+        } else {
+          // annual or legacy → 30 tokens/month
+          let txt = "🎁 Premium members get 30 free tokens every month";
+          if (_bl.startsWith("fr")) txt = "🎁 Les membres premium reçoivent 30 jetons gratuits chaque mois";
+          else if (_bl.startsWith("de")) txt = "🎁 Premium-Mitglieder erhalten 30 kostenlose Tokens pro Monat";
+          bonusInfo.textContent = txt;
+          bonusInfo.style.display = "block";
+        }
+      }
+
+      // Show "Upgrade to Lifetime" upsell only for monthly/annual subscribers (not lifetime, not cancelled)
+      const upsellEl = document.getElementById("lifetime-upgrade-offer");
+      if (upsellEl && (userPlan === "monthly" || userPlan === "annual") && !isCancelled) {
+        const _ul = navigator.language || "";
+        const titleEl = document.getElementById("lifetime-offer-title");
+        const subEl = document.getElementById("lifetime-offer-sub");
+        const ctaEl = document.getElementById("lifetime-offer-cta");
+        if (_ul.startsWith("fr")) {
+          if (titleEl) titleEl.textContent = "Passez à vie — recevez 100 jetons / mois";
+          if (subEl) subEl.innerHTML = 'Payez une fois ($174), gardez le premium pour toujours et recevez <strong style="color:#fde68a;">100 jetons gratuits chaque mois</strong> au lieu de 30. Plus aucun renouvellement.';
+          if (ctaEl) ctaEl.textContent = "💎 Passer à vie — $174 unique";
+        } else if (_ul.startsWith("de")) {
+          if (titleEl) titleEl.textContent = "Auf Lifetime upgraden — 100 Tokens / Monat";
+          if (subEl) subEl.innerHTML = 'Einmal zahlen ($174), Premium für immer behalten und <strong style="color:#fde68a;">100 kostenlose Tokens jeden Monat</strong> statt 30 erhalten. Keine wiederkehrende Abrechnung.';
+          if (ctaEl) ctaEl.textContent = "💎 Jetzt upgraden — $174 einmalig";
+        }
+        upsellEl.style.display = "block";
+      }
 
       if (!isCancelled) {
         document.getElementById("cancel-sub-btn")?.addEventListener("click", () => {

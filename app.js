@@ -5193,13 +5193,14 @@ app.post("/api/get-user-info", async (req, res) => {
     const users = database.collection("users");
     const user = await users.findOne(
       { email: email.trim().toLowerCase() },
-      { projection: { premiumExpiresAt: 1, premiumCancelledAt: 1, explodely_expiresAt: 1 } }
+      { projection: { premiumExpiresAt: 1, premiumCancelledAt: 1, explodely_expiresAt: 1, explodelyPlan: 1 } }
     );
 
     if (!user) return res.json({});
     return res.json({
       premiumExpiresAt: user.explodely_expiresAt || user.premiumExpiresAt || null,
-      premiumCancelledAt: user.premiumCancelledAt || null
+      premiumCancelledAt: user.premiumCancelledAt || null,
+      explodelyPlan: user.explodelyPlan || null
     });
   } catch (error) {
     console.error("❌ Erreur get-user-info:", error);
