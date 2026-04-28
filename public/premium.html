@@ -506,7 +506,7 @@
     const SLIDER_CDN_BASE = "https://img.myaicrush.ai/";
     // Personnages exclus du slider (style incohérent ou retirés)
     const SLIDER_EXCLUDED = new Set(["Chen", "Malik"]);
-    // Fallback statique si le fetch echoue
+    // Fallback statique si le fetch echoue (tous les liens ont ete verifies HEAD 200/206)
     const SLIDER_FALLBACK = [
       { name: "Pauline", url: "https://img.myaicrush.ai/images/pauline/pauline3/pauline-clean.mp4" },
       { name: "Megane",  url: "https://img.myaicrush.ai/images/megane/megane3/megane_dressed_video_01.mp4" },
@@ -516,7 +516,14 @@
       { name: "Nour",    url: "https://img.myaicrush.ai/images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4" },
       { name: "Aiko",    url: "https://img.myaicrush.ai/images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4" },
       { name: "Amber",   url: "https://img.myaicrush.ai/images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4" },
-      { name: "Naomi",   url: "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4" }
+      { name: "Naomi",   url: "https://img.myaicrush.ai/images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4" },
+      { name: "Kat",     url: "https://img.myaicrush.ai/images/kat/kat1/bac3a1e4fa72577bee127e2d50912.webp" },
+      { name: "Amina",   url: "https://img.myaicrush.ai/images/amina/amina3/914991eb78554c470e3cd2cf50f71bfe.webp" },
+      { name: "Hanae",   url: "https://img.myaicrush.ai/images/hanae/hanae3/hanae-profil-vdef.webp" },
+      { name: "Ishani",  url: "https://img.myaicrush.ai/images/ishani/ishani3/9a02df9043621301db46165400fcfd91.webp" },
+      { name: "Kiara",   url: "https://img.myaicrush.ai/images/kiara/kiara3/2decd4674131c3a3b66a2ae2b022f2af.webp" },
+      { name: "Jasmine", url: "https://img.myaicrush.ai/images/jasmine/jasmine3/26dd17ef7f809ddc5d5772ad29266dc3.webp" },
+      { name: "Elvara",  url: "https://img.myaicrush.ai/images/elvara/elvara3/0aee9d2dcfb049c4106817827ca8792b.webp" }
     ];
 
     async function loadSliderMedia() {
