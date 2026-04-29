@@ -1116,6 +1116,146 @@ function getExplodelyProductPriceUSD({ isPremium, isAnnual, isLifetime, tokensAm
     return 0;
 }
 
+// ===== Fuzzy email matching for typos at checkout =====
+// When a customer mistypes their email on Explodely (e.g. "hotmai.com"
+// instead of "hotmail.com"), we try to recover them so the sale can be
+// credited and attributed instead of silently dropped.
+//
+// Two layers (most conservative first):
+//   1) common domain typos -> deterministic correction
+//   2) Levenshtein <= 2 on local-part, ONLY if the candidate user has
+//      already paid us (premium or creditsPurchased > 0). This bounds
+//      the false-positive risk to existing customers only.
+const COMMON_DOMAIN_TYPOS = {
+    'hotmai.com': 'hotmail.com', 'hotnail.com': 'hotmail.com', 'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com', 'hotmaill.com': 'hotmail.com', 'hotmail.co': 'hotmail.com', 'hotmail.cm': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hormail.com': 'hotmail.com',
+    'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmal.com': 'gmail.com', 'gmaill.com': 'gmail.com', 'gnail.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmail.cm': 'gmail.com', 'gmail.con': 'gmail.com', 'gemail.com': 'gmail.com',
+    'yaho.com': 'yahoo.com', 'yahoo.co': 'yahoo.com', 'yahoo.cm': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'yhaoo.com': 'yahoo.com', 'yahho.com': 'yahoo.com',
+    'outlok.com': 'outlook.com', 'outloook.com': 'outlook.com', 'outlook.co': 'outlook.com', 'outlook.cm': 'outlook.com', 'oultook.com': 'outlook.com',
+    'iclould.com': 'icloud.com', 'icloud.co': 'icloud.com', 'icloud.cm': 'icloud.com', 'iclou.com': 'icloud.com',
+    'live.co': 'live.com', 'live.cm': 'live.com', 'liv.com': 'live.com',
+    'orang.fr': 'orange.fr', 'oranges.fr': 'orange.fr', 'orange.f': 'orange.fr',
+    'wandoo.fr': 'wanadoo.fr', 'wanado.fr': 'wanadoo.fr',
+    'fre.fr': 'free.fr', 'frre.fr': 'free.fr',
+    'sfrr.fr': 'sfr.fr',
+    'laposte.ne': 'laposte.net', 'laposte.fr': 'laposte.net',
+    'gmx.de': 'gmx.com', // keep as-is when actually .de — only used as last resort
+    'gmx.co': 'gmx.com'
+};
+
+function levenshtein(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const v0 = new Array(b.length + 1);
+    const v1 = new Array(b.length + 1);
+    for (let i = 0; i <= b.length; i++) v0[i] = i;
+    for (let i = 0; i < a.length; i++) {
+        v1[0] = i + 1;
+        for (let j = 0; j < b.length; j++) {
+            const cost = a[i] === b[j] ? 0 : 1;
+            v1[j + 1] = Math.min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost);
+        }
+        for (let k = 0; k <= b.length; k++) v0[k] = v1[k];
+    }
+    return v1[b.length];
+}
+
+function correctDomainTypo(email) {
+    const at = email.lastIndexOf('@');
+    if (at <= 0) return null;
+    const local = email.slice(0, at);
+    const domain = email.slice(at + 1).toLowerCase();
+    const fix = COMMON_DOMAIN_TYPOS[domain];
+    if (!fix || fix === domain) return null;
+    return `${local}@${fix}`;
+}
+
+// Find an existing paying user whose email is "very close" to the candidate.
+// - Same (corrected) domain
+// - Levenshtein <= 2 on local-part
+// - User must already be a customer (premium or has bought tokens)
+async function findFuzzyPayingUser(database, candidateEmail) {
+    const users = database.collection('users');
+    const at = candidateEmail.lastIndexOf('@');
+    if (at <= 0) return null;
+    const local = candidateEmail.slice(0, at);
+    let domain = candidateEmail.slice(at + 1).toLowerCase();
+    if (COMMON_DOMAIN_TYPOS[domain]) domain = COMMON_DOMAIN_TYPOS[domain];
+
+    // Pull paying users on the same (corrected) domain only
+    const sameDomainPayers = await users.find(
+        {
+            email: { $regex: `@${domain.replace(/\./g, '\\.')}$`, $options: 'i' },
+            $or: [
+                { explodelyPremium: true },
+                { creditsPurchased: { $gt: 0 } }
+            ]
+        },
+        { projection: { email: 1, explodelyPremium: 1, creditsPurchased: 1, lastClickedCampaignAt: 1 } }
+    ).toArray();
+
+    let best = null;
+    for (const u of sameDomainPayers) {
+        const otherLocal = u.email.split('@')[0];
+        const dist = levenshtein(local.toLowerCase(), otherLocal.toLowerCase());
+        if (dist > 2) continue;
+        if (!best || dist < best.distance) {
+            best = { matchedEmail: u.email, distance: dist };
+        }
+    }
+    return best;
+}
+
+// Try to recover an email that didn't match exactly. Returns
+//   { matchedEmail, matchType, originalEmail, distance? }  or null.
+async function recoverEmailFromTypo(database, originalEmail) {
+    const users = database.collection('users');
+
+    // Layer 1: deterministic domain typo
+    const domainCorrected = correctDomainTypo(originalEmail);
+    if (domainCorrected) {
+        const exists = await users.findOne({ email: domainCorrected }, { projection: { email: 1 } });
+        if (exists) {
+            return { matchedEmail: exists.email, matchType: 'domain_typo', originalEmail, distance: 0 };
+        }
+    }
+
+    // Layer 2: Levenshtein <= 2 on local-part, paying users only
+    const fuzzy = await findFuzzyPayingUser(database, domainCorrected || originalEmail);
+    if (fuzzy) {
+        return { matchedEmail: fuzzy.matchedEmail, matchType: 'local_typo', originalEmail, distance: fuzzy.distance };
+    }
+    return null;
+}
+
+// Notify admin once per (original -> matched) pair so we keep an audit trail.
+const _typoMatchAlertSent = new Set();
+async function notifyAdminTypoMatch({ original, matched, matchType, distance, productInfo }) {
+    const key = `${original}=>${matched}`;
+    if (_typoMatchAlertSent.has(key)) return;
+    _typoMatchAlertSent.add(key);
+    try {
+        await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'MyAiCrush <contact@myaicrush.ai>',
+            to: process.env.ADMIN_EMAIL || 'sflueckiger.pro@gmail.com',
+            subject: `[MyAiCrush] Typo email recovered: ${original} -> ${matched}`,
+            html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#1a1a2e;color:#e0e0e0;border-radius:12px;overflow:hidden;">
+                <div style="background:#7c3aed;padding:18px 22px;"><h2 style="margin:0;color:#fff;font-size:1rem;">Email typo auto-recovered</h2></div>
+                <div style="padding:18px 22px;font-size:0.88rem;line-height:1.5;">
+                    <p><strong>Original (Explodely):</strong> <code>${original}</code></p>
+                    <p><strong>Matched user:</strong> <code>${matched}</code></p>
+                    <p><strong>Match type:</strong> ${matchType}${typeof distance === 'number' ? ` (Levenshtein ${distance})` : ''}</p>
+                    ${productInfo ? `<p><strong>Sale:</strong> ${productInfo}</p>` : ''}
+                    <p style="color:#9ca3af;margin-top:14px;font-size:0.78rem;">If this is wrong, refund + adjust manually. Reply with the original email to disable future matches.</p>
+                </div>
+            </div>`
+        });
+        console.log(`📧 Admin notified of typo recovery: ${original} -> ${matched}`);
+    } catch (e) {
+        console.error('❌ Failed to send typo alert email:', e.message);
+    }
+}
+
 async function attributeSaleToCampaign(database, email, productInfo) {
     try {
         const user = await database.collection('users').findOne(
@@ -1178,6 +1318,10 @@ app.post("/webhook/explodely", async (req, res) => {
 
     const normalizeEmail = (v) => String(v || "").trim().toLowerCase();
 
+    // Track typo recovery info on the picked email so we can log it on the
+    // event for audit / dashboard later. Reset for each webhook call.
+    let typoRecovery = null;
+
     const pickBestEmail = async (raw) => {
       // Explodely peut renvoyer "a@gmail.com,a@gmail.com,b@gmail.com"
       const candidates = uniq(
@@ -1188,19 +1332,28 @@ app.post("/webhook/explodely", async (req, res) => {
 
       if (candidates.length === 0) return "";
 
-      // ✅ Si un seul email -> on le prend (même s'il n'existe pas encore en DB,
-      // on créera alors un user complet avec $setOnInsert)
-      if (candidates.length === 1) return candidates[0];
-
-      // ✅ Sinon: on prend celui qui existe dans MongoDB
+      // 1) Try exact matches in DB first across all candidates
       const existing = await users
         .find({ email: { $in: candidates } }, { projection: { email: 1 } })
         .toArray();
 
-      if (existing.length === 1) return existing[0].email;
-      if (existing.length > 1) return existing[0].email; // 1er match
+      if (existing.length >= 1) return existing[0].email;
 
-      // ❌ Aucun match: on ne crédite pas (évite crédits fantômes)
+      // 2) Single candidate, no exact match -> try typo recovery before
+      //    falling back to upsert. This rescues sales when the customer
+      //    mistyped their email at Explodely checkout.
+      if (candidates.length === 1) {
+        const recovered = await recoverEmailFromTypo(database, candidates[0]);
+        if (recovered) {
+          typoRecovery = recovered;
+          console.log(`🩹 [TYPO-RECOVERY] ${recovered.originalEmail} -> ${recovered.matchedEmail} (${recovered.matchType})`);
+          return recovered.matchedEmail;
+        }
+        // No recovery: keep the original (will create a brand-new user via $setOnInsert)
+        return candidates[0];
+      }
+
+      // 3) Multiple candidates, none exists, none recovered -> nothing safe
       return "";
     };
 
@@ -1220,6 +1373,26 @@ app.post("/webhook/explodely", async (req, res) => {
 
     // ✅ Email: choisi 1 seule fois, correctement
     const email = await pickBestEmail(payload.customerEmail);
+
+    // If we recovered an email via typo correction, alert admin once and
+    // prepare the audit-trail field added to every event below.
+    const typoMatchField = typoRecovery ? {
+      typoMatch: {
+        type: typoRecovery.matchType,
+        original: typoRecovery.originalEmail,
+        matched: typoRecovery.matchedEmail,
+        distance: typoRecovery.distance
+      }
+    } : {};
+    if (typoRecovery) {
+      notifyAdminTypoMatch({
+        original: typoRecovery.originalEmail,
+        matched: typoRecovery.matchedEmail,
+        matchType: typoRecovery.matchType,
+        distance: typoRecovery.distance,
+        productInfo: `productIds=${(payload.productId || '').toString()} types=${(payload.type || '').toString()}`
+      }).catch(() => {});
+    }
 
     if (!email) {
       console.warn("⚠️ Webhook Explodely: aucun email MyAiCrush matché:", {
@@ -1317,7 +1490,7 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
+          await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date(), ...typoMatchField });
           console.log(`✅ Premium Annuel Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isAnnual: true, label: "annual", productId, orderId });
           continue;
@@ -1346,7 +1519,7 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
+          await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date(), ...typoMatchField });
           console.log(`✅ Premium LIFETIME Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 100 jetons ignoré)' : '(+100 jetons)'} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isLifetime: true, label: "lifetime", productId, orderId });
           continue;
@@ -1369,7 +1542,7 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: true, createdAt: new Date() });
+          await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: true, createdAt: new Date(), ...typoMatchField });
           console.log(`✅ Premium Mensuel Explodely activé pour ${email} (pas de bonus jetons sur le mensuel) (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_monthly", productId, orderId });
           continue;
@@ -1392,7 +1565,7 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          await explodelyEvents.insertOne({ ...eventKey, action: "tokens_add", tokens: toAdd, createdAt: new Date() });
+          await explodelyEvents.insertOne({ ...eventKey, action: "tokens_add", tokens: toAdd, createdAt: new Date(), ...typoMatchField });
           console.log(`💰 +${toAdd} jetons pour ${email} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { tokensAmount: toAdd, label: `tokens_${toAdd}`, productId, orderId });
           continue;
