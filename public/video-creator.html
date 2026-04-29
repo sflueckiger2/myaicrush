@@ -129,13 +129,46 @@
       position: relative; border-radius: 18px; overflow: hidden;
       border: 1px solid rgba(255,255,255,0.1); background: #000;
       -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
     .vc-video-wrapper video {
       width: 100%; display: block; border-radius: 18px;
       pointer-events: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
     }
     .vc-video-shield {
       position: absolute; inset: 0; z-index: 2; cursor: default;
+    }
+    /* Discreet watermark on every protected video — survives screenshots */
+    .vc-video-wrapper::after,
+    .vc-gallery-card::after,
+    .vc-viewer-overlay::after {
+      content: "myaicrush.ai";
+      position: absolute; right: 8px; top: 8px; z-index: 5;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.18);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+      pointer-events: none;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .vc-viewer-overlay::after { font-size: 0.85rem; right: 18px; top: 18px; color: rgba(255,255,255,0.22); }
+    /* Blur every video when the window loses focus (limits OBS/screen-record from another app) */
+    body.vc-window-blurred .vc-video-wrapper video,
+    body.vc-window-blurred .vc-gallery-card video,
+    body.vc-window-blurred .vc-viewer-overlay video { filter: blur(28px); }
+    /* Discreet legal disclaimer */
+    .vc-legal-notice {
+      max-width: 540px; margin: 28px auto 0;
+      font-size: 0.68rem; line-height: 1.45; color: #555;
+      text-align: center; padding: 0 12px;
+      font-style: italic;
+    }
+    .vc-viewer-legal {
+      position: absolute; bottom: 10px; left: 0; right: 0; z-index: 3;
+      text-align: center; font-size: 0.62rem; color: rgba(255,255,255,0.35);
+      padding: 0 16px; font-style: italic; pointer-events: none;
     }
     .vc-video-controls {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
@@ -311,6 +344,8 @@
       <div id="galleryGrid" class="vc-gallery-grid"></div>
     </div>
 
+    <p class="vc-legal-notice" data-i18n="legal-notice">These videos are for your personal enjoyment. Downloads and screen captures are blocked so you watch them only on the platform. MyAiCrush takes no responsibility for any misuse of these videos.</p>
+
   </div>
 </div>
 
@@ -340,11 +375,12 @@
 <div class="vc-viewer-overlay" id="viewerOverlay" oncontextmenu="return false;">
   <div class="vc-viewer-shield" onclick="closeViewer()"></div>
   <button class="vc-viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
-  <video autoplay loop id="viewerVideo" playsinline></video>
+  <video autoplay loop id="viewerVideo" playsinline controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false;" ondragstart="return false;" draggable="false"></video>
   <div class="vc-viewer-controls">
     <button onclick="viewerTogglePlay()"><i class="fas fa-pause" id="viewerPlayIcon"></i></button>
     <button onclick="viewerToggleMute()"><i class="fas fa-volume-mute" id="viewerMuteIcon"></i></button>
   </div>
+  <div class="vc-viewer-legal" data-i18n="legal-notice">These videos are for your personal enjoyment. Downloads and screen captures are blocked so you watch them only on the platform. MyAiCrush takes no responsibility for any misuse of these videos.</div>
 </div>
 
 <script>
@@ -377,6 +413,7 @@ const i18n = {
     "tokens-modal-cta": "Acheter des jetons",
     "personal-only": "Usage personnel uniquement. Cette vidéo est sauvegardée sur ton compte.",
     "my-videos": "Mes Vidéos", "no-videos": "Tes vidéos générées apparaîtront ici.",
+    "legal-notice": "Ces vidéos sont destinées à votre plaisir personnel. Les téléchargements et captures d'écran sont bloqués pour qu'elles soient visionnées uniquement sur la plateforme. MyAiCrush n'assume aucune responsabilité en cas d'utilisation de ces vidéos en dehors de la plateforme.",
   },
   de: {
     back: "Zurück", title: "Erstelle ein Video von deinem Crush",
@@ -402,6 +439,7 @@ const i18n = {
     "tokens-modal-cta": "Tokens kaufen",
     "personal-only": "Nur für den persönlichen Gebrauch. Dieses Video ist in deinem Konto gespeichert.",
     "my-videos": "Meine Videos", "no-videos": "Deine generierten Videos werden hier angezeigt.",
+    "legal-notice": "Diese Videos sind für dein persönliches Vergnügen bestimmt. Downloads und Screenshots sind gesperrt, damit du sie ausschließlich auf der Plattform ansiehst. MyAiCrush übernimmt keine Verantwortung bei einer Nutzung dieser Videos außerhalb der Plattform.",
   }
 };
 
@@ -514,8 +552,8 @@ function createJobCard(jobId, thumbDataUrl, modelName, promptText) {
     </div>
     <div class="vc-progress-bar"><div class="vc-progress-fill" id="progress-${jobId}" style="width:10%;"></div></div>
     <div class="vc-video-wrapper" id="video-wrap-${jobId}" style="display:none; margin-top:10px;">
-      <video loop muted playsinline id="video-${jobId}"></video>
-      <div class="vc-video-shield" onclick="jobTogglePlay('${jobId}')"></div>
+      <video loop muted playsinline id="video-${jobId}" controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false;" ondragstart="return false;" draggable="false"></video>
+      <div class="vc-video-shield" onclick="jobTogglePlay('${jobId}')" oncontextmenu="return false;"></div>
       <div class="vc-video-controls">
         <button onclick="jobTogglePlay('${jobId}')" id="play-${jobId}"><i class="fas fa-pause"></i></button>
         <input type="range" min="0" max="100" value="0" id="seek-${jobId}" oninput="jobSeek('${jobId}', this.value)">
@@ -677,9 +715,9 @@ async function loadGallery() {
 
     section.style.display = "block";
     grid.innerHTML = data.videos.map(v => `
-      <div class="vc-gallery-card" onclick="openViewer('${v.localUrl}')">
-        <video src="${v.localUrl}" muted playsinline preload="metadata"></video>
-        <div class="vc-gallery-shield"></div>
+      <div class="vc-gallery-card" onclick="openViewer('${v.localUrl}')" oncontextmenu="return false;">
+        <video src="${v.localUrl}" muted playsinline preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false;" ondragstart="return false;" draggable="false"></video>
+        <div class="vc-gallery-shield" oncontextmenu="return false;"></div>
         <div class="vc-gallery-meta">
           <div class="vc-gallery-model">${v.model === 'kling26' ? '✨ Ultra HD' : '🔥 Uncensored'}</div>
           <div>${new Date(v.createdAt).toLocaleDateString()}</div>
@@ -720,13 +758,45 @@ function viewerToggleMute() {
 }
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeViewer(); });
 
-// Block print-screen & common screenshot shortcuts
+// Anti-screenshot / anti-download shortcuts
+// Note: browsers cannot truly block OS-level screen captures (PrintScreen,
+// macOS Cmd+Shift+3/4/5, mobile screen recording). What we can do:
+//   - clear the clipboard right after PrintScreen so the screenshot is not
+//     accessible via paste
+//   - prevent in-page download / save / print / view-source / DevTools
+//   - blur every video as soon as the window loses focus, which kills any
+//     attempt to record with OBS / external app on top
 document.addEventListener("keyup", e => {
-  if (e.key === "PrintScreen") { navigator.clipboard.writeText(""); }
+  if (e.key === "PrintScreen") {
+    try { navigator.clipboard.writeText(""); } catch (_) {}
+  }
 });
 document.addEventListener("keydown", e => {
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "S" || e.key === "s" || e.key === "3" || e.key === "4")) e.preventDefault();
-  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) e.preventDefault();
+  const k = (e.key || "").toLowerCase();
+  const meta = e.ctrlKey || e.metaKey;
+  // Save page / print / view-source / open file
+  if (meta && ["s", "p", "u", "o"].includes(k)) { e.preventDefault(); return false; }
+  // DevTools
+  if (k === "f12") { e.preventDefault(); return false; }
+  if (meta && e.shiftKey && ["i", "j", "c", "k"].includes(k)) { e.preventDefault(); return false; }
+  // macOS screenshot tools
+  if (meta && e.shiftKey && ["3", "4", "5"].includes(k)) { e.preventDefault(); return false; }
+  // Save image as (when available)
+  if (meta && e.altKey && k === "s") { e.preventDefault(); return false; }
+});
+
+// Blur every video when the window loses focus or visibility changes
+// (limits screen recording from a parallel app like OBS).
+function applyBlurState(blurred) {
+  document.body.classList.toggle("vc-window-blurred", blurred);
+}
+window.addEventListener("blur", () => applyBlurState(true));
+window.addEventListener("focus", () => applyBlurState(false));
+document.addEventListener("visibilitychange", () => applyBlurState(document.hidden));
+
+// Block native dragstart on every video (defence in depth)
+document.addEventListener("dragstart", e => {
+  if (e.target && e.target.tagName === "VIDEO") { e.preventDefault(); return false; }
 });
 
 // Drag & drop
