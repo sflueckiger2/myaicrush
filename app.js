@@ -1134,9 +1134,21 @@ async function attributeSaleToCampaign(database, email, productInfo) {
         let campaignObjectId;
         try { campaignObjectId = new ObjectId(user.lastClickedCampaignId); } catch { return; }
 
+        const saleEntry = {
+            email,
+            productLabel: productInfo.label || 'sale',
+            productId: productInfo.productId || null,
+            orderId: productInfo.orderId || null,
+            usd: valueUSD,
+            at: new Date()
+        };
+
         const result = await database.collection('daily_email_campaigns').updateOne(
             { _id: campaignObjectId },
-            { $inc: { purchaseCount: 1, revenue: valueUSD } }
+            {
+                $inc: { purchaseCount: 1, revenue: valueUSD },
+                $push: { sales: saleEntry }
+            }
         );
         console.log(`💰 [EMAIL-ATTRIBUTION] +$${valueUSD} attributed to campaign ${user.lastClickedCampaignId} (${productInfo.label || 'sale'}) for ${email} | matched=${result.matchedCount}`);
     } catch (e) {
@@ -1307,7 +1319,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
           console.log(`✅ Premium Annuel Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
-          await attributeSaleToCampaign(database, email, { isAnnual: true, label: "annual" });
+          await attributeSaleToCampaign(database, email, { isAnnual: true, label: "annual", productId, orderId });
           continue;
         }
 
@@ -1336,7 +1348,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date() });
           console.log(`✅ Premium LIFETIME Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 100 jetons ignoré)' : '(+100 jetons)'} (orderId=${orderId})`);
-          await attributeSaleToCampaign(database, email, { isLifetime: true, label: "lifetime" });
+          await attributeSaleToCampaign(database, email, { isLifetime: true, label: "lifetime", productId, orderId });
           continue;
         }
 
@@ -1359,7 +1371,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: true, createdAt: new Date() });
           console.log(`✅ Premium Mensuel Explodely activé pour ${email} (pas de bonus jetons sur le mensuel) (orderId=${orderId})`);
-          await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_monthly" });
+          await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_monthly", productId, orderId });
           continue;
         }
 
@@ -1382,7 +1394,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
           await explodelyEvents.insertOne({ ...eventKey, action: "tokens_add", tokens: toAdd, createdAt: new Date() });
           console.log(`💰 +${toAdd} jetons pour ${email} (orderId=${orderId})`);
-          await attributeSaleToCampaign(database, email, { tokensAmount: toAdd, label: `tokens_${toAdd}` });
+          await attributeSaleToCampaign(database, email, { tokensAmount: toAdd, label: `tokens_${toAdd}`, productId, orderId });
           continue;
         }
 
@@ -7468,6 +7480,100 @@ app.get("/api/admin/email-campaigns", requireAdmin, async (req, res) => {
     }));
 
     res.json({ campaigns: formatted });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Detail of attributed sales for one campaign.
+// Uses the stored `sales` array if present (set by attributeSaleToCampaign),
+// otherwise falls back to reconstruction from users.lastClickedCampaignId
+// + explodely_events within the EMAIL_ATTRIBUTION_WINDOW_DAYS window.
+app.get("/api/admin/email-campaigns/:id/sales", requireAdmin, async (req, res) => {
+  try {
+    const { ObjectId } = require('mongodb');
+    let campaignId;
+    try { campaignId = new ObjectId(req.params.id); }
+    catch { return res.status(400).json({ error: 'invalid campaign id' }); }
+
+    const database = client.db('MyAICrush');
+    const camp = await database.collection('daily_email_campaigns').findOne({ _id: campaignId });
+    if (!camp) return res.status(404).json({ error: 'campaign not found' });
+
+    // Path A: stored detail
+    if (Array.isArray(camp.sales) && camp.sales.length) {
+      return res.json({
+        source: 'stored',
+        campaign: { id: camp._id.toString(), character: camp.character, language: camp.language || 'en', sentAt: camp.sentAt },
+        totals: { purchaseCount: camp.purchaseCount || 0, revenue: camp.revenue || 0 },
+        sales: camp.sales.map(s => ({
+          email: s.email, productLabel: s.productLabel, productId: s.productId,
+          orderId: s.orderId, usd: s.usd, at: s.at
+        }))
+      });
+    }
+
+    // Path B: reconstruct from users + explodely_events
+    const users = await database.collection('users').find(
+      { lastClickedCampaignId: String(campaignId) },
+      { projection: { email: 1, lastClickedCampaignAt: 1 } }
+    ).toArray();
+
+    if (!users.length) {
+      return res.json({
+        source: 'reconstructed',
+        campaign: { id: camp._id.toString(), character: camp.character, language: camp.language || 'en', sentAt: camp.sentAt },
+        totals: { purchaseCount: camp.purchaseCount || 0, revenue: camp.revenue || 0 },
+        sales: []
+      });
+    }
+
+    const emails = users.map(u => u.email);
+    const events = await database.collection('explodely_events').find({
+      email: { $in: emails }
+    }).sort({ createdAt: 1 }).toArray();
+
+    const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
+    const lifetimeId = String(process.env.EXPLODELY_LIFETIME_PRODUCT_ID || '887584369');
+    const annualId   = String(process.env.EXPLODELY_ANNUAL_PRODUCT_ID  || '');
+    const premiumId  = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || '');
+    const tokenIds = {
+      [String(process.env.EXPLODELY_TOKEN_10_ID  || '')]: 10,
+      [String(process.env.EXPLODELY_TOKEN_50_ID  || '')]: 50,
+      [String(process.env.EXPLODELY_TOKEN_100_ID || '')]: 100,
+      [String(process.env.EXPLODELY_TOKEN_300_ID || '')]: 300,
+      [String(process.env.EXPLODELY_TOKEN_700_ID || '')]: 700,
+      [String(process.env.EXPLODELY_TOKEN_1000_ID|| '')]: 1000
+    };
+
+    const sales = [];
+    for (const ev of events) {
+      const u = userByEmail[ev.email];
+      if (!u || !u.lastClickedCampaignAt) continue;
+      const ageMs = new Date(ev.createdAt).getTime() - new Date(u.lastClickedCampaignAt).getTime();
+      if (ageMs < 0 || ageMs > EMAIL_ATTRIBUTION_WINDOW_DAYS * 24 * 3600 * 1000) continue;
+
+      const productId = String(ev.productId || '');
+      let label = '', usd = 0;
+      if (productId === lifetimeId)       { label = 'lifetime';        usd = 174; }
+      else if (productId === annualId)    { label = 'annual';          usd = 89;  }
+      else if (productId === premiumId)   { label = 'premium_monthly'; usd = 29;  }
+      else if (tokenIds[productId])       { const t = tokenIds[productId]; label = `tokens_${t}`; usd = getExplodelyProductPriceUSD({ tokensAmount: t }); }
+      else continue;
+      if (usd <= 0) continue;
+
+      sales.push({
+        email: ev.email, productLabel: label, productId,
+        orderId: ev.orderId || null, usd, at: ev.createdAt
+      });
+    }
+
+    return res.json({
+      source: 'reconstructed',
+      campaign: { id: camp._id.toString(), character: camp.character, language: camp.language || 'en', sentAt: camp.sentAt },
+      totals: { purchaseCount: camp.purchaseCount || 0, revenue: camp.revenue || 0 },
+      sales
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
