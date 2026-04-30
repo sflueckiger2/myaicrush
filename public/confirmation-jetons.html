@@ -497,17 +497,20 @@
     console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
 
-  <!-- TrafficJunky -->
+  <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->
   <script>
   (function() {
-    const randomNumber = Date.now();
     const urlParams = new URLSearchParams(window.location.search);
-    const transactionId = urlParams.get("session_id") || randomNumber;
-    const description = encodeURIComponent("MyAiCrush+Premium");
+    const rawAmount = urlParams.get("amount");
+    let _tjAmount = parseFloat(rawAmount);
+    if (!_tjAmount || isNaN(_tjAmount) || _tjAmount <= 0) _tjAmount = 29;
+    const transactionId = urlParams.get("session_id") || Date.now();
+    const description = encodeURIComponent("MyAiCrush_Tokens");
     const img = document.createElement("img");
-    img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${randomNumber}&cti=${transactionId}&ctv=40.00&ctd=${description}`;
+    img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${Date.now()}&cti=${transactionId}&ctv=${_tjAmount.toFixed(2)}&ctd=${description}`;
     img.width = 1; img.height = 1; img.style.display = "none";
     document.body.appendChild(img);
+    console.log('[TJ Purchase]', { value: _tjAmount, fromUrl: rawAmount });
   })();
   </script>
 

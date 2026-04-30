@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmation - Welcome to MyAiCrush</title>
+    <meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
     <!-- Google Analytics (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
     <script>
@@ -159,14 +160,20 @@
 
     <script type="application/javascript" src="https://a.magsrv.com/tag_gen.js" data-goal="8f5ae8e33257ea42f1184f0f647f5d05"></script>
 
+    <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->
     <script>
     (function() {
         const urlParams = new URLSearchParams(window.location.search);
+        const rawAmount = urlParams.get("amount");
+        let _tjAmount = parseFloat(rawAmount);
+        if (!_tjAmount || isNaN(_tjAmount) || _tjAmount <= 0) _tjAmount = 29;
         const transactionId = urlParams.get("session_id") || Date.now();
+        const description = encodeURIComponent("MyAiCrush_Premium_Quiz");
         const img = document.createElement("img");
-        img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${Date.now()}&cti=${transactionId}&ctv=49.00&ctd=Premium_Purchase`;
-        img.style.display = "none";
+        img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${Date.now()}&cti=${transactionId}&ctv=${_tjAmount.toFixed(2)}&ctd=${description}`;
+        img.width = 1; img.height = 1; img.style.display = "none";
         document.body.appendChild(img);
+        console.log('[TJ Purchase]', { value: _tjAmount, fromUrl: rawAmount });
     })();
     </script>
 

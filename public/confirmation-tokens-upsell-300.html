@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>One-Time Offer — 300 Tokens 50% Off</title>
+  <meta http-equiv="Delegate-CH" content="sec-ch-ua https://ads.trafficjunky.net; sec-ch-ua-arch https://ads.trafficjunky.net; sec-ch-ua-full-version-list https://ads.trafficjunky.net; sec-ch-ua-mobile https://ads.trafficjunky.net; sec-ch-ua-model https://ads.trafficjunky.net; sec-ch-ua-platform https://ads.trafficjunky.net; sec-ch-ua-platform-version https://ads.trafficjunky.net;">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -507,6 +508,23 @@
     if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 64.5; }
     fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
     console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
+  </script>
+
+  <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->
+  <script>
+  (function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawAmount = urlParams.get("amount");
+    let _tjAmount = parseFloat(rawAmount);
+    if (!_tjAmount || isNaN(_tjAmount) || _tjAmount <= 0) _tjAmount = 64.5;
+    const transactionId = urlParams.get("session_id") || Date.now();
+    const description = encodeURIComponent("MyAiCrush_Tokens_Upsell_300");
+    const img = document.createElement("img");
+    img.src = `https://ads.trafficjunky.net/ct?a=1000552661&member_id=1006784501&cb=${Date.now()}&cti=${transactionId}&ctv=${_tjAmount.toFixed(2)}&ctd=${description}`;
+    img.width = 1; img.height = 1; img.style.display = "none";
+    document.body.appendChild(img);
+    console.log('[TJ Purchase]', { value: _tjAmount, fromUrl: rawAmount });
+  })();
   </script>
 
 <!-- Confirm purchase modal -->
