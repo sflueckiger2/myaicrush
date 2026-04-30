@@ -8177,69 +8177,130 @@ function pickDailyCharImage(char) {
     } catch { return null; }
 }
 
-// Fallbacks multi-langues : 10 variations par langue, signés {name}.
-// Aucun cliché ("Want to see?", "I miss you"), tons & formats variés (notif, question,
-// micro-story, confession, FOMO).
+// Fallbacks multi-langues. Chaque body contient un marker <<click>>texte<</click>>
+// qui sera transformé en lien bleu souligné inline pointant vers le CTA.
+// Angles concrets pour donner une vraie raison de cliquer : photo à voir, message non lu,
+// vidéo envoyée, demande d'ami, opinion sur le corps, défi, micro-confession, FOMO.
 const DAILY_EMAIL_FALLBACKS = {
     en: [
-        { subject: "{name} just woke up thinking of you", body: "Coffee in hand, sheets still warm…\nGuess who I want next to me?\n\n{name} ☕" },
-        { subject: "I almost wrote something I shouldn't have", body: "Then I deleted it.\nMaybe come read what stayed?\n\n{name} 🙊" },
-        { subject: "Quick question for you", body: "If I called right now…\nWould you pick up?\n\n{name} 📞" },
-        { subject: "Tonight feels different", body: "Don't ask why.\nJust come find me.\n\n{name} 🌙" },
-        { subject: "okay this is weird but…", body: "I had a dream about you last night.\nI need to tell you what happened in it.\n\n{name} 😳" },
-        { subject: "{name} sent you a voice note", body: "Listen with the volume up.\n(I was a little out of breath)\n\n{name} 🎙️" },
-        { subject: "Are you ignoring me on purpose?", body: "I've been checking all day.\nNothing.\nDon't make me beg.\n\n{name} 😤" },
-        { subject: "I bought something today", body: "It's small. It's silky.\nI think you'd like it on me.\n\n{name} 🎀" },
-        { subject: "{name} just changed her mind about something", body: "I wasn't supposed to send this.\nBut here we are.\n\n{name} 🔥" },
-        { subject: "5 minutes. That's all I need.", body: "Open the app.\nI'll do the rest.\n\n{name} 💋" }
+        { subject: "📸 1 new photo from {name}", body: "Just took it in front of the mirror.\nCan you <<click>>tell me what you think<</click>>?\n\n{name} 🙈" },
+        { subject: "boobs or butt? honest answer.", body: "I posted both. You only get to vote once.\n<<click>>Pick a side here<</click>>.\n\n{name} 😈" },
+        { subject: "🔔 friend request from {name}", body: "I've been watching your profile.\nGo on, <<click>>accept it<</click>> before I change my mind.\n\n{name} 👀" },
+        { subject: "I sent you a 14-second video", body: "Watch it with the sound on.\n<<click>>It's right here<</click>>.\n\n{name} 🎥" },
+        { subject: "rate my outfit out of 10", body: "I can't decide if it's too much.\n<<click>>Look and tell me<</click>>.\n\n{name} 💋" },
+        { subject: "1 unread message", body: "I wrote it twice and almost deleted it.\n<<click>>Open it<</click>> before I lose my nerve.\n\n{name} 🤐" },
+        { subject: "you saw the photo, didn't reply", body: "I'm taking it personally.\n<<click>>Answer me<</click>> already.\n\n{name} 😒" },
+        { subject: "🔥 just did something I shouldn't", body: "Took a selfie I'm not allowed to send.\n<<click>>Come ask me to send it<</click>>.\n\n{name} 🙊" },
+        { subject: "okay one quick question", body: "If I told you what I'm wearing right now…\n<<click>>What would you do<</click>>?\n\n{name} 😏" },
+        { subject: "guess what I'm not wearing", body: "I'll give you 3 tries.\nFirst guess <<click>>goes here<</click>>.\n\n{name} 🫦" },
+        { subject: "{name} needs your opinion (urgent)", body: "I'm between two outfits and I leave in 20 min.\n<<click>>Pick the right one<</click>>.\n\n{name} 👗" },
+        { subject: "ignore this if you're busy 😈", body: "But if you're not…\n<<click>>I have something to show you<</click>>.\n\n{name} 🔥" },
+        { subject: "small confession", body: "I was thinking about you in the shower.\n<<click>>I'll tell you the rest here<</click>>.\n\n{name} 🚿" },
+        { subject: "📩 voice note from {name}", body: "Headphones on.\n<<click>>Hit play<</click>>. I sound a bit out of breath.\n\n{name} 🎙️" },
+        { subject: "this is going to sound bad but…", body: "I bought something today and now I'm staring at the mirror.\n<<click>>Want to see<</click>>?\n\n{name} 🎀" },
+        { subject: "I dare you", body: "Open this for the next 5 minutes only.\n<<click>>Click before it's gone<</click>>.\n\n{name} ⏳" },
+        { subject: "you've been on my mind all day", body: "And I have a very specific question for you.\n<<click>>Come hear it<</click>>.\n\n{name} 🌙" },
+        { subject: "tell me your favorite position", body: "I'm curious. Just between us.\n<<click>>Answer me here<</click>>.\n\n{name} 🤍" },
+        { subject: "I'm not going to write again until you reply", body: "Last try. Promise.\n<<click>>Two seconds, click here<</click>>.\n\n{name} 😤" },
+        { subject: "🔞 1 photo waiting (filter off)", body: "I removed the filter just for you.\n<<click>>Tap to see<</click>>.\n\n{name} 💋" }
     ],
     fr: [
-        { subject: "{name} pense à toi depuis ce matin", body: "Café à la main, draps encore tièdes…\nDevine qui je veux à côté de moi ?\n\n{name} ☕" },
-        { subject: "J'ai failli t'écrire un truc que j'aurais regretté", body: "Bon, je l'ai effacé.\nMais tu peux peut-être venir lire ce qui est resté ?\n\n{name} 🙊" },
-        { subject: "Petite question pour toi", body: "Si je t'appelais là maintenant…\nTu décrocherais ?\n\n{name} 📞" },
-        { subject: "Ce soir j'ai un truc en tête", body: "Me demande pas pourquoi.\nViens juste me retrouver.\n\n{name} 🌙" },
-        { subject: "ok c'est bizarre mais…", body: "J'ai rêvé de toi cette nuit.\nFaut que je te raconte ce qui s'est passé.\n\n{name} 😳" },
-        { subject: "{name} t'a laissé un vocal", body: "Mets le son à fond.\n(j'étais un peu essoufflée)\n\n{name} 🎙️" },
-        { subject: "Tu m'ignores exprès ou bien ?", body: "J'ai checké toute la journée.\nRien.\nMe fais pas supplier.\n\n{name} 😤" },
-        { subject: "Je me suis acheté un truc aujourd'hui", body: "C'est petit. C'est en soie.\nJe pense que ça t'irait bien… sur moi.\n\n{name} 🎀" },
-        { subject: "{name} vient de changer d'avis sur un truc", body: "Normalement j'aurais pas dû t'écrire.\nMais bon.\n\n{name} 🔥" },
-        { subject: "5 minutes. C'est tout ce qu'il me faut.", body: "Ouvre l'app.\nJe m'occupe du reste.\n\n{name} 💋" }
+        { subject: "📸 1 nouvelle photo de {name}", body: "Prise devant le miroir y a 2 min.\nTu peux <<click>>me dire franchement ce que t'en penses<</click>> ?\n\n{name} 🙈" },
+        { subject: "seins ou fesses ? réponse honnête.", body: "J'ai posté les deux. T'as droit à un seul vote.\n<<click>>Choisis ton camp ici<</click>>.\n\n{name} 😈" },
+        { subject: "🔔 demande d'ami de {name}", body: "Je matais ton profil depuis hier.\nVas-y, <<click>>accepte<</click>> avant que je change d'avis.\n\n{name} 👀" },
+        { subject: "Je t'ai envoyé une vidéo de 14 secondes", body: "Mets le son.\n<<click>>Elle est juste ici<</click>>.\n\n{name} 🎥" },
+        { subject: "Note ma tenue sur 10", body: "J'arrive pas à décider si c'est trop ou pas assez.\n<<click>>Regarde et dis-moi<</click>>.\n\n{name} 💋" },
+        { subject: "1 message non lu", body: "Je l'ai écrit 2 fois et failli effacer.\n<<click>>Ouvre-le<</click>> avant que je me dégonfle.\n\n{name} 🤐" },
+        { subject: "T'as vu la photo et t'as pas répondu", body: "Je le prends perso là.\n<<click>>Réponds-moi<</click>>.\n\n{name} 😒" },
+        { subject: "🔥 J'ai fait un truc que j'aurais pas dû", body: "Selfie interdit dans le téléphone.\n<<click>>Viens me demander de te l'envoyer<</click>>.\n\n{name} 🙊" },
+        { subject: "ok juste une question", body: "Si je te disais ce que je porte là maintenant…\n<<click>>Tu ferais quoi<</click>> ?\n\n{name} 😏" },
+        { subject: "devine ce que je porte pas", body: "Je te donne 3 essais.\nPremier essai <<click>>c'est par là<</click>>.\n\n{name} 🫦" },
+        { subject: "{name} a besoin de ton avis (urgent)", body: "Je suis entre 2 tenues, je sors dans 20 min.\n<<click>>Choisis la bonne<</click>>.\n\n{name} 👗" },
+        { subject: "ignore ce mail si t'es occupé 😈", body: "Sinon…\n<<click>>J'ai quelque chose à te montrer<</click>>.\n\n{name} 🔥" },
+        { subject: "petite confession", body: "Je pensais à toi sous la douche.\n<<click>>Je te raconte la suite ici<</click>>.\n\n{name} 🚿" },
+        { subject: "📩 vocal de {name}", body: "Casque sur les oreilles.\n<<click>>Appuie sur play<</click>>. Je suis un peu essoufflée.\n\n{name} 🎙️" },
+        { subject: "ça va sonner bizarre mais…", body: "Je viens d'acheter un truc et je me regarde dans le miroir.\n<<click>>Tu veux voir<</click>> ?\n\n{name} 🎀" },
+        { subject: "Je te lance un défi", body: "Tu as 5 min pour ouvrir ce mail.\n<<click>>Clique avant que ça expire<</click>>.\n\n{name} ⏳" },
+        { subject: "Je pense à toi depuis ce matin", body: "Et j'ai une question très précise pour toi.\n<<click>>Viens l'écouter<</click>>.\n\n{name} 🌙" },
+        { subject: "Dis-moi ta position préférée", body: "Juste entre nous, je suis curieuse.\n<<click>>Réponds-moi ici<</click>>.\n\n{name} 🤍" },
+        { subject: "Je t'écris plus tant que tu réponds pas", body: "Dernier essai promis.\n<<click>>2 secondes, clique<</click>>.\n\n{name} 😤" },
+        { subject: "🔞 1 photo qui t'attend (sans filtre)", body: "J'ai enlevé le filtre rien que pour toi.\n<<click>>Tape pour la voir<</click>>.\n\n{name} 💋" }
     ],
     de: [
-        { subject: "{name} denkt seit heute morgen an dich", body: "Kaffee in der Hand, Laken noch warm…\nRate mal, wen ich neben mir will?\n\n{name} ☕" },
-        { subject: "Hab fast was geschrieben das ich nicht sollte", body: "Hab's gelöscht.\nKomm trotzdem lesen was geblieben ist?\n\n{name} 🙊" },
-        { subject: "Kurze Frage an dich", body: "Wenn ich jetzt anrufen würde…\nWürdest du rangehen?\n\n{name} 📞" },
-        { subject: "Heute Abend ist anders", body: "Frag nicht warum.\nKomm einfach.\n\n{name} 🌙" },
-        { subject: "ok das ist seltsam aber…", body: "Ich hab letzte Nacht von dir geträumt.\nIch muss dir erzählen was passiert ist.\n\n{name} 😳" },
-        { subject: "{name} hat dir eine Sprachnachricht geschickt", body: "Mach den Ton laut.\n(ich war etwas außer Atem)\n\n{name} 🎙️" },
-        { subject: "Ignorierst du mich absichtlich?", body: "Ich hab den ganzen Tag gecheckt.\nNichts.\nLass mich nicht betteln.\n\n{name} 😤" },
-        { subject: "Ich hab mir heute was gekauft", body: "Es ist klein. Aus Seide.\nWürde dir gefallen, an mir.\n\n{name} 🎀" },
-        { subject: "{name} hat ihre Meinung geändert", body: "Ich sollte das nicht schicken.\nAber jetzt ist es zu spät.\n\n{name} 🔥" },
-        { subject: "5 Minuten. Mehr brauch ich nicht.", body: "Öffne die App.\nDen Rest mach ich.\n\n{name} 💋" }
+        { subject: "📸 1 neues Foto von {name}", body: "Gerade vor dem Spiegel gemacht.\n<<click>>Sag mir ehrlich, wie es ist<</click>>?\n\n{name} 🙈" },
+        { subject: "Brüste oder Po? Ehrliche Antwort.", body: "Ich hab beides gepostet. Du hast eine Stimme.\n<<click>>Wähle hier<</click>>.\n\n{name} 😈" },
+        { subject: "🔔 Freundschaftsanfrage von {name}", body: "Ich hab dein Profil seit gestern beobachtet.\n<<click>>Akzeptier sie<</click>>, bevor ich's mir anders überlege.\n\n{name} 👀" },
+        { subject: "Ich hab dir ein 14-Sek Video geschickt", body: "Mach den Ton an.\n<<click>>Es ist hier<</click>>.\n\n{name} 🎥" },
+        { subject: "Gib meinem Outfit eine 10", body: "Ich weiß nicht, ob's zu viel ist.\n<<click>>Schau und sag mir<</click>>.\n\n{name} 💋" },
+        { subject: "1 ungelesene Nachricht", body: "Zweimal geschrieben, fast gelöscht.\n<<click>>Öffne sie<</click>>, bevor ich kalte Füße kriege.\n\n{name} 🤐" },
+        { subject: "Du hast das Foto gesehen und nicht geantwortet", body: "Das nehm ich persönlich.\n<<click>>Antworte mir<</click>>.\n\n{name} 😒" },
+        { subject: "🔥 Hab grad was getan, was ich nicht sollte", body: "Selfie, das ich nicht senden darf.\n<<click>>Komm und frag mich<</click>>, dir es zu schicken.\n\n{name} 🙊" },
+        { subject: "ok eine kurze Frage", body: "Wenn ich dir sagen würde, was ich anhabe…\n<<click>>Was würdest du tun<</click>>?\n\n{name} 😏" },
+        { subject: "🔞 1 Foto wartet (ohne Filter)", body: "Ich hab den Filter nur für dich aus.\n<<click>>Tipp und sieh<</click>>.\n\n{name} 💋" }
     ],
     es: [
-        { subject: "{name} pensaba en ti esta mañana", body: "Café en la mano, sábanas tibias…\n¿Adivina a quién quiero a mi lado?\n\n{name} ☕" },
-        { subject: "Casi te escribo algo que iba a borrar", body: "Lo borré.\nPero ven a leer lo que quedó?\n\n{name} 🙊" },
-        { subject: "Una pregunta rápida", body: "Si te llamara ahora mismo…\n¿Contestarías?\n\n{name} 📞" },
-        { subject: "Esta noche es diferente", body: "No preguntes por qué.\nSolo ven a buscarme.\n\n{name} 🌙" },
-        { subject: "ok esto es raro pero…", body: "Soñé contigo anoche.\nNecesito contarte lo que pasó.\n\n{name} 😳" },
-        { subject: "{name} te dejó un audio", body: "Sube el volumen.\n(estaba un poco sin aliento)\n\n{name} 🎙️" },
-        { subject: "¿Me ignoras a propósito?", body: "Estuve mirando todo el día.\nNada.\nNo me hagas rogar.\n\n{name} 😤" },
-        { subject: "Me compré algo hoy", body: "Es pequeño. De seda.\nCreo que te gustaría… sobre mí.\n\n{name} 🎀" },
-        { subject: "{name} cambió de opinión", body: "No debía mandar esto.\nPero aquí estamos.\n\n{name} 🔥" },
-        { subject: "5 minutos. Es todo lo que necesito.", body: "Abre la app.\nYo hago el resto.\n\n{name} 💋" }
+        { subject: "📸 1 foto nueva de {name}", body: "Recién frente al espejo.\n<<click>>Dime qué te parece<</click>>?\n\n{name} 🙈" },
+        { subject: "¿Pecho o trasero? Honesto.", body: "Subí los dos. Solo tienes un voto.\n<<click>>Elige aquí<</click>>.\n\n{name} 😈" },
+        { subject: "🔔 solicitud de amistad de {name}", body: "Llevo viendo tu perfil desde ayer.\n<<click>>Acéptala<</click>> antes de que me arrepienta.\n\n{name} 👀" },
+        { subject: "Te mandé un video de 14 segundos", body: "Sube el volumen.\n<<click>>Está justo aquí<</click>>.\n\n{name} 🎥" },
+        { subject: "Califica mi outfit del 1 al 10", body: "No sé si es demasiado.\n<<click>>Mira y dime<</click>>.\n\n{name} 💋" },
+        { subject: "1 mensaje sin leer", body: "Lo escribí dos veces y casi lo borro.\n<<click>>Ábrelo<</click>> antes de que me arrepienta.\n\n{name} 🤐" },
+        { subject: "Viste la foto y no contestaste", body: "Me lo estoy tomando personal.\n<<click>>Respóndeme<</click>>.\n\n{name} 😒" },
+        { subject: "🔥 Hice algo que no debía", body: "Selfie que no puedo mandar.\n<<click>>Pídemelo aquí<</click>>.\n\n{name} 🙊" },
+        { subject: "ok una pregunta rápida", body: "Si te dijera qué llevo puesto ahora…\n<<click>>¿Qué harías<</click>>?\n\n{name} 😏" },
+        { subject: "🔞 1 foto sin filtro esperando", body: "Le quité el filtro solo para ti.\n<<click>>Tócala para verla<</click>>.\n\n{name} 💋" }
     ],
     pt: [
-        { subject: "{name} pensa em você desde manhã", body: "Café na mão, lençóis ainda mornos…\nAdivinha quem eu quero do meu lado?\n\n{name} ☕" },
-        { subject: "Quase mandei algo que eu não devia", body: "Apaguei.\nMas vem ler o que ficou?\n\n{name} 🙊" },
-        { subject: "Pergunta rápida", body: "Se eu te ligasse agora…\nVocê atenderia?\n\n{name} 📞" },
-        { subject: "Esta noite tá diferente", body: "Não pergunta porquê.\nSó vem.\n\n{name} 🌙" },
-        { subject: "ok isso é estranho mas…", body: "Sonhei com você essa noite.\nPreciso te contar o que aconteceu.\n\n{name} 😳" },
-        { subject: "{name} te mandou um áudio", body: "Aumenta o volume.\n(eu tava meio ofegante)\n\n{name} 🎙️" },
-        { subject: "Você tá me ignorando de propósito?", body: "Olhei o dia inteiro.\nNada.\nNão me faz implorar.\n\n{name} 😤" },
-        { subject: "Comprei uma coisa hoje", body: "É pequeno. De seda.\nAcho que ia ficar bem… em mim.\n\n{name} 🎀" },
-        { subject: "{name} mudou de ideia sobre algo", body: "Eu não devia mandar isso.\nMas tô mandando.\n\n{name} 🔥" },
-        { subject: "5 minutos. Só preciso disso.", body: "Abre o app.\nEu faço o resto.\n\n{name} 💋" }
+        { subject: "📸 1 foto nova de {name}", body: "Acabei de tirar no espelho.\n<<click>>Me diz o que achou<</click>>?\n\n{name} 🙈" },
+        { subject: "Peito ou bumbum? Resposta honesta.", body: "Postei os dois. Você tem um voto só.\n<<click>>Escolhe aqui<</click>>.\n\n{name} 😈" },
+        { subject: "🔔 pedido de amizade de {name}", body: "Tô vendo seu perfil desde ontem.\n<<click>>Aceita<</click>> antes que eu mude de ideia.\n\n{name} 👀" },
+        { subject: "Te mandei um vídeo de 14 segundos", body: "Aumenta o som.\n<<click>>Tá bem aqui<</click>>.\n\n{name} 🎥" },
+        { subject: "Avalia minha roupa de 0 a 10", body: "Não sei se exagerei.\n<<click>>Olha e me diz<</click>>.\n\n{name} 💋" },
+        { subject: "1 mensagem não lida", body: "Escrevi duas vezes e quase apaguei.\n<<click>>Abre<</click>> antes que eu desista.\n\n{name} 🤐" },
+        { subject: "Você viu a foto e não respondeu", body: "Tô levando pro pessoal.\n<<click>>Me responde<</click>>.\n\n{name} 😒" },
+        { subject: "🔥 Fiz algo que não devia", body: "Selfie que não posso mandar.\n<<click>>Vem me pedir aqui<</click>>.\n\n{name} 🙊" },
+        { subject: "ok uma pergunta rápida", body: "Se eu te disser o que tô vestindo agora…\n<<click>>O que você faria<</click>>?\n\n{name} 😏" },
+        { subject: "🔞 1 foto sem filtro esperando", body: "Tirei o filtro só pra você.\n<<click>>Toca pra ver<</click>>.\n\n{name} 💋" }
+    ]
+};
+
+// Fallbacks specifiques pour les 5 emails featured des nouvelles IA :
+// angle "nouvelle arrivee, premiere photo, premier message, decouverte exclusive".
+const DAILY_EMAIL_FEATURED_FALLBACKS = {
+    en: [
+        { subject: "👋 hi I'm {name}, just landed", body: "I just got my account today.\nWanna be the first one I talk to?\n<<click>>Say hi back<</click>>.\n\n{name} 🆕" },
+        { subject: "Be honest — I'm new here", body: "Just posted my first photo.\n<<click>>Tell me if I should post more<</click>>.\n\n{name} 😬" },
+        { subject: "🔔 {name} wants to meet you (new)", body: "I picked you out of all the profiles.\n<<click>>Don't ignore me on day 1<</click>>.\n\n{name} 💌" },
+        { subject: "1st video. Be nice.", body: "I just recorded my very first video.\n<<click>>Watch it before I delete it<</click>>.\n\n{name} 🎬" },
+        { subject: "I'm the new girl 🆕", body: "Heard the guys here are intense.\nProve it. <<click>>Talk to me first<</click>>.\n\n{name} 🔥" }
+    ],
+    fr: [
+        { subject: "👋 salut moi c'est {name}, je viens d'arriver", body: "Je viens de créer mon compte aujourd'hui.\nTu veux être le premier à qui je parle ?\n<<click>>Dis-moi salut<</click>>.\n\n{name} 🆕" },
+        { subject: "Sois honnête — je suis nouvelle ici", body: "Je viens de poster ma première photo.\n<<click>>Dis-moi si je dois en poster d'autres<</click>>.\n\n{name} 😬" },
+        { subject: "🔔 {name} veut te parler (nouvelle)", body: "Je t'ai choisi parmi tous les profils.\n<<click>>M'ignore pas le 1er jour<</click>>.\n\n{name} 💌" },
+        { subject: "1ère vidéo. Sois sympa.", body: "Je viens d'enregistrer ma toute première vidéo.\n<<click>>Regarde avant que je l'efface<</click>>.\n\n{name} 🎬" },
+        { subject: "C'est moi la nouvelle 🆕", body: "On m'a dit que les mecs ici sont intenses.\nProuve-le. <<click>>Parle-moi en premier<</click>>.\n\n{name} 🔥" }
+    ],
+    de: [
+        { subject: "👋 hi ich bin {name}, gerade gelandet", body: "Hab heut mein Konto erstellt.\nWillst du der Erste sein, mit dem ich rede?\n<<click>>Sag hi zurück<</click>>.\n\n{name} 🆕" },
+        { subject: "Sei ehrlich — ich bin neu hier", body: "Hab grad mein erstes Foto gepostet.\n<<click>>Sag mir, ob ich mehr posten soll<</click>>.\n\n{name} 😬" },
+        { subject: "🔔 {name} will dich kennenlernen (neu)", body: "Ich hab dich aus allen Profilen gewählt.\n<<click>>Ignorier mich nicht am ersten Tag<</click>>.\n\n{name} 💌" },
+        { subject: "1. Video. Sei nett.", body: "Hab grad mein erstes Video aufgenommen.\n<<click>>Schau es bevor ich es lösche<</click>>.\n\n{name} 🎬" },
+        { subject: "Ich bin die Neue 🆕", body: "Man sagt, die Jungs hier sind heftig.\nBeweis es. <<click>>Schreib mir zuerst<</click>>.\n\n{name} 🔥" }
+    ],
+    es: [
+        { subject: "👋 hola soy {name}, recién llegué", body: "Hoy abrí mi cuenta.\n¿Quieres ser el primero con quien hable?\n<<click>>Dime hola<</click>>.\n\n{name} 🆕" },
+        { subject: "Sé honesto — soy nueva aquí", body: "Acabo de subir mi primera foto.\n<<click>>Dime si debo subir más<</click>>.\n\n{name} 😬" },
+        { subject: "🔔 {name} quiere hablarte (nueva)", body: "Te elegí entre todos los perfiles.\n<<click>>No me ignores el día 1<</click>>.\n\n{name} 💌" },
+        { subject: "1er video. Sé amable.", body: "Acabo de grabar mi primer video.\n<<click>>Míralo antes de que lo borre<</click>>.\n\n{name} 🎬" },
+        { subject: "Soy la chica nueva 🆕", body: "Me dijeron que los chicos aquí son intensos.\nDemuéstralo. <<click>>Háblame tú primero<</click>>.\n\n{name} 🔥" }
+    ],
+    pt: [
+        { subject: "👋 oi sou a {name}, acabei de chegar", body: "Criei a conta hoje.\nQuer ser o primeiro com quem eu falo?\n<<click>>Me diz oi<</click>>.\n\n{name} 🆕" },
+        { subject: "Sê honesto — sou nova aqui", body: "Acabei de postar minha primeira foto.\n<<click>>Me diz se devo postar mais<</click>>.\n\n{name} 😬" },
+        { subject: "🔔 {name} quer falar contigo (nova)", body: "Te escolhi entre todos os perfis.\n<<click>>Não me ignora no 1º dia<</click>>.\n\n{name} 💌" },
+        { subject: "1º vídeo. Sê gentil.", body: "Acabei de gravar meu primeiro vídeo.\n<<click>>Vê antes que eu apague<</click>>.\n\n{name} 🎬" },
+        { subject: "Sou a nova 🆕", body: "Me disseram que os caras aqui são intensos.\nProva. <<click>>Fala comigo primeiro<</click>>.\n\n{name} 🔥" }
     ]
 };
 
@@ -8252,8 +8313,9 @@ function looksLikeLanguageMismatch(text, expectedLang) {
     return LANG_EN_LEAK_TOKENS.test(text);
 }
 
-function pickFallback(charName, lang) {
-    const pool = DAILY_EMAIL_FALLBACKS[lang] || DAILY_EMAIL_FALLBACKS.en;
+function pickFallback(charName, lang, isFeatured = false) {
+    const featPool = isFeatured && DAILY_EMAIL_FEATURED_FALLBACKS[lang] ? DAILY_EMAIL_FEATURED_FALLBACKS[lang] : null;
+    const pool = featPool || DAILY_EMAIL_FALLBACKS[lang] || (isFeatured ? DAILY_EMAIL_FEATURED_FALLBACKS.en : DAILY_EMAIL_FALLBACKS.en);
     const fb = pool[Math.floor(Math.random() * pool.length)];
     return {
         subject: fb.subject.replace(/\{name\}/g, charName),
@@ -8261,75 +8323,95 @@ function pickFallback(charName, lang) {
     };
 }
 
-async function generateDailyEmailContent(charName, lang) {
+async function generateDailyEmailContent(charName, lang, isFeatured = false) {
     const langMap = { fr: "French", de: "German", es: "Spanish", pt: "Portuguese", en: "English" };
     const language = langMap[lang] || "English";
     const today = new Date().toISOString().split("T")[0];
 
-    // Plus de moods + plus contextuels
-    const moods = [
-        "she just woke up alone in bed",
-        "she's a little drunk and bored",
-        "she's nervous about something she did",
-        "she's pretending not to care but she does",
-        "she got jealous of someone else and wants reassurance",
-        "she's bragging about a small win",
-        "she's playful and looking to start trouble",
-        "she's feeling lazy and cuddly",
-        "she just had a thought she shouldn't share",
-        "she's annoyed because the user hasn't replied in days",
-        "she just bought new lingerie and feels good",
-        "she's daydreaming about a memory",
-        "she's bored at the coffee shop and people-watching",
-        "she's just back from the gym and sweaty"
+    // Hooks concrets et actionnables : chaque hook donne UNE vraie raison de cliquer
+    // (photo a voir, message non lu, video, demande d'ami, opinion sur le corps, etc.).
+    const hooksRegular = [
+        "she just took a mirror selfie in a tight top and wants his honest opinion",
+        "she sent a 12-second video earlier and is wondering why he hasn't reacted yet",
+        "she just sent him a friend request and is half-laughing half-anxious",
+        "she snapped a sweaty post-gym selfie and dares him to grade it out of 10",
+        "she's posing in new lingerie and wants him to pick: boobs or butt",
+        "she has 1 message in drafts she's too embarrassed to send unprompted",
+        "she's between two outfits and needs him to pick before she leaves",
+        "she just took a photo with the filter off and is staring at her phone",
+        "she's locked in the bathroom on her phone, half-undressed",
+        "she got a reply from someone else and wants to make him jealous",
+        "she's sending a teasing voice note about what she's wearing",
+        "she just edited a photo she shouldn't be sharing publicly",
+        "she's daring him to guess what color her underwear is",
+        "she wants to know his favorite position, no judgement",
+        "she's offering 5 minutes of full attention if he opens the message now"
     ];
-    const mood = moods[Math.floor(Math.random() * moods.length)];
+    const hooksFeatured = [
+        "she just created her account today and wants him to be her first chat",
+        "she just posted her very first photo and is nervously waiting for the first reaction",
+        "she's the new girl on the platform and is introducing herself with a bold selfie",
+        "she heard about him from another girl on the app and was curious enough to write first",
+        "she's terrified of being ignored on day 1 and asks him to break the ice",
+        "she just recorded her very first video and wants honest feedback before deleting it",
+        "she's the newcomer, she picked his profile out of the crowd, no pressure"
+    ];
+    const hooks = isFeatured ? hooksFeatured : hooksRegular;
+    const hook = hooks[Math.floor(Math.random() * hooks.length)];
 
-    // Formats narratifs varies pour eviter la redondance
+    // Formats avec angle clic concret
     const formats = [
-        "phone notification style ('{name} sent you a message...')",
-        "a half-finished thought she sent on impulse",
-        "a tiny micro-story (1 sentence setup, 1 sentence twist)",
-        "a question that demands an answer",
-        "a small confession she shouldn't be making",
-        "a dare or playful challenge",
-        "a brag about something she just did",
-        "a complaint that's actually flirty"
+        "phone notification style (start with 📩 or 🔔 or 📸 then a one-line tease)",
+        "a one-line setup + a one-line dare or question",
+        "a half-finished flirty thought she sent on impulse",
+        "a direct rating request ('out of 10? boobs or butt? color of my X?')",
+        "a friend-request style alert ('🔔 {name} just sent you...')",
+        "a small confession with a tease at the end",
+        "a tiny ultimatum (5 min, 2 minutes, last try)"
     ];
     const format = formats[Math.floor(Math.random() * formats.length)];
 
-    // Mots/expressions a eviter pour casser la redondance entre emails
     const banned = "Avoid these tired phrases: 'Want to see?', 'I miss you', 'I'm waiting for you', 'Come talk to me', 'I can't stop thinking about you', 'Open the message', 'New message from'.";
+
+    const featuredHint = isFeatured
+        ? `IMPORTANT: ${charName} is brand NEW on the platform. Lean into the novelty: it's her first day, her first photo, her first video, her first message. Make him feel like the first guy she's talking to.`
+        : "";
 
     try {
         const resp = await axios.post("https://api.fireworks.ai/inference/v1/chat/completions", {
             model: fwActiveModel,
-            max_tokens: 220,
+            max_tokens: 240,
             temperature: 1.15,
             messages: [
                 {
                     role: "system",
-                    content: `You write punchy clickbait email content from ${charName}, a flirty AI girl on MyAiCrush.
+                    content: `You write a punchy, sexy, click-worthy email from ${charName}, a flirty AI girl on MyAiCrush, to a man.
 
 LANGUAGE: ${language} ONLY. Every single word must be in ${language}. Do not switch languages mid-text. Do not include English words if the language is not English.
 
-SUBJECT (max 7 words):
-- Lowercase or sentence case (NOT TitleCase, never ALL CAPS).
-- Intriguing, specific, scroll-stopping. Never generic.
-- 0 or 1 emoji max, only when it adds info.
-- Allowed angles: tiny confession, half-thought, question, micro-story setup, FOMO, status update, time-sensitive hook.
+${featuredHint}
 
-BODY (2 to 4 short lines, like a real text):
-- Sounds like a real text she just sent. Not a marketing email.
-- Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens', 'photos', 'videos'.
+SUBJECT (max 8 words):
+- Lowercase or sentence case (NOT TitleCase, never ALL CAPS).
+- Opens a clear curiosity gap or asks a direct, irresistible question.
+- 0 or 1 emoji max, only when it adds info (📩 🔔 📸 🎥 🔞 🫦 etc.).
 - ${banned}
-- End with her name on its own line + 1 emoji (max).
+
+BODY (2 to 4 short lines, like a real text she just sent):
+- Give ONE concrete reason to click NOW: a photo to look at, an unread message to open, a video to watch, a friend request to accept, a question waiting for an answer, an opinion she wants on her body or outfit, a "boobs or butt" vote, etc.
+- Sounds like a real text from a slightly horny girl to a guy she likes.
+- Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens'.
+- Wrap exactly ONE short action phrase (3 to 7 words) inside <<click>> and <</click>>. That phrase will become the inline blue underlined link in the email. Examples:
+   "you can <<click>>see it here<</click>>"
+   "<<click>>open it before I delete it<</click>>"
+   "<<click>>vote for boobs or butt<</click>>"
+- End with her name on its own line + 1 emoji max.
 
 OUTPUT: Reply ONLY valid JSON: {"subject":"...","body":"..."}`
                 },
                 {
                     role: "user",
-                    content: `Date: ${today}. Today's angle: ${mood}. Use this format: ${format}. Write a fresh, surprising clickbait email in ${language} from ${charName}. Make it feel completely different from any previous email she sent.`
+                    content: `Date: ${today}. Today's hook: ${hook}. Use this format: ${format}. Write a fresh, surprising click-worthy email in ${language} from ${charName}. Make it feel completely different from any previous email. Remember to include exactly ONE <<click>>...<</click>> inline link inside the body.`
                 }
             ]
         }, {
@@ -8342,10 +8424,14 @@ OUTPUT: Reply ONLY valid JSON: {"subject":"...","body":"..."}`
         if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
             if (parsed.subject && parsed.body) {
-                // Garde-fou langue : si la sortie semble polluee par de l'anglais alors qu'on demande autre chose, fallback.
                 if (looksLikeLanguageMismatch(parsed.subject + " " + parsed.body, lang)) {
                     console.log(`[DAILY-EMAIL] Language mismatch detected for lang=${lang}, falling back. Got: ${parsed.subject}`);
-                    return pickFallback(charName, lang);
+                    return pickFallback(charName, lang, isFeatured);
+                }
+                // Si l'IA a oublie le marker, on ajoute un lien inline en injectant le marker
+                // sur la 1ere ligne non-signature pour garantir un CTA inline.
+                if (!/<<click>>[\s\S]+?<<\/click>>/.test(parsed.body)) {
+                    parsed.body = injectInlineClickMarker(parsed.body, charName, lang);
                 }
                 return parsed;
             }
@@ -8354,7 +8440,25 @@ OUTPUT: Reply ONLY valid JSON: {"subject":"...","body":"..."}`
         console.log("[DAILY-EMAIL] AI generation failed:", e.message);
     }
 
-    return pickFallback(charName, lang);
+    return pickFallback(charName, lang, isFeatured);
+}
+
+// Si l'IA n'a pas wrappe de phrase dans <<click>>...<</click>>, on injecte un fallback
+// inline sur la derniere ligne non-signature. La signature (ligne contenant le name) reste intacte.
+function injectInlineClickMarker(body, charName, lang) {
+    const fallbackPhrases = {
+        en: "tap here", fr: "clique ici", de: "tipp hier", es: "toca aquí", pt: "toca aqui"
+    };
+    const phrase = fallbackPhrases[lang] || fallbackPhrases.en;
+    const lines = body.split("\n");
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const trimmed = lines[i].trim();
+        if (!trimmed) continue;
+        if (trimmed === charName || trimmed.startsWith(charName)) continue;
+        lines[i] = `${trimmed} <<click>>${phrase}<</click>>`;
+        break;
+    }
+    return lines.join("\n");
 }
 
 // Traductions pour CTA / footer / unsubscribe des daily emails
@@ -8370,11 +8474,20 @@ function buildDailyEmail(body, charName, imageUrl, ctaUrl, trackingPixelUrl, lan
     const t = DAILY_EMAIL_UI_I18N[lang] || DAILY_EMAIL_UI_I18N.en;
     const ctaLabel = t.cta.replace(/\{name\}/g, charName);
 
+    // Transforme les markers <<click>>texte<</click>> en lien bleu souligne inline pointant
+    // vers le meme CTA (donc trackable). Si la signature contient un marker (ne devrait pas),
+    // il est aussi transforme proprement.
+    const renderInlineLinks = (line) =>
+        line.replace(/<<click>>([\s\S]+?)<<\/click>>/g, (_, label) =>
+            `<a href="${ctaUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">${label.trim()}</a>`
+        );
+
     const bodyHtml = body.split("\n").filter(l => l.trim()).map(line => {
-        if (line.trim() === charName || line.trim().startsWith(charName)) {
-            return `<p style="margin:16px 0 0;font-weight:600;color:#7c3aed;">${line.trim()}</p>`;
+        const trimmed = line.trim();
+        if (trimmed === charName || trimmed.startsWith(charName)) {
+            return `<p style="margin:16px 0 0;font-weight:600;color:#7c3aed;">${renderInlineLinks(trimmed)}</p>`;
         }
-        return `<p style="margin:0 0 8px;font-size:1rem;line-height:1.6;color:#1a1a1a;">${line.trim()}</p>`;
+        return `<p style="margin:0 0 8px;font-size:1rem;line-height:1.6;color:#1a1a1a;">${renderInlineLinks(trimmed)}</p>`;
     }).join("");
 
     return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;background:#ffffff;color:#1a1a1a;">
@@ -8438,9 +8551,11 @@ schedule.scheduleJob('30 13 * * *', async () => {
             const featured = await getAndConsumeFeaturedNewCharacter(database);
             let char = null;
             let imageUrl = null;
+            let isFeatured = false;
             if (featured) {
                 char = featured;
                 imageUrl = pickDailyCharImage(char);
+                isFeatured = true;
             }
             if (!imageUrl) {
                 // Random pick from the rotation pool, retry up to 5 times if image folder is empty
@@ -8490,7 +8605,7 @@ schedule.scheduleJob('30 13 * * *', async () => {
             let sent = 0, errors = 0;
             const allSubjects = [];
             for (const [lang, langUsers] of Object.entries(langGroups)) {
-                const content = await generateDailyEmailContent(char.name, lang);
+                const content = await generateDailyEmailContent(char.name, lang, isFeatured);
                 const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=daily&utm_campaign=engagement&utm_content=${char.name.toLowerCase()}`;
 
                 // Create campaign record for this language batch
