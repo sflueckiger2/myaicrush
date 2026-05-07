@@ -28,166 +28,155 @@
 const DEFAULT_STYLE = "amateur iPhone selfie, very realistic, vertical 9:16";
 
 // ---------- SCENE BUNDLES (outfit + setting kept coherent) ----------
+//
+// Each bundle is a CLEAN scene: just outfit + simple location.
+// NO narrative props (no "eating cereal", no "with phone charger cables",
+// no "with a friend's voice off-camera", etc.) — those create distractions
+// and cause the model to focus on irrelevant details. Think: a girl quickly
+// snapping a coquin selfie to send to her boyfriend.
 const SFW_BUNDLES = [
   // Bedroom — pyjamas / sleepwear
-  { outfit: "thin gray spaghetti tank top with no bra and tiny pyjama shorts", setting: "lying on her unmade bed with rumpled white sheets" },
-  { outfit: "oversized faded band t-shirt and no bra, hair messy", setting: "sitting on her unmade bed at night with phone charger cables tangled in the sheets" },
-  { outfit: "matching pink cotton pyjama set with the buttons of the top half undone", setting: "kneeling on her bed in soft morning light through curtains" },
-  { outfit: "tiny silk slip pyjama set with one strap fallen off her shoulder", setting: "in her dim bedroom by a bedside lamp at 2 a.m." },
-  { outfit: "white cotton tank top tucked into pink plaid pyjama pants, no bra", setting: "leaning against the bedroom doorway with a coffee mug" },
-  { outfit: "oversized boyfriend t-shirt without anything else underneath", setting: "on her unmade bed reaching for her phone on the nightstand" },
-  { outfit: "tight ribbed cropped tank top and tiny shorts barely covering anything", setting: "sitting cross-legged on her bed scrolling on her phone" },
-  { outfit: "loose faded blue oversized tee and no bra, knees up", setting: "on the floor next to her bed with laundry piled around" },
-  { outfit: "thin strappy black babydoll slip with adjustable straps slipping off", setting: "standing at the foot of her bed in front of a wardrobe mirror" },
-  { outfit: "thin cotton white tank top, no bra, cleavage soaked from a glass of water she just spilled", setting: "in her kitchenette at the edge of her studio bedroom" },
+  { outfit: "thin gray spaghetti tank top with no bra and tiny pyjama shorts", setting: "in her bedroom" },
+  { outfit: "oversized faded band t-shirt and no bra", setting: "in her bedroom" },
+  { outfit: "matching pink cotton pyjama set with the top buttons undone", setting: "in her bedroom" },
+  { outfit: "tiny silk slip pyjama with one strap fallen off her shoulder", setting: "in her bedroom" },
+  { outfit: "white cotton tank top and pink plaid pyjama pants, no bra", setting: "in her bedroom" },
+  { outfit: "oversized boyfriend t-shirt and nothing else", setting: "on her bed" },
+  { outfit: "tight ribbed cropped tank top and tiny shorts", setting: "on her bed" },
+  { outfit: "loose oversized blue tee and no bra", setting: "in her bedroom" },
+  { outfit: "thin strappy black babydoll slip", setting: "in front of a bedroom mirror" },
+  { outfit: "thin cotton white tank top with no bra", setting: "in her bedroom" },
 
-  // Bedroom — getting dressed / mirror
-  { outfit: "tight low cut blue summer dress with thin straps", setting: "leaning over a messy bedroom dresser in front of a smudged mirror" },
-  { outfit: "low-cut black satin slip dress with delicate straps", setting: "in a hotel room at night by the unmade king bed" },
-  { outfit: "deep V-neck red knit sweater dress hugging her body", setting: "standing in front of a fireplace in a wood-paneled living room" },
-  { outfit: "tight ribbed beige bodysuit unsnapped at the shoulder", setting: "in a tiny apartment elevator with mirror walls" },
-  { outfit: "tiny black tube top pulled low and short denim skirt", setting: "in a cluttered college dorm room next to a desk full of books" },
-  { outfit: "navy school-style cardigan unbuttoned over a tight white tank", setting: "sitting on a windowsill in a small library at sunset" },
-  { outfit: "tight strapless black bandeau top and high-waist jeans", setting: "in front of a full-length bedroom mirror taking a phone selfie" },
-  { outfit: "loose cropped sweatshirt that barely fits her chest", setting: "trying on outfits in front of an open closet, clothes strewn on the bed" },
+  // Bedroom — dresses / mirror
+  { outfit: "tight low-cut blue summer dress with thin straps", setting: "in front of a bedroom mirror" },
+  { outfit: "low-cut black satin slip dress", setting: "in her bedroom" },
+  { outfit: "deep V-neck red knit sweater dress", setting: "in her bedroom" },
+  { outfit: "tight ribbed beige bodysuit", setting: "in front of a bedroom mirror" },
+  { outfit: "tiny black tube top and short denim skirt", setting: "in her bedroom" },
+  { outfit: "navy cardigan unbuttoned over a tight white tank", setting: "in her bedroom" },
+  { outfit: "tight strapless black bandeau top and high-waist jeans", setting: "in front of a full-length bedroom mirror" },
+  { outfit: "loose cropped sweatshirt that barely fits her chest", setting: "in her bedroom" },
 
   // Bathroom — towel / steam / mirror
-  { outfit: "fluffy oversized bath towel barely wrapped under her chest", setting: "in a foggy bathroom with the mirror covered in condensation" },
-  { outfit: "wet white tank top clinging to every curve over no bra", setting: "stepping out of a hot shower with the bathroom still steamy" },
-  { outfit: "small white towel barely held up across her chest", setting: "leaning over the bathroom sink brushing her teeth" },
-  { outfit: "a wet pink robe slipping open at the chest", setting: "sitting on the edge of the porcelain bathtub steam still rising" },
-  { outfit: "dripping wet sports bra and panties", setting: "stepping out of the shower onto the bath mat with her hair plastered to her shoulders" },
-  { outfit: "white ribbed crop top stretched tight with no bra and visible nipple shape", setting: "sitting on the edge of a porcelain bathtub with steam rising" },
-  { outfit: "knotted men's button-up shirt slightly damp from steam", setting: "wiping the bathroom mirror clear with the back of her hand" },
+  { outfit: "fluffy oversized bath towel wrapped under her chest", setting: "in a foggy bathroom" },
+  { outfit: "wet white tank top clinging to her body, no bra", setting: "in a steamy bathroom" },
+  { outfit: "small white towel held up across her chest", setting: "in front of a bathroom mirror" },
+  { outfit: "wet pink robe slipping open at the chest", setting: "in a steamy bathroom" },
+  { outfit: "dripping wet sports bra", setting: "in a bathroom after a shower" },
+  { outfit: "white ribbed crop top stretched tight, no bra", setting: "in a bathroom" },
+  { outfit: "knotted men's button-up shirt", setting: "in front of a bathroom mirror" },
+  { outfit: "tight black sports bra", setting: "in front of a bathroom mirror" },
+  { outfit: "lace bralette under an unbuttoned shirt", setting: "in front of a bathroom mirror" },
 
   // Living room — couch / floor / window
-  { outfit: "oversized cream knit pullover slipping off both shoulders down to her bra straps", setting: "curled sideways on a soft beige couch with a half-finished cup of coffee" },
-  { outfit: "soft pink hoodie unzipped halfway with no bra", setting: "in the back seat of a car at night, city lights through the window" },
-  { outfit: "loose unbuttoned olive cargo shirt over a black bralette", setting: "leaning on a graffiti-tagged concrete wall in a parking garage at night" },
-  { outfit: "thin strappy white camisole with the lace edge of a bra peeking out", setting: "sprawled on the living room rug with a laptop open" },
-  { outfit: "fitted black turtleneck cropped just above the navel", setting: "standing by the living room window at golden hour with city skyline behind" },
-  { outfit: "loose oversized pastel knit cardigan worn with nothing underneath", setting: "sitting cross-legged on a sheepskin rug with a cup of tea" },
-  { outfit: "white ribbed tank top tucked into baggy gray sweatpants riding low", setting: "leaning over the kitchen island reaching for a cookie jar" },
-  { outfit: "tiny black tube top with a fitted leather mini skirt", setting: "on a balcony at night with a cigarette and a glass of wine" },
+  { outfit: "oversized cream knit pullover slipping off both shoulders", setting: "on a beige couch" },
+  { outfit: "soft pink hoodie unzipped halfway with no bra", setting: "on a couch" },
+  { outfit: "thin strappy white camisole", setting: "in her living room" },
+  { outfit: "fitted black turtleneck cropped above the navel", setting: "by a living room window at golden hour" },
+  { outfit: "loose oversized pastel knit cardigan worn with nothing underneath", setting: "on a soft rug" },
+  { outfit: "white ribbed tank top and baggy gray sweatpants riding low", setting: "in her kitchen" },
 
   // Kitchen / dining
-  { outfit: "tight black sports bra and high-waist leggings", setting: "standing in a dim kitchen at night drinking from a water bottle" },
-  { outfit: "oversized white men's button-up shirt half-tucked with no pants", setting: "barefoot in a sunlit kitchen pouring coffee" },
-  { outfit: "tiny apron tied at the waist over a thin cotton top with no bra", setting: "leaning over the kitchen counter chopping fruit" },
-  { outfit: "tight black bralette and high-waist jeans, sleeves rolled up", setting: "loading a dishwasher in a sunlit kitchen" },
+  { outfit: "tight black sports bra and high-waist leggings", setting: "in her kitchen" },
+  { outfit: "oversized white men's button-up shirt half-tucked", setting: "in a sunlit kitchen" },
+  { outfit: "tight black bralette and high-waist jeans", setting: "in her kitchen" },
 
-  // Outdoor / car / urban
-  { outfit: "tight white t-shirt slightly cropped over low-rise blue jeans", setting: "sitting on the hood of a small parked car in a beach parking lot" },
-  { outfit: "tiny string bikini top under an unbuttoned beach shirt", setting: "on a balcony overlooking the ocean at sunrise" },
-  { outfit: "oversized white linen shirt fully unbuttoned over a beige bikini top", setting: "leaning on the railing of a wooden seaside balcony at golden hour" },
-  { outfit: "tight blue denim shorts and a knotted plaid shirt over a white tank", setting: "sitting on the curb in a quiet neighborhood at dusk" },
-  { outfit: "fitted khaki utility shorts and a tight white ribbed tank top", setting: "leaning into the open trunk of a hatchback car packing groceries" },
-  { outfit: "ripped low-rise jeans and a tight black crop top with thin straps", setting: "sitting cross-legged on a metro platform bench late at night" },
-  { outfit: "fitted leather mini skirt and a thin sheer tank top with a black bra showing", setting: "leaning against a brick wall in a graffitied alley at night" },
-  { outfit: "high-waist white denim shorts and a fitted blue cropped tee", setting: "in front of a small corner shop holding a paper bag of groceries" },
-  { outfit: "tight beige athletic dress with a built-in bra, hair in a high ponytail", setting: "leaning against the open door of an SUV in a sunlit parking lot" },
-  { outfit: "small white sundress with thin straps and tan legs", setting: "barefoot on the warm tile of a sun-bleached terrace overlooking the sea" },
-  { outfit: "thin black wrap top showing a lot of cleavage and a long flowy skirt", setting: "sitting on a bench at a quiet park at golden hour" },
+  // Outdoor / beach
+  { outfit: "tight white t-shirt and low-rise blue jeans", setting: "outdoors at golden hour" },
+  { outfit: "tiny string bikini top under an unbuttoned beach shirt", setting: "on a sunlit balcony" },
+  { outfit: "oversized white linen shirt over a beige bikini top", setting: "on a sunlit balcony" },
+  { outfit: "small white sundress with thin straps", setting: "on a sunlit terrace" },
+  { outfit: "thin black wrap top with deep cleavage and a flowy skirt", setting: "outdoors at golden hour" },
 
   // Gym / yoga
-  { outfit: "thin cropped black hoodie pulled up baring her stomach with no bra", setting: "in a small home gym surrounded by yoga mats" },
-  { outfit: "tight neon sports bra and matching tight shorts, slightly sweaty", setting: "leaning against a yoga ball in a small home gym" },
-  { outfit: "thin strappy gray gym tank top and tiny black bike shorts", setting: "sitting on a yoga mat with a dumbbell beside her" },
-  { outfit: "tight pink sports bra under an open zipped athletic jacket", setting: "stretching by a window in a sunlit empty gym" },
+  { outfit: "thin cropped black hoodie pulled up baring her stomach, no bra", setting: "in a small home gym" },
+  { outfit: "tight neon sports bra and tight shorts", setting: "in a home gym" },
+  { outfit: "thin strappy gray gym tank top and tiny black bike shorts", setting: "in a home gym" },
+  { outfit: "tight pink sports bra under an open athletic jacket", setting: "in a sunlit gym" },
 
-  // Mirror selfies / dressing
-  { outfit: "tight ribbed white tank top with no bra and visible nipples", setting: "in front of a full-length bedroom mirror with the phone partially blocking her face" },
-  { outfit: "tiny black bikini top tied at the front with bottoms riding low", setting: "in a fitting room of a clothing store with mirrors on three sides" },
-  { outfit: "soft cotton boxer shorts and a thin tight white t-shirt with no bra", setting: "in front of a bathroom mirror brushing out her wet hair" },
-  { outfit: "fitted knotted plaid shirt and high-waist jean shorts", setting: "leaning forward over a bathroom counter applying lip balm" },
-  { outfit: "thin tight tan camisole with delicate lace trim", setting: "in front of a wardrobe mirror trying on different earrings" },
+  // Mirror selfies — outfits
+  { outfit: "tight ribbed white tank top with no bra", setting: "in front of a full-length bedroom mirror" },
+  { outfit: "tiny black bikini top tied at the front", setting: "in front of a fitting room mirror" },
+  { outfit: "soft cotton boxer shorts and a thin tight white t-shirt, no bra", setting: "in front of a bathroom mirror" },
+  { outfit: "fitted knotted plaid shirt and high-waist jean shorts", setting: "in front of a bathroom mirror" },
+  { outfit: "thin tight tan camisole with lace trim", setting: "in front of a bedroom mirror" },
+  { outfit: "tight white tank top knotted at the waist", setting: "in front of a bathroom mirror" },
+  { outfit: "fitted black crop top and high-waist denim shorts", setting: "in front of a bedroom mirror" },
 
-  // Office / professional but inappropriately tight
-  { outfit: "fitted white blouse with the top three buttons undone over a tiny black bra", setting: "leaning over a cluttered home office desk with papers everywhere" },
-  { outfit: "tight black pencil skirt and a thin cream silk blouse half-tucked", setting: "in front of a tall office window with the city behind her" },
-  { outfit: "tight gray turtleneck dress with sleeves pushed up", setting: "leaning on the back of a leather office chair in a dim study" },
-
-  // Misc / specific scenarios
-  { outfit: "see-through white linen shirt fully unbuttoned over a tiny black bra", setting: "on a wooden balcony at golden hour with vines behind her" },
-  { outfit: "loose oversized purple sweater with one shoulder slipping completely off", setting: "sitting on the kitchen floor leaning against a cabinet eating cereal" },
-  { outfit: "fitted white ribbed long-sleeve top and tight beige leggings", setting: "in a quiet hallway of an apartment building waiting by the elevator" },
-  { outfit: "thin spaghetti-strap silk camisole and tiny matching shorts", setting: "in a small kitchen at 3 a.m. with the fridge open lighting her face" },
-  { outfit: "tight black ribbed bodysuit and an open denim jacket on her shoulders", setting: "in the back seat of an Uber at night, neon city lights moving outside" },
-  { outfit: "white halter top with a deep open back and tight low-rise jeans", setting: "leaning over a railing in a small rooftop garden at night" },
+  // Office / dressed up
+  { outfit: "fitted white blouse with top buttons undone over a tiny black bra", setting: "in a home office" },
+  { outfit: "tight black pencil skirt and a cream silk blouse half-tucked", setting: "in front of a window" },
+  { outfit: "tight gray turtleneck dress with sleeves pushed up", setting: "in a dim study" },
+  { outfit: "see-through white linen shirt over a tiny black bra", setting: "on a sunlit balcony" },
 ];
 
 const NSFW_BUNDLES = [
   // Bedroom — bare on bed
-  { outfit: "topless covering her bare breasts with her crossed forearms underneath pushing them up", setting: "kneeling on a messy unmade bed in dim warm light" },
-  { outfit: "topless with the bedsheet pulled down to her waist", setting: "lying back on white sheets just after waking up" },
-  { outfit: "completely topless lying on her stomach with her arms crossed under her chin", setting: "on her unmade bed with morning sunlight on her bare back" },
-  { outfit: "topless and squeezing her bare breasts together with both hands", setting: "in front of a bedroom mirror in dim warm bedside light" },
-  { outfit: "topless wearing only loose pyjama bottoms riding low on her hips", setting: "in her dark bedroom lit only by the blue glow of a laptop" },
-  { outfit: "topless with hair wet and dripping down her chest", setting: "wrapped in a half-open bathrobe in a steamy bathroom" },
-  { outfit: "completely nude with only a thin chain necklace", setting: "wrapped in white sheets on a hotel bed at sunrise" },
-  { outfit: "topless covering her bare breasts with one hand, the other holding the phone", setting: "selfie in front of a bedroom mirror at golden hour" },
-  { outfit: "topless wearing only mismatched white cotton panties", setting: "sitting cross-legged on her unmade bed eating cereal at midnight" },
-  { outfit: "completely nude under a thin white sheet that has slipped off her chest", setting: "lying on her side on a hotel bed with the curtains drawn" },
-  { outfit: "topless on her back with one knee up and her bare chest fully exposed", setting: "sprawled across the duvet in soft afternoon light" },
-  { outfit: "topless with a white sheet wrapped around her hips only", setting: "sitting on the edge of the bed putting on socks" },
+  { outfit: "topless with arms pushing her bare breasts together", setting: "on her bed" },
+  { outfit: "topless with the bedsheet pulled down to her waist", setting: "on white sheets" },
+  { outfit: "topless lying on her stomach with arms crossed under her chin", setting: "on her bed" },
+  { outfit: "topless squeezing her bare breasts together with both hands", setting: "in front of a bedroom mirror" },
+  { outfit: "topless wearing only loose pyjama bottoms low on her hips", setting: "in her bedroom" },
+  { outfit: "topless with hair wet and dripping down her chest", setting: "in a bathrobe in a steamy bathroom" },
+  { outfit: "fully nude with only a thin chain necklace", setting: "wrapped in white sheets on a bed" },
+  { outfit: "topless covering her bare breasts with one hand", setting: "in front of a bedroom mirror" },
+  { outfit: "topless wearing only white cotton panties", setting: "on her bed" },
+  { outfit: "fully nude under a thin white sheet slipping off her chest", setting: "on a bed" },
+  { outfit: "topless on her back with one knee up", setting: "on her bed in soft daylight" },
+  { outfit: "topless with a white sheet wrapped around her hips only", setting: "on the edge of her bed" },
 
   // Bathroom — wet, mirror, post-shower
-  { outfit: "open unbuttoned oversized white shirt with absolutely nothing underneath", setting: "in front of a steamy bathroom mirror after a shower" },
-  { outfit: "wet bare chest with water dripping down her body", setting: "leaning forward against the glass of a steamy shower" },
-  { outfit: "soaked white bra clinging to her nipples, the rest of her body wet", setting: "stepping out of a bath with bubbles still on her skin" },
-  { outfit: "completely wet and topless with her hair slicked back", setting: "standing under a hot shower head with water cascading down her chest" },
-  { outfit: "topless wearing only black string panties soaked from a shower", setting: "leaning against a bathroom sink in a foggy mirror behind her" },
-  { outfit: "fully nude wrapped in a small towel that has fallen down to her hips", setting: "wiping the bathroom mirror with her hand to take a selfie" },
-  { outfit: "wet bare breasts pressed against the glass shower door from inside", setting: "in a steamy walk-in shower with hot water running" },
-  { outfit: "topless with her hair tied up in a towel turban after a bath", setting: "sitting on the bathroom counter with her bare feet on the cold tile" },
-  { outfit: "completely topless after a bath, soap suds still on her chest", setting: "wrapped in a small white towel only around her hips" },
+  { outfit: "open unbuttoned oversized white shirt, nothing underneath", setting: "in front of a steamy bathroom mirror" },
+  { outfit: "wet bare chest with water dripping down her body", setting: "in a steamy shower" },
+  { outfit: "soaked white bra clinging to her nipples", setting: "in a bathroom after a shower" },
+  { outfit: "fully topless with her hair slicked back, wet", setting: "under a shower" },
+  { outfit: "topless wearing only black string panties, wet", setting: "in front of a foggy bathroom mirror" },
+  { outfit: "fully nude with a small towel slipping down to her hips", setting: "in front of a bathroom mirror" },
+  { outfit: "topless with hair tied up in a towel turban", setting: "on a bathroom counter" },
+  { outfit: "topless after a bath, soap suds on her chest", setting: "in a small bathroom" },
+  { outfit: "topless in front of a steamy bathroom mirror", setting: "in a steamy bathroom" },
 
   // Living room / floor / couch — bare
-  { outfit: "long silk robe completely open at the front showing her full bare chest", setting: "sitting on the floor against a tall living room window" },
-  { outfit: "loose cardigan slipped completely off both shoulders, fully topless", setting: "sitting cross-legged on a beige couch in soft afternoon light" },
-  { outfit: "topless and sucking softly on her own finger", setting: "lying on her stomach on a soft white rug in front of a fireplace" },
-  { outfit: "completely nude on her stomach reading a book", setting: "stretched out on a sheepskin rug in front of a lit fireplace" },
-  { outfit: "topless wearing only thin gold chains on her hips", setting: "sitting on the living room floor leaning against the couch" },
-  { outfit: "fully nude with one leg up on the couch", setting: "in a sunlit minimalist living room with sheer curtains" },
-  { outfit: "open unbuttoned cardigan with absolutely nothing underneath", setting: "curled up on the couch with a blanket halfway covering her" },
-  { outfit: "topless with a denim jacket slipping off both shoulders showing her chest", setting: "sitting cross-legged on the rug with city lights through the window" },
+  { outfit: "long silk robe open at the front, full bare chest visible", setting: "on the living room floor" },
+  { outfit: "loose cardigan off both shoulders, fully topless", setting: "on a beige couch" },
+  { outfit: "fully topless", setting: "on a soft white rug" },
+  { outfit: "topless wearing only thin gold chains on her hips", setting: "in her living room" },
+  { outfit: "fully nude with one leg up on the couch", setting: "in a sunlit living room" },
+  { outfit: "open unbuttoned cardigan with nothing underneath", setting: "on the couch" },
 
   // Kitchen / domestic — bare
-  { outfit: "topless wearing only an unbuttoned denim mini skirt", setting: "in a sunlit kitchen leaning against the counter" },
-  { outfit: "topless with a small kitchen apron tied at the waist barely covering her chest from the side", setting: "leaning over the stove cooking pasta" },
-  { outfit: "completely nude with a small dish towel barely held over her chest", setting: "leaning into the open fridge looking for something to eat" },
-  { outfit: "topless wearing only short white socks", setting: "sitting on the kitchen counter eating yogurt with a spoon" },
-  { outfit: "topless wearing only loose gray sweatpants riding very low on her hips", setting: "leaning over a kitchen island reaching for the salt shaker" },
+  { outfit: "topless wearing only an unbuttoned denim mini skirt", setting: "in a sunlit kitchen" },
+  { outfit: "topless wearing only short white socks", setting: "in her kitchen" },
+  { outfit: "topless wearing only loose gray sweatpants low on her hips", setting: "in her kitchen" },
 
   // Mirror selfies — semi-clothed/bare
-  { outfit: "bare breasts with only black lace panties on", setting: "in front of a full-length bedroom mirror at night" },
-  { outfit: "topless and pulling a t-shirt up over her head, bare breasts exposed", setting: "in a small messy laundry room with clothes piled around" },
-  { outfit: "topless and biting the strap of a tiny bralette pulled down", setting: "sitting on the kitchen counter with bare feet" },
-  { outfit: "topless with both arms crossed under her bare breasts pushing them way up", setting: "standing barefoot by a sunlit bedroom window" },
-  { outfit: "topless wearing only fishnet stockings and high heels", setting: "in front of a wardrobe mirror in a dim bedroom" },
-  { outfit: "fully nude squatting in front of a low mirror selfie", setting: "in a small bathroom with the lights low" },
-  { outfit: "topless trying on a tight new t-shirt that won't fit over her chest", setting: "in a fitting room with the curtain half-closed" },
+  { outfit: "bare breasts with only black lace panties on", setting: "in front of a full-length bedroom mirror" },
+  { outfit: "topless biting the strap of a tiny bralette pulled down", setting: "on a kitchen counter" },
+  { outfit: "topless with arms crossed under her bare breasts pushing them up", setting: "by a sunlit bedroom window" },
+  { outfit: "topless wearing only fishnet stockings", setting: "in front of a bedroom mirror" },
+  { outfit: "fully nude squatting low for a mirror selfie", setting: "in a small bathroom" },
+  { outfit: "topless with a tight t-shirt half pulled up over her chest", setting: "in front of a bathroom mirror" },
+  { outfit: "topless in only black panties", setting: "in front of a bedroom mirror" },
+  { outfit: "topless in only white lace panties", setting: "in her bedroom" },
 
   // Gym / sweat
-  { outfit: "topless body covered in a sheen of sweat", setting: "in a tiny home gym after a workout, towel around her neck" },
-  { outfit: "sports bra pulled up to her collarbone exposing her bare chest, sweaty", setting: "sitting on the bench of a small home gym after a set" },
-  { outfit: "topless drinking from a water bottle, hair wet with sweat", setting: "leaning against a wall mirror in a small gym after running on the treadmill" },
+  { outfit: "topless and slightly sweaty", setting: "in a small home gym" },
+  { outfit: "sports bra pulled up exposing her bare chest", setting: "in a home gym" },
+  { outfit: "topless after a workout", setting: "in a home gym" },
 
   // Outdoor / balcony / window
-  { outfit: "topless leaning out from a half-open robe in the open air", setting: "on a private balcony overlooking the rooftops at sunrise" },
-  { outfit: "completely nude with a thin scarf draped over one shoulder only", setting: "in front of an open window with a sheer curtain blowing inward" },
-  { outfit: "fully topless wearing only short denim cutoffs", setting: "in a private garden hammock at golden hour" },
-  { outfit: "open unbuttoned silk robe falling completely off both shoulders", setting: "stepping out onto a private hotel balcony at dawn" },
+  { outfit: "topless leaning out from a half-open robe", setting: "on a private balcony at sunrise" },
+  { outfit: "fully nude with a thin scarf over one shoulder only", setting: "in front of an open window with a sheer curtain" },
+  { outfit: "fully topless wearing only short denim cutoffs", setting: "in a private garden at golden hour" },
+  { outfit: "open silk robe falling off both shoulders", setting: "on a private balcony at dawn" },
 
-  // Specific positions / actions
-  { outfit: "topless leaning forward chest hanging heavy and full toward the camera", setting: "kneeling on the bed in dim warm light" },
-  { outfit: "topless and stretching her arms above her head", setting: "in front of an open window in the morning sun" },
-  { outfit: "topless and putting on a pair of earrings, bare chest fully exposed", setting: "in front of a vanity table mirror at night" },
-  { outfit: "topless and brushing her long hair", setting: "sitting at a vanity table with low warm lamp light" },
-  { outfit: "topless and applying lotion to her chest with one hand", setting: "sitting on the edge of the bed in the morning sun" },
-  { outfit: "fully nude on her back with her arm covering her eyes", setting: "in a sunlit hotel bed with white sheets twisted around her legs" },
-  { outfit: "topless and trying to push her chest into a too-small bralette", setting: "in front of a wardrobe mirror with bras strewn on the bed" },
-  { outfit: "topless and laughing while her chest bounces from the motion", setting: "sitting cross-legged on the bed with a friend's voice off-camera" },
+  // Positions / poses
+  { outfit: "topless leaning forward, chest hanging heavy toward the camera", setting: "kneeling on the bed" },
+  { outfit: "topless and stretching her arms above her head", setting: "by an open bedroom window" },
+  { outfit: "topless brushing her long hair", setting: "at a vanity table" },
+  { outfit: "topless applying lotion to her chest with one hand", setting: "on the edge of her bed" },
+  { outfit: "fully nude on her back, arm over her eyes", setting: "in a sunlit bed" },
+  { outfit: "topless and laughing", setting: "on her bed" },
 ];
 
 // ---------- ANGLES ----------
@@ -437,35 +426,29 @@ function pickNWeighted(arr, n, getCount) {
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // Light style notes inspired by the user's reference selfies. Kept SHORT and
-// generic — no stacked modifiers. Each note is a single descriptor that gives
-// the image a clear visual identity (B&W, soft daylight, mirror-shot, etc.).
+// generic — only ORTHOGONAL modifiers (B&W, mirror-shot, glasses, plain) so
+// they never conflict with the bundle's setting/outfit. Lighting / time-of-day
+// notes were removed because they clashed with bundle specifics (e.g. "sun-
+// flare outdoors" + "in her bedroom").
 const STYLE_NOTES_SFW = [
   "Black and white photo.",
   "Black and white photo.",
   "Black and white photo.",
   "Mirror selfie holding the phone in front of her face.",
   "Mirror selfie holding the phone in front of her face.",
-  "Soft natural daylight from a window.",
-  "Warm bedside lamp light at night.",
-  "Sun-flare overexposed selfie outdoors.",
   "Front-facing phone selfie at arm's length.",
   "Slightly tilted candid phone selfie.",
   "She is wearing thin round glasses.",
-  "", // plain — no extra style note
-  "",
+  "", "", "",
 ];
 const STYLE_NOTES_NSFW = [
   "Black and white photo.",
   "Black and white photo.",
   "Black and white photo.",
   "Mirror selfie holding the phone in front of her face.",
-  "Mirror selfie holding the phone in front of her face.",
-  "Soft natural daylight from a window.",
-  "Warm bedside lamp light at night.",
   "Front-facing phone selfie at arm's length.",
   "She is wearing thin round glasses.",
-  "",
-  "",
+  "", "", "",
 ];
 
 function composeSfwScene(bundle) {

@@ -228,28 +228,66 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
     }).then((r) => console.log('[driver] image-mode reset: ' + JSON.stringify(r))).catch(() => {});
     await page.waitForTimeout(700);
 
-    // Toggle Fast Mode OFF if it's currently ON. Fast=ON is signalled by a
-    // Mantine Badge with numeric content inside the drawer chip row. Try up
-    // to 2 toggles in case our first click fires a hover-tooltip instead.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const fastInfo = await page.evaluate(() => {
+    // Force the IMAGE Concept to the bare "Mango 2" (NOT "Mango 2 Fast Mode").
+    // Mage stores both as distinct Concepts that share a thumbnail:
+    //   • "Mango 2"            — base model, ~130s, no gems, BEST quality
+    //   • "Mango 2 Fast Mode"  — speed variant, ~29s, costs ~60 gems, BLURRIER
+    // The drawer's "Fast" toggle only flips a flag inside the Fast Mode
+    // concept; it does NOT clear the concept itself, so previous platform
+    // batches submitted with Concept="Mango 2 Fast Mode" attached and got the
+    // lower-quality output. We open the model picker and click "Mango 2"
+    // explicitly to make sure the bare-model Concept is the active one.
+    try {
+      const conceptInfo = await page.evaluate(() => {
         const vh = window.innerHeight;
         const inDrawer = (r) => r.top > vh - 220 && r.top < vh - 30;
-        const fastBtn = Array.from(document.querySelectorAll('button'))
-          .find((b) => (b.innerText || '').trim() === 'Fast' && inDrawer(b.getBoundingClientRect()));
-        if (!fastBtn) return { fastFound: false };
         const badges = Array.from(document.querySelectorAll('[class*="mage-Badge"]'))
           .filter((el) => inDrawer(el.getBoundingClientRect()))
           .filter((el) => /^\s*\d+\s*$/.test((el.innerText || '').trim()));
-        return { fastFound: true, gemCostVisible: badges.length > 0, badgeText: badges[0]?.innerText?.trim() || null };
+        return { gemCostVisible: badges.length > 0 };
       });
-      if (!fastInfo.fastFound) { console.log('[driver] no Fast chip in drawer — skipping'); break; }
-      if (!fastInfo.gemCostVisible) { console.log('[driver] Fast Mode already OFF (no gem badge)'); break; }
-      console.log('[driver] Fast Mode is ON (gem badge="' + fastInfo.badgeText + '") — toggling OFF (attempt ' + (attempt + 1) + ')');
-      try {
-        await page.locator('button', { hasText: /^Fast$/ }).first().click({ timeout: 3000 });
-      } catch (e) { console.log('[driver] Fast click failed: ' + e.message.split('\n')[0]); break; }
-      await page.waitForTimeout(900);
+      if (conceptInfo.gemCostVisible) {
+        console.log('[driver] gem-cost badge visible → Concept is Fast Mode, switching to bare "Mango 2"');
+        // Open the model picker by clicking the chip whose label starts with "Mango"
+        await page.locator('button', { hasText: /^Mango/ }).first().click({ timeout: 3000 });
+        await page.waitForTimeout(1500);
+        // Verify picker open
+        const pickerOpen = await page.evaluate(() => {
+          return !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
+            .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)));
+        });
+        if (pickerOpen) {
+          console.log('[driver] picker open — clicking bare "Mango 2" tile');
+          // Click via locator filtering: must contain "Mango 2" but NOT "Fast Mode"
+          // We pick the smallest matching element (the actual title <p>).
+          const clicked = await page.evaluate(() => {
+            const titles = Array.from(document.querySelectorAll('p, span, div, button'))
+              .filter((el) => (el.innerText || '').trim() === 'Mango 2');
+            if (!titles.length) return false;
+            // Walk up to closest interactive ancestor and click
+            const tile = titles[0];
+            const tileR = tile.getBoundingClientRect();
+            // Mantine cards capture clicks via parent .mage-Group-root or button — fire a synthetic click
+            const target = tile.closest('button') || tile.closest('[role="button"]') || tile;
+            target.click();
+            return { x: tileR.left, y: tileR.top };
+          });
+          console.log('[driver] Mango 2 click result: ' + JSON.stringify(clicked));
+          if (clicked) {
+            // Also try a real Playwright click for robustness
+            try {
+              await page.getByText('Mango 2', { exact: true }).first().click({ timeout: 2500 });
+            } catch (_) {}
+          }
+          await page.waitForTimeout(1500);
+        } else {
+          console.log('[driver] picker did not open — skipping concept switch');
+        }
+      } else {
+        console.log('[driver] no gem-cost badge — Concept already bare Mango 2');
+      }
+    } catch (e) {
+      console.log('[driver] concept switch failed: ' + e.message.split('\n')[0]);
     }
 
     // Seed seen URLs from current DOM/perf to avoid picking up stale ones.
