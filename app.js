@@ -1927,13 +1927,23 @@ app.get('/auth/google/callback', async (req, res) => {
 
 
 
-// Ajouter un middleware pour servir le fichier characters.json à partir de la racine
-
+// Servir characters.json a la racine, en filtrant les personnages marques `hidden: true`
+// (preserves dans le JSON pour les conserver en base mais invisibles cote site).
 app.get('/characters.json', (req, res) => {
   const lang = req.headers['accept-language'] || '';
   const isFrench = lang.toLowerCase().startsWith('fr');
   const file = isFrench ? 'characters.fr.json' : 'characters.json';
-  res.sendFile(path.join(__dirname, file));
+  try {
+    const fs = require('fs');
+    const raw = fs.readFileSync(path.join(__dirname, file), 'utf-8');
+    const all = JSON.parse(raw);
+    const visible = all.filter(c => c && c.hidden !== true);
+    res.set('Cache-Control', 'no-cache');
+    res.json(visible);
+  } catch (e) {
+    console.error('[characters.json] read/filter failed:', e.message);
+    res.sendFile(path.join(__dirname, file));
+  }
 });
 
 app.get('/api/stories', async (req, res) => {
@@ -1944,6 +1954,7 @@ app.get('/api/stories', async (req, res) => {
   const groups = [];
 
   for (const char of charactersEN) {
+    if (char.hidden === true) continue;
     const photoPath = char.photo || '';
     const match = photoPath.match(/images\/([^/]+)\//);
     if (!match) continue;
@@ -8082,6 +8093,7 @@ function getDailyRotationPool() {
         const allChars = JSON.parse(raw);
         const pool = [];
         for (const c of allChars) {
+            if (c && c.hidden === true) continue;
             if (DAILY_EMAIL_EXCLUDED_NAMES.includes(c.name)) continue;
             const cfg = deriveCharConfigFromJson(c);
             if (cfg) pool.push(cfg);
@@ -8117,7 +8129,7 @@ async function getAndConsumeFeaturedNewCharacter(database) {
         const fs = require("fs");
         const raw = fs.readFileSync(path.join(__dirname, "characters.json"), "utf-8");
         const allChars = JSON.parse(raw);
-        const newChars = allChars.filter(c => c && c.new === true && c.name);
+        const newChars = allChars.filter(c => c && c.new === true && c.name && c.hidden !== true);
         if (!newChars.length) return null;
 
         const tracking = database.collection("featured_email_tracking");
