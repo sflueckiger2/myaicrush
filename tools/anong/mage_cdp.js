@@ -229,65 +229,90 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
     await page.waitForTimeout(700);
 
     // Force the IMAGE Concept to the bare "Mango 2" (NOT "Mango 2 Fast Mode").
+    //
     // Mage stores both as distinct Concepts that share a thumbnail:
     //   • "Mango 2"            — base model, ~130s, no gems, BEST quality
     //   • "Mango 2 Fast Mode"  — speed variant, ~29s, costs ~60 gems, BLURRIER
-    // The drawer's "Fast" toggle only flips a flag inside the Fast Mode
-    // concept; it does NOT clear the concept itself, so previous platform
-    // batches submitted with Concept="Mango 2 Fast Mode" attached and got the
-    // lower-quality output. We open the model picker and click "Mango 2"
-    // explicitly to make sure the bare-model Concept is the active one.
+    //
+    // CRITICAL nuances we learned the hard way:
+    //   1. The drawer's bottom chip ALWAYS reads "Mango 2" — it shows the
+    //      underlying model name regardless of which Concept is active. So we
+    //      cannot tell which Concept is selected just from the chip text.
+    //   2. The Fast Mode signal we DO have is the numeric gem-cost Mantine
+    //      Badge inside the drawer area (e.g. "60"). When Fast Mode is the
+    //      active Concept, the gem badge appears; when bare Mango 2 is the
+    //      active Concept, no gem badge.
+    //   3. Even when the drawer chip says "Mango 2", the user's last manual
+    //      session may have selected the Fast Mode Concept and Mage persists
+    //      that across reloads. So we ALWAYS open the picker and explicitly
+    //      pick the bare "Mango 2" tile, gem badge or not.
+    //   4. The picker contains the <p>"Mango 2" title at y≈180 AND the drawer
+    //      chip <button>"Mango 2" at y≈525 simultaneously. We MUST filter to
+    //      the picker zone (y < vh-250) before picking the click target,
+    //      otherwise we re-click the drawer chip we just opened the picker
+    //      with — which closes the picker without changing the Concept.
+    //   5. Calling `.click()` in a page.evaluate runs the DOM click but does
+    //      not always fire Mantine's React handler. A real mouse down/up via
+    //      Playwright's `page.mouse` reliably fires it.
     try {
-      const conceptInfo = await page.evaluate(() => {
-        const vh = window.innerHeight;
-        const inDrawer = (r) => r.top > vh - 220 && r.top < vh - 30;
-        const badges = Array.from(document.querySelectorAll('[class*="mage-Badge"]'))
-          .filter((el) => inDrawer(el.getBoundingClientRect()))
-          .filter((el) => /^\s*\d+\s*$/.test((el.innerText || '').trim()));
-        return { gemCostVisible: badges.length > 0 };
-      });
-      if (conceptInfo.gemCostVisible) {
-        console.log('[driver] gem-cost badge visible → Concept is Fast Mode, switching to bare "Mango 2"');
-        // Open the model picker by clicking the chip whose label starts with "Mango"
-        await page.locator('button', { hasText: /^Mango/ }).first().click({ timeout: 3000 });
-        await page.waitForTimeout(1500);
-        // Verify picker open
-        const pickerOpen = await page.evaluate(() => {
-          return !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
-            .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)));
-        });
-        if (pickerOpen) {
-          console.log('[driver] picker open — clicking bare "Mango 2" tile');
-          // Click via locator filtering: must contain "Mango 2" but NOT "Fast Mode"
-          // We pick the smallest matching element (the actual title <p>).
-          const clicked = await page.evaluate(() => {
-            const titles = Array.from(document.querySelectorAll('p, span, div, button'))
-              .filter((el) => (el.innerText || '').trim() === 'Mango 2');
-            if (!titles.length) return false;
-            // Walk up to closest interactive ancestor and click
-            const tile = titles[0];
-            const tileR = tile.getBoundingClientRect();
-            // Mantine cards capture clicks via parent .mage-Group-root or button — fire a synthetic click
-            const target = tile.closest('button') || tile.closest('[role="button"]') || tile;
-            target.click();
-            return { x: tileR.left, y: tileR.top };
-          });
-          console.log('[driver] Mango 2 click result: ' + JSON.stringify(clicked));
-          if (clicked) {
-            // Also try a real Playwright click for robustness
-            try {
-              await page.getByText('Mango 2', { exact: true }).first().click({ timeout: 2500 });
-            } catch (_) {}
-          }
-          await page.waitForTimeout(1500);
-        } else {
-          console.log('[driver] picker did not open — skipping concept switch');
-        }
+      console.log('[driver] forcing bare "Mango 2" Concept selection…');
+      await page.locator('button', { hasText: /^Mango/ }).first().click({ timeout: 3000 });
+      await page.waitForTimeout(1700);
+      const pickerOpen = await page.evaluate(() =>
+        !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
+          .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)))
+      );
+      if (!pickerOpen) {
+        console.log('[driver] picker did not open — skipping concept switch');
       } else {
-        console.log('[driver] no gem-cost badge — Concept already bare Mango 2');
+        // Find the bare "Mango 2" picker tile. Filter by y-position so we
+        // never confuse it with the drawer chip near the bottom.
+        const tileInfo = await page.evaluate(() => {
+          const vh = window.innerHeight;
+          const titles = Array.from(document.querySelectorAll('p, span, div'))
+            .filter((el) => (el.innerText || '').trim() === 'Mango 2')
+            .map((el) => ({ el, r: el.getBoundingClientRect() }))
+            .filter(({ r }) => r.top < vh - 250 && r.top > 50);
+          if (!titles.length) return { found: false, reason: 'no picker tile' };
+          // Walk up from the title to find a ~270x70 card ancestor.
+          let card = titles[0].el;
+          for (let i = 0; i < 8; i++) {
+            const r = card.getBoundingClientRect();
+            if (r.width > 200 && r.width < 360 && r.height > 50 && r.height < 100) break;
+            const next = card.parentElement;
+            if (!next) return { found: false, reason: 'no card ancestor' };
+            card = next;
+          }
+          const cardR = card.getBoundingClientRect();
+          return {
+            found: true,
+            cx: Math.round(cardR.left + cardR.width / 2),
+            cy: Math.round(cardR.top + cardR.height / 2),
+          };
+        });
+        if (!tileInfo.found) {
+          console.log('[driver] bare Mango 2 tile not found: ' + tileInfo.reason);
+          await page.keyboard.press('Escape').catch(() => {});
+        } else {
+          console.log('[driver] clicking bare Mango 2 tile @' + tileInfo.cx + ',' + tileInfo.cy);
+          await page.mouse.move(tileInfo.cx, tileInfo.cy);
+          await page.waitForTimeout(80);
+          await page.mouse.down();
+          await page.waitForTimeout(60);
+          await page.mouse.up();
+          await page.waitForTimeout(1700);
+          // Confirm picker closed (= a tile was actually selected)
+          const stillOpen = await page.evaluate(() =>
+            !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
+              .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)))
+          );
+          console.log('[driver] picker after click: ' + (stillOpen ? 'STILL OPEN (click missed)' : 'closed ✓'));
+          if (stillOpen) await page.keyboard.press('Escape').catch(() => {});
+        }
       }
     } catch (e) {
       console.log('[driver] concept switch failed: ' + e.message.split('\n')[0]);
+      await page.keyboard.press('Escape').catch(() => {});
     }
 
     // Seed seen URLs from current DOM/perf to avoid picking up stale ones.
