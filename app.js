@@ -7818,7 +7818,11 @@ app.get("/api/admin/email-campaigns", requireAdmin, async (req, res) => {
   try {
     const database = client.db('MyAICrush');
     const campaigns = database.collection('daily_email_campaigns');
-    const results = await campaigns.find({})
+    // Hide low-volume / failed runs (< 100 emails actually sent) to keep the
+    // dashboard focused on real campaigns. Long-tail languages from the legacy
+    // multi-lang scheduler used to clutter the report with sentCount=1/2 rows.
+    const MIN_SENT_FOR_DASHBOARD = 100;
+    const results = await campaigns.find({ sentCount: { $gte: MIN_SENT_FOR_DASHBOARD } })
       .sort({ sentAt: -1 })
       .limit(50)
       .toArray();
@@ -8747,16 +8751,20 @@ if (VIDEO_ANNOUNCEMENT_AT.getTime() > Date.now()) {
     console.log(`🎬 [ANNOUNCEMENT] scheduled for ${VIDEO_ANNOUNCEMENT_AT.toISOString()} (= 22:00 Europe/Zurich)`);
 }
 
-// 📬 Daily engagement email — 15:30 Lausanne (UTC+2) = 13:30 UTC
-schedule.scheduleJob('30 13 * * *', async () => {
+// 📬 Daily engagement email — runs twice a day:
+//   - 03:00 Lausanne (CEST/UTC+2) = 01:00 UTC  → cron '0 1 * * *'
+//   - 14:00 Lausanne (CEST/UTC+2) = 12:00 UTC  → cron '0 12 * * *'
+// Per-user dedup uses a 6h gap (>>3h, <11h between slots) so the same user
+// receives BOTH slots but cannot be hit twice if the cron fires twice (e.g.
+// during a Render redeploy near the firing time).
+async function runDailyEmailJob() {
     try {
         console.log(`📬 [DAILY-EMAIL] Starting daily email send...`);
             const database = client.db('MyAICrush');
             const users = database.collection('users');
 
             const tenDaysAgo = new Date(Date.now() - 10 * 24 * 3600 * 1000);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const sixHoursAgo = new Date(Date.now() - 6 * 3600 * 1000);
 
             // Auto-clean: disable users who haven't opened in 10+ days
             const cleanResult = await users.updateMany(
@@ -8807,14 +8815,15 @@ schedule.scheduleJob('30 13 * * *', async () => {
                 }
             }
 
-            // Find eligible users
+            // Find eligible users — 6h gap dedup so a user can receive both daily
+            // slots but cannot be hit twice if the cron fires twice in a row.
             const eligibleUsers = await users.find({
                 dailyEmailEligible: true,
                 unsubscribedEmail: { $ne: true },
                 email: { $exists: true, $ne: "" },
                 $or: [
                     { lastDailyEmailSentAt: { $exists: false } },
-                    { lastDailyEmailSentAt: { $lt: today } }
+                    { lastDailyEmailSentAt: { $lt: sixHoursAgo } }
                 ]
             }, { projection: { email: 1, lang: 1 } }).toArray();
 
@@ -8823,12 +8832,17 @@ schedule.scheduleJob('30 13 * * *', async () => {
 
             if (!validUsers.length) return;
 
-            // Generate content per language group
-            const langGroups = {};
+            // FR + EN only — any other lang gets the English email. This keeps
+            // copy effort focused on the two volumes that matter and avoids
+            // wasting AI generations on long-tail languages.
+            const langGroups = { en: [], fr: [] };
             for (const u of validUsers) {
-                const lang = (u.lang || "en").substring(0, 2).toLowerCase();
-                if (!langGroups[lang]) langGroups[lang] = [];
-                langGroups[lang].push(u);
+                const raw = (u.lang || "en").substring(0, 2).toLowerCase();
+                const bucket = raw === "fr" ? "fr" : "en";
+                langGroups[bucket].push(u);
+            }
+            for (const k of Object.keys(langGroups)) {
+                if (!langGroups[k].length) delete langGroups[k];
             }
 
             let sent = 0, errors = 0;
@@ -8890,7 +8904,12 @@ schedule.scheduleJob('30 13 * * *', async () => {
         } catch (e) {
             console.error("[DAILY-EMAIL] Fatal error:", e.message);
         }
-});
+}
+
+// Two daily slots: 03:00 Lausanne (= 01:00 UTC) and 14:00 Lausanne (= 12:00 UTC).
+schedule.scheduleJob('0 1 * * *', runDailyEmailJob);
+schedule.scheduleJob('0 12 * * *', runDailyEmailJob);
+console.log('📬 [DAILY-EMAIL] Scheduled at 03:00 + 14:00 Lausanne (01:00 + 12:00 UTC)');
 
 // 🚫 Unsubscribe from marketing emails
 app.get('/unsubscribe', async (req, res) => {
