@@ -234,6 +234,66 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
     }).then((r) => console.log('[driver] image-mode reset: ' + JSON.stringify(r))).catch(() => {});
     await page.waitForTimeout(700);
 
+    // CRITICAL: clear any reference / character image still attached to the
+    // drawer. Mage's drawer keeps an uploaded image (e.g. from a previous
+    // image-to-video submit) attached as a Character / Reference, and at
+    // submit time it is included in `architectureConfig.image`. That image
+    // acts as a conditioning input on the text-to-image gen and makes every
+    // output look like a "montage" / blend of the prompt + the stuck
+    // reference (the user reported subtly fake faces despite a clean prompt).
+    //
+    // The dismiss flow Mage exposes:
+    //   1. Hover the small 50x50 thumbnail in the drawer
+    //   2. A tiny svg-only close button (~16x16) appears at the thumb's
+    //      top-right corner
+    //   3. Click it → the reference is detached and Mage no longer sends
+    //      `image` in the architectureConfig
+    //
+    // We loop because the drawer can hold both a Character and a Reference
+    // slot simultaneously (two thumbs).
+    for (let pass = 0; pass < 4; pass++) {
+      const thumb = await page.evaluate(() => {
+        const vh = window.innerHeight;
+        const inDrawer = (r) => r.top > vh - 280 && r.top < vh - 30;
+        const t = Array.from(document.querySelectorAll('img'))
+          .find((el) => {
+            const r = el.getBoundingClientRect();
+            return inDrawer(r) && r.width >= 30 && r.width <= 80 && r.height >= 30 && r.height <= 80
+              && /uploads/.test(el.src || el.currentSrc || '');
+          });
+        if (!t) return null;
+        const r = t.getBoundingClientRect();
+        return {
+          cx: Math.round(r.left + r.width / 2),
+          cy: Math.round(r.top + r.height / 2),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+        };
+      });
+      if (!thumb) {
+        if (pass === 0) console.log('[driver] reference cleanup: no thumbnail attached ✓');
+        break;
+      }
+      console.log('[driver] reference cleanup: detaching thumb @' + thumb.cx + ',' + thumb.cy + ' (pass ' + (pass + 1) + ')');
+      await page.mouse.move(thumb.cx, thumb.cy);
+      await page.waitForTimeout(900);
+      const closeBtn = await page.evaluate((t) => {
+        return Array.from(document.querySelectorAll('button, [role="button"]'))
+          .map((el) => ({ el, r: el.getBoundingClientRect() }))
+          .filter(({ r }) => r.width > 0 && r.width <= 30 && r.height > 0 && r.height <= 30
+            && Math.abs(r.left + r.width / 2 - (t.cx + t.w / 2 - 8)) < 20
+            && Math.abs(r.top + r.height / 2 - (t.cy - t.h / 2 + 8)) < 20)
+          .map(({ r }) => ({ x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }))
+          .find(() => true);
+      }, thumb);
+      if (!closeBtn) {
+        console.log('[driver] reference cleanup: close button not visible — aborting cleanup');
+        break;
+      }
+      await page.mouse.click(closeBtn.x, closeBtn.y);
+      await page.waitForTimeout(800);
+    }
+
     // Force the IMAGE Concept to the bare "Mango 2" (NOT "Mango 2 Fast Mode").
     //
     // Mage stores both as distinct Concepts that share a thumbnail:
