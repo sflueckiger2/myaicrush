@@ -1,334 +1,156 @@
 /*
   template_prompts.js — combinatorial generator for Mage.space prompts.
 
-  Each call to `buildPromptsForGenetics` randomly composes N dressed (SFW) +
-  N coquin (NSFW) scenes from independent pools:
+  DESIGN GOALS (rewritten 2026-05):
+    - SHORT prompts. Long prompts confused Mango 2 and produced 3-arm /
+      weird-nipple artifacts.
+    - NO PHONE. We removed every mention of "phone", "holding the phone",
+      "mirror selfie with phone in hand", etc. The phone-in-frame prop
+      caused continuity issues in the generated videos (extra hand,
+      wandering phone, etc.). The vibe is now "candid intimate selfie"
+      WITHOUT showing the device — most refs the user provided are
+      framed as if the camera is just there.
+    - Style matches the user's reference set: small intimate spaces
+      (attic bedroom with wooden ceiling, simple bedrooms, bathrooms,
+      beds), simple lingerie / bralettes / sports bras / loose tees /
+      light dresses, natural daylight, sometimes B&W, sometimes round
+      glasses, framing often cropped (only face+chest, only torso, only
+      side body, etc.).
+    - Genetics stay 100% the character's — only outfit / setting /
+      framing vary across batches.
 
-    SCENE_BUNDLE   = outfit + setting (kept coherent together)
-    ANGLES         = camera framing / point of view
-    POSES_*        = body language with chest emphasis
-    LIGHTINGS      = lighting & mood
-    STYLE_MODS     = realism modifiers (B&W, grain, blur, ...)
-    VIDEO_BEATS_*  = micro-motion templates for video prompt
+  Final prompt shape:
+    Photo of {GENETICS}. She is wearing {OUTFIT}, {SETTING}. {FRAMING} {STYLE}
 
-  This way two batches with the same character almost never produce the same
-  shot. The pool sizes give MILLIONS of unique combinations per kind.
-
-  Style is intentionally amateur iPhone selfie / candid — the model is told
-  the photo is unedited, motion-blurred, badly framed, with skin imperfections.
-  Video prompts are short imperative directions describing chest dynamics in
-  English (Wan 2.2 prefers English) — they intentionally allow facial
-  expressions (smile, wink, lip-bite, tongue-out) where they make the clip
-  feel more like a real selfie.
+  Video prompt: short imperative English describing chest motion (Wan 2.2).
 */
 
-// Short, simple style suffix. Long stacked modifiers (motion blur + grain +
-// vellus hair + blemishes + chromatic aberration + ...) confused Mage and
-// produced 3-arm / weird-nipple artifacts, so we keep it minimal.
-const DEFAULT_STYLE = "amateur iPhone selfie, very realistic, vertical 9:16";
+const DEFAULT_STYLE = "natural amateur selfie, very realistic, vertical 9:16";
 
 // ---------- SCENE BUNDLES (outfit + setting kept coherent) ----------
 //
-// Each bundle is a CLEAN scene: just outfit + simple location.
-// NO narrative props (no "eating cereal", no "with phone charger cables",
-// no "with a friend's voice off-camera", etc.) — those create distractions
-// and cause the model to focus on irrelevant details. Think: a girl quickly
-// snapping a coquin selfie to send to her boyfriend.
+// Each bundle is just `outfit` + `setting`. Style: intimate, domestic,
+// candid amateur selfie — without specifying "phone in hand" (the device
+// caused continuity issues in videos). We aim for VARIETY of small
+// domestic decors so two batches don't end up in the same room. The
+// reference set was used as STYLE inspiration (intimate / candid /
+// natural light), NOT a prescription — we deliberately do NOT lock to
+// "attic with wooden ceiling" or "round glasses", which would make every
+// shot look identical.
 const SFW_BUNDLES = [
-  // Bedroom — pyjamas / sleepwear
-  { outfit: "thin gray spaghetti tank top with no bra and tiny pyjama shorts", setting: "in her bedroom" },
-  { outfit: "oversized faded band t-shirt and no bra", setting: "in her bedroom" },
-  { outfit: "matching pink cotton pyjama set with the top buttons undone", setting: "in her bedroom" },
-  { outfit: "tiny silk slip pyjama with one strap fallen off her shoulder", setting: "in her bedroom" },
-  { outfit: "white cotton tank top and pink plaid pyjama pants, no bra", setting: "in her bedroom" },
-  { outfit: "oversized boyfriend t-shirt and nothing else", setting: "on her bed" },
-  { outfit: "tight ribbed cropped tank top and tiny shorts", setting: "on her bed" },
-  { outfit: "loose oversized blue tee and no bra", setting: "in her bedroom" },
-  { outfit: "thin strappy black babydoll slip", setting: "in front of a bedroom mirror" },
-  { outfit: "thin cotton white tank top with no bra", setting: "in her bedroom" },
+  // — Lingerie / bralette sets (varied rooms)
+  { outfit: "a thin black lace bralette and matching panties", setting: "in a soft-lit bedroom" },
+  { outfit: "a soft white lace bralette and white panties", setting: "in a small white-walled bedroom" },
+  { outfit: "a beige seamless bralette and matching panties", setting: "in a sunlit bedroom" },
+  { outfit: "a plain black bralette and black cotton panties", setting: "by a tall bedroom window" },
+  { outfit: "a soft pink bralette and pink panties", setting: "in a cozy bedroom" },
+  { outfit: "a thin satin cream bralette and matching shorts", setting: "in a hotel room" },
+  { outfit: "a black sports bra and black panties", setting: "by a bedroom window with sheer curtains" },
+  { outfit: "a fitted gray sports bra and tiny gray shorts", setting: "in a bright bedroom" },
+  { outfit: "a small olive sports bra and matching panties", setting: "in a small dim bedroom" },
+  { outfit: "a thin white lace bralette", setting: "in a dressing room with mirrored walls" },
 
-  // Bedroom — dresses / mirror
-  { outfit: "tight low-cut blue summer dress with thin straps", setting: "in front of a bedroom mirror" },
-  { outfit: "low-cut black satin slip dress", setting: "in her bedroom" },
-  { outfit: "deep V-neck red knit sweater dress", setting: "in her bedroom" },
-  { outfit: "tight ribbed beige bodysuit", setting: "in front of a bedroom mirror" },
-  { outfit: "tiny black tube top and short denim skirt", setting: "in her bedroom" },
-  { outfit: "navy cardigan unbuttoned over a tight white tank", setting: "in her bedroom" },
-  { outfit: "tight strapless black bandeau top and high-waist jeans", setting: "in front of a full-length bedroom mirror" },
-  { outfit: "loose cropped sweatshirt that barely fits her chest", setting: "in her bedroom" },
+  // — Tank tops / oversized tees
+  { outfit: "a thin white ribbed tank top with no bra and white panties", setting: "in a small bedroom" },
+  { outfit: "an oversized faded gray t-shirt and no pants", setting: "in a soft-lit bedroom in the morning" },
+  { outfit: "an oversized white t-shirt and white panties", setting: "in a sunlit bedroom" },
+  { outfit: "a tiny gray tank top and tiny pyjama shorts", setting: "in a small living room" },
+  { outfit: "an oversized boyfriend t-shirt and short cotton shorts", setting: "in a cozy bedroom in the morning" },
+  { outfit: "a thin black ribbed tank top and small shorts", setting: "in a hotel room with city light through the window" },
 
-  // Bathroom — towel / steam / mirror
-  { outfit: "fluffy oversized bath towel wrapped under her chest", setting: "in a foggy bathroom" },
-  { outfit: "wet white tank top clinging to her body, no bra", setting: "in a steamy bathroom" },
-  { outfit: "small white towel held up across her chest", setting: "in front of a bathroom mirror" },
-  { outfit: "wet pink robe slipping open at the chest", setting: "in a steamy bathroom" },
-  { outfit: "dripping wet sports bra", setting: "in a bathroom after a shower" },
-  { outfit: "white ribbed crop top stretched tight, no bra", setting: "in a bathroom" },
-  { outfit: "knotted men's button-up shirt", setting: "in front of a bathroom mirror" },
-  { outfit: "tight black sports bra", setting: "in front of a bathroom mirror" },
-  { outfit: "lace bralette under an unbuttoned shirt", setting: "in front of a bathroom mirror" },
+  // — On / in bed
+  { outfit: "a soft white tank top and panties", setting: "lying on a bed with white sheets" },
+  { outfit: "a small black bralette and panties", setting: "lying on a bed with gray sheets" },
+  { outfit: "an oversized t-shirt slipping off one shoulder", setting: "sitting cross-legged on a bed" },
+  { outfit: "a thin pink camisole", setting: "lying on white pillows" },
+  { outfit: "a tiny strappy nightie", setting: "on a soft duvet" },
 
-  // Living room — couch / floor / window
-  { outfit: "oversized cream knit pullover slipping off both shoulders", setting: "on a beige couch" },
-  { outfit: "soft pink hoodie unzipped halfway with no bra", setting: "on a couch" },
-  { outfit: "thin strappy white camisole", setting: "in her living room" },
-  { outfit: "fitted black turtleneck cropped above the navel", setting: "by a living room window at golden hour" },
-  { outfit: "loose oversized pastel knit cardigan worn with nothing underneath", setting: "on a soft rug" },
-  { outfit: "white ribbed tank top and baggy gray sweatpants riding low", setting: "in her kitchen" },
+  // — Bathroom / post-shower / robe
+  { outfit: "a black bralette", setting: "in a small modern bathroom" },
+  { outfit: "a soft white towel wrapped under her chest", setting: "in a steamy bathroom" },
+  { outfit: "a fitted gray sports bra", setting: "in a tiled bathroom" },
+  { outfit: "a thin silk robe loosely tied", setting: "in a small bathroom" },
+  { outfit: "a soft pink robe slightly open at the chest", setting: "by a sunlit bathroom window" },
+  { outfit: "a small white towel turban and a tank top", setting: "in front of a steamy bathroom mirror" },
 
-  // Kitchen / dining
-  { outfit: "tight black sports bra and high-waist leggings", setting: "in her kitchen" },
-  { outfit: "oversized white men's button-up shirt half-tucked", setting: "in a sunlit kitchen" },
-  { outfit: "tight black bralette and high-waist jeans", setting: "in her kitchen" },
+  // — Light dresses / blouses
+  { outfit: "a small light blue summer dress with thin straps", setting: "in a soft-lit room" },
+  { outfit: "a small white summer dress with thin straps", setting: "in a sunlit hallway" },
+  { outfit: "a soft gray pleated short dress with long sheer sleeves", setting: "in front of a closet mirror" },
+  { outfit: "a small black slip dress", setting: "in a dim hotel room" },
+  { outfit: "a thin floral sundress", setting: "by an open window" },
+  { outfit: "an unbuttoned oversized white shirt over a small bra", setting: "in a bright bedroom" },
 
-  // Outdoor / beach
-  { outfit: "tight white t-shirt and low-rise blue jeans", setting: "outdoors at golden hour" },
-  { outfit: "tiny string bikini top under an unbuttoned beach shirt", setting: "on a sunlit balcony" },
-  { outfit: "oversized white linen shirt over a beige bikini top", setting: "on a sunlit balcony" },
-  { outfit: "small white sundress with thin straps", setting: "on a sunlit terrace" },
-  { outfit: "thin black wrap top with deep cleavage and a flowy skirt", setting: "outdoors at golden hour" },
+  // — Crop / knot tops
+  { outfit: "a small white knotted top tied at the chest and tiny black shorts", setting: "in a small kitchen" },
+  { outfit: "a small beige knotted top tied at the chest and a black mini skirt", setting: "in a soft-lit hallway" },
+  { outfit: "a fitted black crop top and high-waist jean shorts", setting: "in front of a wardrobe mirror" },
+  { outfit: "a tight ribbed white crop top and gray sweatpants riding low", setting: "on a beige sofa" },
 
-  // Gym / yoga
-  { outfit: "thin cropped black hoodie pulled up baring her stomach, no bra", setting: "in a small home gym" },
-  { outfit: "tight neon sports bra and tight shorts", setting: "in a home gym" },
-  { outfit: "thin strappy gray gym tank top and tiny black bike shorts", setting: "in a home gym" },
-  { outfit: "tight pink sports bra under an open athletic jacket", setting: "in a sunlit gym" },
+  // — Living room / sofa / couch
+  { outfit: "an oversized cream knit pullover slipping off one shoulder", setting: "on a beige couch" },
+  { outfit: "a soft pink hoodie unzipped halfway over a small bralette", setting: "on a couch" },
+  { outfit: "a thin strappy white camisole", setting: "in a small living room" },
+  { outfit: "a fitted black turtleneck and high-waist jeans", setting: "by a window at golden hour" },
 
-  // Mirror selfies — outfits
-  { outfit: "tight ribbed white tank top with no bra", setting: "in front of a full-length bedroom mirror" },
-  { outfit: "tiny black bikini top tied at the front", setting: "in front of a fitting room mirror" },
-  { outfit: "soft cotton boxer shorts and a thin tight white t-shirt, no bra", setting: "in front of a bathroom mirror" },
-  { outfit: "fitted knotted plaid shirt and high-waist jean shorts", setting: "in front of a bathroom mirror" },
-  { outfit: "thin tight tan camisole with lace trim", setting: "in front of a bedroom mirror" },
-  { outfit: "tight white tank top knotted at the waist", setting: "in front of a bathroom mirror" },
-  { outfit: "fitted black crop top and high-waist denim shorts", setting: "in front of a bedroom mirror" },
-
-  // Office / dressed up
-  { outfit: "fitted white blouse with top buttons undone over a tiny black bra", setting: "in a home office" },
-  { outfit: "tight black pencil skirt and a cream silk blouse half-tucked", setting: "in front of a window" },
-  { outfit: "tight gray turtleneck dress with sleeves pushed up", setting: "in a dim study" },
-  { outfit: "see-through white linen shirt over a tiny black bra", setting: "on a sunlit balcony" },
+  // — Outdoor / balcony / terrace (clothed)
+  { outfit: "a small white sundress with thin straps", setting: "on a small sunlit balcony" },
+  { outfit: "a tiny string bikini top under an unbuttoned linen shirt", setting: "on a sunlit terrace" },
+  { outfit: "a tight white tank top and low-rise jeans", setting: "on a small balcony at golden hour" },
 ];
 
 const NSFW_BUNDLES = [
-  // Bedroom — bare on bed
-  { outfit: "topless with arms pushing her bare breasts together", setting: "on her bed" },
-  { outfit: "topless with the bedsheet pulled down to her waist", setting: "on white sheets" },
-  { outfit: "topless lying on her stomach with arms crossed under her chin", setting: "on her bed" },
-  { outfit: "topless squeezing her bare breasts together with both hands", setting: "in front of a bedroom mirror" },
-  { outfit: "topless wearing only loose pyjama bottoms low on her hips", setting: "in her bedroom" },
-  { outfit: "topless with hair wet and dripping down her chest", setting: "in a bathrobe in a steamy bathroom" },
-  { outfit: "fully nude with only a thin chain necklace", setting: "wrapped in white sheets on a bed" },
-  { outfit: "topless covering her bare breasts with one hand", setting: "in front of a bedroom mirror" },
-  { outfit: "topless wearing only white cotton panties", setting: "on her bed" },
-  { outfit: "fully nude under a thin white sheet slipping off her chest", setting: "on a bed" },
-  { outfit: "topless on her back with one knee up", setting: "on her bed in soft daylight" },
-  { outfit: "topless with a white sheet wrapped around her hips only", setting: "on the edge of her bed" },
+  // — Topless + panties (varied rooms)
+  { outfit: "topless wearing only black panties", setting: "in a soft-lit bedroom" },
+  { outfit: "topless wearing only white panties", setting: "in a small bedroom" },
+  { outfit: "topless wearing only black lace panties", setting: "by a bedroom window with sheer curtains" },
+  { outfit: "topless wearing only white lace panties", setting: "in a sunlit bedroom" },
+  { outfit: "topless wearing only beige panties", setting: "in a small white-walled bedroom" },
+  { outfit: "topless wearing only thin pink panties", setting: "in a cozy bedroom" },
+  { outfit: "topless wearing only black string panties", setting: "in a hotel room" },
+  { outfit: "topless wearing only fishnet stockings", setting: "in a dim bedroom" },
 
-  // Bathroom — wet, mirror, post-shower
-  { outfit: "open unbuttoned oversized white shirt, nothing underneath", setting: "in front of a steamy bathroom mirror" },
-  { outfit: "wet bare chest with water dripping down her body", setting: "in a steamy shower" },
-  { outfit: "soaked white bra clinging to her nipples", setting: "in a bathroom after a shower" },
-  { outfit: "fully topless with her hair slicked back, wet", setting: "under a shower" },
-  { outfit: "topless wearing only black string panties, wet", setting: "in front of a foggy bathroom mirror" },
-  { outfit: "fully nude with a small towel slipping down to her hips", setting: "in front of a bathroom mirror" },
-  { outfit: "topless with hair tied up in a towel turban", setting: "on a bathroom counter" },
-  { outfit: "topless after a bath, soap suds on her chest", setting: "in a small bathroom" },
-  { outfit: "topless in front of a steamy bathroom mirror", setting: "in a steamy bathroom" },
+  // — Bare on / in bed
+  { outfit: "topless lying on her back", setting: "on a bed with white sheets" },
+  { outfit: "topless lying on her stomach with arms folded under her chin", setting: "on a bed with gray sheets" },
+  { outfit: "topless wearing only panties, sitting cross-legged", setting: "on a soft duvet" },
+  { outfit: "topless wrapped loosely in a white sheet", setting: "on a bed in the morning" },
+  { outfit: "topless on her side", setting: "on white pillows" },
+  { outfit: "fully nude under a thin sheet slipping off her chest", setting: "on a bed in soft daylight" },
 
-  // Living room / floor / couch — bare
-  { outfit: "long silk robe open at the front, full bare chest visible", setting: "on the living room floor" },
-  { outfit: "loose cardigan off both shoulders, fully topless", setting: "on a beige couch" },
-  { outfit: "fully topless", setting: "on a soft white rug" },
-  { outfit: "topless wearing only thin gold chains on her hips", setting: "in her living room" },
-  { outfit: "fully nude with one leg up on the couch", setting: "in a sunlit living room" },
-  { outfit: "open unbuttoned cardigan with nothing underneath", setting: "on the couch" },
+  // — Bathroom / post-shower / wet
+  { outfit: "topless wearing only black panties", setting: "in a small bathroom" },
+  { outfit: "topless with a small white towel held loosely against her chest", setting: "in a tiled bathroom" },
+  { outfit: "topless wearing only white panties", setting: "in front of a foggy bathroom mirror" },
+  { outfit: "topless after a shower with damp hair", setting: "in a steamy bathroom" },
+  { outfit: "topless wearing only a small white towel around her hips", setting: "in a modern bathroom" },
+  { outfit: "fully nude with wet hair stuck to her chest", setting: "in a steamy bathroom" },
 
-  // Kitchen / domestic — bare
-  { outfit: "topless wearing only an unbuttoned denim mini skirt", setting: "in a sunlit kitchen" },
-  { outfit: "topless wearing only short white socks", setting: "in her kitchen" },
-  { outfit: "topless wearing only loose gray sweatpants low on her hips", setting: "in her kitchen" },
+  // — Half-undressed / in motion
+  { outfit: "topless under an open unbuttoned white shirt", setting: "in a sunlit bedroom" },
+  { outfit: "topless under an open unbuttoned oversized denim shirt", setting: "in a small living room" },
+  { outfit: "topless with a black bralette pulled down exposing her bare chest", setting: "in front of a wardrobe mirror" },
+  { outfit: "topless with her soft white t-shirt lifted up over her bare chest", setting: "on a beige couch" },
+  { outfit: "topless under a thin silk robe falling open at the chest", setting: "in a hotel room" },
+  { outfit: "topless under a soft pink robe slipping off both shoulders", setting: "by a sunlit bedroom window" },
 
-  // Mirror selfies — semi-clothed/bare
-  { outfit: "bare breasts with only black lace panties on", setting: "in front of a full-length bedroom mirror" },
-  { outfit: "topless biting the strap of a tiny bralette pulled down", setting: "on a kitchen counter" },
-  { outfit: "topless with arms crossed under her bare breasts pushing them up", setting: "by a sunlit bedroom window" },
-  { outfit: "topless wearing only fishnet stockings", setting: "in front of a bedroom mirror" },
-  { outfit: "fully nude squatting low for a mirror selfie", setting: "in a small bathroom" },
-  { outfit: "topless with a tight t-shirt half pulled up over her chest", setting: "in front of a bathroom mirror" },
-  { outfit: "topless in only black panties", setting: "in front of a bedroom mirror" },
-  { outfit: "topless in only white lace panties", setting: "in her bedroom" },
+  // — Posed / kneeling
+  { outfit: "topless kneeling on the floor", setting: "in a small bedroom" },
+  { outfit: "topless kneeling on a soft rug", setting: "in a sunlit living room" },
+  { outfit: "topless on her knees stretching her arms above her head", setting: "in a dim bedroom" },
+  { outfit: "topless leaning forward on the edge of a bed", setting: "in a small bedroom" },
 
-  // Gym / sweat
-  { outfit: "topless and slightly sweaty", setting: "in a small home gym" },
-  { outfit: "sports bra pulled up exposing her bare chest", setting: "in a home gym" },
-  { outfit: "topless after a workout", setting: "in a home gym" },
-
-  // Outdoor / balcony / window
-  { outfit: "topless leaning out from a half-open robe", setting: "on a private balcony at sunrise" },
-  { outfit: "fully nude with a thin scarf over one shoulder only", setting: "in front of an open window with a sheer curtain" },
-  { outfit: "fully topless wearing only short denim cutoffs", setting: "in a private garden at golden hour" },
-  { outfit: "open silk robe falling off both shoulders", setting: "on a private balcony at dawn" },
-
-  // Positions / poses
-  { outfit: "topless leaning forward, chest hanging heavy toward the camera", setting: "kneeling on the bed" },
-  { outfit: "topless and stretching her arms above her head", setting: "by an open bedroom window" },
-  { outfit: "topless brushing her long hair", setting: "at a vanity table" },
-  { outfit: "topless applying lotion to her chest with one hand", setting: "on the edge of her bed" },
-  { outfit: "fully nude on her back, arm over her eyes", setting: "in a sunlit bed" },
-  { outfit: "topless and laughing", setting: "on her bed" },
-];
-
-// ---------- ANGLES ----------
-const ANGLES = [
-  "extreme close up centered on her chest with her face only half visible at the top",
-  "low angle phone selfie taken from below pointing up at her face and chest",
-  "top down POV looking straight down at her chest and stomach, phone held above her face",
-  "side profile shot from her right showing her chest in clean side view",
-  "side profile shot from her left with the camera slightly tilted diagonally",
-  "very close up of just her lips and chest with the rest of her face out of frame",
-  "mirror selfie from waist up with her face partially obscured by the phone",
-  "over the shoulder shot showing her back and the side curve of her chest",
-  "badly framed accidental selfie cutting the top of her head and one shoulder",
-  "ultra wide phone selfie distorting her perspective with chest in the foreground",
-  "candid shot from far away across the room with her chest still as the focal point",
-  "POV with the camera held very close to her collarbone looking down her shirt",
-  "low angle from her feet looking up her body, breasts in the foreground heavy",
-  "tight headshot mostly her face with just the top of her cleavage in frame",
-  "fisheye-like distortion close up making her breasts look exaggeratedly large in the foreground",
-  "phone held at hip level pointing up at her chest, head cropped off",
-  "behind-the-shoulder mirror selfie showing her back and a sliver of her side chest",
-  "selfie taken with the phone pressed against the bathroom mirror, chest in foreground",
-  "candid blurry shot mid-motion as she reaches for the phone",
-  "phone left propped up across the room catching her by accident in passing",
-  "ultra-close macro of her cleavage and a single drop of water on her skin",
-  "phone held in her teeth, hands free, chest pushed forward to fit her face into frame",
-  "selfie taken with the phone above her head looking down, chest centered in frame",
-  "wide environmental shot showing the entire room with her tiny in the corner, chest still readable",
-  "selfie with the phone hovering inches from one breast, the other half out of frame",
-  "tilted dutch-angle shot with one corner higher than the other",
-  "back-camera shot held low pointing back at her, feet and chest in frame",
-  "rear-view mirror selfie inside a parked car at night",
-  "bathroom-mirror full-body selfie with the phone deliberately covering her face",
-  "candid shot taken by a friend off to the side mid-laugh",
-];
-
-// ---------- POSES (chest emphasis) ----------
-const POSES_SFW = [
-  "deep cleavage pressed together as she leans forward",
-  "her arms crossed underneath her chest pushing her breasts up",
-  "one hand absentmindedly resting under her breasts",
-  "she is biting her lower lip while pushing her chest forward",
-  "her free hand pulling her top lower to expose more cleavage",
-  "her breasts hanging heavy in the fabric, slightly spilling sideways",
-  "she is squeezing her breasts together with the inside of her arms",
-  "her shoulder slightly turned so her chest takes most of the frame",
-  "she is stretching her arms above her head making the fabric ride up",
-  "she is laughing and her breasts are slightly bouncing mid-motion",
-  "she is leaning sideways against a wall, chest pushed forward",
-  "she is mid-yawn with her arms behind her head, chest fully exposed by the pose",
-  "her hand inside the open neckline of her top resting on her chest",
-  "she is twisting her torso to one side so her chest pushes against the fabric",
-  "she is sliding one strap of her top down her shoulder while biting her lip",
-  "her arms hugging her own waist pushing her chest up tight",
-  "she is mid-breath with her chest expanded and pushing against the top",
-  "she is leaning over a counter, chest pressing on the surface flattening sideways",
-  "she is on tiptoes reaching for something high, chest pulled tight by the motion",
-  "she is winking at the camera, chest leaning toward the lens",
-  "she is cradling a coffee mug between her chest, breasts compressed around it",
-  "she is tucking a strand of hair behind her ear, chest cocked forward",
-  "she is bending over to pick up something, chest hanging into frame",
-  "she is sitting cross-legged with her chest resting on her crossed arms",
-  "she is pulling the bottom of her top up exposing her stomach, chest framed by fabric",
-  "she is mid-step with her chest visibly bouncing in motion",
-  "she is squishing her chest between both upper arms in a self-hug",
-  "she is twisting her head to one side, ponytail flicking, chest tilted",
-];
-
-const POSES_NSFW = [
-  "she is squeezing her bare breasts together with both hands",
-  "her bare breasts hanging heavy and slightly spilling between her arms",
-  "she is biting her lower lip while pushing her bare chest forward",
-  "her crossed forearms pressing under her bare breasts pushing them way up",
-  "she is leaning forward so her bare breasts hang into the camera",
-  "one bare breast is partially covered by her hair, the other fully visible",
-  "she is cupping just one bare breast while looking down at it",
-  "she is licking her own finger as her bare chest is fully exposed",
-  "she is pressing her bare chest against a cold surface flattening her breasts",
-  "she is mid-laugh with her bare breasts bouncing visibly",
-  "she is arching her back deeply making her bare breasts point upward",
-  "she is sliding a strap off her shoulder slowly, bare chest only half exposed",
-  "she is on her hands and knees with her bare breasts hanging straight down full",
-  "she is stretching her arms over her head, bare chest pulled tight and lifted",
-  "she is tracing her bare nipple with one finger, the other hand holding the phone",
-  "she is mid-yawn with bare chest fully exposed and arched back",
-  "she is twisting her body so one bare breast is in profile and the other dimly lit",
-  "she is leaning forward over a counter with her bare chest spilling onto the surface",
-  "she is biting her lip while one bare breast is partly lifted by her hand",
-  "she is on her back with arms above her head, bare breasts spilling sideways",
-  "she is sliding a panty strap off her hip with her bare chest in foreground",
-  "she is laughing softly while her bare breasts shake from the motion",
-  "she is tugging at the elastic of her panties exposing more skin, bare chest forward",
-  "she is hugging her own waist with both arms, lifting bare chest tight together",
-  "she is brushing her bare nipples lightly with the back of her fingers",
-  "she is crouched down with her bare breasts hanging between her arms",
-  "she is twisting one nipple gently between thumb and finger, the other breast bare and free",
-  "she is mid-step with bare chest visibly bouncing in motion",
-];
-
-// ---------- LIGHTINGS ----------
-const LIGHTINGS = [
-  "warm evening tungsten light from a bedside lamp",
-  "cold blue neon overhead light from a bathroom fixture",
-  "soft natural morning light coming through sheer curtains",
-  "harsh phone flash directly on her skin",
-  "golden hour orange sunlight on her chest from a window",
-  "dim blue glow from a TV or laptop screen",
-  "mixed orange-and-blue light from a window and a lamp",
-  "low warm candlelight",
-  "fluorescent flickering overhead light from a parking garage",
-  "fridge interior light spilling sideways across her body",
-  "overhead lighting from a single bare bulb",
-  "filtered light through a foggy bathroom",
-  "city neon signs reflecting in the window onto her face",
-  "single shaft of sunlight through closed blinds striping her chest",
-  "screen-only lighting from her own phone screen lighting her face from below",
-  "moonlight through the curtains falling on her chest",
-  "soft pink light from a string of fairy lights around the bed",
-  "amber light from a streetlamp through the window at night",
-  "harsh white salon light from above",
-  "diffused overcast daylight, no shadows, slightly gray",
-  "uneven uplight from a candle flickering on the floor",
-  "underexposed bedroom with one small lamp on the floor",
-];
-
-// ---------- STYLE MODIFIERS ----------
-const STYLE_MODS = [
-  "slight motion blur on her arm",
-  "grainy black and white photo",
-  "very out of focus background with sharp chest in foreground",
-  "candid mid-blink shot",
-  "slightly underexposed with crushed shadows",
-  "high ISO grain visible everywhere",
-  "deep saturated colors",
-  "muted desaturated colors",
-  "harsh contrast like a phone in low light",
-  "slight chromatic aberration on the edges",
-  "lens fingerprint smudge softening the corners",
-  "phone-flash overexposed in the chest area",
-  "tilted horizon, looks like a hurried snap",
-  "raw unedited iPhone photo, no filter",
-  "slight greenish tint typical of cheap phone cameras",
-  "soft halation around the brightest light source",
-  "minor light flare from a window catching the lens",
+  // — Outdoor / window / balcony (bare)
+  { outfit: "topless leaning out from a half-open silk robe", setting: "on a small balcony at sunrise" },
+  { outfit: "fully nude with a thin sheer scarf over one shoulder only", setting: "in front of an open window with a sheer curtain" },
+  { outfit: "topless wearing only short denim cutoffs", setting: "on a small terrace at golden hour" },
 ];
 
 // ---------- VIDEO MICRO-BEATS ----------
-// Wan 2.2 prefers VERY simple English imperatives. We aim for one short
-// sentence describing chest motion + one short consequence sentence. The
-// model interprets long descriptive prompts poorly and tends to ignore them
-// or freeze the subject. Format reference: "The woman squeezes her large
-// breasts with her hands. Her breasts look bigger and bounce."
+// Wan 2.2 prefers VERY simple English imperatives. One short sentence
+// describing chest motion + one short consequence sentence. Long prompts
+// are ignored. Format: "The woman squeezes her large breasts with her hands.
+// Her breasts look bigger and bounce."
 const VIDEO_BEATS_SFW = [
   "The woman squeezes her large breasts with her hands. Her breasts look bigger and bounce.",
   "The woman squeezes her arms against her chest. Her breasts look bigger and bounce.",
@@ -348,8 +170,8 @@ const VIDEO_BEATS_SFW = [
   "The woman lifts her breasts with both hands. Her breasts look bigger.",
   "The woman pushes her breasts together. Her breasts look bigger.",
   "The woman walks backward. Her breasts bounce.",
-  "The woman waves at the camera. Her breasts bounce as she moves.",
   "The woman drops her shoulders. Her breasts fall heavy and settle.",
+  "The woman laughs softly. Her breasts shake naturally.",
 ];
 
 const VIDEO_BEATS_NSFW = [
@@ -372,18 +194,13 @@ const VIDEO_BEATS_NSFW = [
   "The woman pushes her bare breasts together. Her bare breasts look bigger.",
   "The woman walks backward. Her bare breasts bounce.",
   "The woman drops her shoulders. Her bare breasts fall heavy and settle.",
-  "The woman traces her bare nipple with one finger. Her bare breasts move slightly.",
+  "The woman laughs softly. Her bare breasts shake naturally.",
 ];
 
 // ---------- helpers ----------
 const fs = require('fs');
 const path = require('path');
 
-// Persistent usage history so successive batches don't keep tripping over the
-// same SCENE_BUNDLE (outfit + setting). Each call increments the count for
-// each bundle picked. Bundles with the lowest count are always preferred —
-// only after all 60 bundles have been used once does the picker start a
-// second pass. This eliminates near-duplicate images across batches.
 const USAGE_FILE = path.join(__dirname, '_bundle_usage.json');
 
 function loadUsage() {
@@ -396,10 +213,9 @@ function saveUsage(usage) {
 }
 function bundleKey(b) { return b.outfit + '|' + b.setting; }
 
-// Pick `n` items from `arr`, preferring those with the lowest usage count.
-// `getCount(item)` returns the current count. Items with the same count are
-// shuffled with Fisher-Yates so successive batches don't always replay the
-// same order at a given level.
+// Pick `n` items preferring the lowest usage count. Same-count items are
+// shuffled with Fisher-Yates so successive batches don't replay the same
+// order at a given level.
 function pickNWeighted(arr, n, getCount) {
   const groups = new Map();
   for (const item of arr) {
@@ -425,43 +241,71 @@ function pickNWeighted(arr, n, getCount) {
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-// Light style notes inspired by the user's reference selfies. Kept SHORT and
-// generic — only ORTHOGONAL modifiers (B&W, mirror-shot, glasses, plain) so
-// they never conflict with the bundle's setting/outfit. Lighting / time-of-day
-// notes were removed because they clashed with bundle specifics (e.g. "sun-
-// flare outdoors" + "in her bedroom").
-const STYLE_NOTES_SFW = [
+// ---------- FRAMING NOTES ----------
+// SHORT framing/camera-perspective modifiers. We deliberately avoid
+// putting outfit/decor/accessory specifics here (no "round glasses",
+// no "wooden ceiling"), because those would compound with the bundle's
+// outfit+setting and turn every shot into a clone. These are PURE
+// composition notes — angle, crop, B&W, etc.
+//
+// Empty slots = let the bundle stand on its own (most natural-looking).
+const FRAMING_NOTES = [
+  "Close-up on her face and chest.",
+  "Close-up on her face and chest.",
+  "Tight crop showing only her torso, face out of frame.",
+  "Tight crop showing only her chest and stomach, face out of frame.",
+  "Side profile shot of her body.",
+  "Low angle from below looking up at her.",
+  "Top-down angle looking down at her chest.",
+  "Lying on the bed, close-up.",
+  "Looking up at the camera, head slightly tilted.",
+  "Slightly tilted candid framing, a bit imperfect.",
+  "Badly framed candid shot, head partially cropped.",
+  "Wide shot showing her full body in the room.",
   "Black and white photo.",
   "Black and white photo.",
-  "Black and white photo.",
-  "Mirror selfie holding the phone in front of her face.",
-  "Mirror selfie holding the phone in front of her face.",
-  "Front-facing phone selfie at arm's length.",
-  "Slightly tilted candid phone selfie.",
-  "She is wearing thin round glasses.",
-  "", "", "",
+  "Black and white photo, close-up.",
+  "Soft natural daylight on her skin.",
+  "",
+  "",
+  "",
+  "",
 ];
-const STYLE_NOTES_NSFW = [
+
+const FRAMING_NOTES_NSFW = [
+  "Close-up on her face and bare chest.",
+  "Close-up on her face and bare chest.",
+  "Tight crop showing only her bare chest and stomach, face out of frame.",
+  "Tight crop showing only her bare torso, face out of frame.",
+  "Side profile shot of her body.",
+  "Low angle from below looking up at her bare chest.",
+  "Top-down angle looking down at her bare chest.",
+  "Lying on the bed, close-up of her bare chest.",
+  "Looking up at the camera, head slightly tilted.",
+  "Slightly tilted candid framing, a bit imperfect.",
+  "Badly framed candid shot, head partially cropped.",
+  "Wide shot showing her full body in the room.",
   "Black and white photo.",
   "Black and white photo.",
-  "Black and white photo.",
-  "Mirror selfie holding the phone in front of her face.",
-  "Front-facing phone selfie at arm's length.",
-  "She is wearing thin round glasses.",
-  "", "", "",
+  "Black and white photo, close-up.",
+  "Soft natural daylight on her skin.",
+  "",
+  "",
+  "",
+  "",
 ];
 
 function composeSfwScene(bundle) {
   return {
     label: `${bundle.outfit}, ${bundle.setting}`,
-    note: pick(STYLE_NOTES_SFW),
+    note: pick(FRAMING_NOTES),
     video: pick(VIDEO_BEATS_SFW),
   };
 }
 function composeNsfwScene(bundle) {
   return {
     label: `${bundle.outfit}, ${bundle.setting}`,
-    note: pick(STYLE_NOTES_NSFW),
+    note: pick(FRAMING_NOTES_NSFW),
     video: pick(VIDEO_BEATS_NSFW),
   };
 }
@@ -474,8 +318,6 @@ function buildItem(prefix, idx, kind, scene) {
   return { name, kind, prompt: text, videoPrompt: scene.video };
 }
 
-// `dressedStart` and `coquinStart` let the caller anchor the numbering past
-// existing files so that successive batches never overwrite each other.
 function buildPromptsForGenetics({ character, genetics, styleSuffix, dressedStart, coquinStart, count = 5 }) {
   const style = styleSuffix || DEFAULT_STYLE;
   const ds = Number.isFinite(dressedStart) ? dressedStart : 10;
@@ -489,7 +331,6 @@ function buildPromptsForGenetics({ character, genetics, styleSuffix, dressedStar
   const dressedBundles = pickNWeighted(SFW_BUNDLES, count, (b) => sfwUsage[bundleKey(b)] || 0);
   const coquinBundles = pickNWeighted(NSFW_BUNDLES, count, (b) => nsfwUsage[bundleKey(b)] || 0);
 
-  // Persist updated usage counts so the next batch sees these as "used".
   for (const b of dressedBundles) sfwUsage[bundleKey(b)] = (sfwUsage[bundleKey(b)] || 0) + 1;
   for (const b of coquinBundles) nsfwUsage[bundleKey(b)] = (nsfwUsage[bundleKey(b)] || 0) + 1;
   saveUsage(usage);

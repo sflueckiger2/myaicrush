@@ -156,10 +156,16 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
   let onResponse = null;
   try {
     page = await findOrCreateMageTab(browser);
+    // CRITICAL: bring the tab to the foreground. A Mage tab in the background
+    // gets its requestAnimationFrame loop throttled by Chrome, which makes
+    // Mantine click handlers fire late or not at all — that's why batches
+    // launched after a long video session were timing out everywhere.
+    try { await page.bringToFront(); } catch (_) {}
     // Reload to ensure a clean drawer state — kills any leftover overlay,
     // command palette, half-typed prompt, or stale image cache from a
     // previous batch.
     try { await page.reload({ waitUntil: 'domcontentloaded' }); } catch (_) {}
+    try { await page.bringToFront(); } catch (_) {}
     const ready = await waitForMageReady(page, 25000);
     if (!ready) throw new Error('Mage prompt drawer never became ready');
 
@@ -254,17 +260,26 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
     //   5. Calling `.click()` in a page.evaluate runs the DOM click but does
     //      not always fire Mantine's React handler. A real mouse down/up via
     //      Playwright's `page.mouse` reliably fires it.
-    try {
-      console.log('[driver] forcing bare "Mango 2" Concept selection…');
-      await page.locator('button', { hasText: /^Mango/ }).first().click({ timeout: 3000 });
-      await page.waitForTimeout(1700);
-      const pickerOpen = await page.evaluate(() =>
-        !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
-          .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)))
-      );
-      if (!pickerOpen) {
-        console.log('[driver] picker did not open — skipping concept switch');
-      } else {
+    let conceptOk = false;
+    for (let attempt = 1; attempt <= 2 && !conceptOk; attempt++) {
+      try {
+        console.log('[driver] forcing bare "Mango 2" Concept selection… (attempt ' + attempt + '/2)');
+        // Make sure the chip is actually visible before we click — its locator
+        // may resolve to a hidden/zero-size button if the drawer is still
+        // transitioning. `waitFor` retries internally for up to 8s.
+        const chip = page.locator('button', { hasText: /^Mango/ }).first();
+        await chip.waitFor({ state: 'visible', timeout: 8000 });
+        await chip.click({ timeout: 4000 });
+        await page.waitForTimeout(1700);
+        const pickerOpen = await page.evaluate(() =>
+          !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
+            .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)))
+        );
+        if (!pickerOpen) {
+          console.log('[driver] picker did not open — skipping concept switch');
+          conceptOk = true; // not fatal, generation still works
+          break;
+        }
         // Find the bare "Mango 2" picker tile. Filter by y-position so we
         // never confuse it with the drawer chip near the bottom.
         const tileInfo = await page.evaluate(() => {
@@ -274,7 +289,6 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
             .map((el) => ({ el, r: el.getBoundingClientRect() }))
             .filter(({ r }) => r.top < vh - 250 && r.top > 50);
           if (!titles.length) return { found: false, reason: 'no picker tile' };
-          // Walk up from the title to find a ~270x70 card ancestor.
           let card = titles[0].el;
           for (let i = 0; i < 8; i++) {
             const r = card.getBoundingClientRect();
@@ -301,18 +315,49 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
           await page.waitForTimeout(60);
           await page.mouse.up();
           await page.waitForTimeout(1700);
-          // Confirm picker closed (= a tile was actually selected)
           const stillOpen = await page.evaluate(() =>
             !!Array.from(document.querySelectorAll('div, [role="dialog"]'))
               .find((el) => /Choose Image Model|Choose Model/i.test((el.innerText || '').slice(0, 200)))
           );
           console.log('[driver] picker after click: ' + (stillOpen ? 'STILL OPEN (click missed)' : 'closed ✓'));
           if (stillOpen) await page.keyboard.press('Escape').catch(() => {});
+          else conceptOk = true;
+        }
+      } catch (e) {
+        console.log('[driver] concept switch failed: ' + e.message.split('\n')[0]);
+        await page.keyboard.press('Escape').catch(() => {});
+      }
+      // If first attempt didn't succeed, do a hard recovery: full reload +
+      // re-expand drawer + image-mode reset, then retry once.
+      if (!conceptOk && attempt === 1) {
+        console.log('[driver] attempting hard recovery before retry…');
+        try {
+          await page.bringToFront();
+          await page.goto('https://www.mage.space/explore', { waitUntil: 'domcontentloaded' });
+          await page.bringToFront();
+          await waitForMageReady(page, 25000);
+          // Re-expand drawer
+          await page.evaluate(() => {
+            const ce = document.querySelector('[contenteditable="true"]');
+            if (!ce) return;
+            const drawer = ce.closest('[class*="promptbar"]') || ce.parentElement;
+            const dR = drawer.getBoundingClientRect();
+            const cands = Array.from(document.querySelectorAll('button'))
+              .filter((b) => !((b.textContent || '').trim()) && b.querySelector('svg'))
+              .map((b) => ({ b, r: b.getBoundingClientRect() }))
+              .filter(({ r }) => r.width > 0 && r.height > 0 && r.width <= 32 && r.height <= 32
+                && r.top >= dR.top - 6 && r.top <= dR.bottom + 6
+                && r.left >= dR.right - 60 && r.left <= dR.right + 30);
+            if (cands[0]) cands[0].b.click();
+          });
+          await page.waitForTimeout(900);
+          // Re-click the Image pill
+          await page.locator('button', { hasText: /^Image$/ }).first().click({ timeout: 3000 }).catch(() => {});
+          await page.waitForTimeout(900);
+        } catch (recErr) {
+          console.log('[driver] hard recovery failed: ' + recErr.message.split('\n')[0]);
         }
       }
-    } catch (e) {
-      console.log('[driver] concept switch failed: ' + e.message.split('\n')[0]);
-      await page.keyboard.press('Escape').catch(() => {});
     }
 
     // Seed seen URLs from current DOM/perf to avoid picking up stale ones.
@@ -350,6 +395,9 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
       } catch (_) {}
     };
     page.on('response', onResponse);
+
+    let consecutiveFails = 0;
+    const MAX_CONSECUTIVE_FAILS = 3;
 
     for (let i = 0; i < items.length; i++) {
       if (cancelled) break;
@@ -534,12 +582,23 @@ async function driveQueue({ items, onResult, perPromptTimeoutMs = 480000, minWai
           reportedUrls.add(url);
           await onResult(it, url, null);
           if (onProgress) onProgress({ index: i, total: items.length, name: it.name, phase: 'ok', url });
+          consecutiveFails = 0;
         } else {
           await onResult(it, null, 'timeout');
           if (onProgress) onProgress({ index: i, total: items.length, name: it.name, phase: 'timeout' });
+          consecutiveFails++;
         }
       } catch (e) {
         if (onProgress) onProgress({ index: i, total: items.length, name: it.name, phase: 'result-error', error: e.message });
+        consecutiveFails++;
+      }
+      // Bail out early if the Mage tab is in a stuck state — better to abort
+      // and let the user diagnose than to silently burn through a 100-item
+      // queue with each item timing out at 8 minutes (= 13 hours wasted).
+      if (consecutiveFails >= MAX_CONSECUTIVE_FAILS) {
+        const msg = MAX_CONSECUTIVE_FAILS + ' consecutive failures — aborting batch (Mage tab likely stuck, reload manually then relaunch)';
+        console.log('[driver] ' + msg);
+        return { ok: false, error: msg };
       }
       await page.waitForTimeout(betweenMs);
     }
