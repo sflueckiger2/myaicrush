@@ -8221,7 +8221,10 @@ app.get('/t/:token', async (req, res) => {
         console.log(`📨 [OPEN-TRACK] email=${email}, campaignId=${campaignId}`);
         if (email && email.includes('@')) {
             const database = client.db('MyAICrush');
-            await database.collection('users').updateOne({ email }, { $set: { lastEmailOpenedAt: new Date() } });
+            await database.collection('users').updateOne(
+                { email },
+                { $set: { lastEmailOpenedAt: new Date(), dailyEmailsSinceLastOpen: 0 } }
+            );
             if (campaignId) {
                 const result = await database.collection('daily_email_campaigns').updateOne(
                     { _id: new (require('mongodb').ObjectId)(campaignId) },
@@ -8763,23 +8766,21 @@ async function runDailyEmailJob() {
             const database = client.db('MyAICrush');
             const users = database.collection('users');
 
-            const tenDaysAgo = new Date(Date.now() - 10 * 24 * 3600 * 1000);
             const sixHoursAgo = new Date(Date.now() - 6 * 3600 * 1000);
 
-            // Auto-clean: disable users who haven't opened in 10+ days
+            // Auto-clean: disable users who haven't opened ANY of the last
+            // DAILY_EMAIL_NO_OPEN_LIMIT consecutive emails. The counter is
+            // incremented on each send and reset to 0 when the open pixel fires.
+            const DAILY_EMAIL_NO_OPEN_LIMIT = 15;
             const cleanResult = await users.updateMany(
                 {
                     dailyEmailEligible: true,
-                    $or: [
-                        { lastEmailOpenedAt: { $lt: tenDaysAgo } },
-                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $lt: tenDaysAgo } },
-                        { lastEmailOpenedAt: { $exists: false }, dailyEmailEligibleSince: { $exists: false }, createdAt: { $lt: tenDaysAgo } }
-                    ]
+                    dailyEmailsSinceLastOpen: { $gte: DAILY_EMAIL_NO_OPEN_LIMIT }
                 },
                 { $set: { dailyEmailEligible: false, dailyEmailCleanedAt: new Date() } }
             );
             if (cleanResult.modifiedCount > 0) {
-                console.log(`🧹 [DAILY-EMAIL] Auto-cleaned ${cleanResult.modifiedCount} inactive users`);
+                console.log(`🧹 [DAILY-EMAIL] Auto-cleaned ${cleanResult.modifiedCount} users with ${DAILY_EMAIL_NO_OPEN_LIMIT}+ unopened emails`);
             }
 
             // Pick today's character: any IA flagged `new: true` in characters.json gets
@@ -8885,7 +8886,10 @@ async function runDailyEmailJob() {
                             html
                         });
 
-                        await users.updateOne({ email: u.email }, { $set: { lastDailyEmailSentAt: new Date() } });
+                        await users.updateOne({ email: u.email }, {
+                            $set: { lastDailyEmailSentAt: new Date() },
+                            $inc: { dailyEmailsSinceLastOpen: 1 }
+                        });
                         sent++;
                         langSent++;
                     } catch (e) {
