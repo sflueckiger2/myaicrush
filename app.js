@@ -8707,6 +8707,46 @@ function isValidEmailFormat(email) {
     return true;
 }
 
+// 🎬 ONE-SHOT — Video creator announcement blast
+// Fires at May 8, 2026 22:00 Lausanne (CEST/UTC+2) = 20:00 UTC.
+// Idempotent via the `one_shot_email_log` collection so a Render restart
+// inside the firing window can't trigger a duplicate blast.
+const VIDEO_ANNOUNCEMENT_AT = new Date('2026-05-08T20:00:00.000Z');
+const VIDEO_ANNOUNCEMENT_KEY = 'video_creator_announcement_2026_05_08';
+if (VIDEO_ANNOUNCEMENT_AT.getTime() > Date.now()) {
+    schedule.scheduleJob(VIDEO_ANNOUNCEMENT_AT, async () => {
+        try {
+            const db = client.db('MyAICrush');
+            const lockCol = db.collection('one_shot_email_log');
+            const existing = await lockCol.findOne({ key: VIDEO_ANNOUNCEMENT_KEY });
+            if (existing && existing.completedAt) {
+                console.log(`🎬 [ANNOUNCEMENT] already sent at ${existing.completedAt.toISOString()}, skipping`);
+                return;
+            }
+            const lockRes = await lockCol.updateOne(
+                { key: VIDEO_ANNOUNCEMENT_KEY, completedAt: { $exists: false } },
+                { $setOnInsert: { key: VIDEO_ANNOUNCEMENT_KEY, startedAt: new Date() } },
+                { upsert: true }
+            );
+            if (lockRes.upsertedCount === 0 && !existing) {
+                console.log('🎬 [ANNOUNCEMENT] another instance is already running, skipping');
+                return;
+            }
+            console.log('🎬 [ANNOUNCEMENT] firing video-creator announcement blast...');
+            const { sendRealBlast } = require('./tools/send_video_creator_announcement.cjs');
+            const result = await sendRealBlast({ log: (...a) => console.log(...a) });
+            await lockCol.updateOne(
+                { key: VIDEO_ANNOUNCEMENT_KEY },
+                { $set: { completedAt: new Date(), result } }
+            );
+            console.log(`🎬 [ANNOUNCEMENT] completed: sent=${result.sent} errors=${result.errors} target=${result.total}`);
+        } catch (e) {
+            console.error('🎬 [ANNOUNCEMENT] error:', e);
+        }
+    });
+    console.log(`🎬 [ANNOUNCEMENT] scheduled for ${VIDEO_ANNOUNCEMENT_AT.toISOString()} (= 22:00 Europe/Zurich)`);
+}
+
 // 📬 Daily engagement email — 15:30 Lausanne (UTC+2) = 13:30 UTC
 schedule.scheduleJob('30 13 * * *', async () => {
     try {
