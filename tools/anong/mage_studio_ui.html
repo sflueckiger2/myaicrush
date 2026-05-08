@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Mage Studio</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0d0d12; color: #e7e7ee; }
+    header { padding: 16px 24px; background: linear-gradient(135deg,#fa8c16,#9254de); }
+    header h1 { margin: 0; font-size: 20px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+    section { background: #15151c; border: 1px solid #2a2a36; border-radius: 12px; padding: 20px; }
+    h2 { margin-top: 0; font-size: 16px; color: #fa8c16; }
+    button { background: #fa8c16; color: #1a1a22; border: 0; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    button.secondary { background: #2a2a36; color: #e7e7ee; }
+    button:hover { filter: brightness(1.1); }
+    pre, code { background: #0a0a10; padding: 8px; border-radius: 6px; overflow-x: auto; font-family: ui-monospace, "SFMono-Regular", monospace; font-size: 12px; color: #e0e0ea; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    select { background: #0a0a10; color: #e7e7ee; border: 1px solid #2a2a36; padding: 8px; border-radius: 6px; min-width: 220px; }
+    .item { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #1f1f27; align-items: center; }
+    .item:last-child { border-bottom: 0; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .pill.sfw { background: #234d33; color: #b6f5cc; }
+    .pill.nsfw { background: #4d2333; color: #f5b6cc; }
+    .pill.done { background: #335; color: #ccf; }
+    .pill.pending { background: #2a2a36; color: #e7e7ee; }
+    .pill.running { background: #fa8c16; color: #1a1a22; animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+    .progress { height: 8px; background: #1f1f27; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+    .progress > div { height: 100%; background: linear-gradient(90deg, #fa8c16, #9254de); transition: width .25s; }
+    .small { color: #99a; font-size: 12px; }
+    .copy-btn { font-size: 11px; padding: 6px 10px; }
+    a { color: #fa8c16; }
+  </style>
+</head>
+<body>
+  <header><h1>🥭 Mage Studio</h1></header>
+  <main>
+    <section style="grid-column: 1 / -1;">
+      <h2>0. New character from genetics (auto-batch)</h2>
+      <p class="small">
+        Type the character name (lowercase, used as folder name) and the genetics description.
+        We'll generate <b id="count-summary">10</b> varied prompts (<b id="count-each">5</b>
+        dressed + <b id="count-each2">5</b> coquin, all distinct scenes/angles/B&amp;W) and start
+        the batch. Images are free on Mage Pro Plus. Estimated video cost for this batch:
+        <b id="cost-estimate">$0 (free under Pro Plus)</b>.
+      </p>
+      <div class="row" style="align-items: stretch;">
+        <input id="auto-character" placeholder="character (e.g. anong)" style="flex: 0 0 200px; padding: 8px; background:#0a0a10; color:#e7e7ee; border:1px solid #2a2a36; border-radius:6px;" />
+        <input id="auto-batch-key" placeholder="batch key (optional)" style="flex: 1 1 200px; padding: 8px; background:#0a0a10; color:#e7e7ee; border:1px solid #2a2a36; border-radius:6px;" />
+        <label class="small" style="display: flex; align-items: center; gap: 6px; flex: 0 0 auto;">
+          per category
+          <input id="auto-count" type="number" min="1" max="50" value="5" style="width: 64px; padding: 8px; background:#0a0a10; color:#e7e7ee; border:1px solid #2a2a36; border-radius:6px; text-align:center;" />
+        </label>
+      </div>
+      <div class="row" style="align-items: center; margin-top: 6px;">
+        <label class="small" style="display: flex; align-items: center; gap: 6px;">
+          video quality
+          <select id="auto-quality" style="padding: 7px; background:#0a0a10; color:#e7e7ee; border:1px solid #2a2a36; border-radius:6px;">
+            <option value="free" selected>FREE — Mage WAN 2.2 Lightning ($0/vid, ~85s/video)</option>
+            <option value="standard">Standard — Fal WAN 2.1 480p (~$0.20/vid)</option>
+            <option value="eco">Eco — Fal LTX v0.95 SFW + WAN NSFW (~$0.04/$0.20)</option>
+            <option value="premium">Premium — Fal Kling Pro 1.6 (~$0.475/vid)</option>
+            <option value="none">No videos — images only</option>
+          </select>
+        </label>
+        <span class="small" style="opacity:0.7;">"Free" replays Mage's own server actions through the dedicated Chrome — no Fal cost. Falls under your Pro Plus plan.</span>
+      </div>
+      <textarea id="auto-genetics" rows="4" placeholder="genetics description (e.g. Asian-African mixed race 22 year old woman, dark skin, very HUGE GIANT L CUP heavy chest shaped realistically by gravity, soft natural face, long straight black hair, warm golden skin, almond-shaped dark brown eyes...)" style="width:100%; margin-top:8px; padding: 10px; background:#0a0a10; color:#e7e7ee; border:1px solid #2a2a36; border-radius:6px; font: 13px/1.5 ui-monospace, monospace; resize: vertical;"></textarea>
+      <textarea id="auto-style" rows="2" placeholder="style suffix (optional, defaults to amateur iPhone selfie / soft focus / 9:16)" style="width:100%; margin-top:8px; padding: 10px; background:#0a0a10; color:#e7e7ee; border:1px solid #2a2a36; border-radius:6px; font: 13px/1.5 ui-monospace, monospace; resize: vertical;"></textarea>
+      <div class="row" style="margin-top:8px;">
+        <button id="auto-go">Generate <span id="auto-go-count">10</span> photos + videos</button>
+        <button class="secondary" id="auto-build">Build prompts only (no start)</button>
+      </div>
+      <p id="auto-status" class="small"></p>
+    </section>
+
+    <section style="grid-column: 1 / -1;">
+      <h2>Auto-pilot Chrome (zero console paste)</h2>
+      <p class="small">
+        First time only: click <b>Launch Chrome (Mage profile)</b>. A Chrome window opens against a
+        dedicated profile under <code>tools/anong/.mage-chrome-profile</code> with the debug port open.
+        Log in to Mage there once, set Mango 2 + 9:16 + Fast Mode OFF, then come back here.<br>
+        After that, every time you click <b>Generate</b> in section 0 (or <b>Auto-run current batch</b>
+        below), the server attaches to that Chrome via CDP and injects the runner itself — you don't
+        touch the console.
+      </p>
+      <div class="row" style="margin-top:8px;">
+        <button class="secondary" id="cdp-launch">Launch Chrome (Mage profile)</button>
+        <button class="secondary" id="cdp-status">Check CDP status</button>
+        <button id="cdp-run">Auto-run current batch</button>
+      </div>
+      <p id="cdp-status-text" class="small"></p>
+    </section>
+
+    <section>
+      <h2>1. Pick a batch</h2>
+      <p class="small">Each batch is a JSON file under <code>tools/anong/</code> ending in <code>_prompts.json</code>.</p>
+      <div class="row">
+        <select id="batch"></select>
+        <button id="start">Start batch</button>
+      </div>
+      <p id="started" class="small"></p>
+    </section>
+
+    <section>
+      <h2>2. Run in Mage.space</h2>
+      <p class="small">
+        Open <a href="https://www.mage.space/explore" target="_blank">mage.space/explore</a> in another tab,
+        make sure you're logged in, set the model to <b>Mango 2</b> (no Fast Mode) and aspect <b>9:16</b>.
+        Then open DevTools (F12) on that tab, switch to the <b>Console</b> panel and paste:
+      </p>
+      <pre id="snippet">fetch('http://localhost:5005/runner.js').then(r =&gt; r.text()).then(eval);</pre>
+      <button class="secondary copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('snippet').textContent)">Copy snippet</button>
+      <p class="small">The runner will loop through every prompt, capture each generated image's CDN URL and POST it back here.</p>
+    </section>
+
+    <section style="grid-column: 1 / -1;">
+      <h2>3. Live progress — Images</h2>
+      <div class="progress"><div id="bar" style="width: 0"></div></div>
+      <p id="summary" class="small">No batch started.</p>
+      <div id="items"></div>
+      <div class="row" style="margin-top: 12px;">
+        <button class="secondary" id="rerun-videos">Run optimize + videos now</button>
+      </div>
+    </section>
+
+    <section style="grid-column: 1 / -1;">
+      <h2>4. Live progress — Videos</h2>
+      <div class="progress"><div id="vbar" style="width: 0"></div></div>
+      <p id="vsummary" class="small">No video job yet. Videos auto-start once all images are done (and quality is set to <b>FREE — Mage</b> or paid Fal). To re-trigger manually, use the button in section 3.</p>
+      <pre id="vlog" class="small" style="max-height: 180px; overflow:auto; background:#0a0a10; padding:8px; border-radius:6px; margin-top:6px; display:none;"></pre>
+    </section>
+  </main>
+
+  <script>
+    async function refreshBatches() {
+      const r = await fetch('/api/batches'); const list = await r.json();
+      const sel = document.getElementById('batch');
+      sel.innerHTML = '';
+      list.forEach((b) => { const o = document.createElement('option'); o.value = b; o.textContent = b; sel.appendChild(o); });
+    }
+    async function refreshState() {
+      const r = await fetch('/api/state'); const s = await r.json();
+      const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+      document.getElementById('bar').style.width = pct + '%';
+      const driverHint = s.driverActive
+        ? ` • driver running (phase: ${s.activePhase || '...'}) — ne clique pas Generate à nouveau`
+        : (s.lastDriverError ? ` • last driver error: ${s.lastDriverError}` : '');
+      document.getElementById('summary').textContent = s.batch
+        ? `${s.batch} • ${s.character} • ${s.done} / ${s.total} done (${pct}%)${driverHint}`
+        : 'No batch started.';
+      // Disable the generate button while a driver is active to prevent the
+      // double-driver race that destroys the page evaluation context.
+      const goBtn = document.getElementById('auto-go');
+      if (goBtn) {
+        goBtn.disabled = !!s.driverActive;
+        goBtn.textContent = s.driverActive ? 'Driver running...' : 'Generate 10 photos + videos';
+      }
+      const list = document.getElementById('items');
+      list.innerHTML = '';
+      (s.items || []).forEach((it) => {
+        const row = document.createElement('div');
+        row.className = 'item';
+        const left = document.createElement('div');
+        const fileLabel = it.file ? `<span class="small">${it.file}</span>` : '';
+        left.innerHTML = `<b>${it.name}</b> <span class="pill ${it.kind}">${it.kind}</span> ${fileLabel}`;
+        const right = document.createElement('div');
+        const vs = it.videoStatus || 'pending';
+        right.innerHTML = `<span class="pill ${it.status}" title="image">img: ${it.status}</span> <span class="pill ${vs}" title="video">vid: ${vs}</span>`;
+        row.appendChild(left); row.appendChild(right);
+        list.appendChild(row);
+      });
+
+      // ---- Video section --------------------------------------------------
+      const vp = s.videoProgress || { phase: 'idle', total: 0, done: 0, failed: 0, currentName: null, currentIndex: 0, lastLine: '', log: [] };
+      const vbar = document.getElementById('vbar');
+      const vsum = document.getElementById('vsummary');
+      const vlog = document.getElementById('vlog');
+      const totalVids = vp.total || (s.items ? s.items.length : 0);
+      const vpct = totalVids ? Math.round((vp.done / totalVids) * 100) : 0;
+      vbar.style.width = vpct + '%';
+      let phaseLabel;
+      switch (vp.phase) {
+        case 'idle':                phaseLabel = 'idle'; break;
+        case 'optimizing-images':   phaseLabel = 'optimizing images (sharp/mozjpeg)'; break;
+        case 'optimizing-videos':   phaseLabel = 'optimizing existing videos (ffmpeg)'; break;
+        case 'generating':          phaseLabel = 'generating new videos via Mage WAN 2.2 Fast'; break;
+        case 'done':                phaseLabel = 'done'; break;
+        case 'error':               phaseLabel = 'error'; break;
+        default:                    phaseLabel = vp.phase;
+      }
+      const eta = (vp.phase === 'generating' && vp.startedAt && vp.done > 0)
+        ? (() => {
+            const elapsed = (Date.now() - vp.startedAt) / 1000;
+            const perJob = elapsed / vp.done;
+            const left = (totalVids - vp.done) * perJob;
+            const m = Math.floor(left / 60), sec = Math.round(left % 60);
+            return `, ETA ~${m}m${sec}s`;
+          })()
+        : '';
+      const cur = vp.currentName ? ` • current: <b>${vp.currentName}</b> (${vp.currentIndex}/${totalVids || '?'})` : '';
+      const failed = vp.failed ? ` • <span style="color:#f5b6cc">${vp.failed} failed</span>` : '';
+      if (vp.phase === 'idle' && totalVids === 0 && (!vp.lastLine || !vp.lastLine.length)) {
+        vsum.innerHTML = `Idle. Videos auto-start once all ${s.total || '—'} images are done. Quality: <b>FREE — Mage</b>.`;
+      } else {
+        vsum.innerHTML = `Phase: <b>${phaseLabel}</b> • ${vp.done}/${totalVids || '?'} done${eta}${cur}${failed}`;
+      }
+      if (vp.log && vp.log.length) {
+        vlog.style.display = 'block';
+        vlog.textContent = vp.log.slice(-25).join('\n');
+        vlog.scrollTop = vlog.scrollHeight;
+      }
+    }
+    document.getElementById('start').addEventListener('click', async () => {
+      const batch = document.getElementById('batch').value;
+      const r = await fetch('/api/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ batch }) });
+      const j = await r.json();
+      document.getElementById('started').textContent = j.ok ? `Queued ${j.count} prompts for ${j.character}.` : ('Error: ' + j.error);
+      refreshState();
+    });
+
+    function readCount() {
+      const raw = parseInt(document.getElementById('auto-count').value, 10);
+      return Math.max(1, Math.min(50, isFinite(raw) ? raw : 5));
+    }
+    function readQuality() { return document.getElementById('auto-quality').value || 'free'; }
+    // Per-vid price estimates (USD). NSFW always WAN 480p ($0.20) for Fal modes.
+    const SFW_VID_PRICE_BY_QUALITY = { free: 0, standard: 0.20, eco: 0.04, premium: 0.475, none: 0 };
+    const NSFW_VID_PRICE_BY_QUALITY = { free: 0, standard: 0.20, eco: 0.20, premium: 0.20, none: 0 };
+    function refreshCountLabels() {
+      const each = readCount();
+      const total = 2 * each;
+      document.getElementById('count-summary').textContent = total;
+      document.getElementById('count-each').textContent = each;
+      document.getElementById('count-each2').textContent = each;
+      document.getElementById('auto-go-count').textContent = total;
+      const q = readQuality();
+      const sfwCost = each * (SFW_VID_PRICE_BY_QUALITY[q] || 0);
+      const nsfwCost = each * (NSFW_VID_PRICE_BY_QUALITY[q] || 0);
+      const cost = (sfwCost + nsfwCost).toFixed(2);
+      document.getElementById('cost-estimate').textContent = q === 'free' ? '$0 (free under Pro Plus)' : '$' + cost;
+    }
+    document.getElementById('auto-count').addEventListener('input', refreshCountLabels);
+    document.getElementById('auto-quality').addEventListener('change', refreshCountLabels);
+    refreshCountLabels();
+
+    async function autoBatch(autoStart) {
+      const character = document.getElementById('auto-character').value.trim().toLowerCase();
+      const batchKey = document.getElementById('auto-batch-key').value.trim();
+      const genetics = document.getElementById('auto-genetics').value.trim();
+      const styleSuffix = document.getElementById('auto-style').value.trim();
+      const count = readCount();
+      const quality = readQuality();
+      const status = document.getElementById('auto-status');
+      if (!character || !genetics) { status.textContent = 'Need character and genetics.'; return; }
+      status.textContent = 'Working...';
+      // If autoStart, try the full CDP auto-run path so the user gets zero-touch.
+      if (autoStart) {
+        const r = await fetch('/api/auto-run', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ autoBatch: { character, batchKey, genetics, styleSuffix, count, quality } })
+        });
+        const j = await r.json();
+        if (j.ok) {
+          status.textContent = `Built and auto-running "${j.batch}" (${j.count} prompts) in attached Chrome (${j.mageUrl}). Watch progress below.`;
+          await refreshBatches(); refreshState(); return;
+        }
+        status.textContent = 'CDP failed (' + (j.error || 'unknown') + '). Falling back to clipboard…';
+        // fall through to plain auto-batch + clipboard fallback
+      }
+      const r = await fetch('/api/auto-batch', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ character, batchKey, genetics, styleSuffix, autoStart, count, quality })
+      });
+      const j = await r.json();
+      if (!j.ok) { status.textContent = 'Error: ' + (j.error || 'unknown'); return; }
+      if (autoStart) {
+        try {
+          await navigator.clipboard.writeText(document.getElementById('snippet').textContent);
+          window.open('https://www.mage.space/explore', '_blank');
+          status.textContent = `Built batch "${j.batch}" (${j.count} prompts). Snippet copied to clipboard, Mage tab opened — F12 → Console → Ctrl+V → Enter.`;
+        } catch (_) {
+          status.textContent = `Built batch "${j.batch}" (${j.count} prompts). Open Mage and paste the snippet from section 2.`;
+        }
+      } else {
+        status.textContent = `Built batch "${j.batch}" (${j.count} prompts).`;
+      }
+      await refreshBatches();
+      const sel = document.getElementById('batch'); sel.value = j.batch;
+      refreshState();
+    }
+    document.getElementById('auto-go').addEventListener('click', () => autoBatch(true));
+    document.getElementById('auto-build').addEventListener('click', () => autoBatch(false));
+
+    async function cdpLaunch() {
+      const t = document.getElementById('cdp-status-text');
+      t.textContent = 'Launching Chrome...';
+      const r = await fetch('/api/launch-chrome', { method: 'POST' });
+      const j = await r.json();
+      t.textContent = j.ok
+        ? (j.alreadyRunning ? 'Chrome already running on debug port.' : 'Chrome launched. Log in to Mage if needed, then close this banner.')
+        : 'Error: ' + (j.error || 'unknown');
+    }
+    async function cdpStatus() {
+      const t = document.getElementById('cdp-status-text');
+      const r = await fetch('/api/cdp-status'); const j = await r.json();
+      t.textContent = j.alive ? `CDP alive on port ${j.port}.` : `CDP not running. Click "Launch Chrome (Mage profile)".`;
+    }
+    async function cdpRun() {
+      const t = document.getElementById('cdp-status-text');
+      t.textContent = 'Attaching to Chrome and injecting runner...';
+      const r = await fetch('/api/auto-run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+      const j = await r.json();
+      t.textContent = j.ok ? `Runner injected on ${j.mageUrl} for batch "${j.batch}".` : ('Error: ' + (j.error || 'unknown'));
+    }
+    document.getElementById('cdp-launch').addEventListener('click', cdpLaunch);
+    document.getElementById('cdp-status').addEventListener('click', cdpStatus);
+    document.getElementById('cdp-run').addEventListener('click', cdpRun);
+    document.getElementById('rerun-videos').addEventListener('click', async () => {
+      const r = await fetch('/api/run-videos', { method: 'POST' }); const j = await r.json();
+      alert(j.ok ? 'Triggered optimize + video generation.' : ('Error: ' + (j.error || 'unknown')));
+    });
+    refreshBatches(); refreshState(); setInterval(refreshState, 2500);
+  </script>
+</body>
+</html>
