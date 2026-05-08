@@ -26,7 +26,7 @@
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     var params    = new URLSearchParams(location.search);
-    var amount    = parseFloat(params.get('amount') || '30');
+    var amount    = parseFloat(params.get('amount') || '29');
     var plan      = (params.get('plan') || 'quarterly').toLowerCase();
     var sessionId = params.get('session_id') || '';
     var sku       = plan === 'annual' ? 'premium_annual' : 'premium_quarterly';

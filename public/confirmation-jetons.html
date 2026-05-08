@@ -26,7 +26,7 @@
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     var params    = new URLSearchParams(location.search);
-    var amount    = parseFloat(params.get('amount') || '30');
+    var amount    = parseFloat(params.get('amount') || '37');
     var plan      = (params.get('plan') || 'quarterly').toLowerCase();
     var sessionId = params.get('session_id') || '';
     var sku       = plan === 'annual' ? 'premium_annual' : 'premium_quarterly';
@@ -492,7 +492,7 @@
     var purchaseEventID = 'purchase_' + Date.now();
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
-    if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 29; }
+    if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 37; }
     fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
     console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
