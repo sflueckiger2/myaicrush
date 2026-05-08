@@ -230,6 +230,15 @@
       font-size: 0.7rem; color: #b0b0c3;
     }
     .vc-gallery-meta .vc-gallery-model { color: #f472b6; font-weight: 600; text-transform: uppercase; font-size: 0.6rem; }
+    .vc-gallery-delete {
+      position: absolute; top: 8px; right: 8px; z-index: 4;
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,0.65); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 0.85rem; transition: background 0.2s, transform 0.2s;
+      backdrop-filter: blur(4px);
+    }
+    .vc-gallery-delete:hover { background: rgba(220, 38, 38, 0.9); transform: scale(1.05); }
     .vc-gallery-empty {
       text-align: center; padding: 30px; color: #666; font-size: 0.9rem;
       background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1);
@@ -314,11 +323,11 @@
           <div class="vc-mode-title" data-i18n="mode-hd-title">Ultra Quality</div>
           <div class="vc-mode-desc" data-i18n="mode-hd-desc">Stunning quality, SFW content. Powered by Kling 2.6</div>
         </div>
-        <div class="vc-mode-card" data-mode="wan26" onclick="selectMode(this)">
+        <div class="vc-mode-card" data-mode="wan21" onclick="selectMode(this)">
           <span class="vc-mode-badge vc-badge-hot">18+</span>
           <div class="vc-mode-icon">🔥</div>
           <div class="vc-mode-title" data-i18n="mode-nsfw-title">Uncensored</div>
-          <div class="vc-mode-desc" data-i18n="mode-nsfw-desc">NSFW-friendly, no filter. Powered by WAN 2.6</div>
+          <div class="vc-mode-desc" data-i18n="mode-nsfw-desc">NSFW-friendly, no filter. Powered by WAN 2.1</div>
         </div>
       </div>
     </div>
@@ -398,7 +407,7 @@ const i18n = {
     "prompt-label": "Décris le mouvement (optionnel)", "prompt-placeholder": "Ex: Elle sourit et passe sa main dans ses cheveux...",
     "mode-label": "Choisis ton style", "mode-hd-title": "Ultra Qualité",
     "mode-hd-desc": "Qualité incroyable, contenu SFW. Propulsé par Kling 2.6",
-    "mode-nsfw-title": "Sans Censure", "mode-nsfw-desc": "NSFW, aucun filtre. Propulsé par WAN 2.6",
+    "mode-nsfw-title": "Sans Censure", "mode-nsfw-desc": "NSFW, aucun filtre. Propulsé par WAN 2.1",
     "cost-info": "Coût : <strong>9 jetons</strong> par vidéo (~10 secondes)", "generate-btn": "Générer ma vidéo",
     "status-queued": "Envoi de ta vidéo...", "status-processing": "Création en cours... cela peut prendre 2–4 min",
     "status-saving": "Sauvegarde en cours...", "status-done": "Ta vidéo est prête !", "status-failed": "Échec de la génération. Réessaie.",
@@ -413,6 +422,8 @@ const i18n = {
     "tokens-modal-cta": "Acheter des jetons",
     "personal-only": "Usage personnel uniquement. Cette vidéo est sauvegardée sur ton compte.",
     "my-videos": "Mes Vidéos", "no-videos": "Tes vidéos générées apparaîtront ici.",
+    "delete-aria": "Supprimer la vidéo", "delete-confirm": "Supprimer définitivement cette vidéo ?",
+    "delete-failed": "Suppression impossible. Réessaie dans quelques instants.",
     "legal-notice": "Ces vidéos sont destinées à votre plaisir personnel. Les téléchargements et captures d'écran sont bloqués pour qu'elles soient visionnées uniquement sur la plateforme. MyAiCrush n'assume aucune responsabilité en cas d'utilisation de ces vidéos en dehors de la plateforme.",
   },
   de: {
@@ -424,7 +435,7 @@ const i18n = {
     "prompt-label": "Beschreibe die Bewegung (optional)", "prompt-placeholder": "Z.B. Sie lächelt und streicht sich durchs Haar...",
     "mode-label": "Wähle deinen Stil", "mode-hd-title": "Ultra Qualität",
     "mode-hd-desc": "Beeindruckende Qualität, SFW-Inhalt. Powered by Kling 2.6",
-    "mode-nsfw-title": "Unzensiert", "mode-nsfw-desc": "NSFW-freundlich, kein Filter. Powered by WAN 2.6",
+    "mode-nsfw-title": "Unzensiert", "mode-nsfw-desc": "NSFW-freundlich, kein Filter. Powered by WAN 2.1",
     "cost-info": "Kosten: <strong>9 Token</strong> pro Video (~10 Sekunden)", "generate-btn": "Mein Video generieren",
     "status-queued": "Video wird gesendet...", "status-processing": "Erstellung läuft... kann 2–4 Min dauern",
     "status-saving": "Wird gespeichert...", "status-done": "Dein Video ist fertig!", "status-failed": "Generierung fehlgeschlagen. Versuche es erneut.",
@@ -439,6 +450,8 @@ const i18n = {
     "tokens-modal-cta": "Tokens kaufen",
     "personal-only": "Nur für den persönlichen Gebrauch. Dieses Video ist in deinem Konto gespeichert.",
     "my-videos": "Meine Videos", "no-videos": "Deine generierten Videos werden hier angezeigt.",
+    "delete-aria": "Video löschen", "delete-confirm": "Dieses Video endgültig löschen?",
+    "delete-failed": "Löschen nicht möglich. Versuche es in einem Moment erneut.",
     "legal-notice": "Diese Videos sind für dein persönliches Vergnügen bestimmt. Downloads und Screenshots sind gesperrt, damit du sie ausschließlich auf der Plattform ansiehst. MyAiCrush übernimmt keine Verantwortung bei einer Nutzung dieser Videos außerhalb der Plattform.",
   }
 };
@@ -714,10 +727,14 @@ async function loadGallery() {
     }
 
     section.style.display = "block";
+    const deleteAria = t("delete-aria") || "Delete video";
     grid.innerHTML = data.videos.map(v => `
-      <div class="vc-gallery-card" onclick="openViewer('${v.localUrl}')" oncontextmenu="return false;">
+      <div class="vc-gallery-card" data-id="${v._id}" data-url="${v.localUrl}" oncontextmenu="return false;">
         <video src="${v.localUrl}" muted playsinline preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false;" ondragstart="return false;" draggable="false"></video>
         <div class="vc-gallery-shield" oncontextmenu="return false;"></div>
+        <button type="button" class="vc-gallery-delete" aria-label="${deleteAria}" title="${deleteAria}">
+          <i class="fas fa-trash"></i>
+        </button>
         <div class="vc-gallery-meta">
           <div class="vc-gallery-model">${v.model === 'kling26' ? '✨ Ultra HD' : '🔥 Uncensored'}</div>
           <div>${new Date(v.createdAt).toLocaleDateString()}</div>
@@ -725,13 +742,50 @@ async function loadGallery() {
       </div>
     `).join("");
 
-    // Hover to play thumbnails
+    // Hover to play thumbnails + click to open viewer + delete button
     grid.querySelectorAll(".vc-gallery-card").forEach(card => {
       const vid = card.querySelector("video");
+      const url = card.getAttribute("data-url");
+      const id = card.getAttribute("data-id");
       card.addEventListener("mouseenter", () => vid.play());
       card.addEventListener("mouseleave", () => { vid.pause(); vid.currentTime = 0; });
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".vc-gallery-delete")) return;
+        openViewer(url);
+      });
+      const delBtn = card.querySelector(".vc-gallery-delete");
+      if (delBtn) {
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteVideo(id, card);
+        });
+      }
     });
   } catch (e) { console.error("Gallery load error:", e); }
+}
+
+async function deleteVideo(videoId, card) {
+  if (!videoId || !userEmail) return;
+  const confirmMsg = t("delete-confirm") || "Delete this video permanently?";
+  if (!window.confirm(confirmMsg)) return;
+  try {
+    if (card) card.style.opacity = "0.4";
+    const res = await fetch("/api/video-creator/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userEmail, videoId })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.deleted) throw new Error(data.error || "delete failed");
+    if (card) card.remove();
+    // If grid is now empty, reload to render the empty state
+    const grid = document.getElementById("galleryGrid");
+    if (grid && !grid.querySelector(".vc-gallery-card")) loadGallery();
+  } catch (e) {
+    console.error("Delete video error:", e);
+    if (card) card.style.opacity = "1";
+    alert(t("delete-failed") || "Could not delete the video. Please try again.");
+  }
 }
 
 // Fullscreen viewer

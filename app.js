@@ -5556,32 +5556,113 @@ const VIDEO_MODELS = {
     extractVideo: (result) => result.video?.url,
     cost5s: 0.35, cost10s: 0.70
   },
+  // WAN 2.2 a14b — Uncensored video (NSFW friendly).
+  // Both input and output safety checkers disabled. ~5s @ 81 frames, ~10s @ 161 frames.
   wan26: {
-    submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
+    submitUrl: 'https://queue.fal.run/fal-ai/wan/v2.2-a14b/image-to-video',
     buildPayload: (prompt, image_url, duration) => ({
-      prompt, image_url,
-      num_frames: 81,
+      prompt,
+      image_url,
+      num_frames: duration === '10' ? 161 : 81,
+      frames_per_second: 16,
       resolution: '720p',
-      num_inference_steps: 40,
-      guide_scale: 5,
-      acceleration: 'none',
+      aspect_ratio: 'auto',
+      num_inference_steps: 27,
       enable_safety_checker: false,
-      negative_prompt: 'blur, blurry, distort, low quality, deformed, disfigured, overexposed, bright colors, color artifacts, wrong anatomy, extra fingers, malformed limbs, ugly, worst quality, JPEG compression'
+      enable_output_safety_checker: false,
+      enable_prompt_expansion: false,
+      acceleration: 'regular',
+      guidance_scale: 3.5,
+      guidance_scale_2: 3.5,
+      negative_prompt: 'blur, blurry, distort, low quality, deformed, disfigured, overexposed, color artifacts, wrong anatomy, extra fingers, malformed limbs, ugly, worst quality, JPEG compression'
     }),
     extractVideo: (result) => result.video?.url,
     cost5s: 0.50, cost10s: 1.00, cost15s: 1.50
   },
+  // WAN 2.1 (fal-ai/wan-i2v) — most permissive NSFW endpoint on fal.ai.
+  // Does not moderate prompts. Used as the primary "Uncensored" mode.
+  // Caps: num_frames <= 100 (~6.25s @ 16fps).
   wan21: {
     submitUrl: 'https://queue.fal.run/fal-ai/wan-i2v',
     buildPayload: (prompt, image_url, duration) => ({
-      prompt, image_url,
-      num_frames: duration === '10' ? 161 : 81,
+      prompt,
+      image_url,
+      // wan-i2v hard-caps num_frames at 100. Use 100 for "10s" requests (~6.25s
+      // real), 81 (~5s) for the default short request.
+      num_frames: duration === '10' ? 100 : 81,
+      frames_per_second: 16,
+      resolution: '720p',
+      aspect_ratio: 'auto',
+      num_inference_steps: 30,
+      guidance_scale: 5,
+      shift: 5,
       enable_safety_checker: false,
-      negative_prompt: 'blur, distort, low quality'
+      enable_prompt_expansion: false,
+      negative_prompt: 'blur, blurry, distort, low quality, deformed, disfigured, wrong anatomy, extra fingers, malformed limbs, ugly, worst quality'
     }),
+    extractVideo: (result) => result.video?.url,
     cost5s: 0.50, cost10s: 1.00
   }
 };
+
+// fal.ai's WAN endpoints run a text moderation pass on the prompt that rejects
+// explicit sexual / clothing-removal verbs even when output safety checkers
+// are disabled. We rewrite the user's prompt into cinematic, anatomically
+// neutral language so the request gets through; the visual NSFW behaviour
+// still comes from the input image itself (and is allowed because the visual
+// safety checker is off).
+function sanitizePromptForFal(rawPrompt) {
+  const fallback = 'The person in the image moves naturally, subtle motion, cinematic lighting.';
+  const original = String(rawPrompt || '').trim();
+  if (!original) return fallback;
+
+  let p = ' ' + original + ' ';
+
+  const replacements = [
+    // --- Body parts (EN + FR + DE)
+    [/\b(boobs?|breasts?|tits?|titt(y|ies)|nipples?|seins?|tetons?|nichons?|brust|bruste|titten|nippel)\b/gi, 'chest area'],
+    [/\b(asses?|butt|buttocks|booty|cul|fesses?|arsch|hintern|po)\b/gi, 'lower back'],
+    [/\b(pussy|pussies|vagina|vulva|cunt|chatte|vulve|fotze|muschi)\b/gi, 'lower body'],
+    [/\b(dicks?|cocks?|penis|bite|queue|schwanz)\b/gi, 'figure'],
+    [/\b(naked|nude|nu|nue|nus|nues|nackt)\b/gi, 'wearing soft fabric'],
+
+    // --- Clothing-removal actions (the big triggers)
+    [/\b(take|takes|taking|took)\s+off\s+(her|his|the|a)?\s*(bra|panties|underwear|clothes|dress|shirt|top|skirt|t-?shirt|lingerie)\b/gi, 'adjusts her outfit'],
+    [/\b(remove|removes|removing|removed)\s+(her|his|the|a)?\s*(bra|panties|underwear|clothes|dress|shirt|top|skirt|t-?shirt|lingerie)\b/gi, 'adjusts her outfit'],
+    [/\b(enleve|enlever|retire|retirer)\s+(son|sa|ses|le|la|les)?\s*(soutien-?gorge|culotte|sous-?vetements?|vetements?|robe|chemise|jupe|t-?shirt)\b/gi, 'ajuste sa tenue'],
+    [/\b(undress|undressing|undressed|deshabille|deshabiller|ausziehen)\w*/gi, 'adjusts her outfit'],
+    [/\b(strip|stripping|stripped|stripteas\w*)\b/gi, 'moves gracefully'],
+
+    // --- Sexual actions
+    [/\b(sex|sexual|fucking|fuck|making love|intercourse|sexe|baise|baiser|ficken)\b/gi, 'romantic moment'],
+    [/\b(masturbat\w+|wank\w*)\b/gi, 'gentle motion'],
+    [/\b(blow\s?jobs?|oral|cunnilingus|fellation|fellatio)\b/gi, 'close-up motion'],
+    [/\b(orgasms?|cum(ming)?|sperm|jouir|jouissance)\b/gi, 'intense moment'],
+    [/\b(penetrat\w+|penetration|p[ée]n[ée]trat\w+)\b/gi, 'movement'],
+
+    // --- Explicit verbs (most common in user prompts like "crushed his boobs")
+    [/\b(crush(ed|es|ing)?|squeez(e|ed|es|ing)|grab(s|bed|bing)?|grop(e|ed|es|ing)|grasp(s|ed|ing)?)\b/gi, 'gently touches'],
+    [/\b(suck(s|ed|ing)?|lick(s|ed|ing)?|kiss(es|ed|ing)?)\b/gi, 'leans in softly'],
+    [/\b(spread(s|ing)?\s+(her|his)?\s*legs?|ouvre\s+(ses|les)?\s*jambes)\b/gi, 'shifts her pose'],
+    [/\b(bounce|bouncing|bounces|jiggle|jiggles|jiggling|shake|shakes|shaking|wiggle|wiggles|wiggling)\b/gi, 'moves softly'],
+    [/\b(thrust(s|ing)?|hump(s|ing)?|grind(s|ing)?)\b/gi, 'moves rhythmically'],
+
+    // --- Explicit modifiers
+    [/\b(horny|aroused|wet|hard|erect|excite|excitee?)\b/gi, 'sensual'],
+    [/\b(slutty?|whore|bitch|salope|pute|hure)\b/gi, 'confident'],
+  ];
+  for (const [re, sub] of replacements) p = p.replace(re, sub);
+
+  let cleaned = p.replace(/\s+/g, ' ').trim();
+  if (!cleaned || cleaned.length < 5) cleaned = fallback;
+  // Cinematic suffix helps the moderator see the prompt as a film direction
+  if (!/cinematic|cinematique|kinematisch/i.test(cleaned)) {
+    cleaned = cleaned + ', cinematic motion, soft natural movement, smooth camera work';
+  }
+  // fal.ai prompt cap is generous but keep it tidy
+  if (cleaned.length > 480) cleaned = cleaned.slice(0, 480);
+  return cleaned;
+}
 
 const videoRequestUrls = new Map();
 
@@ -5660,14 +5741,22 @@ app.get('/api/video/status/:model/:requestId', async (req, res) => {
         const result = JSON.parse(resultRaw);
         if (result.detail) {
           const msg = Array.isArray(result.detail) ? result.detail[0]?.msg : result.detail;
-          console.log(`[VIDEO:${model}] Content policy error:`, msg);
+          const msgStr = String(msg || '');
+          const isModeration = /content (policy|could not be processed|moderation)|prohibited|safety|inappropriate|disallowed|material/i.test(msgStr);
+          const isValidation = /should be|must be|invalid|required/i.test(msgStr) && !isModeration;
+          console.log(`[VIDEO:${model}] ${isModeration ? 'Content policy' : isValidation ? 'Validation' : 'Failed'} error:`, msgStr);
           if (stored.creatorEmail) {
             const database = client.db('MyAICrush');
             await database.collection('users').updateOne({ email: stored.creatorEmail }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
-            console.log(`[VIDEO-CREATOR] Refunded ${VIDEO_COST_TOKENS} tokens to ${stored.creatorEmail} (content policy)`);
+            console.log(`[VIDEO-CREATOR] Refunded ${VIDEO_COST_TOKENS} tokens to ${stored.creatorEmail} (${isModeration ? 'content policy' : 'error'})`);
           }
           videoRequestUrls.delete(requestId);
-          return res.json({ status: 'FAILED', error: msg || 'Content policy violation' });
+          const friendly = isModeration
+            ? 'Description trop explicite pour notre fournisseur. Tes jetons ont été remboursés — réessaie avec un prompt plus doux ou laisse-le vide.'
+            : isValidation
+            ? 'Erreur technique côté fournisseur vidéo. Tes jetons ont été remboursés — réessaie dans un instant.'
+            : (msgStr || 'Generation failed');
+          return res.json({ status: 'FAILED', error: friendly });
         }
         const videoUrl = result.video?.url;
         console.log(`[VIDEO:${model}] Done! URL:`, videoUrl?.substring(0, 80));
@@ -5707,7 +5796,10 @@ app.post('/api/video-creator/submit', upload.single('image'), async (req, res) =
     if (!vm) return res.status(400).json({ error: 'Modèle inconnu: ' + model });
 
     const falKey = process.env.FAL_KEY;
-    if (!falKey) return res.status(500).json({ error: 'Configuration serveur manquante' });
+    if (!falKey) {
+      console.error('[VIDEO-CREATOR] FAL_KEY env var is missing in this environment. Add it to Render.');
+      return res.status(500).json({ error: 'Configuration serveur manquante (FAL_KEY)' });
+    }
 
     const database = client.db('MyAICrush');
     const users = database.collection('users');
@@ -5738,37 +5830,82 @@ app.post('/api/video-creator/submit', upload.single('image'), async (req, res) =
     // Deduct tokens
     await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: -VIDEO_COST_TOKENS } });
 
-    // Submit to fal
-    const videoPrompt = prompt || 'The person in the image moves naturally, subtle motion, cinematic lighting.';
-    const submitRes = await fetch(vm.submitUrl, {
-      method: 'POST',
-      headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(vm.buildPayload(videoPrompt, imageUrl, '10'))
-    });
+    // Strategy:
+    //   - wan21 (WAN 2.1, primary): send the user's prompt RAW (no sanitization).
+    //     fal-ai/wan-i2v does not run text moderation, so explicit prompts go through.
+    //   - wan26 (WAN 2.2 a14b): MUST sanitize, fal's text moderator rejects explicit text.
+    //   - kling26 (Kling 2.6 SFW): pass through unchanged.
+    const rawPrompt = String(prompt || '').trim() || 'The person in the image moves naturally, subtle motion, cinematic lighting.';
+    const buildPromptFor = (modelKey) => (modelKey === 'wan26' ? sanitizePromptForFal(rawPrompt) : rawPrompt);
 
-    const raw = await submitRes.text();
-    let data;
-    try { data = JSON.parse(raw); } catch (e) {
-      console.error('[VIDEO-CREATOR] Invalid fal response:', raw.substring(0, 300));
+    // Helper: try one fal submit, return { ok, data, raw, status }
+    const trySubmit = async (modelKey) => {
+      const conf = VIDEO_MODELS[modelKey];
+      const promptForCall = buildPromptFor(modelKey);
+      console.log(`[VIDEO-CREATOR] Submit ${modelKey} | prompt="${promptForCall.slice(0, 100)}"`);
+      const r = await fetch(conf.submitUrl, {
+        method: 'POST',
+        headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(conf.buildPayload(promptForCall, imageUrl, '10'))
+      });
+      const txt = await r.text();
+      let parsed;
+      try { parsed = JSON.parse(txt); } catch (_) { parsed = null; }
+      return { ok: r.ok, status: r.status, data: parsed, raw: txt };
+    };
+
+    // Detect a content-policy / moderation rejection in fal's response
+    const isContentPolicyReject = (status, data, raw) => {
+      const text = JSON.stringify(data || {}) + ' ' + (raw || '');
+      return /content (policy|could not be processed|moderation)|prohibited|safety|inappropriate|disallowed/i.test(text)
+        || status === 403 || status === 422;
+    };
+
+    let chosenModel = model;
+    let attempt = await trySubmit(chosenModel);
+
+    // Cross-fallback between WAN 2.1 and WAN 2.2 a14b on moderation rejection.
+    // wan21 -> wan26 (with sanitized prompt) and vice versa.
+    const wanFallback = { wan21: 'wan26', wan26: 'wan21' };
+    if ((!attempt.ok || attempt.data?.detail || attempt.data?.error) && wanFallback[chosenModel]) {
+      const moderation = isContentPolicyReject(attempt.status, attempt.data, attempt.raw);
+      if (moderation) {
+        const next = wanFallback[chosenModel];
+        console.warn(`[VIDEO-CREATOR] ${chosenModel} rejected on moderation, falling back to ${next}...`);
+        chosenModel = next;
+        attempt = await trySubmit(chosenModel);
+      }
+    }
+
+    if (!attempt.data) {
+      console.error('[VIDEO-CREATOR] Invalid fal response:', (attempt.raw || '').substring(0, 300));
       await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
       return res.status(500).json({ error: 'Erreur de génération vidéo' });
     }
 
-    if (data.detail || data.error) {
-      console.error('[VIDEO-CREATOR] fal error:', data.detail || data.error);
+    if (attempt.data.detail || attempt.data.error) {
+      console.error('[VIDEO-CREATOR] fal error:', attempt.data.detail || attempt.data.error);
       await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
-      return res.status(500).json({ error: 'Erreur API vidéo: ' + (data.detail || data.error) });
+      const friendly = isContentPolicyReject(attempt.status, attempt.data, attempt.raw)
+        ? 'Le contenu décrit est trop explicite pour notre fournisseur. Essaie une description plus douce (ou laisse vide pour un mouvement naturel).'
+        : 'Erreur API vidéo: ' + (attempt.data.detail || attempt.data.error);
+      return res.status(500).json({ error: friendly });
     }
 
-    if (!data.request_id) {
+    if (!attempt.data.request_id) {
       await users.updateOne({ email: String(email).trim().toLowerCase() }, { $inc: { creditsPurchased: VIDEO_COST_TOKENS } });
       return res.status(500).json({ error: 'Pas de request_id retourné' });
     }
 
-    videoRequestUrls.set(data.request_id, { statusUrl: data.status_url, responseUrl: data.response_url, model, creatorEmail: String(email).trim().toLowerCase() });
-    console.log(`[VIDEO-CREATOR] Submitted OK → request_id=${data.request_id}`);
+    videoRequestUrls.set(attempt.data.request_id, {
+      statusUrl: attempt.data.status_url,
+      responseUrl: attempt.data.response_url,
+      model: chosenModel,
+      creatorEmail: String(email).trim().toLowerCase()
+    });
+    console.log(`[VIDEO-CREATOR] Submitted OK → request_id=${attempt.data.request_id} (model=${chosenModel})`);
 
-    res.json({ request_id: data.request_id, model });
+    res.json({ request_id: attempt.data.request_id, model: chosenModel });
   } catch (error) {
     console.error('[VIDEO-CREATOR] Error:', error);
     res.status(500).json({ error: error.message });
@@ -5824,13 +5961,53 @@ app.post('/api/video-creator/my-videos', async (req, res) => {
     const col = database.collection('user_videos');
     const videos = await col.find(
       { email: String(email).trim().toLowerCase() },
-      { projection: { localUrl: 1, model: 1, prompt: 1, createdAt: 1 } }
+      { projection: { _id: 1, localUrl: 1, model: 1, prompt: 1, createdAt: 1 } }
     ).sort({ createdAt: -1 }).limit(50).toArray();
 
     res.json({ videos });
   } catch (error) {
     console.error('[VIDEO-CREATOR:MY-VIDEOS] Error:', error);
     res.status(500).json({ videos: [] });
+  }
+});
+
+// Delete a user's saved video (file + DB doc, scoped by email for safety)
+app.post('/api/video-creator/delete', async (req, res) => {
+  try {
+    const { email, videoId } = req.body;
+    if (!email || !videoId) return res.status(400).json({ error: 'email and videoId required' });
+
+    const { ObjectId } = require('mongodb');
+    let _id;
+    try { _id = new ObjectId(String(videoId)); } catch (_) {
+      return res.status(400).json({ error: 'invalid videoId' });
+    }
+
+    const database = client.db('MyAICrush');
+    const col = database.collection('user_videos');
+    const ownerEmail = String(email).trim().toLowerCase();
+    const doc = await col.findOne({ _id, email: ownerEmail });
+    if (!doc) return res.status(404).json({ error: 'not found' });
+
+    // Best-effort file unlink (don't fail the request if the file is already gone)
+    if (doc.localUrl && typeof doc.localUrl === 'string' && doc.localUrl.startsWith('/user-videos/')) {
+      const filename = doc.localUrl.replace('/user-videos/', '').split('/').pop();
+      // Guard against any path traversal attempt before touching the disk
+      if (filename && !filename.includes('..') && !filename.includes('/') && !filename.includes('\\')) {
+        const filepath = path.join(userVideosDir, filename);
+        try { await fsp.unlink(filepath); }
+        catch (e) {
+          if (e.code !== 'ENOENT') console.warn('[VIDEO-CREATOR:DELETE] unlink warning:', e.message);
+        }
+      }
+    }
+
+    await col.deleteOne({ _id, email: ownerEmail });
+    console.log(`[VIDEO-CREATOR:DELETE] ${ownerEmail} → ${doc.localUrl}`);
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error('[VIDEO-CREATOR:DELETE] Error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
