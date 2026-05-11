@@ -21,9 +21,13 @@ const { chromium } = require('playwright');
 const CDP_URL = 'http://127.0.0.1:9222';
 const MAGE_URL = 'https://www.mage.space/explore';
 
-const ACTION_UPLOAD_IMAGE = '60504e32c82efd78691ca44fe403127904130c7507';
-const ACTION_SUBMIT_VIDEO = '407876bb74f87cb9f48cb11a92568bd2125638b2c0';
-const ACTION_GET_HISTORY  = '40c81c37d71fda7bc79e7ad8087d8ed13d23f941f0';
+// Recaptured 2026-05-11 after Mage redeploy rotated all server-action IDs
+// (previous values returned the /explore HTML fallback => empty upload URL).
+// Capture flow: tools/anong/recapture_v2.js (auto-drives the UI, classifies
+// each next-action POST by request-body shape).
+const ACTION_UPLOAD_IMAGE = '607c57539c298183e030fdb0a6265caf3e816e528b';
+const ACTION_SUBMIT_VIDEO = '407ca2a0193729da68adfb5c6ddb37c3f7d7ed8942';
+const ACTION_GET_HISTORY  = '40d312579b4c138bfd6783d380d4b2795d17a3daec';
 
 // Exposed for callers that want to override per-batch.
 //
