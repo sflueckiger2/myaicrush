@@ -8573,17 +8573,16 @@ async function generateDailyEmailContent(charName, lang, isFeatured = false) {
         ? `IMPORTANT: ${charName} is brand NEW on the platform. Lean into the novelty: it's her first day, her first photo, her first video, her first message. Make him feel like the first guy she's talking to.`
         : "";
 
-    try {
-        const resp = await axios.post("https://api.fireworks.ai/inference/v1/chat/completions", {
-            model: fwActiveModel,
-            max_tokens: 240,
-            temperature: 1.15,
-            messages: [
-                {
-                    role: "system",
-                    content: `You write a punchy, sexy, click-worthy email from ${charName}, a flirty AI girl on MyAiCrush, to a man.
+    // FR-specific guidance to kill English calques ("Want to see?", "Open the message", etc.)
+    // and force a real native register (tutoiement, ponctuation FR, vocabulaire familier).
+    const langSpecificGuidance = lang === "fr"
+        ? `Tu écris en français NATIF (style SMS d'une fille un peu chaude qui drague). Tutoie. N'utilise JAMAIS de calque anglais. Pas de "Veux-tu voir...", pas de "Tu me manques", pas de "Je t'attends", pas de "Viens me parler", pas de "Je n'arrête pas de penser à toi", pas de "Ouvre le message", pas de "Nouveau message de". Préfère "j'ai", "je viens de", "regarde ça", "dis-moi", "t'imagines pas", "j'ai craqué", "je galère à choisir", etc. Ponctuation française (apostrophes courbes acceptées, espaces fines NON requises).`
+        : `Write in fluent native English. Avoid these tired phrases: "Want to see?", "I miss you", "I'm waiting for you", "Come talk to me", "I can't stop thinking about you", "Open the message", "New message from".`;
 
-LANGUAGE: ${language} ONLY. Every single word must be in ${language}. Do not switch languages mid-text. Do not include English words if the language is not English.
+    const systemPrompt = `You write a punchy, sexy, click-worthy email from ${charName}, a flirty girl on MyAiCrush, to a man.
+
+LANGUAGE: ${language} ONLY. Every single word must be in ${language}. Never switch languages mid-text.
+${langSpecificGuidance}
 
 ${featuredHint}
 
@@ -8591,31 +8590,35 @@ SUBJECT (max 8 words):
 - Lowercase or sentence case (NOT TitleCase, never ALL CAPS).
 - Opens a clear curiosity gap or asks a direct, irresistible question.
 - 0 or 1 emoji max, only when it adds info (📩 🔔 📸 🎥 🔞 🫦 etc.).
-- ${banned}
 
 BODY (2 to 4 short lines, like a real text she just sent):
-- Give ONE concrete reason to click NOW: a photo to look at, an unread message to open, a video to watch, a friend request to accept, a question waiting for an answer, an opinion she wants on her body or outfit, a "boobs or butt" vote, etc.
+- Give ONE concrete reason to click NOW: a photo to look at, an unread message to open, a video to watch, a friend request to accept, a question waiting for an answer, an opinion she wants on her body or outfit, a "seins ou fesses" / "boobs or butt" vote, etc.
 - Sounds like a real text from a slightly horny girl to a guy she likes.
 - Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens'.
-- Wrap exactly ONE short action phrase (3 to 7 words) inside <<click>> and <</click>>. That phrase will become the inline blue underlined link in the email. Examples:
-   "you can <<click>>see it here<</click>>"
-   "<<click>>open it before I delete it<</click>>"
-   "<<click>>vote for boobs or butt<</click>>"
+- Wrap exactly ONE short action phrase (3 to 7 words) inside <<click>> and <</click>>. That phrase will become the inline blue underlined link in the email. Examples (EN): "you can <<click>>see it here<</click>>", "<<click>>open it before I delete it<</click>>". Examples (FR): "tu peux <<click>>la voir ici<</click>>", "<<click>>regarde avant que je supprime<</click>>", "<<click>>vote seins ou fesses<</click>>".
 - End with her name on its own line + 1 emoji max.
 
-OUTPUT: Reply ONLY valid JSON: {"subject":"...","body":"..."}`
-                },
-                {
-                    role: "user",
-                    content: `Date: ${today}. Today's hook: ${hook}. Use this format: ${format}. Write a fresh, surprising click-worthy email in ${language} from ${charName}. Make it feel completely different from any previous email. Remember to include exactly ONE <<click>>...<</click>> inline link inside the body.`
-                }
-            ]
+OUTPUT: Reply ONLY valid JSON, no markdown, no commentary: {"subject":"...","body":"..."}`;
+
+    const userPrompt = `Date: ${today}. Today's hook: ${hook}. Use this format: ${format}. Write a fresh, surprising click-worthy email in ${language} from ${charName}. Make it feel completely different from any previous email. Remember to include exactly ONE <<click>>...<</click>> inline link inside the body.`;
+
+    try {
+        const resp = await axios.post("https://api.anthropic.com/v1/messages", {
+            model: "claude-sonnet-4-5",
+            max_tokens: 400,
+            temperature: 0.9,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userPrompt }]
         }, {
-            headers: { Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`, "Content-Type": "application/json" },
-            timeout: 15000
+            headers: {
+                "x-api-key": process.env.CLAUDE_API,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            timeout: 20000
         });
 
-        const raw = resp.data.choices?.[0]?.message?.content || "";
+        const raw = resp.data?.content?.[0]?.text || "";
         const jsonMatch = raw.match(/\{[\s\S]*"subject"[\s\S]*"body"[\s\S]*\}/);
         if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
@@ -8629,11 +8632,14 @@ OUTPUT: Reply ONLY valid JSON: {"subject":"...","body":"..."}`
                 if (!/<<click>>[\s\S]+?<<\/click>>/.test(parsed.body)) {
                     parsed.body = injectInlineClickMarker(parsed.body, charName, lang);
                 }
+                console.log(`[DAILY-EMAIL] ✅ Sonnet 4.5 generated (${lang}/${charName}): "${parsed.subject}"`);
                 return parsed;
             }
         }
+        console.log(`[DAILY-EMAIL] Could not parse JSON from Sonnet response, falling back. Raw: ${raw.slice(0, 200)}`);
     } catch (e) {
-        console.log("[DAILY-EMAIL] AI generation failed:", e.message);
+        const detail = e.response?.data ? JSON.stringify(e.response.data).slice(0, 200) : e.message;
+        console.log(`[DAILY-EMAIL] Anthropic call failed (lang=${lang}): ${detail}`);
     }
 
     return pickFallback(charName, lang, isFeatured);
