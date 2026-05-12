@@ -8714,12 +8714,14 @@ function isValidEmailFormat(email) {
     return true;
 }
 
-// 🎬 ONE-SHOT — Video creator announcement blast
-// Fires at May 8, 2026 22:00 Lausanne (CEST/UTC+2) = 20:00 UTC.
+// 🎬 ONE-SHOT — Video creator announcement blast (re-send)
+// Fires at May 12, 2026 17:00 Lausanne (CEST/UTC+2) = 15:00 UTC.
 // Idempotent via the `one_shot_email_log` collection so a Render restart
 // inside the firing window can't trigger a duplicate blast.
-const VIDEO_ANNOUNCEMENT_AT = new Date('2026-05-08T20:00:00.000Z');
-const VIDEO_ANNOUNCEMENT_KEY = 'video_creator_announcement_2026_05_08';
+// NOTE: a previous send already fired on May 8 (key ..._2026_05_08, sent=1712);
+// this is a fresh re-send under a new key so the lock check doesn't skip.
+const VIDEO_ANNOUNCEMENT_AT = new Date('2026-05-12T15:00:00.000Z');
+const VIDEO_ANNOUNCEMENT_KEY = 'video_creator_announcement_2026_05_12_17h';
 if (VIDEO_ANNOUNCEMENT_AT.getTime() > Date.now()) {
     schedule.scheduleJob(VIDEO_ANNOUNCEMENT_AT, async () => {
         try {
@@ -8751,7 +8753,7 @@ if (VIDEO_ANNOUNCEMENT_AT.getTime() > Date.now()) {
             console.error('🎬 [ANNOUNCEMENT] error:', e);
         }
     });
-    console.log(`🎬 [ANNOUNCEMENT] scheduled for ${VIDEO_ANNOUNCEMENT_AT.toISOString()} (= 22:00 Europe/Zurich)`);
+    console.log(`🎬 [ANNOUNCEMENT] scheduled for ${VIDEO_ANNOUNCEMENT_AT.toISOString()} (= 17:00 Europe/Zurich)`);
 }
 
 // 📬 Daily engagement email — runs twice a day:
