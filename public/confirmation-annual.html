@@ -159,6 +159,33 @@
     .vs-monthly { font-size: 0.8rem; color: #6b7280; text-align: center; margin-top: 10px; }
     .vs-monthly s { color: #ef4444; }
 
+    /* Tokens upsell callout — emphasize 100 tokens/mo (lifetime) vs 30 tokens/mo (annual) */
+    .tokens-callout {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin: 24px 0;
+      padding: 18px 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(250,204,21,0.12), rgba(244,114,182,0.10));
+      border: 1px solid rgba(250,204,21,0.40);
+      box-shadow: 0 0 30px rgba(250,204,21,0.10);
+    }
+    .tokens-icon { font-size: 2.4rem; flex-shrink: 0; line-height: 1; }
+    .tokens-body { flex: 1; }
+    .tokens-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.25rem;
+      letter-spacing: 1px;
+      color: #facc15;
+      margin-bottom: 6px;
+      line-height: 1.15;
+    }
+    .tokens-compare { font-size: 0.82rem; color: #d1d5db; line-height: 1.5; }
+    .tokens-compare strong { color: #fff; font-weight: 700; }
+    .tokens-compare .plus { color: #facc15; font-weight: 700; }
+    .tokens-compare s { color: #6b7280; }
+
     .video-section { margin: 32px 0; }
     .video-label { text-align: center; font-size: 1rem; color: #d1d5db; margin-bottom: 14px; font-style: italic; }
     .video-label strong { color: white; }
@@ -323,6 +350,18 @@
     </div>
   </div>
 
+  <!-- Tokens differential callout: 100/mo Lifetime vs 30/mo Annual -->
+  <div class="tokens-callout fade-up">
+    <div class="tokens-icon">&#127873;</div>
+    <div class="tokens-body">
+      <div class="tokens-title">100 free tokens / month &mdash; for life</div>
+      <div class="tokens-compare">
+        Lifetime: <strong>100 tokens / month</strong> &middot; Annual: only 30 / month<br>
+        That&rsquo;s <span class="plus">+70 tokens every single month</span>, forever.
+      </div>
+    </div>
+  </div>
+
   <div class="video-section fade-up">
     <p class="video-label">&#128172; <strong>&ldquo;One payment, unlimited access...</strong><br>cheaper than 6 months of Netflix.&rdquo;</p>
     <div class="video-wrap">
@@ -359,6 +398,10 @@
 
   <div class="benefits fade-up">
     <h2 class="benefits-title">Everything. Forever. One payment.</h2>
+    <div class="benefit-row" style="background:rgba(250,204,21,0.08); border-color:rgba(250,204,21,0.35);">
+      <span class="benefit-icon">&#127873;</span>
+      <span class="benefit-text"><strong>100 free tokens every month</strong> &mdash; vs only 30 with Annual</span>
+    </div>
     <div class="benefit-row">
       <span class="benefit-icon">&#9854;&#65039;</span>
       <span class="benefit-text"><strong>No more monthly bills</strong> &mdash; pay once, done</span>
