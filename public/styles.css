@@ -761,6 +761,75 @@ video.chat-profile-pic {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
+/* HTML banner replacing the legacy menu-standard.webp (advertises -83%) */
+.menu-banner--promo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 93%;
+  margin: 0 auto;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(244,114,182,0.18), rgba(168,85,247,0.18));
+  border: 1px solid rgba(244,114,182,0.45);
+  border-radius: 12px;
+  text-decoration: none;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+.menu-banner--promo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(244,114,182,0.28);
+  border-color: rgba(244,114,182,0.7);
+}
+.menu-banner-promo__discount {
+  font-family: 'Bebas Neue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.7rem;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #f472b6, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  flex-shrink: 0;
+  padding-right: 4px;
+}
+.menu-banner-promo__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+}
+.menu-banner-promo__eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #f472b6;
+}
+.menu-banner-promo__title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-banner-promo__arrow {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.6);
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.menu-banner--promo:hover .menu-banner-promo__arrow {
+  color: #fff;
+  transform: translateX(2px);
+}
+
 
 
 .hamburger {
