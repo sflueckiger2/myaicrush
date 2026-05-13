@@ -1110,7 +1110,7 @@ const EXPLODELY_TOKEN_PRICES_USD = { 10: 9, 50: 37, 100: 59, 300: 129, 700: 249,
 
 function getExplodelyProductPriceUSD({ isPremium, isAnnual, isLifetime, tokensAmount }) {
     if (isLifetime) return 174;
-    if (isAnnual) return 89;
+    if (isAnnual) return 59;
     if (isPremium) return 29;
     if (tokensAmount && EXPLODELY_TOKEN_PRICES_USD[tokensAmount]) return EXPLODELY_TOKEN_PRICES_USD[tokensAmount];
     return 0;
@@ -7921,7 +7921,7 @@ app.get("/api/admin/email-campaigns/:id/sales", requireAdmin, async (req, res) =
       const productId = String(ev.productId || '');
       let label = '', usd = 0;
       if (productId === lifetimeId)       { label = 'lifetime';        usd = 174; }
-      else if (productId === annualId)    { label = 'annual';          usd = 89;  }
+      else if (productId === annualId)    { label = 'annual';          usd = 59;  }
       else if (productId === premiumId)   { label = 'premium_monthly'; usd = 29;  }
       else if (tokenIds[productId])       { const t = tokenIds[productId]; label = `tokens_${t}`; usd = getExplodelyProductPriceUSD({ tokensAmount: t }); }
       else continue;

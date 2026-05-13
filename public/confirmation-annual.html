@@ -440,11 +440,10 @@
     s.parentNode.insertBefore(t,s)}(window,document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '2477423972706417');
-    fbq('init', '1305416328350589');
     var purchaseEventID = 'purchase_' + Date.now();
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
-    if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 89; }
+    if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 59; }
     fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
     console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
@@ -455,7 +454,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const rawAmount = urlParams.get("amount");
     let _tjAmount = parseFloat(rawAmount);
-    if (!_tjAmount || isNaN(_tjAmount) || _tjAmount <= 0) _tjAmount = 29;
+    if (!_tjAmount || isNaN(_tjAmount) || _tjAmount <= 0) _tjAmount = 59;
     const transactionId = urlParams.get("session_id") || Date.now();
     const description = encodeURIComponent("MyAiCrush_Annual");
     const img = document.createElement("img");
