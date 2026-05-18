@@ -132,3 +132,19 @@ dist
 # Mage.space session token (sensitive, expires ~1h)
 .mage_token
 
+# Chrome profiles for Mage automation (contain cookies, login data, history — NEVER commit)
+.mage_profile/
+tools/anong/.mage-chrome-profile/
+
+# Local dump and logs
+.state_dump.json
+.studio.err.log
+.studio.out.log
+*.mp4
+node-error.log
+node-output.log
+anong_studio.log
+anong_video_gen*.log
+gen_pauline_batch*.log
+optimize_*.log
+

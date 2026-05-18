@@ -158,8 +158,9 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Fireworks model config with automatic fallback ──
-const FW_PRIMARY_MODEL = "accounts/fireworks/models/qwen3-vl-30b-a3b-instruct";
-const FW_FALLBACK_MODEL = "accounts/fireworks/models/llama-v3p3-70b-instruct";
+// Both models support reasoning_effort:"none" to behave like instant-reply instruct models
+const FW_PRIMARY_MODEL = "accounts/fireworks/models/qwen3p6-plus";
+const FW_FALLBACK_MODEL = "accounts/fireworks/models/kimi-k2p5";
 let fwActiveModel = FW_PRIMARY_MODEL;
 let fwLastAlertSentAt = 0;
 const FW_ALERT_COOLDOWN_MS = 3600_000; // 1 email per hour max
@@ -2779,7 +2780,8 @@ async function fireworksChat({ systemPrompt, temperature = 0.9, timeoutMs = 3000
       messages: [{ role: "system", content: systemPrompt }],
       max_tokens: 90,
       temperature,
-      top_p: 1.0
+      top_p: 1.0,
+      reasoning_effort: "none"
     },
     {
       timeout: timeoutMs,
@@ -3230,7 +3232,8 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
                 temperature: 1.0,
                 top_p: 1.0,
                 frequency_penalty: 0.3,
-                presence_penalty: 0.8
+                presence_penalty: 0.8,
+                reasoning_effort: "none"
               },
               {
                 headers: {
@@ -3255,7 +3258,8 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
                   temperature: 1.0,
                   top_p: 1.0,
                   frequency_penalty: 0.3,
-                  presence_penalty: 0.8
+                  presence_penalty: 0.8,
+                  reasoning_effort: "none"
                 },
                 {
                   headers: {
@@ -6064,7 +6068,7 @@ app.post('/api/generate-ai-prompts', async (req, res) => {
         'Authorization': `Bearer ${process.env.FIREWORKS_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ model, messages, temperature, max_tokens, stream: true })
+      body: JSON.stringify({ model, messages, temperature, max_tokens, stream: true, reasoning_effort: "none" })
     });
 
     let response = await callFw(fwActiveModel);
