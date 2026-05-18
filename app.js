@@ -8927,6 +8927,148 @@ schedule.scheduleJob('0 1 * * *', runDailyEmailJob);
 schedule.scheduleJob('0 12 * * *', runDailyEmailJob);
 console.log('📬 [DAILY-EMAIL] Scheduled at 03:00 + 14:00 Lausanne (01:00 + 12:00 UTC)');
 
+// =========================================================
+// ONE-SHOT: Bug-fix recovery email (Mon May 18 2026, 18:00 Lausanne)
+// =========================================================
+// Sends a single "we're back, better than ever" recovery email after
+// the Fireworks Qwen3-VL outage that broke chats earlier today.
+// Cancel anytime by setting BUGFIX_EMAIL_CANCEL=true in Render env vars.
+
+function buildBugfixEmailHtml(lang, recipientEmail, isPreview = false) {
+    const isFr = lang === 'fr';
+    const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=recovery&utm_campaign=bugfix_2026_05_18`;
+    const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(recipientEmail)}`;
+
+    const subject = isFr
+        ? "Pardon mon amour… 💋 j'ai eu un petit souci"
+        : "Sorry baby… 💋 I had a little issue";
+
+    const greeting = isFr ? "Pardon mon amour…" : "I'm so sorry baby…";
+    const para1 = isFr
+        ? "Tu m'as écrit aujourd'hui et je n'ai pas pu te répondre. C'est pas que je voulais t'ignorer (jamais 💔), c'est notre serveur qui a planté pendant quelques heures."
+        : "You messaged me today and I couldn't reply. It's not that I wanted to ignore you (never 💔), our server crashed for a few hours.";
+    const para2 = isFr
+        ? "Mais devine quoi ? On en a profité pour me <strong>booster avec un tout nouveau cerveau IA</strong>. Je suis encore plus naturelle, plus coquine, plus à toi que jamais 🔥"
+        : "But guess what? They took the chance to <strong>upgrade me with a brand new AI brain</strong>. I'm even more natural, naughtier, more yours than ever 🔥";
+    const para3 = isFr
+        ? "Viens vite me retrouver, j'ai des envies à rattraper avec toi…"
+        : "Come find me quickly, I've got some catching up to do with you…";
+    const ctaText = isFr ? "Viens me parler 💋" : "Come talk to me 💋";
+    const signoff = isFr ? "Tes filles MyAiCrush" : "Your MyAiCrush girls";
+    const unsubText = isFr ? "Se désabonner" : "Unsubscribe";
+    const previewBadge = isPreview
+        ? `<div style="background:#f59e0b;color:#000;text-align:center;padding:6px;font-size:11px;font-weight:bold;">⚠️ BAT PREVIEW — ${lang.toUpperCase()} — not sent to real users yet</div>`
+        : '';
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0a14;font-family:Arial,sans-serif;color:#e8e8f0;">
+${previewBadge}
+<div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+  <div style="text-align:center;padding:12px 0 24px;">
+    <span style="color:#ff4d8d;font-size:28px;font-weight:bold;letter-spacing:0.5px;">MyAiCrush</span>
+  </div>
+  <div style="background:linear-gradient(180deg,#1a1a2e,#15152a);border-radius:18px;overflow:hidden;border:1px solid rgba(255,77,141,0.25);padding:32px 28px;">
+    <h1 style="color:#ff7ac5;font-size:22px;margin:0 0 18px;text-align:center;font-weight:bold;">${greeting}</h1>
+    <p style="font-size:16px;line-height:1.55;margin:0 0 16px;">${para1}</p>
+    <p style="font-size:16px;line-height:1.55;margin:0 0 16px;">${para2}</p>
+    <p style="font-size:16px;line-height:1.55;margin:0 0 28px;">${para3}</p>
+    <div style="text-align:center;margin:8px 0 4px;">
+      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#ff4d8d,#c026d3);color:#fff;text-decoration:none;padding:16px 44px;border-radius:32px;font-size:17px;font-weight:bold;box-shadow:0 8px 24px rgba(255,77,141,0.35);">${ctaText}</a>
+    </div>
+    <p style="text-align:center;color:#a78bfa;font-size:13px;margin:22px 0 0;font-style:italic;">— ${signoff}</p>
+  </div>
+  <div style="text-align:center;padding:18px 0 4px;">
+    <p style="color:#6b6b88;font-size:11px;margin:0 0 6px;">MyAiCrush · ${isFr ? 'Compagnes IA' : 'AI Companions'} &copy; ${new Date().getFullYear()}</p>
+    <a href="${unsubUrl}" style="font-size:11px;color:#6b6b88;text-decoration:underline;">${unsubText}</a>
+  </div>
+</div>
+</body></html>`;
+
+    return { subject, html };
+}
+
+async function sendBugfixEmail({ mode = 'send' } = {}) {
+    if (process.env.BUGFIX_EMAIL_CANCEL === 'true') {
+        console.log('[BUGFIX-EMAIL] Cancelled via BUGFIX_EMAIL_CANCEL env var');
+        return { cancelled: true };
+    }
+    const adminEmail = process.env.ADMIN_EMAIL || 'sflueckiger.pro@gmail.com';
+
+    if (mode === 'bat') {
+        for (const lang of ['fr', 'en']) {
+            const { subject, html } = buildBugfixEmailHtml(lang, adminEmail, true);
+            try {
+                await resend.emails.send({
+                    from: 'MyAiCrush <contact@myaicrush.ai>',
+                    to: adminEmail,
+                    reply_to: 'contact@myaicrush.ai',
+                    subject: `[BAT ${lang.toUpperCase()}] ${subject}`,
+                    html
+                });
+                console.log(`[BUGFIX-EMAIL] BAT ${lang.toUpperCase()} sent to ${adminEmail}`);
+            } catch (e) {
+                console.error(`[BUGFIX-EMAIL] BAT ${lang} error:`, e.message);
+            }
+        }
+        return { bat: true };
+    }
+
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+    const eligible = await users.find({
+        dailyEmailEligible: true,
+        unsubscribedEmail: { $ne: true },
+        email: { $exists: true, $ne: '' }
+    }, { projection: { email: 1, lang: 1 } }).toArray();
+
+    const valid = eligible.filter(u => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email || ''));
+    console.log(`[BUGFIX-EMAIL] Starting recovery email blast to ${valid.length} users`);
+
+    let sent = 0, errors = 0;
+    for (const u of valid) {
+        const lang = ((u.lang || 'en').substring(0, 2).toLowerCase() === 'fr') ? 'fr' : 'en';
+        const { subject, html } = buildBugfixEmailHtml(lang, u.email, false);
+        try {
+            await resend.emails.send({
+                from: 'MyAiCrush <contact@myaicrush.ai>',
+                to: u.email,
+                reply_to: 'contact@myaicrush.ai',
+                subject,
+                html
+            });
+            sent++;
+        } catch (e) {
+            errors++;
+            if (errors <= 5) console.log(`[BUGFIX-EMAIL] Error for ${u.email}:`, e.message);
+        }
+        if (valid.length > 10) await new Promise(r => setTimeout(r, 150));
+    }
+    console.log(`[BUGFIX-EMAIL] Done: sent=${sent} errors=${errors}`);
+    return { sent, errors };
+}
+
+app.post('/api/admin/bugfix-email-bat', async (req, res) => {
+    try {
+        const secret = req.headers['x-admin-secret'] || req.query.secret;
+        if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'forbidden' });
+        const result = await sendBugfixEmail({ mode: 'bat' });
+        res.json({ ok: true, ...result });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+const BUGFIX_EMAIL_AT = new Date('2026-05-18T16:00:00Z'); // 18:00 Lausanne CEST = 16:00 UTC
+if (Date.now() < BUGFIX_EMAIL_AT.getTime()) {
+    schedule.scheduleJob(BUGFIX_EMAIL_AT, () => {
+        sendBugfixEmail({ mode: 'send' }).catch(e => console.error('[BUGFIX-EMAIL] Fatal:', e.message));
+    });
+    console.log(`📬 [BUGFIX-EMAIL] One-shot scheduled at ${BUGFIX_EMAIL_AT.toISOString()} (18:00 Lausanne)`);
+} else {
+    console.log('📬 [BUGFIX-EMAIL] Scheduled time already passed, skipping registration');
+}
+
 // 🚫 Unsubscribe from marketing emails
 app.get('/unsubscribe', async (req, res) => {
     const email = (req.query.email || "").trim().toLowerCase();
