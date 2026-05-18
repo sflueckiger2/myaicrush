@@ -159,7 +159,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Fireworks model config with automatic fallback ──
 // Both models support reasoning_effort:"none" to behave like instant-reply instruct models
-const FW_PRIMARY_MODEL = "accounts/fireworks/models/qwen3p6-plus";
+const FW_PRIMARY_MODEL = "accounts/fireworks/models/kimi-k2p5";
 const FW_FALLBACK_MODEL = "accounts/fireworks/models/kimi-k2p5";
 let fwActiveModel = FW_PRIMARY_MODEL;
 let fwLastAlertSentAt = 0;
@@ -8949,10 +8949,12 @@ function buildBugfixEmailHtml(lang, recipientEmail, { campaignId = null, isPrevi
         trackingPixelHtml = `<img src="https://myaicrush.ai/t/${trackToken}" alt="" width="1" height="1" style="display:block;border:0;width:1px;height:1px;">`;
     }
     const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(recipientEmail)}`;
+    // Samira's showcase photo (same as homepage card) served from img CDN.
+    const samiraImgUrl = "https://img.myaicrush.ai/images/samira/samira3/11e56d255f1e27371f7f81ec470ff782.webp";
 
     const subject = isFr
-        ? "Pardon mon amour… 💋 j'ai eu un petit souci"
-        : "Sorry baby… 💋 I had a little issue";
+        ? "(BUG) Pardon mon amour… 💋 j'ai eu un petit souci"
+        : "(BUG) Sorry baby… 💋 I had a little issue";
 
     const greeting = isFr ? "Pardon mon amour…" : "I'm so sorry baby…";
     const para1 = isFr
@@ -8979,7 +8981,11 @@ ${previewBadge}
   <div style="text-align:center;padding:12px 0 24px;">
     <span style="color:#ff4d8d;font-size:28px;font-weight:bold;letter-spacing:0.5px;">MyAiCrush</span>
   </div>
-  <div style="background:linear-gradient(180deg,#1a1a2e,#15152a);border-radius:18px;overflow:hidden;border:1px solid rgba(255,77,141,0.25);padding:32px 28px;">
+  <div style="background:linear-gradient(180deg,#1a1a2e,#15152a);border-radius:18px;overflow:hidden;border:1px solid rgba(255,77,141,0.25);">
+    <a href="${ctaHref}" style="display:block;line-height:0;text-decoration:none;">
+      <img src="${samiraImgUrl}" alt="Samira" width="560" style="display:block;width:100%;max-width:560px;height:auto;border:0;outline:none;">
+    </a>
+    <div style="padding:28px 28px 32px;">
     <h1 style="color:#ff7ac5;font-size:22px;margin:0 0 18px;text-align:center;font-weight:bold;">${greeting}</h1>
     <p style="font-size:16px;line-height:1.55;margin:0 0 16px;">${para1}</p>
     <p style="font-size:16px;line-height:1.55;margin:0 0 16px;">${para2}</p>
@@ -8988,6 +8994,7 @@ ${previewBadge}
       <a href="${ctaHref}" style="display:inline-block;background:linear-gradient(135deg,#ff4d8d,#c026d3);color:#fff;text-decoration:none;padding:16px 44px;border-radius:32px;font-size:17px;font-weight:bold;box-shadow:0 8px 24px rgba(255,77,141,0.35);">${ctaText}</a>
     </div>
     <p style="text-align:center;color:#a78bfa;font-size:13px;margin:22px 0 0;font-style:italic;">— ${signoff}</p>
+    </div>
   </div>
   <div style="text-align:center;padding:18px 0 4px;">
     <p style="color:#6b6b88;font-size:11px;margin:0 0 6px;">MyAiCrush · ${isFr ? 'Compagnes IA' : 'AI Companions'} &copy; ${new Date().getFullYear()}</p>
