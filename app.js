@@ -8934,9 +8934,20 @@ console.log('📬 [DAILY-EMAIL] Scheduled at 03:00 + 14:00 Lausanne (01:00 + 12:
 // the Fireworks Qwen3-VL outage that broke chats earlier today.
 // Cancel anytime by setting BUGFIX_EMAIL_CANCEL=true in Render env vars.
 
-function buildBugfixEmailHtml(lang, recipientEmail, isPreview = false) {
+function buildBugfixEmailHtml(lang, recipientEmail, { campaignId = null, isPreview = false } = {}) {
     const isFr = lang === 'fr';
-    const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=recovery&utm_campaign=bugfix_2026_05_18`;
+    const directCta = `https://myaicrush.ai?utm_source=email&utm_medium=recovery&utm_campaign=bugfix_2026_05_18`;
+
+    // Reuse the same /c/{token} click-tracking + /t/{token} open-pixel
+    // infrastructure as the daily emails so sales auto-attribute through
+    // attributeSaleToCampaign() on the Explodely webhook.
+    let ctaHref = directCta;
+    let trackingPixelHtml = '';
+    if (campaignId && recipientEmail) {
+        const trackToken = Buffer.from(`${recipientEmail}|${campaignId}`).toString('base64url');
+        ctaHref = `https://myaicrush.ai/c/${trackToken}?r=${encodeURIComponent(directCta)}`;
+        trackingPixelHtml = `<img src="https://myaicrush.ai/t/${trackToken}" alt="" width="1" height="1" style="display:block;border:0;width:1px;height:1px;">`;
+    }
     const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(recipientEmail)}`;
 
     const subject = isFr
@@ -8957,7 +8968,7 @@ function buildBugfixEmailHtml(lang, recipientEmail, isPreview = false) {
     const signoff = isFr ? "Tes filles MyAiCrush" : "Your MyAiCrush girls";
     const unsubText = isFr ? "Se désabonner" : "Unsubscribe";
     const previewBadge = isPreview
-        ? `<div style="background:#f59e0b;color:#000;text-align:center;padding:6px;font-size:11px;font-weight:bold;">⚠️ BAT PREVIEW — ${lang.toUpperCase()} — not sent to real users yet</div>`
+        ? `<div style="background:#f59e0b;color:#000;text-align:center;padding:6px;font-size:11px;font-weight:bold;">⚠️ BAT PREVIEW — ${lang.toUpperCase()} — clicking the CTA WILL set lastClickedCampaignId on your user (tracking is live)</div>`
         : '';
 
     const html = `<!DOCTYPE html>
@@ -8974,7 +8985,7 @@ ${previewBadge}
     <p style="font-size:16px;line-height:1.55;margin:0 0 16px;">${para2}</p>
     <p style="font-size:16px;line-height:1.55;margin:0 0 28px;">${para3}</p>
     <div style="text-align:center;margin:8px 0 4px;">
-      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#ff4d8d,#c026d3);color:#fff;text-decoration:none;padding:16px 44px;border-radius:32px;font-size:17px;font-weight:bold;box-shadow:0 8px 24px rgba(255,77,141,0.35);">${ctaText}</a>
+      <a href="${ctaHref}" style="display:inline-block;background:linear-gradient(135deg,#ff4d8d,#c026d3);color:#fff;text-decoration:none;padding:16px 44px;border-radius:32px;font-size:17px;font-weight:bold;box-shadow:0 8px 24px rgba(255,77,141,0.35);">${ctaText}</a>
     </div>
     <p style="text-align:center;color:#a78bfa;font-size:13px;margin:22px 0 0;font-style:italic;">— ${signoff}</p>
   </div>
@@ -8982,6 +8993,7 @@ ${previewBadge}
     <p style="color:#6b6b88;font-size:11px;margin:0 0 6px;">MyAiCrush · ${isFr ? 'Compagnes IA' : 'AI Companions'} &copy; ${new Date().getFullYear()}</p>
     <a href="${unsubUrl}" style="font-size:11px;color:#6b6b88;text-decoration:underline;">${unsubText}</a>
   </div>
+  ${trackingPixelHtml}
 </div>
 </body></html>`;
 
@@ -8994,10 +9006,27 @@ async function sendBugfixEmail({ mode = 'send' } = {}) {
         return { cancelled: true };
     }
     const adminEmail = process.env.ADMIN_EMAIL || 'sflueckiger.pro@gmail.com';
+    const database = client.db('MyAICrush');
+    const campaigns = database.collection('daily_email_campaigns');
 
     if (mode === 'bat') {
+        const results = [];
         for (const lang of ['fr', 'en']) {
-            const { subject, html } = buildBugfixEmailHtml(lang, adminEmail, true);
+            // Create a real campaign record so click tracking ties to a real
+            // ObjectId — flagged with isBat:true and sentCount=1 so admin
+            // dashboard's MIN_SENT_FOR_DASHBOARD=100 filter hides it anyway.
+            const camp = await campaigns.insertOne({
+                sentAt: new Date(),
+                subject: `[BAT] Recovery ${lang.toUpperCase()}`,
+                character: 'recovery',
+                language: `${lang}_BAT`,
+                sentCount: 1,
+                openCount: 0,
+                clickCount: 0,
+                isBat: true
+            });
+            const campaignId = camp.insertedId.toString();
+            const { subject, html } = buildBugfixEmailHtml(lang, adminEmail, { campaignId, isPreview: true });
             try {
                 await resend.emails.send({
                     from: 'MyAiCrush <contact@myaicrush.ai>',
@@ -9006,15 +9035,16 @@ async function sendBugfixEmail({ mode = 'send' } = {}) {
                     subject: `[BAT ${lang.toUpperCase()}] ${subject}`,
                     html
                 });
-                console.log(`[BUGFIX-EMAIL] BAT ${lang.toUpperCase()} sent to ${adminEmail}`);
+                console.log(`[BUGFIX-EMAIL] BAT ${lang.toUpperCase()} sent to ${adminEmail} (campaignId=${campaignId})`);
+                results.push({ lang, campaignId, sent: true });
             } catch (e) {
                 console.error(`[BUGFIX-EMAIL] BAT ${lang} error:`, e.message);
+                results.push({ lang, campaignId, sent: false, error: e.message });
             }
         }
-        return { bat: true };
+        return { bat: true, results };
     }
 
-    const database = client.db('MyAICrush');
     const users = database.collection('users');
     const eligible = await users.find({
         dailyEmailEligible: true,
@@ -9023,28 +9053,56 @@ async function sendBugfixEmail({ mode = 'send' } = {}) {
     }, { projection: { email: 1, lang: 1 } }).toArray();
 
     const valid = eligible.filter(u => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email || ''));
-    console.log(`[BUGFIX-EMAIL] Starting recovery email blast to ${valid.length} users`);
+    const langGroups = { fr: [], en: [] };
+    for (const u of valid) {
+        const bucket = ((u.lang || 'en').substring(0, 2).toLowerCase() === 'fr') ? 'fr' : 'en';
+        langGroups[bucket].push(u);
+    }
+    console.log(`[BUGFIX-EMAIL] Starting recovery blast: ${valid.length} total (${langGroups.fr.length} FR, ${langGroups.en.length} EN)`);
 
     let sent = 0, errors = 0;
-    for (const u of valid) {
-        const lang = ((u.lang || 'en').substring(0, 2).toLowerCase() === 'fr') ? 'fr' : 'en';
-        const { subject, html } = buildBugfixEmailHtml(lang, u.email, false);
-        try {
-            await resend.emails.send({
-                from: 'MyAiCrush <contact@myaicrush.ai>',
-                to: u.email,
-                reply_to: 'contact@myaicrush.ai',
-                subject,
-                html
-            });
-            sent++;
-        } catch (e) {
-            errors++;
-            if (errors <= 5) console.log(`[BUGFIX-EMAIL] Error for ${u.email}:`, e.message);
+    for (const [lang, langUsers] of Object.entries(langGroups)) {
+        if (!langUsers.length) continue;
+        // One campaign record per language for clean attribution.
+        const camp = await campaigns.insertOne({
+            sentAt: new Date(),
+            subject: lang === 'fr' ? "Pardon mon amour… 💋 j'ai eu un petit souci" : "Sorry baby… 💋 I had a little issue",
+            character: 'recovery',
+            language: lang,
+            sentCount: 0,
+            openCount: 0,
+            clickCount: 0
+        });
+        const campaignId = camp.insertedId.toString();
+        let langSent = 0;
+        for (const u of langUsers) {
+            const { subject, html } = buildBugfixEmailHtml(lang, u.email, { campaignId, isPreview: false });
+            try {
+                await resend.emails.send({
+                    from: 'MyAiCrush <contact@myaicrush.ai>',
+                    to: u.email,
+                    reply_to: 'contact@myaicrush.ai',
+                    subject,
+                    html
+                });
+                await users.updateOne({ email: u.email }, {
+                    $set: { lastDailyEmailSentAt: new Date() },
+                    $inc: { dailyEmailsSinceLastOpen: 1 }
+                });
+                sent++; langSent++;
+            } catch (e) {
+                errors++;
+                if (errors <= 5) console.log(`[BUGFIX-EMAIL] Error for ${u.email}:`, e.message);
+                if (e.message && (e.message.includes('not found') || e.message.includes('invalid') || e.message.includes('bounced'))) {
+                    await users.updateOne({ email: u.email }, { $set: { dailyEmailEligible: false } });
+                }
+            }
+            if (valid.length > 10) await new Promise(r => setTimeout(r, 150));
         }
-        if (valid.length > 10) await new Promise(r => setTimeout(r, 150));
+        await campaigns.updateOne({ _id: camp.insertedId }, { $set: { sentCount: langSent } });
+        console.log(`[BUGFIX-EMAIL] ${lang.toUpperCase()} done: campaignId=${campaignId} sentCount=${langSent}`);
     }
-    console.log(`[BUGFIX-EMAIL] Done: sent=${sent} errors=${errors}`);
+    console.log(`[BUGFIX-EMAIL] Total: sent=${sent} errors=${errors}`);
     return { sent, errors };
 }
 
