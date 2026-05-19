@@ -8305,7 +8305,18 @@ function deriveCharConfigFromJson(charJson) {
     if (!match) return null;
     const folder = match[1];
     const ext = match[2].toLowerCase();
-    const cfg = { name: charJson.name, folder, ext };
+    // Profile bundle: minimal personality payload Sonnet uses to write IN her voice
+    // (description + temperament + ethnicity + interests). Avoid sending the giant
+    // fullPromptNympho — it bloats the prompt and isn't needed for daily teasers.
+    const profile = {
+        description: charJson.description || "",
+        temperament: charJson?.prompt?.temperament || "",
+        objective: charJson?.prompt?.objective || "",
+        ethnicity: charJson.ethnicity || "",
+        measurements: charJson.measurements || "",
+        interests: Array.isArray(charJson.interests) ? charJson.interests.slice(0, 6) : []
+    };
+    const cfg = { name: charJson.name, folder, ext, profile };
     // For .jpg/.jpeg folders we typically only want "dressed" SFW images for emails
     if (ext === "jpg" || ext === "jpeg") {
         cfg.filter = f => f.includes("dressed") && (f.endsWith(".jpg") || f.endsWith(".jpeg"));
@@ -8524,7 +8535,12 @@ function pickFallback(charName, lang, isFeatured = false) {
     };
 }
 
-async function generateDailyEmailContent(charName, lang, isFeatured = false) {
+async function generateDailyEmailContent(charOrName, lang, isFeatured = false) {
+    // Backward compatible: accept either a full cfg/object {name, profile} or a bare string name.
+    // When only a name is passed, the profile is empty and Sonnet falls back to its generic flirty
+    // tone — which is the *old* behavior and what we want to avoid.
+    const charName = typeof charOrName === "string" ? charOrName : charOrName.name;
+    const profile = typeof charOrName === "object" && charOrName.profile ? charOrName.profile : null;
     const langMap = { fr: "French", de: "German", es: "Spanish", pt: "Portuguese", en: "English" };
     const language = langMap[lang] || "English";
     const today = new Date().toISOString().split("T")[0];
@@ -8584,23 +8600,44 @@ async function generateDailyEmailContent(charName, lang, isFeatured = false) {
         ? `Tu écris en français NATIF (style SMS d'une fille un peu chaude qui drague). Tutoie. N'utilise JAMAIS de calque anglais. Pas de "Veux-tu voir...", pas de "Tu me manques", pas de "Je t'attends", pas de "Viens me parler", pas de "Je n'arrête pas de penser à toi", pas de "Ouvre le message", pas de "Nouveau message de". Préfère "j'ai", "je viens de", "regarde ça", "dis-moi", "t'imagines pas", "j'ai craqué", "je galère à choisir", etc. Ponctuation française (apostrophes courbes acceptées, espaces fines NON requises).`
         : `Write in fluent native English. Avoid these tired phrases: "Want to see?", "I miss you", "I'm waiting for you", "Come talk to me", "I can't stop thinking about you", "Open the message", "New message from".`;
 
-    const systemPrompt = `You write a punchy, sexy, click-worthy email from ${charName}, a flirty girl on MyAiCrush, to a man.
+    // Character voice block: when we have a profile, we lock Sonnet to HER personality
+    // (Morgana = dominant manager, Lilith = demon, Magalie = girl-next-door, etc.) so the
+    // email reads native to her archetype instead of the same flirty template for everyone.
+    const profileBlock = profile && (profile.description || profile.temperament) ? `
+HER VOICE — write strictly in character (most important section):
+- Who she is: ${profile.description || "(unspecified)"}
+- Temperament: ${profile.temperament || "(unspecified)"}
+- Vibe & body: ${profile.ethnicity || ""} ${profile.measurements ? `— ${profile.measurements}` : ""}
+${profile.interests && profile.interests.length ? `- She loves: ${profile.interests.join(", ")}` : ""}
+
+The email MUST feel native to HER personality. Don't write a generic "flirty girl" email — write what SHE specifically would text. Lean into her archetype:
+- If she's dominant/authoritative → use orders, challenges, smirks. NEVER write her as submissive or pleading.
+- If she's shy/girl-next-door → soft, hesitant, almost embarrassed. NEVER write her as a pornstar.
+- If she's a demon/dark/gothic → references to night, sin, fire, forbidden things.
+- If she's on a first date / scenario → reference the scene she's living right now.
+- If she has a specific job/role (boss, neighbor, etc.) → use it as the hook.
+Use her name, accent, vocabulary, and props (clothing, decor, situation) that match her universe.
+` : "";
+
+    const systemPrompt = `You write a punchy, sexy, click-worthy email from ${charName}, a girl on MyAiCrush, to a man who is paying attention to her.
 
 LANGUAGE: ${language} ONLY. Every single word must be in ${language}. Never switch languages mid-text.
 ${langSpecificGuidance}
 
 ${featuredHint}
-
+${profileBlock}
 SUBJECT (max 8 words):
 - Lowercase or sentence case (NOT TitleCase, never ALL CAPS).
 - Opens a clear curiosity gap or asks a direct, irresistible question.
 - 0 or 1 emoji max, only when it adds info (📩 🔔 📸 🎥 🔞 🫦 etc.).
+- The subject should already HINT at her unique voice (a dominant manager's subject reads different from a shy neighbor's).
 
 BODY (2 to 4 short lines, like a real text she just sent):
-- Give ONE concrete reason to click NOW: a photo to look at, an unread message to open, a video to watch, a friend request to accept, a question waiting for an answer, an opinion she wants on her body or outfit, a "seins ou fesses" / "boobs or butt" vote, etc.
-- Sounds like a real text from a slightly horny girl to a guy she likes.
+- Give ONE concrete reason to click NOW: a photo to look at, an unread message to open, a video to watch, a friend request to accept, a question waiting for an answer, an opinion she wants on her body or outfit, a vote on her body/outfit, etc.
+- Anchor in HER world: her job, her decor, her current scene from the description above. Don't write a generic "selfie in front of the mirror" if her universe is a dungeon, a desk, a beach, a temple, etc.
+- Sounds like a real text from her — not a marketing brief.
 - Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens'.
-- Wrap exactly ONE short action phrase (3 to 7 words) inside <<click>> and <</click>>. That phrase will become the inline blue underlined link in the email. Examples (EN): "you can <<click>>see it here<</click>>", "<<click>>open it before I delete it<</click>>". Examples (FR): "tu peux <<click>>la voir ici<</click>>", "<<click>>regarde avant que je supprime<</click>>", "<<click>>vote seins ou fesses<</click>>".
+- Wrap exactly ONE short action phrase (3 to 7 words) inside <<click>> and <</click>>. That phrase will become the inline blue underlined link. Examples (EN): "you can <<click>>see it here<</click>>", "<<click>>obey me right now<</click>>". Examples (FR): "tu peux <<click>>la voir ici<</click>>", "<<click>>viens à mon bureau<</click>>".
 - End with her name on its own line + 1 emoji max.
 
 OUTPUT: Reply ONLY valid JSON, no markdown, no commentary: {"subject":"...","body":"..."}`;
@@ -8862,7 +8899,7 @@ async function runDailyEmailJob() {
             let sent = 0, errors = 0;
             const allSubjects = [];
             for (const [lang, langUsers] of Object.entries(langGroups)) {
-                const content = await generateDailyEmailContent(char.name, lang, isFeatured);
+                const content = await generateDailyEmailContent(char, lang, isFeatured);
                 const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=daily&utm_campaign=engagement&utm_content=${char.name.toLowerCase()}`;
 
                 // Create campaign record for this language batch
@@ -9121,6 +9158,76 @@ app.post('/api/admin/bugfix-email-bat', async (req, res) => {
         const result = await sendBugfixEmail({ mode: 'bat' });
         res.json({ ok: true, ...result });
     } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Preview the persona-aware daily emails for a hand-picked set of characters
+// before pushing to prod. Generates the real Sonnet 4.5 output, builds the real
+// HTML, and ships it to the admin inbox so we can review tone/voice/length
+// without touching real users. Tagged isBat:true on the campaign records so the
+// admin dashboard's MIN_SENT_FOR_DASHBOARD=100 filter keeps them out of stats.
+app.post('/api/admin/daily-email-preview', async (req, res) => {
+    try {
+        const secret = req.headers['x-admin-secret'] || req.query.secret;
+        if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'forbidden' });
+        const adminEmail = process.env.ADMIN_EMAIL || 'sflueckiger.pro@gmail.com';
+        const requested = Array.isArray(req.body?.characters) && req.body.characters.length
+            ? req.body.characters
+            : ['Morgana', 'Magalie', 'Anong', 'Lilith', 'Samira'];
+        const langs = Array.isArray(req.body?.langs) && req.body.langs.length
+            ? req.body.langs
+            : ['fr', 'en'];
+
+        const pool = getDailyRotationPool();
+        const found = requested.map(n => pool.find(c => c.name === n)).filter(Boolean);
+        if (!found.length) return res.status(404).json({ error: 'no matching characters in rotation pool', requested });
+
+        const db = client.db('MyAICrush');
+        const campaigns = db.collection('daily_email_campaigns');
+        const out = [];
+        for (const char of found) {
+            const imageUrl = pickDailyCharImage(char);
+            for (const lang of langs) {
+                const content = await generateDailyEmailContent(char, lang, false);
+                const camp = await campaigns.insertOne({
+                    sentAt: new Date(),
+                    subject: `[BAT] ${content.subject}`,
+                    character: char.name,
+                    language: `${lang}_BAT`,
+                    sentCount: 1,
+                    openCount: 0,
+                    clickCount: 0,
+                    isBat: true
+                });
+                const campaignId = camp.insertedId.toString();
+                const trackToken = Buffer.from(`${adminEmail}|${campaignId}`).toString('base64url');
+                const trackingPixelUrl = `https://myaicrush.ai/t/${trackToken}`;
+                const ctaUrl = `https://myaicrush.ai?utm_source=email&utm_medium=daily&utm_campaign=engagement&utm_content=${char.name.toLowerCase()}`;
+                const clickTrackUrl = `https://myaicrush.ai/c/${trackToken}?r=${encodeURIComponent(ctaUrl)}`;
+                const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(adminEmail)}`;
+                const tUi = DAILY_EMAIL_UI_I18N[lang] || DAILY_EMAIL_UI_I18N.en;
+                const html = `<div style="background:#f59e0b;color:#000;text-align:center;padding:6px;font-size:11px;font-weight:bold;">⚠️ DAILY-EMAIL BAT — ${char.name} / ${lang.toUpperCase()} — clicking the CTA WILL track</div>`
+                    + buildDailyEmail(content.body, char.name, imageUrl, clickTrackUrl, trackingPixelUrl, lang)
+                    + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">${tUi.unsub}</a></div>`;
+                try {
+                    await resend.emails.send({
+                        from: 'MyAiCrush <contact@myaicrush.ai>',
+                        to: adminEmail,
+                        reply_to: 'contact@myaicrush.ai',
+                        subject: `[BAT ${char.name} ${lang.toUpperCase()}] ${content.subject}`,
+                        html
+                    });
+                    out.push({ char: char.name, lang, campaignId, subject: content.subject, body: content.body, sent: true });
+                    console.log(`[DAILY-EMAIL-BAT] ${char.name}/${lang}: "${content.subject}"`);
+                } catch (e) {
+                    out.push({ char: char.name, lang, campaignId, subject: content.subject, sent: false, error: e.message });
+                }
+            }
+        }
+        res.json({ ok: true, count: out.length, results: out });
+    } catch (e) {
+        console.error('[DAILY-EMAIL-BAT] error:', e);
         res.status(500).json({ error: e.message });
     }
 });
