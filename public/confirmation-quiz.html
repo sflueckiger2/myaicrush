@@ -52,10 +52,12 @@
         let amount = parseFloat(rawAmount);
         if (!amount || isNaN(amount) || amount <= 0) { amount = 29; }
 
-        // Purchase fired server-side via /webhook/explodely (sendFacebookPurchaseCAPI in app.js).
-        // Browser-side track disabled to avoid double counting.
-        // fbq('track', 'Purchase', { value: amount, currency: 'USD' });
-        console.log("[FB Purchase] handled server-side via /webhook/explodely → CAPI", amount + "$ (fromUrl:", rawAmount + ")");
+        // Pixel + CAPI deduplication via shared event_id (see fb-tracking.js).
+        let _fbPendingEventId = null;
+        try { _fbPendingEventId = localStorage.getItem('fbPendingEventId'); } catch (_) {}
+        const _fbFinalEventId = _fbPendingEventId || ('purchase_quiz_' + Date.now());
+        fbq('track', 'Purchase', { value: amount, currency: 'USD' }, { eventID: _fbFinalEventId });
+        console.log("[FB Purchase] pixel sent", amount + "$ (fromUrl:", rawAmount + ", eventID:", _fbFinalEventId, "source:", _fbPendingEventId ? "pendingEventId(matches CAPI)" : "fallback", ")");
     });
     </script>
 

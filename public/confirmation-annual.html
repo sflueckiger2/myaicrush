@@ -494,15 +494,17 @@
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
     if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 59; }
-    // Purchase events are now fired server-side from the Explodely webhook
-    // (see sendFacebookPurchaseCAPI in app.js) using the Explodely orderId
-    // as event_id. The browser-side track is intentionally disabled to
-    // avoid double-counting: with the server-side CAPI active, firing here
-    // would generate a duplicate event whose event_id (timestamp-based
-    // fallback) wouldn't match the CAPI event_id (orderId), so FB would
-    // count it as a second conversion.
-    // fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
-    console.log('[FB Purchase] handled server-side via /webhook/explodely → CAPI', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
+    // Pixel + CAPI deduplication. Both this browser pixel AND the
+    // server-side CAPI fired from /webhook/explodely send a Purchase
+    // event sharing the SAME event_id. FB merges them into one
+    // conversion (best Event Match Quality). The shared id is a UUID
+    // generated in /scripts/fb-tracking.js when the user clicked the
+    // Explodely CTA, stashed in localStorage as `fbPendingEventId`.
+    var _fbPendingEventId = null;
+    try { _fbPendingEventId = localStorage.getItem('fbPendingEventId'); } catch (_) {}
+    var _fbFinalEventId = _fbPendingEventId || purchaseEventID;
+    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: _fbFinalEventId });
+    console.log('[FB Purchase] pixel sent', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: _fbFinalEventId, source: _fbPendingEventId ? 'pendingEventId(matches CAPI)' : 'fallback(no CAPI match)' });
   </script>
 
   <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->

@@ -513,10 +513,12 @@
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
     if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 124.5; }
-    // Purchase fired server-side via /webhook/explodely (sendFacebookPurchaseCAPI in app.js).
-    // Browser-side track disabled to avoid double counting.
-    // fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
-    console.log('[FB Purchase] handled server-side via /webhook/explodely → CAPI', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
+    // Pixel + CAPI deduplication via shared event_id (see fb-tracking.js).
+    var _fbPendingEventId = null;
+    try { _fbPendingEventId = localStorage.getItem('fbPendingEventId'); } catch (_) {}
+    var _fbFinalEventId = _fbPendingEventId || purchaseEventID;
+    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: _fbFinalEventId });
+    console.log('[FB Purchase] pixel sent', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: _fbFinalEventId, source: _fbPendingEventId ? 'pendingEventId(matches CAPI)' : 'fallback' });
   </script>
 
   <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->

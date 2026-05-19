@@ -1141,7 +1141,7 @@ function getExplodelyProductPriceUSD({ isPremium, isAnnual, isLifetime, tokensAm
 // =====================================================================
 const sha256Hex = (val) => crypto.createHash('sha256').update(String(val || '').trim().toLowerCase()).digest('hex');
 
-async function sendFacebookPurchaseCAPI({ email, orderId, valueUSD, productLabel, fbp, fbc, ipAddress, userAgent, eventTime, eventSourceUrl }) {
+async function sendFacebookPurchaseCAPI({ email, orderId, eventId, valueUSD, productLabel, fbp, fbc, ipAddress, userAgent, eventTime, eventSourceUrl }) {
     if (!FACEBOOK_PIXEL_ID || !FACEBOOK_ACCESS_TOKEN) {
         console.warn("⚠️ FB CAPI not configured (missing FACEBOOK_PIXEL_ID or FACEBOOK_ACCESS_TOKEN env)");
         return { ok: false, skipped: true };
@@ -1168,11 +1168,15 @@ async function sendFacebookPurchaseCAPI({ email, orderId, valueUSD, productLabel
         order_id: String(orderId),
     };
 
+    // event_id is the dedup key. The browser pixel must send the same
+    // value as eventID for FB to merge the two events into one.
+    const finalEventId = String(eventId || orderId);
+
     const payload = {
         data: [{
             event_name: "Purchase",
             event_time: eventTime || Math.floor(Date.now() / 1000),
-            event_id: String(orderId), // CLEF de dedup: même valeur que tout autre event envoyé pour cette commande
+            event_id: finalEventId,
             action_source: "website",
             event_source_url: eventSourceUrl || "https://myaicrush.ai/",
             user_data,
@@ -1183,7 +1187,7 @@ async function sendFacebookPurchaseCAPI({ email, orderId, valueUSD, productLabel
 
     try {
         const r = await axios.post(FB_API_URL, payload, { timeout: 8000 });
-        console.log(`✅ FB CAPI Purchase sent: orderId=${orderId} email=${cleanEmail} value=${valueUSD} USD → fb=${JSON.stringify(r.data)}`);
+        console.log(`✅ FB CAPI Purchase sent: orderId=${orderId} eventId=${finalEventId} email=${cleanEmail} value=${valueUSD} USD → fb=${JSON.stringify(r.data)}`);
         return { ok: true, data: r.data };
     } catch (err) {
         const errBody = err.response?.data || err.message;
@@ -1390,9 +1394,17 @@ async function fireFbPurchaseFromWebhook(database, email, productInfo) {
             { projection: { fbTracking: 1 } }
         );
         const fbt = userDoc?.fbTracking || {};
+
+        // Prefer the client-generated pendingEventId so it matches what
+        // the browser pixel will send. Fall back to orderId if the user
+        // somehow reached Explodely without going through a tracked CTA
+        // (e.g. shared link, direct purchase, etc.).
+        const eventId = fbt.pendingEventId || String(productInfo.orderId);
+
         await sendFacebookPurchaseCAPI({
             email,
             orderId: productInfo.orderId,
+            eventId, // ← shared with the browser pixel for dedup
             valueUSD,
             productLabel: productInfo.label || 'sale',
             fbp: fbt.fbp || null,
@@ -1402,6 +1414,16 @@ async function fireFbPurchaseFromWebhook(database, email, productInfo) {
             eventTime: Math.floor(Date.now() / 1000),
             eventSourceUrl: "https://myaicrush.ai/",
         });
+
+        // Clear the pendingEventId so a future purchase by the same user
+        // generates a fresh one (avoids edge case where two purchases get
+        // the same event_id and FB drops the second as a duplicate).
+        if (fbt.pendingEventId) {
+            await database.collection('users').updateOne(
+                { email },
+                { $unset: { 'fbTracking.pendingEventId': "" } }
+            );
+        }
     } catch (e) {
         console.error("❌ fireFbPurchaseFromWebhook error:", e.message);
     }
@@ -1418,6 +1440,7 @@ app.post("/api/store-fb-tracking", async (req, res) => {
         const email = String(req.body?.email || '').trim().toLowerCase();
         const fbp = req.body?.fbp ? String(req.body.fbp) : null;
         const fbc = req.body?.fbc ? String(req.body.fbc) : null;
+        const pendingEventId = req.body?.pendingEventId ? String(req.body.pendingEventId) : null;
 
         if (!email || !email.includes('@')) {
             return res.status(400).json({ ok: false, error: 'email required' });
@@ -1433,6 +1456,7 @@ app.post("/api/store-fb-tracking", async (req, res) => {
             fbc,
             ipAddress,
             userAgent,
+            pendingEventId,
             capturedAt: new Date(),
         };
 
