@@ -159,8 +159,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Fireworks model config with automatic fallback ──
 // Both models support reasoning_effort:"none" to behave like instant-reply instruct models
+// PROVISOIRE: Kimi K2.5 promu en primary pour test, Qwen3.6 Plus reste en fallback.
 const FW_PRIMARY_MODEL = "accounts/fireworks/models/kimi-k2p5";
-const FW_FALLBACK_MODEL = "accounts/fireworks/models/kimi-k2p5";
+const FW_FALLBACK_MODEL = "accounts/fireworks/models/qwen3p6-plus";
 let fwActiveModel = FW_PRIMARY_MODEL;
 let fwLastAlertSentAt = 0;
 const FW_ALERT_COOLDOWN_MS = 3600_000; // 1 email per hour max
@@ -3221,6 +3222,7 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
 
         let response;
         const chatModel = fwActiveModel;
+        console.log(`🤖 [CHAT-MODEL] Using ${chatModel.split('/').pop()} (active=${fwActiveModel === FW_PRIMARY_MODEL ? 'PRIMARY' : 'FALLBACK'})`);
         for (let _attempt = 0; _attempt < 3; _attempt++) {
           try {
             response = await axios.post(
