@@ -8758,7 +8758,8 @@ BODY (2 to 4 short lines, like a real text she just sent):
 - ONE concrete reason to click NOW: photo to see, message to open, video, friend request, opinion needed, vote, dare. Pick one that fits her archetype.
 - Real-text energy, not marketing copy.
 - Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens'.
-- Wrap ONE short action phrase (3-7 words) in <<click>>...<</click>>. Make the phrase ALSO match her voice (dom: "viens à mon bureau" / shy: "regarde avant que je supprime" / demon: "réponds à mon appel").
+- Wrap ONE short action phrase (3-7 words) in <<click>>...<</click>>. The phrase MUST match her voice (dom: "viens à mon bureau" / shy: "regarde avant que je supprime" / demon: "réponds à mon appel").
+- Marker format is strict: literally <<click>>your phrase<</click>>. Do NOT write <>, <click>, [text](click), or any other variant. Only the canonical double-bracket form.
 - End with her name on its own line + 1 emoji max.
 
 OUTPUT: Reply ONLY valid JSON, no markdown, no commentary: {"subject":"...","body":"..."}`;
@@ -8845,20 +8846,52 @@ function buildDailyEmail(body, charName, imageUrl, ctaUrl, trackingPixelUrl, lan
     const t = DAILY_EMAIL_UI_I18N[lang] || DAILY_EMAIL_UI_I18N.en;
     const ctaLabel = t.cta.replace(/\{name\}/g, charName);
 
-    // Transforme les markers <<click>>texte<</click>> en lien bleu souligne inline pointant
-    // vers le meme CTA (donc trackable). Si la signature contient un marker (ne devrait pas),
-    // il est aussi transforme proprement.
-    const renderInlineLinks = (line) =>
-        line.replace(/<<click>>([\s\S]+?)<<\/click>>/g, (_, label) =>
-            `<a href="${ctaUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">${label.trim()}</a>`
-        );
+    // Defensive marker pipeline: Sonnet occasionally produces marker variants
+    // (<click>, <<CLICK>>, partial markers, stray "<>"  artifacts). We normalize
+    // before parsing, render the link, then strip any orphan noise so users
+    // never see raw "<>" or "<<click>>" leak into the final email.
+    const inlineLink = (label) =>
+        `<a href="${ctaUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">${label.trim()}</a>`;
 
-    const bodyHtml = body.split("\n").filter(l => l.trim()).map(line => {
+    let processed = body
+        // Normalize case + single/double-bracket variants → canonical <<click>>...<</click>>
+        .replace(/<<?\s*click\s*>>?/gi, "<<click>>")
+        .replace(/<<?\s*\/\s*click\s*>>?/gi, "<</click>>")
+        // Markdown-link variant: sometimes Sonnet writes [text](click) → unwrap to marker
+        .replace(/\[([^\]]+)\]\(\s*click\s*\)/gi, "<<click>>$1<</click>>");
+
+    // Render real link from canonical markers (multi-line safe — applied on full body BEFORE split).
+    processed = processed.replace(/<<click>>([\s\S]+?)<<\/click>>/g, (_, label) => inlineLink(label));
+
+    // Strip any leftover marker fragments + stray "<>" placeholders Sonnet sometimes
+    // leaves next to the real marker. These shouldn't survive to the inbox.
+    processed = processed
+        .replace(/<<click>>/g, "")
+        .replace(/<<\/click>>/g, "")
+        .replace(/<\s*\/?\s*click\s*>/gi, "")
+        .replace(/<\s*>/g, "");
+
+    // Last-resort safety net: if for any reason no link survived, inject the CTA
+    // fallback inline so the email always has at least one clickable CTA in body.
+    if (!processed.includes("<a href=")) {
+        const fb = { en: "tap here", fr: "clique ici", de: "tipp hier", es: "toca aquí", pt: "toca aqui" }[lang] || "tap here";
+        const lines = processed.split("\n");
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const trimmed = lines[i].trim();
+            if (!trimmed) continue;
+            if (trimmed === charName || trimmed.startsWith(charName)) continue;
+            lines[i] = `${trimmed} ${inlineLink(fb)}`;
+            break;
+        }
+        processed = lines.join("\n");
+    }
+
+    const bodyHtml = processed.split("\n").filter(l => l.trim()).map(line => {
         const trimmed = line.trim();
         if (trimmed === charName || trimmed.startsWith(charName)) {
-            return `<p style="margin:16px 0 0;font-weight:600;color:#7c3aed;">${renderInlineLinks(trimmed)}</p>`;
+            return `<p style="margin:16px 0 0;font-weight:600;color:#7c3aed;">${trimmed}</p>`;
         }
-        return `<p style="margin:0 0 8px;font-size:1rem;line-height:1.6;color:#1a1a1a;">${renderInlineLinks(trimmed)}</p>`;
+        return `<p style="margin:0 0 8px;font-size:1rem;line-height:1.6;color:#1a1a1a;">${trimmed}</p>`;
     }).join("");
 
     return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;background:#ffffff;color:#1a1a1a;">
