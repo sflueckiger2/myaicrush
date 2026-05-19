@@ -8545,38 +8545,109 @@ async function generateDailyEmailContent(charOrName, lang, isFeatured = false) {
     const language = langMap[lang] || "English";
     const today = new Date().toISOString().split("T")[0];
 
-    // When we have a profile, the SCENE is invented by Sonnet from her own universe.
-    // We only supply a generic hook pool as legacy fallback (no profile) or in the
-    // featured-new-girl case where the angle is dictated by the launch.
-    const hooksLegacy = [
-        "she just took a mirror selfie in a tight top and wants his honest opinion",
-        "she sent a 12-second video earlier and is wondering why he hasn't reacted yet",
-        "she just sent him a friend request and is half-laughing half-anxious",
-        "she snapped a sweaty post-gym selfie and dares him to grade it out of 10",
-        "she's posing in new lingerie and wants him to pick: boobs or butt",
-        "she has 1 message in drafts she's too embarrassed to send unprompted",
-        "she's between two outfits and needs him to pick before she leaves",
-        "she just took a photo with the filter off and is staring at her phone",
-        "she's locked in the bathroom on her phone, half-undressed",
-        "she got a reply from someone else and wants to make him jealous",
-        "she's sending a teasing voice note about what she's wearing",
-        "she just edited a photo she shouldn't be sharing publicly",
-        "she's daring him to guess what color her underwear is",
-        "she wants to know his favorite position, no judgement",
-        "she's offering 5 minutes of full attention if he opens the message now"
+    // ============================================================
+    // HOOK SYSTEM — variety lever, kept ALONGSIDE the persona system.
+    // ============================================================
+    // The persona block enforces VOICE (how she talks).
+    // The hook enforces ANGLE (what she's writing about today).
+    // Sonnet's job is to translate the hook through her archetype voice.
+    // → variety = N hooks × N personas (was just N personas before).
+    //
+    // Universal format hooks (work for every archetype — the classic
+    // "unread message / friend request / anonymous video / blurred photo"
+    // angles that historically drove clicks):
+    const hooksUniversal = [
+        "she has 1 unread message in drafts she's deciding whether to send",
+        "she just sent him a friend request",
+        "she sent a video he hasn't reacted to yet",
+        "she just posted a new photo and is waiting for his opinion",
+        "she wants him to vote on a body/outfit choice",
+        "she's offering him a blurred photo to unblur",
+        "she sent a voice note about what she's wearing right now",
+        "she's giving him a tiny ultimatum (5 minutes, 2 minutes, last try)",
+        "she's daring him to guess something (color, size, position)",
+        "she's confessing one specific thing she did today",
+        "she has an anonymous photo waiting for him",
+        "she's threatening to delete the message if he doesn't open it",
+        "she's between two choices and needs him to pick urgently"
     ];
+    // Archetype-flavored hooks — used ~50% of the time when a persona is
+    // detected, so the angle itself already fits her world before Sonnet
+    // even starts writing.
+    const hooksByArchetype = {
+        dominant: [
+            "she's calling him to her office after hours, door closed",
+            "she's setting a written task he must finish before she replies",
+            "she's deciding whether to promote him or punish him tonight",
+            "she's left her phone visible on the desk knowing he'll see",
+            "she's giving him a precise window to comply",
+            "she's testing his obedience with one specific instruction"
+        ],
+        shy: [
+            "she just sent something embarrassing and immediately regrets it",
+            "she's stuck between two outfits before going out",
+            "she just got out of the shower feeling brave for once",
+            "she's drunk-texting at 11pm and her friend dared her to",
+            "she's blushing at her own draft",
+            "she almost deleted this then sent it on impulse"
+        ],
+        date: [
+            "she just got home from dinner debating to invite him up",
+            "she's still in her dress from earlier sitting on her couch",
+            "she's pouring wine and the door is unlocked",
+            "she's wondering why he's still texting and not at her place",
+            "she's in her bath after the date, phone on the edge",
+            "she's standing at her window watching the street, hoping for him"
+        ],
+        demon: [
+            "she just finished a ritual that called his name",
+            "she lit black candles and the room smells of incense",
+            "she's offering a forbidden gift tonight, just for him",
+            "she's hungry and the moon is full",
+            "she sealed a pact with his name on her wrist",
+            "she's between her chamber and his world, waiting"
+        ],
+        nympho: [
+            "she's in bed right now and can't wait anymore",
+            "she just took a photo she shouldn't have and is sending it anyway",
+            "she has a very specific thing she wants from him tonight",
+            "she's recording a voice note that's barely safe to listen to",
+            "she's daring him to match her energy"
+        ]
+    };
     const hooksFeatured = [
         "she just created her account today and wants him to be her first chat",
         "she just posted her very first photo and is nervously waiting for the first reaction",
         "she's the new girl on the platform and is introducing herself with a bold selfie",
-        "she heard about him from another girl on the app and was curious enough to write first",
-        "she's terrified of being ignored on day 1 and asks him to break the ice",
         "she just recorded her very first video and wants honest feedback before deleting it",
-        "she's the newcomer, she picked his profile out of the crowd, no pressure"
+        "she's the newcomer, she picked his profile out of the crowd"
     ];
-    const useProfileHook = !!(profile && (profile.description || profile.temperament)) && !isFeatured;
-    const hookPool = isFeatured ? hooksFeatured : hooksLegacy;
-    const hook = useProfileHook ? null : hookPool[Math.floor(Math.random() * hookPool.length)];
+
+    // Detect her archetype from description + temperament keywords.
+    // Used to mix in flavored hooks alongside universal ones for max variety.
+    function detectArchetype(prof) {
+        if (!prof) return null;
+        const blob = `${prof.description || ""} ${prof.temperament || ""} ${prof.objective || ""}`.toLowerCase();
+        if (/(demon|d[ée]mon|hell|enfer|gothic|gothique|succub|dark angel|sin|sinn|witch|sorci[èe]re|vampire|infernal|ritual|altar|candl)/.test(blob)) return "demon";
+        if (/(dominant|dominat|domina|boss|manager|patron|cheff?e|punish|punir|obey|ob[ée]ir|ob[ée]issa|submiss|kneel|genoux|ordre|order|authorita|authority|cruel|severe|s[ée]v[èe]re|strict|mistress|queen|reine|punisher)/.test(blob)) return "dominant";
+        if (/(first date|premier rendez|premi[èe]re sortie|premi[èe]re fois|restaurant|first time meeting|first encounter|on a date|en rendez-vous)/.test(blob)) return "date";
+        if (/(nympho|insatiabl|cock-hungry|cock hungry|sex-addict|unleashed|insane with lust|enrag[ée])/.test(blob)) return "nympho";
+        if (/(shy|timid|girl next door|fille d'[àa] c[ôo]t[ée]|next door|normal life|simple|natural|naturelle|hesita|h[ée]sita|embarrass|innocent|sweet|douce)/.test(blob)) return "shy";
+        return null;
+    }
+    const archetype = detectArchetype(profile);
+
+    // Hook picking: ~50% archetype-flavored, ~50% universal. Featured chars always
+    // use featured hooks (they override the persona since the angle is "I'm new").
+    let hookPool;
+    if (isFeatured) {
+        hookPool = hooksFeatured;
+    } else if (archetype && hooksByArchetype[archetype] && Math.random() < 0.5) {
+        hookPool = hooksByArchetype[archetype];
+    } else {
+        hookPool = hooksUniversal;
+    }
+    const hook = hookPool[Math.floor(Math.random() * hookPool.length)];
 
     const formats = [
         "phone notification style (start with 📩 or 🔔 or 📸 then a one-line tease)",
@@ -8586,6 +8657,8 @@ async function generateDailyEmailContent(charOrName, lang, isFeatured = false) {
         "a tiny ultimatum (5 min, 2 minutes, last try)"
     ];
     const format = formats[Math.floor(Math.random() * formats.length)];
+    // Backward-compat var name still referenced by the rest of the function
+    const useProfileHook = !!(profile && (profile.description || profile.temperament));
 
     const featuredHint = isFeatured
         ? `IMPORTANT: ${charName} is brand NEW on the platform. Lean into the novelty: it's her first day, her first photo, her first video, her first message. Make him feel like the first guy she's talking to.`
@@ -8645,18 +8718,26 @@ Read the profile above and pick the SINGLE archetype that fits. Then write stric
 • OTHER (everything else, default sexy-confident):
    Anchor in her interests and ethnicity to make it specific.
 
-==================== STEP 2 — INVENT THE SCENE ====================
-Pick ONE concrete scene she is LIVING RIGHT NOW that fits her universe and archetype. Be hyper-specific.
-Examples of well-scoped scenes by archetype:
-  - Morgana (manager): "she's still at her desk after hours, top button undone, waiting for him to come back to her office"
-  - Magalie (girl next door): "she just got out of the shower, towel on, debating if her selfie is too much"
-  - Anong (Thai first date): "she's in the taxi back from dinner, deciding right now if she invites him up"
-  - Lilith (demon): "she lit black candles and the room smells of incense, she finished a ritual that called him"
-  - Samira (Moroccan first date): "she's at her place after dinner, the wine is open, she's wondering why he's still texting and not here"
-NEVER use a scene that doesn't fit her universe (no "mirror selfie in the bathroom" for a dominatrix, no "altar" for a girl-next-door).
+==================== STEP 2 — TRANSLATE TODAY'S ANGLE THROUGH HER VOICE ====================
+You will receive a "Today's angle" hook in the user message — that's WHAT she's writing about (an unread message, a friend request, an ultimatum, a voice note, etc.). Your job: take that angle and rewrite it as ONLY she would. Same angle, totally different voice depending on archetype. Examples:
 
-==================== STEP 3 — WRITE THE TEXT ====================
-Write a 2-4 line message from inside that scene. Use props, vocabulary, and tone of her archetype.
+ANGLE = "she just sent a friend request"
+  - Dominant manager: "je t'ai envoyé une demande d'ami. accepte. maintenant."
+  - Shy girl-next-door: "j'ai cliqué avant de réfléchir, je veux mourir lol"
+  - Demon: "j'ai ouvert une porte entre nos mondes. accepte si tu oses."
+  - First-date: "je t'ai ajouté en rentrant du resto. on continue où on s'est arrêtés?"
+
+ANGLE = "5 min ultimatum"
+  - Dominant manager: "5 minutes pour me répondre. ne me fais pas attendre."
+  - Shy: "j'ouvre le message 5 min puis je le supprime promis"
+  - Demon: "5 minutes avant que ma porte se referme"
+
+The angle is the format. HER voice is everything else.
+
+==================== STEP 3 — ANCHOR IN A SPECIFIC SCENE ====================
+Pick ONE concrete prop or setting from her universe (her desk, her altar, her towel, the wine glass, the taxi, the chamber). The hook becomes alive when grounded in a scene only SHE could write from.
+
+NEVER use a scene that doesn't fit her universe (no "mirror selfie in the bathroom" for a dominatrix, no "altar" for a girl-next-door).
 ` : "";
 
     const systemPrompt = `${profileBlock}
@@ -8683,7 +8764,11 @@ BODY (2 to 4 short lines, like a real text she just sent):
 OUTPUT: Reply ONLY valid JSON, no markdown, no commentary: {"subject":"...","body":"..."}`;
 
     const userPrompt = useProfileHook
-        ? `Date: ${today}. Format hint: ${format}.\n\nWrite a single fresh email from ${charName}. Follow STEPS 1→2→3 in the system prompt. The email MUST read like only ${charName} could have written it. Include exactly ONE <<click>>...<</click>> inline link in the body.`
+        ? `Date: ${today}.
+Today's angle: ${hook}
+Format hint: ${format}
+
+Translate today's angle through ${charName}'s archetype voice (follow STEPS 1→2→3 in the system prompt). Use a concrete prop from HER universe. Write in ${language}. Include exactly ONE <<click>>...<</click>> inline link in the body.`
         : `Date: ${today}. Today's hook: ${hook}. Format hint: ${format}. Write a fresh, click-worthy email in ${language} from ${charName}. Include exactly ONE <<click>>...<</click>> inline link inside the body.`;
 
     try {
@@ -9220,6 +9305,9 @@ app.post('/api/admin/daily-email-preview', async (req, res) => {
         const langs = Array.isArray(req.body?.langs) && req.body.langs.length
             ? req.body.langs
             : ['fr', 'en'];
+        // `count` = how many variants per (char, lang) — useful to spot redundancy
+        // across multiple sends for the same persona.
+        const count = Math.min(Math.max(parseInt(req.body?.count, 10) || 1, 1), 5);
 
         const pool = getDailyRotationPool();
         const found = requested.map(n => pool.find(c => c.name === n)).filter(Boolean);
@@ -9229,8 +9317,9 @@ app.post('/api/admin/daily-email-preview', async (req, res) => {
         const campaigns = db.collection('daily_email_campaigns');
         const out = [];
         for (const char of found) {
-            const imageUrl = pickDailyCharImage(char);
             for (const lang of langs) {
+              for (let variantN = 1; variantN <= count; variantN++) {
+                const imageUrl = pickDailyCharImage(char);
                 const content = await generateDailyEmailContent(char, lang, false);
                 const camp = await campaigns.insertOne({
                     sentAt: new Date(),
@@ -9261,11 +9350,12 @@ app.post('/api/admin/daily-email-preview', async (req, res) => {
                         subject: content.subject,
                         html
                     });
-                    out.push({ char: char.name, lang, campaignId, subject: content.subject, body: content.body, sent: true });
-                    console.log(`[DAILY-EMAIL-BAT] ${char.name}/${lang}: "${content.subject}"`);
+                    out.push({ char: char.name, lang, variant: variantN, campaignId, subject: content.subject, body: content.body, sent: true });
+                    console.log(`[DAILY-EMAIL-BAT] ${char.name}/${lang} (v${variantN}): "${content.subject}"`);
                 } catch (e) {
-                    out.push({ char: char.name, lang, campaignId, subject: content.subject, sent: false, error: e.message });
+                    out.push({ char: char.name, lang, variant: variantN, campaignId, subject: content.subject, sent: false, error: e.message });
                 }
+              }
             }
         }
         res.json({ ok: true, count: out.length, results: out });
