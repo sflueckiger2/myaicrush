@@ -3346,3 +3346,218 @@ vapi-widget {
 .hidden-footer {
   display: none !important;
 }
+
+/* =========================================================================
+   Signup / signin popup (candy.ai-style, minimal)
+   ========================================================================= */
+.signup-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: spOverlayIn 0.2s ease-out;
+}
+.signup-popup-overlay.hidden { display: none; }
+@keyframes spOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+.signup-popup {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  background: #161618;
+  border-radius: 20px;
+  padding: 30px 26px 24px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
+  color: white;
+  animation: spIn 0.22s ease-out;
+}
+@keyframes spIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.signup-popup-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.signup-popup-close:hover { color: white; }
+
+.signup-popup-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 20px;
+  letter-spacing: -0.3px;
+  background: linear-gradient(90deg, #f472b6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.signup-field {
+  position: relative;
+  margin-bottom: 12px;
+}
+.signup-field > i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f472b6;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+/* Higher specificity (.signup-popup .signup-field) to beat the legacy
+   `form input[type="email"]` rule in this file which forces width:90% +
+   padding:12px 15px and would shove the placeholder under the icon. */
+.signup-popup .signup-field input,
+.signup-popup .signup-field input[type="email"],
+.signup-popup .signup-field input[type="password"],
+.signup-popup .signup-field input[type="text"] {
+  width: 100%;
+  background: #232325;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 13px 44px 13px 44px !important;
+  margin: 0;
+  color: white;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  font-family: inherit;
+  box-shadow: none;
+}
+.signup-popup .signup-field input::placeholder { color: #9ca3af; font-weight: 600; }
+.signup-popup .signup-field input:focus {
+  border-color: #f472b6 !important;
+  background: #2a2a2c;
+  box-shadow: none !important;
+}
+.signup-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.95rem;
+}
+.signup-eye:hover { color: white; }
+.signup-hint {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  margin: 0 0 16px 4px;
+}
+
+.signup-cta {
+  width: 100%;
+  background: linear-gradient(90deg, #f472b6, #ec4899);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+.signup-cta:hover, .signup-cta:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(244, 114, 182, 0.45);
+}
+.signup-cta:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.signup-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 14px;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  font-weight: 600;
+}
+.signup-divider::before, .signup-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.signup-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: white;
+  color: #111 !important;
+  border-radius: 10px;
+  padding: 11px;
+  text-align: center;
+  text-decoration: none !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.signup-social img {
+  width: 18px;
+  height: 18px;
+}
+.signup-social:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.signup-terms {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+.signup-terms a { color: #f472b6; text-decoration: none; }
+.signup-terms a:hover { text-decoration: underline; }
+
+.signup-footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+.signup-footer a { color: #f472b6; font-weight: 600; text-decoration: none; }
+.signup-footer a:hover { text-decoration: underline; }
+
+.signup-error {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  display: none;
+}
+.signup-error.is-visible { display: block; }
+
+@media (max-width: 380px) {
+  .signup-popup { padding: 26px 20px 20px; }
+}

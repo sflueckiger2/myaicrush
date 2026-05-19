@@ -24,7 +24,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
       <title>MyAICrush - The best AI companions</title>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=4">
 
     
       
@@ -425,143 +425,120 @@ banner.addEventListener("click", async (e) => {
 
   <script>
 
+  // Private-content slider — shown to EVERYONE now (was premium-only).
+  // - Locale: FR navigator gets the FR slides, everything else falls back
+  //   to the EN slides (images/market/<name>-slider-prive[-en].webp).
+  // - Click destination depends on premium status: premium → contenu-prive.html,
+  //   non-premium / logged-out → premium.html (acquisition push).
   document.addEventListener("DOMContentLoaded", async () => {
     const header = document.getElementById("cheaper-plan-dynamic-banner");
+    if (!header) return;
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.email) return;
+    const isFr = (navigator.language || "").toLowerCase().startsWith("fr");
+    const suffix = isFr ? "" : "-en";
 
+    // Resolve premium status. Logged-out users are treated as non-premium
+    // (no API call). Failures default to non-premium so the slider always
+    // renders.
+    let isPremium = false;
     try {
-      const res = await fetch(`${window.location.origin}/api/is-premium`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email })
-      });
-
-      const { isPremium } = await res.json();
-
-      if (!isPremium) return;
-
-      const sliderSection = document.createElement("div");
-      sliderSection.className = "private-slider-section";
-      sliderSection.innerHTML = `
-        <div id="private-slider" class="private-slider">
-          <div class="slider-inner">
-             <img src="images/market/hanae-slider-prive-en.webp" alt="Slide 5" />
-              <img src="images/market/naomi-slider-prive-en.webp" alt="Slide 2" />
-              <img src="images/market/chloe-slider-prive-en.webp" alt="Slide 3" />
-               <img src="images/market/lea-slider-prive-en.webp" alt="Slide 4" />
-             <img src="images/market/asha-slider-prive-en.webp" alt="Slide 2" />
-             <img src="images/market/alex-slider-prive-en.webp" alt="Slide 2" />
-            <img src="images/market/emilie-slider-prive-en.webp" alt="Slide 2" />
-            <img src="images/market/lila-slider-prive-en.webp" alt="Slide 2" />
-            <img src="images/market/candy-slider-prive-en.webp" alt="Slide 1" />
-            <img src="images/market/jasmine-slider-prive-en.webp" />
-           
-          </div>
-          <button class="slider-arrow left-arrow">&#10094;</button>
-          <button class="slider-arrow right-arrow">&#10095;</button>
-        </div>
-      `;
-
-      header.insertAdjacentElement("afterend", sliderSection);
-      
-      const chatBoxEl = document.getElementById("chat-box");
-
-const sliderObserver = new MutationObserver(() => {
-  if (chatBoxEl.style.display === "flex") {
-    sliderSection.classList.add("hidden-slider");
-  } else {
-    sliderSection.classList.remove("hidden-slider");
-  }
-});
-
-sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style'] });
-
-      const slider = sliderSection.querySelector("#private-slider");
-      const sliderInner = slider.querySelector(".slider-inner");
-      const slides = sliderInner.querySelectorAll("img");
-      const leftArrow = slider.querySelector(".left-arrow");
-      const rightArrow = slider.querySelector(".right-arrow");
-
-      let index = 0;
-      const totalSlides = slides.length;
-
-      function showSlide(i) {
-        const sliderWidth = slider.clientWidth;
-        sliderInner.style.transform = `translateX(-${i * sliderWidth}px)`;
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      if (user?.email) {
+        const res = await fetch(`${window.location.origin}/api/is-premium`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+        isPremium = !!(await res.json()).isPremium;
       }
-
-      function nextSlide() {
-        index = (index + 1) % totalSlides;
-        showSlide(index);
-      }
-
-      function prevSlide() {
-        index = (index - 1 + totalSlides) % totalSlides;
-        showSlide(index);
-      }
-
-      let autoSlide = setInterval(nextSlide, 3000);
-
-      rightArrow.addEventListener("click", (e) => {
-        e.stopPropagation();
-        nextSlide();
-        resetAuto();
-      });
-
-      leftArrow.addEventListener("click", (e) => {
-        e.stopPropagation();
-        prevSlide();
-        resetAuto();
-      });
-
-      function resetAuto() {
-        clearInterval(autoSlide);
-        autoSlide = setInterval(nextSlide, 3000);
-      }
-
-      slider.addEventListener("click", () => {
-        window.location.href = "contenu-prive.html";
-      });
-
     } catch (err) {
-      console.error("❌ Erreur vérification premium :", err);
+      console.warn("⚠️ is-premium check failed, defaulting to non-premium:", err);
     }
-  });
 
+    const slideChars = ["hanae","naomi","chloe","lea","asha","alex","emilie","lila","candy","jasmine"];
 
+    const sliderSection = document.createElement("div");
+    sliderSection.className = "private-slider-section";
+    sliderSection.innerHTML = `
+      <div id="private-slider" class="private-slider">
+        <div class="slider-inner">
+          ${slideChars.map(c =>
+            `<img src="images/market/${c}-slider-prive${suffix}.webp" alt="${c}" loading="lazy" />`
+          ).join("\n          ")}
+        </div>
+        <button class="slider-arrow left-arrow">&#10094;</button>
+        <button class="slider-arrow right-arrow">&#10095;</button>
+      </div>
+    `;
 
-  </script>
+    header.insertAdjacentElement("afterend", sliderSection);
 
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
     const chatBoxEl = document.getElementById("chat-box");
-    const header = document.getElementById("cheaper-plan-dynamic-banner");
-    if (!header || !chatBoxEl) return;
-
-    const _fr = (navigator.language || "").startsWith("fr");
-    const _de = (navigator.language || "").startsWith("de");
-    const vcBanner = document.createElement("a");
-    vcBanner.href = "video-creator.html";
-    vcBanner.style.cssText = "display:flex;align-items:center;gap:12px;margin:12px auto 0;max-width:700px;padding:14px 18px;background:linear-gradient(135deg,rgba(244,114,182,0.12),rgba(168,85,247,0.12));border:1px solid rgba(244,114,182,0.25);border-radius:16px;text-decoration:none;color:#fff;transition:all 0.3s ease;";
-    vcBanner.innerHTML = `<span style="font-size:1.6rem;">🎬</span><span style="flex:1;"><span style="font-weight:700;font-size:0.9rem;">Video Creator</span><br><span style="font-size:0.75rem;color:#b0b0c3;">${_fr ? "Transforme une photo en vidéo IA" : _de ? "Verwandle ein Foto in ein KI-Video" : "Turn any photo into an AI video"}</span></span><span style="background:linear-gradient(90deg,#f472b6,#a855f7);font-size:0.55rem;padding:3px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;">NEW</span>`;
-    vcBanner.onmouseover = () => { vcBanner.style.background = "linear-gradient(135deg,rgba(244,114,182,0.2),rgba(168,85,247,0.2))"; };
-    vcBanner.onmouseout = () => { vcBanner.style.background = "linear-gradient(135deg,rgba(244,114,182,0.12),rgba(168,85,247,0.12))"; };
-
-    const existingSlider = document.querySelector(".private-slider-section");
-    if (existingSlider) {
-      existingSlider.insertAdjacentElement("afterend", vcBanner);
-    } else {
-      header.insertAdjacentElement("afterend", vcBanner);
+    if (chatBoxEl) {
+      const sliderObserver = new MutationObserver(() => {
+        if (chatBoxEl.style.display === "flex") {
+          sliderSection.classList.add("hidden-slider");
+        } else {
+          sliderSection.classList.remove("hidden-slider");
+        }
+      });
+      sliderObserver.observe(chatBoxEl, { attributes: true, attributeFilter: ['style'] });
     }
 
-    const vcBannerObs = new MutationObserver(() => {
-      vcBanner.style.display = (chatBoxEl.style.display === "flex") ? "none" : "flex";
+    const slider = sliderSection.querySelector("#private-slider");
+    const sliderInner = slider.querySelector(".slider-inner");
+    const slides = sliderInner.querySelectorAll("img");
+    const leftArrow = slider.querySelector(".left-arrow");
+    const rightArrow = slider.querySelector(".right-arrow");
+
+    let index = 0;
+    const totalSlides = slides.length;
+
+    function showSlide(i) {
+      const sliderWidth = slider.clientWidth;
+      sliderInner.style.transform = `translateX(-${i * sliderWidth}px)`;
+    }
+
+    function nextSlide() {
+      index = (index + 1) % totalSlides;
+      showSlide(index);
+    }
+
+    function prevSlide() {
+      index = (index - 1 + totalSlides) % totalSlides;
+      showSlide(index);
+    }
+
+    let autoSlide = setInterval(nextSlide, 3000);
+
+    rightArrow.addEventListener("click", (e) => {
+      e.stopPropagation();
+      nextSlide();
+      resetAuto();
     });
-    vcBannerObs.observe(chatBoxEl, { attributes: true, attributeFilter: ['style'] });
+
+    leftArrow.addEventListener("click", (e) => {
+      e.stopPropagation();
+      prevSlide();
+      resetAuto();
+    });
+
+    function resetAuto() {
+      clearInterval(autoSlide);
+      autoSlide = setInterval(nextSlide, 3000);
+    }
+
+    slider.addEventListener("click", () => {
+      window.location.href = isPremium ? "contenu-prive.html" : "premium.html";
+    });
   });
+
+
+
   </script>
+
+  <!-- Video Creator banner removed — replaced by the Insta-style Stories row
+       at the top of the home (#stories), populated by /api/stories. -->
 
 
 <script type="module" src="/scripts/popup-loader.js"></script>
@@ -713,7 +690,10 @@ setTimeout(() => {
   }
 
   const STORY_DURATION = 5000;
-  const STORY_CACHE_KEY = 'myaicrush_stories_v2';
+  // v3: API now scans every subfolder under public/images/<girl>/ (was <girl>1
+  // only, which returned 0 results since folders are named <girl>3/<girl>4/…).
+  // Bumping the version invalidates the empty cache from the previous build.
+  const STORY_CACHE_KEY = 'myaicrush_stories_v3';
   const STORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
   let storyGroups = [];
@@ -1153,6 +1133,251 @@ setTimeout(() => {
 
 <script type="module" src="/scripts/i18n-index.js"></script>
 <script type="module" src="/scripts/i18n-menu.js"></script>
+
+<!-- =====================================================================
+     Signup / signin popup (candy.ai-style, replaces redirect to profile.html
+     for signed-out visitors). Same backend endpoints (/api/signup, /api/login)
+     so localStorage 'user' is set exactly like the legacy flow.
+     ===================================================================== -->
+<div id="signup-popup" class="signup-popup-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="sp-title">
+  <div class="signup-popup">
+    <button type="button" class="signup-popup-close" id="sp-close" aria-label="Close">&times;</button>
+    <h2 id="sp-title" class="signup-popup-title"></h2>
+
+    <p id="sp-error" class="signup-error"></p>
+
+    <form id="sp-form" novalidate>
+      <div class="signup-field">
+        <i class="fa fa-envelope"></i>
+        <input type="email" id="sp-email" required autocomplete="email" />
+      </div>
+      <div class="signup-field">
+        <i class="fa fa-lock"></i>
+        <input type="password" id="sp-password" required autocomplete="current-password" minlength="6" />
+        <button type="button" class="signup-eye" id="sp-eye" aria-label="Toggle password visibility">
+          <i class="fa fa-eye"></i>
+        </button>
+      </div>
+      <p class="signup-hint" id="sp-hint"></p>
+      <button type="submit" class="signup-cta" id="sp-cta"></button>
+    </form>
+
+    <div class="signup-divider" id="sp-divider"></div>
+
+    <a href="/auth/google" class="signup-social" id="sp-google">
+      <img src="/images/google-logo.webp" alt="" />
+      <span id="sp-google-label">Google</span>
+    </a>
+
+    <p class="signup-terms" id="sp-terms"></p>
+    <div class="signup-footer" id="sp-footer"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const overlay = document.getElementById("signup-popup");
+  if (!overlay) return;
+
+  const $ = (id) => document.getElementById(id);
+  const closeBtn = $("sp-close");
+  const titleEl  = $("sp-title");
+  const form     = $("sp-form");
+  const emailEl  = $("sp-email");
+  const pwdEl    = $("sp-password");
+  const eyeBtn   = $("sp-eye");
+  const hintEl   = $("sp-hint");
+  const ctaBtn   = $("sp-cta");
+  const dividerEl= $("sp-divider");
+  const googleLbl= $("sp-google-label");
+  const termsEl  = $("sp-terms");
+  const footerEl = $("sp-footer");
+  const errorEl  = $("sp-error");
+
+  const navLang = (navigator.language || "en").toLowerCase();
+  const lang = navLang.startsWith("fr") ? "fr"
+             : navLang.startsWith("de") ? "de"
+             : "en";
+
+  const T = {
+    fr: {
+      titleSignup: "Créer un compte",
+      titleSignin: "Connexion",
+      emailPh: "E-mail",
+      pwdPh: "Mot de passe",
+      hint: "Minimum 6 caractères",
+      ctaSignup: "Créer un compte gratuit",
+      ctaSignin: "Se connecter",
+      divider: "ou continuer avec",
+      googleSignup: "S'inscrire avec Google",
+      googleSignin: "Continuer avec Google",
+      terms: 'En vous inscrivant, vous acceptez les <a href="/terms-and-conditions.html" target="_blank">Conditions d\'utilisation</a>',
+      toSignin: 'Vous avez déjà un compte ? <a href="#" data-toggle="signin">Se connecter</a>',
+      toSignup: 'Pas encore de compte ? <a href="#" data-toggle="signup">S\'inscrire</a>',
+      errGeneric: "Erreur. Merci de réessayer.",
+      errPwd: "Mot de passe trop court (6 caractères min).",
+      working: "Patientez…",
+    },
+    en: {
+      titleSignup: "Create an account",
+      titleSignin: "Sign in",
+      emailPh: "Email",
+      pwdPh: "Password",
+      hint: "Minimum 6 characters",
+      ctaSignup: "Create a free account",
+      ctaSignin: "Sign in",
+      divider: "or continue with",
+      googleSignup: "Sign up with Google",
+      googleSignin: "Continue with Google",
+      terms: 'By signing up, you agree to our <a href="/terms-and-conditions.html" target="_blank">Terms of Service</a>',
+      toSignin: 'Already have an account? <a href="#" data-toggle="signin">Sign in</a>',
+      toSignup: 'No account yet? <a href="#" data-toggle="signup">Sign up</a>',
+      errGeneric: "Something went wrong. Please try again.",
+      errPwd: "Password too short (6 characters minimum).",
+      working: "Please wait…",
+    },
+    de: {
+      titleSignup: "Konto erstellen",
+      titleSignin: "Anmelden",
+      emailPh: "E-Mail",
+      pwdPh: "Passwort",
+      hint: "Mindestens 6 Zeichen",
+      ctaSignup: "Kostenloses Konto erstellen",
+      ctaSignin: "Anmelden",
+      divider: "oder weiter mit",
+      googleSignup: "Mit Google registrieren",
+      googleSignin: "Mit Google fortfahren",
+      terms: 'Mit der Anmeldung akzeptierst du die <a href="/terms-and-conditions.html" target="_blank">Nutzungsbedingungen</a>',
+      toSignin: 'Hast du schon ein Konto? <a href="#" data-toggle="signin">Anmelden</a>',
+      toSignup: 'Noch kein Konto? <a href="#" data-toggle="signup">Registrieren</a>',
+      errGeneric: "Fehler. Bitte versuche es erneut.",
+      errPwd: "Passwort zu kurz (mindestens 6 Zeichen).",
+      working: "Bitte warten…",
+    },
+  };
+  const t = T[lang] || T.en;
+
+  let mode = "signup"; // 'signup' | 'signin'
+
+  function applyTexts() {
+    titleEl.textContent = mode === "signup" ? t.titleSignup : t.titleSignin;
+    emailEl.placeholder = t.emailPh;
+    pwdEl.placeholder = t.pwdPh;
+    pwdEl.autocomplete = mode === "signup" ? "new-password" : "current-password";
+    hintEl.textContent = mode === "signup" ? t.hint : "";
+    hintEl.style.display = mode === "signup" ? "block" : "none";
+    ctaBtn.textContent = mode === "signup" ? t.ctaSignup : t.ctaSignin;
+    dividerEl.textContent = t.divider;
+    googleLbl.textContent = mode === "signup" ? t.googleSignup : t.googleSignin;
+    termsEl.innerHTML = mode === "signup" ? t.terms : "";
+    termsEl.style.display = mode === "signup" ? "block" : "none";
+    footerEl.innerHTML = mode === "signup" ? t.toSignin : t.toSignup;
+    errorEl.textContent = "";
+    errorEl.classList.remove("is-visible");
+  }
+
+  function open(initialMode) {
+    mode = initialMode === "signin" ? "signin" : "signup";
+    applyTexts();
+    overlay.classList.remove("hidden");
+    setTimeout(() => emailEl.focus(), 50);
+  }
+
+  function close() {
+    overlay.classList.add("hidden");
+    form.reset();
+    pwdEl.type = "password";
+    eyeBtn.querySelector("i").className = "fa fa-eye";
+  }
+
+  closeBtn.addEventListener("click", close);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay.classList.contains("hidden")) close();
+  });
+
+  // Toggle mode via footer link
+  footerEl.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-toggle]");
+    if (!a) return;
+    e.preventDefault();
+    mode = a.getAttribute("data-toggle");
+    applyTexts();
+  });
+
+  // Show/hide password
+  eyeBtn.addEventListener("click", () => {
+    const hidden = pwdEl.type === "password";
+    pwdEl.type = hidden ? "text" : "password";
+    eyeBtn.querySelector("i").className = hidden ? "fa fa-eye-slash" : "fa fa-eye";
+  });
+
+  // Submit → /api/signup or /api/login (same backend as profile.html)
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl.textContent = "";
+    errorEl.classList.remove("is-visible");
+
+    const email = emailEl.value.trim();
+    const password = pwdEl.value;
+    if (!email || !password) return;
+    if (mode === "signup" && password.length < 6) {
+      errorEl.textContent = t.errPwd;
+      errorEl.classList.add("is-visible");
+      return;
+    }
+
+    ctaBtn.disabled = true;
+    const original = ctaBtn.textContent;
+    ctaBtn.textContent = t.working;
+
+    try {
+      const url = mode === "signup" ? "/api/signup" : "/api/login";
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const userObj = data.user || { email };
+        localStorage.setItem("user", JSON.stringify(userObj));
+        close();
+        window.location.reload();
+        return;
+      }
+      const err = await res.json().catch(() => ({}));
+      errorEl.textContent = err.message || t.errGeneric;
+      errorEl.classList.add("is-visible");
+    } catch (err) {
+      console.error("[signup popup] submit failed:", err);
+      errorEl.textContent = t.errGeneric;
+      errorEl.classList.add("is-visible");
+    } finally {
+      ctaBtn.disabled = false;
+      ctaBtn.textContent = original;
+    }
+  });
+
+  // Expose API
+  window.openSignupPopup = open;
+  window.closeSignupPopup = close;
+
+  // Intercept clicks on any link to profile.html — open the popup if the
+  // visitor is signed-out. Logged-in users still fall through to the
+  // profile dashboard (profile.html keeps serving their account view).
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href$="profile.html"], a[href*="/profile.html"]');
+    if (!a) return;
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem("user") || "null"); } catch (_) {}
+    if (user && user.email) return; // logged in → keep default behavior
+    e.preventDefault();
+    open("signup");
+  });
+})();
+</script>
 
     </body>
     </html>

@@ -36,36 +36,20 @@ if (user?.email && bannerContainer) {
 
   const banner = document.createElement("a");
   banner.href = "#"; // on gère le clic nous-mêmes
-  if (isPremium) {
-    // Existing tokens upsell image for premium members.
-    banner.className = "menu-banner";
-    banner.innerHTML = `
-      <img
-        src="images/banners/menu-premium.webp"
-        alt="Menu Banner"
-        class="menu-banner-image">
-    `;
-  } else {
-    // HTML banner advertising the -83% annual discount (was a static image of -50%).
-    banner.className = "menu-banner menu-banner--promo";
-    const _bLang = (navigator.language || "en").substring(0, 2).toLowerCase();
-    const _bCopy = {
-      en: { eyebrow: "Premium", title: "Annual access · $59/year" },
-      fr: { eyebrow: "Premium", title: "Accès annuel · 59 $/an" },
-      de: { eyebrow: "Premium", title: "Jahreszugang · 59 $/Jahr" },
-      es: { eyebrow: "Premium", title: "Acceso anual · 59 $/año" },
-      pt: { eyebrow: "Premium", title: "Acesso anual · 59 $/ano" }
-    };
-    const _bc = _bCopy[_bLang] || _bCopy.en;
-    banner.innerHTML = `
-      <span class="menu-banner-promo__discount">−83%</span>
-      <span class="menu-banner-promo__body">
-        <span class="menu-banner-promo__eyebrow">${_bc.eyebrow}</span>
-        <span class="menu-banner-promo__title">${_bc.title}</span>
-      </span>
-      <span class="menu-banner-promo__arrow">→</span>
-    `;
-  }
+  banner.className = "menu-banner";
+  // Locale-aware menu banner. Two distinct image variants:
+  //   - menu-premium.webp / menu-premium-fr.webp  -> shown to premium users (tokens upsell)
+  //   - menu-standard.webp / menu-standard-fr.webp -> shown to free users (premium upsell)
+  const _bFr = (navigator.language || "").toLowerCase().startsWith("fr");
+  const menuBannerSrc = isPremium
+    ? (_bFr ? "images/banners/menu-premium-fr.webp" : "images/banners/menu-premium.webp")
+    : (_bFr ? "images/banners/menu-standard-fr.webp" : "images/banners/menu-standard.webp");
+  banner.innerHTML = `
+    <img
+      src="${menuBannerSrc}"
+      alt="Menu Banner"
+      class="menu-banner-image">
+  `;
   bannerContainer.appendChild(banner);
 
   // ✅ Gère le clic sur la bannière

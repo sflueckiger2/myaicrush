@@ -2082,10 +2082,10 @@ app.get('/auth/google/callback', async (req, res) => {
       const detectedLang = (req.headers["accept-language"] || "en").split(",")[0].split("-")[0].toLowerCase();
       await usersCollection.updateOne({ email: userEmail }, { $set: { lang: detectedLang, lastLogin: new Date() } });
 
-      // Tu peux garder une logique différente pour new/existing si tu veux, là c'est la même :
-      const redirectUrl = isNewUser 
-        ? `${BASE_URL}/index.html` 
-        : `${BASE_URL}/index.html`;
+      // Redirect to the SAME origin the OAuth callback came in on (so a
+      // localhost dev login stays on localhost, prod stays on myaicrush.ai).
+      // Relative path = no env-dependent BASE_URL hardcoding needed.
+      const redirectUrl = '/index.html';
 
       // Réponse HTML avec un script pour stocker l'utilisateur dans localStorage et rediriger
       res.send(`
@@ -2127,39 +2127,69 @@ app.get('/characters.json', (req, res) => {
   }
 });
 
+// GET /api/stories
+// Returns Insta-style story groups (one per visible character) with 1-3
+// random media each. Strictly limited to the public/images/<girl>/<girl>3/
+// folder — `<girl>4` (undressed) and themed folders (douche-amateur,
+// nour-gaterie-bain, salle-de-bain, etc.) are NEVER picked from.
+//
+// Randomness is seeded with the current day + character name, so each
+// visitor sees the same selection during a given day (cache-friendly) but a
+// fresh one every 24h.
 app.get('/api/stories', async (req, res) => {
   const fsP = require('fs').promises;
   const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
+  const imageExts = /\.(webp|jpg|jpeg|png|gif)$/i;
   const daysSinceEpoch = Math.floor(Date.now() / 86400000);
 
   const groups = [];
 
   for (const char of charactersEN) {
     if (char.hidden === true) continue;
+
     const photoPath = char.photo || '';
     const match = photoPath.match(/images\/([^/]+)\//);
     if (!match) continue;
     const girl = match[1];
-    const folder = `images/${girl}/${girl}1`;
-    const absDir = path.join(__dirname, 'public', folder);
 
+    // STRICT: only <girl>3 folder. Skip everything else (girl4 = undressed,
+    // themed folders may contain risqué content).
+    const sub = `${girl}3`;
+    const subAbs = path.join(__dirname, 'public', 'images', girl, sub);
+
+    let allMedia = [];
     try {
-      const files = await fsP.readdir(absDir);
-      const all = files.filter(f => mediaExts.test(f)).map(f => `${folder}/${f}`);
-      if (!all.length) continue;
-
-      let s = daysSinceEpoch ^ (girl.length * 2654435761);
-      const shuffled = [...all].sort(() => { s = (s * 9301 + 49297) % 233280; return s / 233280 - 0.5; });
-      const media = shuffled.slice(0, Math.min(shuffled.length, 2));
-
-      const bgPhoto = char.backgroundPhoto || '';
-      let avatar = bgPhoto || photoPath;
-      if (/\.(mp4|webm|mov)$/i.test(avatar)) {
-        avatar = all.find(f => !/\.(mp4|webm|mov)$/i.test(f)) || media[0];
+      const files = await fsP.readdir(subAbs);
+      for (const f of files) {
+        if (mediaExts.test(f)) {
+          allMedia.push(`images/${girl}/${sub}/${f}`);
+        }
       }
+    } catch (_) {
+      continue; // <girl>3 folder doesn't exist for this character
+    }
 
-      groups.push({ name: char.name, avatar, media });
-    } catch (_) {}
+    if (!allMedia.length) continue;
+
+    // Deterministic daily shuffle (Mulberry32-ish from day+girl).
+    let s = (daysSinceEpoch ^ (girl.length * 2654435761)) >>> 0;
+    const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    const shuffled = [...allMedia].sort(() => rand() - 0.5);
+
+    // 1, 2 or 3 media — random each day but stable for the day.
+    const count = 1 + Math.floor(rand() * 3);
+    const media = shuffled.slice(0, Math.min(shuffled.length, count));
+
+    // Avatar: prefer backgroundPhoto if it's a still image, else the first
+    // still image among collected media, else fall back to the original
+    // photoPath.
+    const bgPhoto = char.backgroundPhoto || '';
+    let avatar = bgPhoto;
+    if (!avatar || !imageExts.test(avatar)) {
+      avatar = allMedia.find(m => imageExts.test(m)) || photoPath;
+    }
+
+    groups.push({ name: char.name, avatar, media });
   }
 
   res.json({ groups });

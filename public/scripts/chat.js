@@ -861,6 +861,10 @@ function initVoiceToText() {
   micBtn.addEventListener('click', () => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user || !user.email) {
+      if (typeof window.openSignupPopup === 'function') {
+        window.openSignupPopup('signup');
+        return;
+      }
       window.location.href = 'profile.html';
       return;
     }
@@ -1035,6 +1039,10 @@ window.addEventListener('focusout', applyKeyboardInsets);
  
   export async function startChat(characterName) {
     if (!isUserLoggedIn()) {
+        if (typeof window.openSignupPopup === 'function') {
+          window.openSignupPopup('signup');
+          return;
+        }
         window.location.href = 'profile.html';
         return;
     }
@@ -1645,6 +1653,10 @@ async function speakMessage(text, btn) {
 
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user || !user.email) {
+        if (typeof window.openSignupPopup === "function") {
+          window.openSignupPopup("signup");
+          return;
+        }
         window.location.href = "profile.html";
         return;
     }

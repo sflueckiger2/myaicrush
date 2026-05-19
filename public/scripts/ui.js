@@ -128,11 +128,21 @@ media.style.objectFit = 'cover';
 
        // ✅ Insérer la première bannière après la 2e IA
 if (chatOptions.children.length === 2) {
+    // Locale-aware banner asset. Note the asset naming is inconsistent in
+    // public/images/banners/:
+    //   banner1.webp        / banner1-fr.webp
+    //   banner1-premium.webp / banner1-premium.fr.webp  (uses `.fr.` !)
+    //   banner2.webp        / banner2-fr.webp
+    //   banner2-premium.webp / banner2-premium-fr.webp  (uses `-fr.`)
+    const _fr1 = (navigator.language || "").toLowerCase().startsWith("fr");
+    const banner1Src = isPremium
+        ? (_fr1 ? 'images/banners/banner1-premium.fr.webp' : 'images/banners/banner1-premium.webp')
+        : (_fr1 ? 'images/banners/banner1-fr.webp'         : 'images/banners/banner1.webp');
     const banner1 = document.createElement("div");
 banner1.className = "horizontal-banner";
 banner1.innerHTML = `
   <a href="#" class="banner-link">
-    <img src="images/banners/${isPremium ? 'banner1-premium' : 'banner1'}.webp" alt="Bannière 1" class="banner-image">
+    <img src="${banner1Src}" alt="Bannière 1" class="banner-image">
   </a>
 `;
 chatOptions.appendChild(banner1);
@@ -171,11 +181,15 @@ banner1.querySelector('.banner-link').addEventListener("click", async (e) => {
 
 // ✅ Insérer la deuxième bannière après la 6e IA
 if (chatOptions.children.length === 7) {
+    const _fr2 = (navigator.language || "").toLowerCase().startsWith("fr");
+    const banner2Src = isPremium
+        ? (_fr2 ? 'images/banners/banner2-premium-fr.webp' : 'images/banners/banner2-premium.webp')
+        : (_fr2 ? 'images/banners/banner2-fr.webp'         : 'images/banners/banner2.webp');
     const banner2 = document.createElement("div");
 banner2.className = "horizontal-banner";
 banner2.innerHTML = `
   <a href="#" class="banner-link">
-    <img src="images/banners/${isPremium ? 'banner2-premium' : 'banner2'}.webp" alt="Bannière 2" class="banner-image">
+    <img src="${banner2Src}" alt="Bannière 2" class="banner-image">
   </a>
 `;
 chatOptions.appendChild(banner2);
