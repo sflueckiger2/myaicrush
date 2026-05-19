@@ -311,6 +311,7 @@
     .disclaimer-content.open { max-height: 2000px; padding-bottom: 20px; }
     .disclaimer-content p { margin-bottom: 10px; }
   </style>
+  <script src="/scripts/fb-tracking.js" defer></script>
 </head>
 <body>
 
@@ -512,8 +513,10 @@
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
     if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 124.5; }
-    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
-    console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
+    // Purchase fired server-side via /webhook/explodely (sendFacebookPurchaseCAPI in app.js).
+    // Browser-side track disabled to avoid double counting.
+    // fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
+    console.log('[FB Purchase] handled server-side via /webhook/explodely → CAPI', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
 
   <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->

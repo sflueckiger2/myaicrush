@@ -301,6 +301,7 @@
     .disclaimer-content.open { max-height: 2000px; padding-bottom: 20px; }
     .disclaimer-content p { margin-bottom: 10px; }
   </style>
+  <script src="/scripts/fb-tracking.js" defer></script>
 </head>
 <body>
 
@@ -493,8 +494,15 @@
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
     if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 59; }
-    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
-    console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
+    // Purchase events are now fired server-side from the Explodely webhook
+    // (see sendFacebookPurchaseCAPI in app.js) using the Explodely orderId
+    // as event_id. The browser-side track is intentionally disabled to
+    // avoid double-counting: with the server-side CAPI active, firing here
+    // would generate a duplicate event whose event_id (timestamp-based
+    // fallback) wouldn't match the CAPI event_id (orderId), so FB would
+    // count it as a second conversion.
+    // fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
+    console.log('[FB Purchase] handled server-side via /webhook/explodely → CAPI', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
 
   <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->
