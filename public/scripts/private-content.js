@@ -15,7 +15,7 @@ function openJetonsPopup() {
 
 async function loadCharacters() {
   try {
-    const response = await fetch('/characters.json');
+    const response = await fetch(`/characters.json?t=${Date.now()}`);
     const characters = await response.json();
     renderPrivateContents(characters);
   } catch (error) {

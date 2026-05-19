@@ -7,7 +7,7 @@ let characters = []; // Stocker les personnages chargés
 
 // Charger les données des personnages depuis characters.json
 function loadCharacters() {
-  fetch('/characters.json')
+  fetch(`/characters.json?t=${Date.now()}`)
     .then(response => {
       if (!response.ok) {
         throw new Error(`Erreur HTTP : ${response.status}`);

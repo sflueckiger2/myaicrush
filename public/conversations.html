@@ -92,7 +92,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: user.email })
           }),
-          fetch("/characters.json")
+          fetch(`/characters.json?t=${Date.now()}`)
         ]);
 
         const { conversations } = await convRes.json();

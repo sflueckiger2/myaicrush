@@ -375,11 +375,19 @@ app.use('/images', express.static(path.join(__dirname, 'public/images'), {
 
 
 // 2) Static global (pour le reste du site)
+// Cache policy per asset class:
+//  - JSON: no-store (data must be fresh on every fetch — characters.json etc.)
+//  - HTML: no-cache (browser must revalidate via etag on every visit so a fresh
+//          deploy is picked up immediately, avoiding the "I still see old
+//          characters on my phone" cache trap)
+//  - JS/CSS/images: default (Express handles etag → fast but auto-busts on file change)
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
-    // uniquement pour les JSON : pas de cache
     if (filePath.endsWith('.json')) {
       res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Pragma', 'no-cache');
+    } else if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
     }
   }
