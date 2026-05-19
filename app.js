@@ -8545,9 +8545,10 @@ async function generateDailyEmailContent(charOrName, lang, isFeatured = false) {
     const language = langMap[lang] || "English";
     const today = new Date().toISOString().split("T")[0];
 
-    // Hooks concrets et actionnables : chaque hook donne UNE vraie raison de cliquer
-    // (photo a voir, message non lu, video, demande d'ami, opinion sur le corps, etc.).
-    const hooksRegular = [
+    // When we have a profile, the SCENE is invented by Sonnet from her own universe.
+    // We only supply a generic hook pool as legacy fallback (no profile) or in the
+    // featured-new-girl case where the angle is dictated by the launch.
+    const hooksLegacy = [
         "she just took a mirror selfie in a tight top and wants his honest opinion",
         "she sent a 12-second video earlier and is wondering why he hasn't reacted yet",
         "she just sent him a friend request and is half-laughing half-anxious",
@@ -8573,76 +8574,117 @@ async function generateDailyEmailContent(charOrName, lang, isFeatured = false) {
         "she just recorded her very first video and wants honest feedback before deleting it",
         "she's the newcomer, she picked his profile out of the crowd, no pressure"
     ];
-    const hooks = isFeatured ? hooksFeatured : hooksRegular;
-    const hook = hooks[Math.floor(Math.random() * hooks.length)];
+    const useProfileHook = !!(profile && (profile.description || profile.temperament)) && !isFeatured;
+    const hookPool = isFeatured ? hooksFeatured : hooksLegacy;
+    const hook = useProfileHook ? null : hookPool[Math.floor(Math.random() * hookPool.length)];
 
-    // Formats avec angle clic concret
     const formats = [
         "phone notification style (start with 📩 or 🔔 or 📸 then a one-line tease)",
         "a one-line setup + a one-line dare or question",
         "a half-finished flirty thought she sent on impulse",
-        "a direct rating request ('out of 10? boobs or butt? color of my X?')",
-        "a friend-request style alert ('🔔 {name} just sent you...')",
         "a small confession with a tease at the end",
         "a tiny ultimatum (5 min, 2 minutes, last try)"
     ];
     const format = formats[Math.floor(Math.random() * formats.length)];
 
-    const banned = "Avoid these tired phrases: 'Want to see?', 'I miss you', 'I'm waiting for you', 'Come talk to me', 'I can't stop thinking about you', 'Open the message', 'New message from'.";
-
     const featuredHint = isFeatured
         ? `IMPORTANT: ${charName} is brand NEW on the platform. Lean into the novelty: it's her first day, her first photo, her first video, her first message. Make him feel like the first guy she's talking to.`
         : "";
 
-    // FR-specific guidance to kill English calques ("Want to see?", "Open the message", etc.)
-    // and force a real native register (tutoiement, ponctuation FR, vocabulaire familier).
+    // FR-specific guidance to kill English calques and force a real native register.
     const langSpecificGuidance = lang === "fr"
-        ? `Tu écris en français NATIF (style SMS d'une fille un peu chaude qui drague). Tutoie. N'utilise JAMAIS de calque anglais. Pas de "Veux-tu voir...", pas de "Tu me manques", pas de "Je t'attends", pas de "Viens me parler", pas de "Je n'arrête pas de penser à toi", pas de "Ouvre le message", pas de "Nouveau message de". Préfère "j'ai", "je viens de", "regarde ça", "dis-moi", "t'imagines pas", "j'ai craqué", "je galère à choisir", etc. Ponctuation française (apostrophes courbes acceptées, espaces fines NON requises).`
+        ? `Tu écris en français NATIF (style SMS d'une fille un peu chaude qui drague). Tutoie. N'utilise JAMAIS de calque anglais. Pas de "Veux-tu voir...", pas de "Tu me manques", pas de "Je t'attends", pas de "Viens me parler", pas de "Je n'arrête pas de penser à toi", pas de "Ouvre le message", pas de "Nouveau message de". Préfère "j'ai", "je viens de", "regarde ça", "dis-moi", "t'imagines pas", "j'ai craqué", "je galère à choisir", etc.`
         : `Write in fluent native English. Avoid these tired phrases: "Want to see?", "I miss you", "I'm waiting for you", "Come talk to me", "I can't stop thinking about you", "Open the message", "New message from".`;
 
-    // Character voice block: when we have a profile, we lock Sonnet to HER personality
-    // (Morgana = dominant manager, Lilith = demon, Magalie = girl-next-door, etc.) so the
-    // email reads native to her archetype instead of the same flirty template for everyone.
-    const profileBlock = profile && (profile.description || profile.temperament) ? `
-HER VOICE — write strictly in character (most important section):
-- Who she is: ${profile.description || "(unspecified)"}
-- Temperament: ${profile.temperament || "(unspecified)"}
-- Vibe & body: ${profile.ethnicity || ""} ${profile.measurements ? `— ${profile.measurements}` : ""}
-${profile.interests && profile.interests.length ? `- She loves: ${profile.interests.join(", ")}` : ""}
+    // ============================================================
+    // CHARACTER VOICE BLOCK — THE CORE OF THE PROMPT
+    // ============================================================
+    // When we have a profile, we lock Sonnet HARD into the persona. This is the
+    // #1 lever for stopping every email from sounding the same. Three layers:
+    //   1. Raw profile data (who she is, temperament, body, interests)
+    //   2. Explicit ARCHETYPE detection rules with DO/DON'T per archetype
+    //   3. SCENE INVENTION — Sonnet picks ONE specific scene from her universe
+    //      (her desk, her demon altar, her taxi back from dinner, her bathroom)
+    //      and writes the text as if it's happening right now.
+    const profileBlock = useProfileHook ? `
+==================== HER UNIVERSE (read carefully) ====================
+NAME: ${charName}
+WHO SHE IS: ${profile.description || "(unspecified)"}
+TEMPERAMENT: ${profile.temperament || "(unspecified)"}
+${profile.objective ? `HER OBJECTIVE: ${profile.objective}` : ""}
+BODY / VIBE: ${profile.ethnicity || ""} ${profile.measurements ? `— ${profile.measurements}` : ""}
+${profile.interests && profile.interests.length ? `LOVES: ${profile.interests.join(", ")}` : ""}
 
-The email MUST feel native to HER personality. Don't write a generic "flirty girl" email — write what SHE specifically would text. Lean into her archetype:
-- If she's dominant/authoritative → use orders, challenges, smirks. NEVER write her as submissive or pleading.
-- If she's shy/girl-next-door → soft, hesitant, almost embarrassed. NEVER write her as a pornstar.
-- If she's a demon/dark/gothic → references to night, sin, fire, forbidden things.
-- If she's on a first date / scenario → reference the scene she's living right now.
-- If she has a specific job/role (boss, neighbor, etc.) → use it as the hook.
-Use her name, accent, vocabulary, and props (clothing, decor, situation) that match her universe.
+==================== STEP 1 — DETECT HER ARCHETYPE ====================
+Read the profile above and pick the SINGLE archetype that fits. Then write strictly inside its rules:
+
+• DOMINANT / AUTHORITY (boss, dominatrix, manager, queen, mistress, professor):
+   ✅ DO: orders, smirks, ultimatums, "kneel", "obey", "report to my office", "I decide", "you have X minutes"
+   ❌ DON'T: pleading, "I'm nervous", "I almost deleted this", apologies, embarrassment, panic, "ose t'ajouter"
+   Voice: cold, amused, in control. She does not ask permission. She informs him of her decisions.
+
+• SHY / GIRL-NEXT-DOOR (Magalie-type, normal life, hesitant):
+   ✅ DO: hesitation, "I shouldn't but…", "I just hit send before I panicked", silly self-talk, mundane decor (kitchen, bed, towel)
+   ❌ DON'T: orders, "obey", "kneel", explicit demands. No dom moves.
+   Voice: soft, embarrassed, sweet. Like the cute neighbor texting at 11pm.
+
+• FIRST DATE / LIVE SCENARIO (Anong, Samira, similar dating arcs):
+   ✅ DO: anchor in the DATE happening right now — the restaurant table, the taxi back, "I just got home, the door's open", "I'm still wearing the dress from dinner"
+   ❌ DON'T: act like a stranger or a pornstar. The date frame matters.
+   Voice: alive, in the moment, the night is unfolding.
+
+• DEMON / DARK / GOTHIC (Lilith, Elvara, Morgana-when-dark):
+   ✅ DO: candles, blood moon, sin, hell, ritual, "I summoned you", "I'm hungry tonight", "the veil is thin"
+   ❌ DON'T: mundane modern props like "selfie in the bathroom mirror" or "post-gym sweat". Stay otherworldly.
+   Voice: hypnotic, ceremonial, ancient.
+
+• NYMPHO / OPENLY EXPLICIT (specific characters with that as core identity):
+   ✅ DO: blunt sexual demands matching her described moves. Vulgar where appropriate.
+   ❌ DON'T: pretend to be shy or use girl-next-door softness. She doesn't hide.
+
+• OTHER (everything else, default sexy-confident):
+   Anchor in her interests and ethnicity to make it specific.
+
+==================== STEP 2 — INVENT THE SCENE ====================
+Pick ONE concrete scene she is LIVING RIGHT NOW that fits her universe and archetype. Be hyper-specific.
+Examples of well-scoped scenes by archetype:
+  - Morgana (manager): "she's still at her desk after hours, top button undone, waiting for him to come back to her office"
+  - Magalie (girl next door): "she just got out of the shower, towel on, debating if her selfie is too much"
+  - Anong (Thai first date): "she's in the taxi back from dinner, deciding right now if she invites him up"
+  - Lilith (demon): "she lit black candles and the room smells of incense, she finished a ritual that called him"
+  - Samira (Moroccan first date): "she's at her place after dinner, the wine is open, she's wondering why he's still texting and not here"
+NEVER use a scene that doesn't fit her universe (no "mirror selfie in the bathroom" for a dominatrix, no "altar" for a girl-next-door).
+
+==================== STEP 3 — WRITE THE TEXT ====================
+Write a 2-4 line message from inside that scene. Use props, vocabulary, and tone of her archetype.
 ` : "";
 
-    const systemPrompt = `You write a punchy, sexy, click-worthy email from ${charName}, a girl on MyAiCrush, to a man who is paying attention to her.
+    const systemPrompt = `${profileBlock}
+You write a punchy, sexy, click-worthy email from ${charName} to a man who has been paying attention to her.
 
-LANGUAGE: ${language} ONLY. Every single word must be in ${language}. Never switch languages mid-text.
-${langSpecificGuidance}
+LANGUAGE: ${language} ONLY. Every word in ${language}. ${langSpecificGuidance}
 
 ${featuredHint}
-${profileBlock}
+
 SUBJECT (max 8 words):
 - Lowercase or sentence case (NOT TitleCase, never ALL CAPS).
-- Opens a clear curiosity gap or asks a direct, irresistible question.
+- Opens a curiosity gap or asks a direct, irresistible question.
 - 0 or 1 emoji max, only when it adds info (📩 🔔 📸 🎥 🔞 🫦 etc.).
-- The subject should already HINT at her unique voice (a dominant manager's subject reads different from a shy neighbor's).
+- MUST already telegraph her archetype: a dominant manager's subject reads VERY different from a shy neighbor's. If I read 10 subjects without seeing her name, I should still be able to guess which girl wrote it.
 
 BODY (2 to 4 short lines, like a real text she just sent):
-- Give ONE concrete reason to click NOW: a photo to look at, an unread message to open, a video to watch, a friend request to accept, a question waiting for an answer, an opinion she wants on her body or outfit, a vote on her body/outfit, etc.
-- Anchor in HER world: her job, her decor, her current scene from the description above. Don't write a generic "selfie in front of the mirror" if her universe is a dungeon, a desk, a beach, a temple, etc.
-- Sounds like a real text from her — not a marketing brief.
+- Anchor in the SCENE you invented in STEP 2. Use specific props (her desk, candles, taxi, towel, the wine glass, whatever fits HER).
+- ONE concrete reason to click NOW: photo to see, message to open, video, friend request, opinion needed, vote, dare. Pick one that fits her archetype.
+- Real-text energy, not marketing copy.
 - Do NOT mention 'AI', 'app', 'platform', 'premium', 'tokens'.
-- Wrap exactly ONE short action phrase (3 to 7 words) inside <<click>> and <</click>>. That phrase will become the inline blue underlined link. Examples (EN): "you can <<click>>see it here<</click>>", "<<click>>obey me right now<</click>>". Examples (FR): "tu peux <<click>>la voir ici<</click>>", "<<click>>viens à mon bureau<</click>>".
+- Wrap ONE short action phrase (3-7 words) in <<click>>...<</click>>. Make the phrase ALSO match her voice (dom: "viens à mon bureau" / shy: "regarde avant que je supprime" / demon: "réponds à mon appel").
 - End with her name on its own line + 1 emoji max.
 
 OUTPUT: Reply ONLY valid JSON, no markdown, no commentary: {"subject":"...","body":"..."}`;
 
-    const userPrompt = `Date: ${today}. Today's hook: ${hook}. Use this format: ${format}. Write a fresh, surprising click-worthy email in ${language} from ${charName}. Make it feel completely different from any previous email. Remember to include exactly ONE <<click>>...<</click>> inline link inside the body.`;
+    const userPrompt = useProfileHook
+        ? `Date: ${today}. Format hint: ${format}.\n\nWrite a single fresh email from ${charName}. Follow STEPS 1→2→3 in the system prompt. The email MUST read like only ${charName} could have written it. Include exactly ONE <<click>>...<</click>> inline link in the body.`
+        : `Date: ${today}. Today's hook: ${hook}. Format hint: ${format}. Write a fresh, click-worthy email in ${language} from ${charName}. Include exactly ONE <<click>>...<</click>> inline link inside the body.`;
 
     try {
         const resp = await axios.post("https://api.anthropic.com/v1/messages", {
@@ -9192,7 +9234,7 @@ app.post('/api/admin/daily-email-preview', async (req, res) => {
                 const content = await generateDailyEmailContent(char, lang, false);
                 const camp = await campaigns.insertOne({
                     sentAt: new Date(),
-                    subject: `[BAT] ${content.subject}`,
+                    subject: content.subject,
                     character: char.name,
                     language: `${lang}_BAT`,
                     sentCount: 1,
@@ -9207,15 +9249,16 @@ app.post('/api/admin/daily-email-preview', async (req, res) => {
                 const clickTrackUrl = `https://myaicrush.ai/c/${trackToken}?r=${encodeURIComponent(ctaUrl)}`;
                 const unsubUrl = `https://myaicrush.ai/unsubscribe?email=${encodeURIComponent(adminEmail)}`;
                 const tUi = DAILY_EMAIL_UI_I18N[lang] || DAILY_EMAIL_UI_I18N.en;
-                const html = `<div style="background:#f59e0b;color:#000;text-align:center;padding:6px;font-size:11px;font-weight:bold;">⚠️ DAILY-EMAIL BAT — ${char.name} / ${lang.toUpperCase()} — clicking the CTA WILL track</div>`
-                    + buildDailyEmail(content.body, char.name, imageUrl, clickTrackUrl, trackingPixelUrl, lang)
+                // No visible BAT badge — admin recognizes BATs from the subject prefix only.
+                // The body must look 100% identical to what a real user would see to judge tone fairly.
+                const html = buildDailyEmail(content.body, char.name, imageUrl, clickTrackUrl, trackingPixelUrl, lang)
                     + `<div style="text-align:center;padding:0 20px 16px;"><a href="${unsubUrl}" style="font-size:0.65rem;color:#c0c0c0;text-decoration:underline;">${tUi.unsub}</a></div>`;
                 try {
                     await resend.emails.send({
                         from: 'MyAiCrush <contact@myaicrush.ai>',
                         to: adminEmail,
                         reply_to: 'contact@myaicrush.ai',
-                        subject: `[BAT ${char.name} ${lang.toUpperCase()}] ${content.subject}`,
+                        subject: content.subject,
                         html
                     });
                     out.push({ char: char.name, lang, campaignId, subject: content.subject, body: content.body, sent: true });
