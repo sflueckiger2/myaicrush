@@ -26,13 +26,54 @@
       min-height: 100vh;
       line-height: 1.5;
     }
-    .app { max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
+    .app { max-width: 1200px; margin: 0 auto; padding: 40px 20px 80px; }
     .app.hidden { display: none; }
     h1 { text-align: center; font-size: 1.6rem; margin-bottom: 4px; }
-    .subtitle { text-align: center; color: var(--dim); font-size: 0.82rem; margin-bottom: 30px; }
-    .nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+    .subtitle { text-align: center; color: var(--dim); font-size: 0.82rem; margin-bottom: 16px; }
+    .nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
     .nav a { color: var(--dim); text-decoration: none; font-size: 0.82rem; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); transition: all .2s; }
     .nav a:hover, .nav a.active { color: var(--accent2); border-color: var(--accent2); }
+    /* Tab switcher */
+    .tabs { display: flex; gap: 8px; justify-content: center; margin: 12px 0 24px; flex-wrap: wrap; }
+    .tab-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 8px 20px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+    .tab-btn:hover { color: var(--text); border-color: var(--accent2); }
+    .tab-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-color: transparent; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    /* KPI hero card with d1/d7/d30 trio */
+    .kpi-hero { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; }
+    .kpi-hero .icon { font-size: 1.2rem; margin-bottom: 4px; }
+    .kpi-hero .name { font-size: 0.72rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+    .kpi-trio { display: flex; gap: 14px; justify-content: center; }
+    .kpi-trio .mini { text-align: center; flex: 1; }
+    .kpi-trio .mini .v { font-size: 1.15rem; font-weight: 700; color: var(--accent2); }
+    .kpi-trio .mini .l { font-size: 0.62rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .kpi-trio .mini.green .v { color: var(--green); }
+    .kpi-trio .mini.blue .v { color: var(--blue); }
+    /* Funnel */
+    .funnel { display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+    .funnel-step { background: rgba(124,58,237,0.08); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; transition: all .2s; }
+    .funnel-step:hover { background: rgba(124,58,237,0.15); }
+    .funnel-step .step-name { font-size: 0.92rem; font-weight: 500; }
+    .funnel-step .step-bar { flex: 1; margin: 0 16px; height: 8px; background: rgba(124,58,237,0.1); border-radius: 999px; overflow: hidden; }
+    .funnel-step .step-bar-inner { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 999px; }
+    .funnel-step .step-value { font-weight: 700; font-size: 1.05rem; color: var(--accent2); min-width: 60px; text-align: right; }
+    .funnel-step .step-pct { font-size: 0.75rem; color: var(--dim); margin-left: 8px; min-width: 50px; text-align: right; }
+    /* Cohort table */
+    .cohort-cell { display: inline-block; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; min-width: 48px; text-align: center; }
+    .cohort-cell.incomplete { opacity: 0.35; font-style: italic; }
+    /* Two-column layout */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 740px) { .two-col { grid-template-columns: 1fr; } }
+    /* Chart container */
+    .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+    .chart-wrap h3 { font-size: 0.95rem; color: var(--text); margin-bottom: 12px; }
+    .chart-wrap canvas { max-height: 280px; }
+    /* Pill badges for status */
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .pill.green { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+    .pill.yellow { background: rgba(251,191,36,0.15); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+    .pill.dim { background: rgba(255,255,255,0.05); color: var(--dim); }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
     .stat-card {
       background: var(--card);
@@ -75,6 +116,7 @@
     .badge-stored { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
     .badge-reconstructed { background: rgba(251,191,36,0.15); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -88,14 +130,25 @@
 
 <div class="app hidden" id="app">
   <h1>MyAiCrush Dashboard</h1>
-  <p class="subtitle">Email & user metrics</p>
+  <p class="subtitle">Growth & email metrics</p>
   <div class="nav">
     <a href="admin-tickets.html">Tickets</a>
     <a href="admin-email.html">Daily Email</a>
     <a href="admin-dashboard.html" class="active">Dashboard</a>
   </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="growth">📈 Growth</button>
+    <button class="tab-btn" data-tab="email">📬 Email</button>
+  </div>
   <div class="refresh-info" id="refresh-info"></div>
-  <div id="content"><div class="loading">Loading stats...</div></div>
+
+  <div class="tab-panel active" id="tab-growth">
+    <div id="growth-content"><div class="loading">Loading growth stats…</div></div>
+  </div>
+
+  <div class="tab-panel" id="tab-email">
+    <div id="email-content"><div class="loading">Loading email stats…</div></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="sales-modal">
@@ -116,36 +169,82 @@
   const loginOverlay = document.getElementById("login-overlay");
   const appDiv = document.getElementById("app");
   const loginErr = document.getElementById("login-err");
-  const content = document.getElementById("content");
+  const growthContent = document.getElementById("growth-content");
+  const emailContent  = document.getElementById("email-content");
   const refreshInfo = document.getElementById("refresh-info");
   let adminEmail = "";
+  let emailLoaded = false;
+  let growthLoaded = false;
+  const charts = {}; // keep refs so we can destroy on re-render
+
+  // ---- Tab switching ---------------------------------------------------
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id === `tab-${tab}`));
+      if (tab === "email" && !emailLoaded) loadEmailStats();
+    });
+  });
 
   (async function init() {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || !user.email) { loginErr.style.display = "block"; return; }
-
-      const res = await fetch("/api/admin/dashboard-stats", {
-        headers: { "x-admin-email": user.email }
-      });
-      if (!res.ok) { loginErr.style.display = "block"; return; }
-
       adminEmail = user.email;
+
+      // Fast auth probe so the login overlay disappears immediately —
+      // /api/admin/dashboard-stats is much cheaper than the growth endpoint
+      // (which does heavy aggregations). Once auth is confirmed, we reveal
+      // the loading state and then fetch the heavier growth payload.
+      const authProbe = await fetch("/api/admin/dashboard-stats", { headers: { "x-admin-email": adminEmail } });
+      if (!authProbe.ok) { loginErr.style.display = "block"; return; }
+
       loginOverlay.style.display = "none";
       appDiv.classList.remove("hidden");
 
+      // Now fetch the heavier growth payload (can take a few seconds on
+      // larger DBs). The "Loading growth stats…" placeholder is already in
+      // place from the initial HTML.
+      const res = await fetch("/api/admin/growth-stats", { headers: { "x-admin-email": adminEmail } });
+      if (!res.ok) {
+        growthContent.innerHTML = '<p style="color:var(--red);text-align:center;padding:40px 0;">Failed to load growth stats (HTTP ' + res.status + '). Check server logs.</p>';
+        return;
+      }
       const data = await res.json();
-      renderDashboard(data);
+      renderGrowth(data);
+      growthLoaded = true;
     } catch (e) {
-      loginErr.style.display = "block";
+      console.error("init error:", e);
+      // If we already passed auth, show error in the panel; otherwise show the login error.
+      if (loginOverlay.style.display === "none") {
+        growthContent.innerHTML = '<p style="color:var(--red);text-align:center;padding:40px 0;">Error loading growth stats: ' + (e.message || e) + '</p>';
+      } else {
+        loginErr.style.display = "block";
+      }
     }
   })();
 
-  function renderDashboard(d) {
+  // =====================================================================
+  // EMAIL TAB (legacy admin stats) — same data + layout as before
+  // =====================================================================
+  async function loadEmailStats() {
+    try {
+      const res = await fetch("/api/admin/dashboard-stats", { headers: { "x-admin-email": adminEmail } });
+      if (!res.ok) { emailContent.innerHTML = '<p style="color:var(--red);text-align:center;">Failed to load email stats.</p>'; return; }
+      const data = await res.json();
+      renderEmailDashboard(data);
+      emailLoaded = true;
+    } catch (e) {
+      emailContent.innerHTML = '<p style="color:var(--red);text-align:center;">Error loading email stats.</p>';
+    }
+  }
+
+  function renderEmailDashboard(d) {
     const ts = new Date(d.timestamp);
     refreshInfo.textContent = `Last updated: ${ts.toLocaleString()}`;
 
-    content.innerHTML = `
+    emailContent.innerHTML = `
       <div class="section">
         <h2>Users</h2>
         <div class="grid">
@@ -323,6 +422,309 @@
   document.getElementById("sales-modal").addEventListener("click", (e) => {
     if (e.target.id === "sales-modal") e.target.classList.remove("show");
   });
+
+  // =====================================================================
+  // GROWTH TAB — Phase 1 (Facebook ads → signup → premium funnel)
+  // =====================================================================
+  function fmtUsd(n) { return "$" + (Math.round(n || 0)).toLocaleString(); }
+  function fmtPct(n) { return (n || 0).toFixed(1) + "%"; }
+  function pctOf(part, whole) { return whole > 0 ? Math.round((part / whole) * 1000) / 10 : 0; }
+  function maskEmail(e) {
+    if (!e) return "-";
+    const [u, d] = e.split("@");
+    if (!d) return e;
+    const masked = u.length <= 2 ? u[0] + "*" : u.slice(0, 2) + "***";
+    return masked + "@" + d;
+  }
+  function cohortColor(pct) {
+    // pct 0 → red (dim), 50 → yellow, 100 → green
+    if (pct >= 60) return { bg: "rgba(52,211,153,0.20)", fg: "#34d399", border: "rgba(52,211,153,0.4)" };
+    if (pct >= 30) return { bg: "rgba(251,191,36,0.18)", fg: "#fbbf24", border: "rgba(251,191,36,0.4)" };
+    if (pct >  0)  return { bg: "rgba(239,68,68,0.15)",  fg: "#ef4444", border: "rgba(239,68,68,0.35)" };
+    return { bg: "rgba(255,255,255,0.04)", fg: "#6b6b88", border: "rgba(255,255,255,0.08)" };
+  }
+  function cohortCellHtml(pct, complete) {
+    const c = cohortColor(pct);
+    const cls = complete ? "" : " incomplete";
+    return `<span class="cohort-cell${cls}" style="background:${c.bg};color:${c.fg};border:1px solid ${c.border};" title="${complete ? "" : "Cohort not old enough yet — incomplete"}">${pct}%</span>`;
+  }
+
+  function renderGrowth(d) {
+    const ts = new Date(d.timestamp);
+    refreshInfo.textContent = `Last updated: ${ts.toLocaleString()}`;
+
+    const k = d.kpis, t = d.totals, f = d.funnel;
+
+    growthContent.innerHTML = `
+      <!-- KPI hero cards: 4 across, each with d1/d7/d30 trio -->
+      <div class="section">
+        <h2>Key metrics — last 24h / 7d / 30d</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+          <div class="kpi-hero">
+            <div class="icon">👤</div>
+            <div class="name">New signups</div>
+            <div class="kpi-trio">
+              <div class="mini blue"><div class="v">${k.signups.d1}</div><div class="l">24h</div></div>
+              <div class="mini blue"><div class="v">${k.signups.d7}</div><div class="l">7d</div></div>
+              <div class="mini"><div class="v">${k.signups.d30}</div><div class="l">30d</div></div>
+            </div>
+          </div>
+          <div class="kpi-hero">
+            <div class="icon">💰</div>
+            <div class="name">Revenue</div>
+            <div class="kpi-trio">
+              <div class="mini green"><div class="v">${fmtUsd(k.revenue.d1)}</div><div class="l">24h</div></div>
+              <div class="mini green"><div class="v">${fmtUsd(k.revenue.d7)}</div><div class="l">7d</div></div>
+              <div class="mini"><div class="v">${fmtUsd(k.revenue.d30)}</div><div class="l">30d</div></div>
+            </div>
+          </div>
+          <div class="kpi-hero">
+            <div class="icon">🛒</div>
+            <div class="name">Sales count</div>
+            <div class="kpi-trio">
+              <div class="mini"><div class="v">${k.salesCount.d1}</div><div class="l">24h</div></div>
+              <div class="mini"><div class="v">${k.salesCount.d7}</div><div class="l">7d</div></div>
+              <div class="mini"><div class="v">${k.salesCount.d30}</div><div class="l">30d</div></div>
+            </div>
+          </div>
+          <div class="kpi-hero">
+            <div class="icon">🧍</div>
+            <div class="name">Paying users</div>
+            <div class="kpi-trio">
+              <div class="mini blue"><div class="v">${k.paidUsers.d1}</div><div class="l">24h</div></div>
+              <div class="mini blue"><div class="v">${k.paidUsers.d7}</div><div class="l">7d</div></div>
+              <div class="mini"><div class="v">${k.paidUsers.d30}</div><div class="l">30d</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All-time totals -->
+      <div class="section">
+        <h2>All-time totals</h2>
+        <div class="grid">
+          <div class="stat-card"><div class="value">${t.totalUsers.toLocaleString()}</div><div class="label">Total users</div></div>
+          <div class="stat-card green"><div class="value">${t.activePremium.toLocaleString()}</div><div class="label">Active premium</div></div>
+          <div class="stat-card blue"><div class="value">${t.totalPaidUsers.toLocaleString()}</div><div class="label">Total paying users</div></div>
+          <div class="stat-card green"><div class="value">${fmtUsd(t.totalRevenue)}</div><div class="label">Lifetime revenue</div></div>
+          <div class="stat-card yellow"><div class="value">${fmtUsd(t.arpu)}</div><div class="label">ARPU</div></div>
+          <div class="stat-card yellow"><div class="value">${fmtPct(t.paidConversionRate)}</div><div class="label">Paid conversion %</div></div>
+        </div>
+      </div>
+
+      <!-- Time series chart -->
+      <div class="section">
+        <div class="chart-wrap">
+          <h3>Signups & Revenue — last 30 days</h3>
+          <canvas id="chart-timeseries"></canvas>
+        </div>
+      </div>
+
+      <!-- Funnel + Cohorts side by side on desktop -->
+      <div class="section">
+        <div class="two-col">
+          <div>
+            <h2>Conversion funnel · last 30d signup cohort</h2>
+            <div class="table-wrap" style="padding:8px;">
+              <div class="funnel">
+                ${renderFunnelStep("Signups",         f.signups,    f.signups, 100)}
+                ${renderFunnelStep("Activated (≥1 chat)", f.activated, f.signups, pctOf(f.activated, f.signups))}
+                ${renderFunnelStep("Buyers (any product)", f.buyers,  f.signups, pctOf(f.buyers,    f.signups))}
+                ${renderFunnelStep("Premium (active now)", f.premium, f.signups, pctOf(f.premium,   f.signups))}
+              </div>
+              <p style="color:var(--dim);font-size:0.72rem;padding:8px 12px 4px;line-height:1.4;">
+                Drop-off between Activated → Buyers shows you how many engaged users never convert to a sale.
+                This funnel doesn't yet split by traffic source — that's Phase 2 (UTM/fbclid capture).
+              </p>
+            </div>
+          </div>
+          <div>
+            <h2>Weekly cohort retention</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Week</th>
+                    <th>Size</th>
+                    <th>D0</th><th>D1</th><th>D7</th><th>D30</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${d.cohorts.map(c => `<tr>
+                    <td>${c.weekStart}</td>
+                    <td>${c.size}</td>
+                    <td>${cohortCellHtml(c.d0,  c.complete.d0)}</td>
+                    <td>${cohortCellHtml(c.d1,  c.complete.d1)}</td>
+                    <td>${cohortCellHtml(c.d7,  c.complete.d7)}</td>
+                    <td>${cohortCellHtml(c.d30, c.complete.d30)}</td>
+                  </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+            <p style="color:var(--dim);font-size:0.72rem;padding:8px 12px 4px;line-height:1.4;">
+              % of signups who sent ≥1 chat message within Day N of signup. Italic + faded = cohort too young to fully measure that milestone yet.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-character table -->
+      <div class="section">
+        <h2>Per-character performance · last 30d</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Character</th>
+                <th>Unique users</th>
+                <th>Total messages</th>
+                <th>Currently premium</th>
+                <th>Premium %</th>
+                <th>Revenue (30d)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${d.perCharacter.map(c => `<tr>
+                <td><b>${c.character}</b></td>
+                <td>${c.uniqueUsers}</td>
+                <td style="color:var(--dim);">${c.messages.toLocaleString()}</td>
+                <td>${c.premiumUsers}</td>
+                <td style="color:${c.conversionPct >= 5 ? "var(--green)" : c.conversionPct >= 2 ? "var(--yellow)" : "var(--red)"};font-weight:700;">${fmtPct(c.conversionPct)}</td>
+                <td style="color:var(--green);font-weight:700;">${fmtUsd(c.revenue)}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+        <p style="color:var(--dim);font-size:0.72rem;padding:6px 4px;line-height:1.4;">
+          "Currently premium" = users (in 30d active list for that character) who are active premium <i>right now</i>. Premium % gives you the best-converting characters — useful for picking ad creatives.
+        </p>
+      </div>
+
+      <!-- Top users side by side -->
+      <div class="section">
+        <div class="two-col">
+          <div>
+            <h2>💸 Top spenders</h2>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Email</th><th>Total spent</th><th>Sales</th><th>Last buy</th></tr></thead>
+                <tbody>
+                  ${d.topSpenders.map(u => `<tr>
+                    <td title="${u.email}" style="font-size:0.78rem;">${u.email}</td>
+                    <td style="color:var(--green);font-weight:700;">${fmtUsd(u.revenue)}</td>
+                    <td>${u.saleCount}</td>
+                    <td style="color:var(--dim);font-size:0.75rem;">${u.lastBuyAt ? new Date(u.lastBuyAt).toLocaleDateString() : "-"}</td>
+                  </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h2>💬 Top chatters</h2>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Email</th><th>Messages</th><th>Characters</th><th>Last msg</th></tr></thead>
+                <tbody>
+                  ${d.topChatteurs.map(u => `<tr>
+                    <td title="${u.email}" style="font-size:0.78rem;">${u.email}</td>
+                    <td style="color:var(--accent2);font-weight:700;">${u.messages.toLocaleString()}</td>
+                    <td>${u.charsCount}</td>
+                    <td style="color:var(--dim);font-size:0.75rem;">${u.lastMsgAt ? new Date(u.lastMsgAt).toLocaleDateString() : "-"}</td>
+                  </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p style="color:var(--dim);font-size:0.72rem;text-align:center;padding-top:12px;">
+        Phase 1 dashboard · Phase 2 (UTM/fbclid capture, per-campaign CAC/ROAS) coming next.
+      </p>
+    `;
+
+    drawTimeseriesChart(d.timeseries);
+  }
+
+  function renderFunnelStep(name, value, total, pct) {
+    return `<div class="funnel-step">
+      <div class="step-name">${name}</div>
+      <div class="step-bar"><div class="step-bar-inner" style="width:${Math.min(100, pct)}%;"></div></div>
+      <div class="step-value">${value.toLocaleString()}</div>
+      <div class="step-pct">${pct}%</div>
+    </div>`;
+  }
+
+  function drawTimeseriesChart(series) {
+    const canvas = document.getElementById("chart-timeseries");
+    if (!canvas || typeof Chart === "undefined") return;
+
+    if (charts.timeseries) charts.timeseries.destroy();
+
+    const labels = series.map(d => d.day.slice(5)); // MM-DD
+    const signups = series.map(d => d.signups);
+    const revenue = series.map(d => d.revenue);
+
+    charts.timeseries = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            type: "bar",
+            label: "Signups",
+            data: signups,
+            backgroundColor: "rgba(124,58,237,0.55)",
+            borderRadius: 4,
+            yAxisID: "y"
+          },
+          {
+            type: "line",
+            label: "Revenue ($)",
+            data: revenue,
+            borderColor: "#34d399",
+            backgroundColor: "rgba(52,211,153,0.15)",
+            borderWidth: 2,
+            tension: 0.25,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            fill: true,
+            yAxisID: "y1"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: "index" },
+        plugins: {
+          legend: { labels: { color: "#e8e8f0", boxWidth: 12 } },
+          tooltip: {
+            backgroundColor: "rgba(20,10,30,0.95)",
+            titleColor: "#f472b6",
+            bodyColor: "#e8e8f0",
+            borderColor: "rgba(124,58,237,0.4)",
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: { ticks: { color: "#6b6b88", maxTicksLimit: 10 }, grid: { color: "rgba(255,255,255,0.04)" } },
+          y: {
+            position: "left",
+            ticks: { color: "#7c3aed", precision: 0 },
+            grid: { color: "rgba(255,255,255,0.04)" },
+            title: { display: true, text: "Signups", color: "#7c3aed" }
+          },
+          y1: {
+            position: "right",
+            ticks: { color: "#34d399", callback: (v) => "$" + v },
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: "Revenue (USD)", color: "#34d399" }
+          }
+        }
+      }
+    });
+  }
 })();
 </script>
 </body>

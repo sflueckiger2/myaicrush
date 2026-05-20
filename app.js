@@ -7863,6 +7863,278 @@ app.get("/api/admin/dashboard-stats", requireAdmin, async (req, res) => {
   }
 });
 
+// =====================================================================
+// Growth dashboard — Phase 1
+// =====================================================================
+// Aggregates data we already have (users, explodely_events, chat_messages)
+// into a single payload for the new "Growth" tab in admin-dashboard.html.
+//
+// Phase 1 = no new instrumentation. Phase 2 will add UTM/fbclid capture so
+// every KPI below can also be sliced by Facebook ad campaign.
+// =====================================================================
+app.get("/api/admin/growth-stats", requireAdmin, async (req, res) => {
+  try {
+    const database = client.db('MyAICrush');
+    const users  = database.collection('users');
+    const events = database.collection('explodely_events');
+    const chats  = database.collection('chat_messages');
+
+    const now = new Date();
+    const h24 = new Date(now - 24 * 3600 * 1000);
+    const d7  = new Date(now -  7 * 24 * 3600 * 1000);
+    const d30 = new Date(now - 30 * 24 * 3600 * 1000);
+    const d60 = new Date(now - 60 * 24 * 3600 * 1000); // covers 8 weekly cohorts
+
+    // Only positive money events. Refunds / token removals are not counted.
+    const SALE_ACTIONS = ['premium_on', 'annual_premium_on', 'lifetime_premium_on', 'tokens_add'];
+    function eventUsd(ev) {
+      switch (ev.action) {
+        case 'premium_on':          return 29;
+        case 'annual_premium_on':   return 59;
+        case 'lifetime_premium_on': return 174;
+        case 'tokens_add':          return EXPLODELY_TOKEN_PRICES_USD[ev.tokens] || 0;
+        default:                    return 0;
+      }
+    }
+
+    const [
+      totalUsers,
+      activePremium,
+      newUsers24h, newUsers7d, newUsers30d,
+      saleEvents30d,
+      saleEventsAll,
+      signupsLast30d,
+      cohortSignups,
+      cohortMessages,
+      perCharacterAgg,
+      topSpendersAgg,
+      topChattersAgg,
+      buyersDistinctAllTime,
+      activated30dEmails,
+      premiumAmongSignups30d
+    ] = await Promise.all([
+      users.countDocuments({}),
+      users.countDocuments({ explodelyPremium: true }),
+      users.countDocuments({ createdAt: { $gte: h24 } }),
+      users.countDocuments({ createdAt: { $gte: d7  } }),
+      users.countDocuments({ createdAt: { $gte: d30 } }),
+      events.find({ action: { $in: SALE_ACTIONS }, createdAt: { $gte: d30 } })
+            .project({ email: 1, action: 1, tokens: 1, createdAt: 1 })
+            .toArray(),
+      events.find({ action: { $in: SALE_ACTIONS } })
+            .project({ email: 1, action: 1, tokens: 1, createdAt: 1 })
+            .toArray(),
+      users.find({ createdAt: { $gte: d30 } })
+           .project({ email: 1, createdAt: 1 })
+           .toArray(),
+      users.find({ createdAt: { $gte: d60 } })
+           .project({ email: 1, createdAt: 1 })
+           .toArray(),
+      // Cohort retention only needs each user's FIRST message timestamp,
+      // not every single message. This aggregation returns one row per
+      // email instead of potentially hundreds of thousands of rows.
+      chats.aggregate([
+        { $match: { createdAt: { $gte: d60 } } },
+        { $group: { _id: '$email', firstMsgAt: { $min: '$createdAt' } } }
+      ]).toArray(),
+      chats.aggregate([
+        { $match: { createdAt: { $gte: d30 }, role: 'user' } },
+        { $group: { _id: { character: '$character', email: '$email' }, msgs: { $sum: 1 } } },
+        { $group: { _id: '$_id.character', uniqueUsers: { $sum: 1 }, messages: { $sum: '$msgs' }, emails: { $addToSet: '$_id.email' } } },
+        { $sort: { uniqueUsers: -1 } },
+        { $limit: 15 }
+      ]).toArray(),
+      events.aggregate([
+        { $match: { action: { $in: SALE_ACTIONS } } },
+        {
+          $group: {
+            _id: '$email',
+            saleCount: { $sum: 1 },
+            lastBuyAt: { $max: '$createdAt' },
+            revenue: {
+              $sum: {
+                $switch: {
+                  branches: [
+                    { case: { $eq: ['$action', 'premium_on'] },          then: 29 },
+                    { case: { $eq: ['$action', 'annual_premium_on'] },   then: 59 },
+                    { case: { $eq: ['$action', 'lifetime_premium_on'] }, then: 174 },
+                    { case: { $eq: ['$action', 'tokens_add'] }, then: {
+                      $switch: {
+                        branches: Object.entries(EXPLODELY_TOKEN_PRICES_USD)
+                          .map(([k, v]) => ({ case: { $eq: ['$tokens', Number(k)] }, then: v })),
+                        default: 0
+                      }
+                    } }
+                  ],
+                  default: 0
+                }
+              }
+            }
+          }
+        },
+        { $sort: { revenue: -1 } },
+        { $limit: 10 }
+      ]).toArray(),
+      chats.aggregate([
+        { $group: { _id: '$email', messages: { $sum: 1 }, lastMsgAt: { $max: '$createdAt' }, chars: { $addToSet: '$character' } } },
+        { $project: { messages: 1, lastMsgAt: 1, charsCount: { $size: '$chars' } } },
+        { $sort: { messages: -1 } },
+        { $limit: 10 }
+      ]).toArray(),
+      events.distinct('email', { action: { $in: SALE_ACTIONS } }),
+      chats.distinct('email', { createdAt: { $gte: d30 } }),
+      users.countDocuments({ createdAt: { $gte: d30 }, explodelyPremium: true })
+    ]);
+
+    // ---- Helpers
+    const sumUsd = (arr) => arr.reduce((s, e) => s + eventUsd(e), 0);
+    const distinctEmails = (arr) => new Set(arr.map(e => e.email)).size;
+
+    const saleEvents7d  = saleEvents30d.filter(e => e.createdAt >= d7);
+    const saleEvents24h = saleEvents30d.filter(e => e.createdAt >= h24);
+    const totalRevenueAllTime = sumUsd(saleEventsAll);
+
+    // ---- Timeseries (last 30 calendar days, UTC)
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setUTCHours(0, 0, 0, 0);
+      d.setUTCDate(d.getUTCDate() - i);
+      days.push({ day: d.toISOString().slice(0, 10), signups: 0, salesCount: 0, revenue: 0, premiumSales: 0, tokenSales: 0 });
+    }
+    const dayMap = Object.fromEntries(days.map(d => [d.day, d]));
+    for (const u of signupsLast30d) {
+      const key = new Date(u.createdAt).toISOString().slice(0, 10);
+      if (dayMap[key]) dayMap[key].signups++;
+    }
+    for (const e of saleEvents30d) {
+      const key = new Date(e.createdAt).toISOString().slice(0, 10);
+      if (!dayMap[key]) continue;
+      dayMap[key].salesCount++;
+      dayMap[key].revenue += eventUsd(e);
+      if (e.action === 'tokens_add') dayMap[key].tokenSales++;
+      else                            dayMap[key].premiumSales++;
+    }
+    days.forEach(d => d.revenue = Math.round(d.revenue));
+
+    // ---- Funnel (signup cohort = users who signed up in the last 30d)
+    const signups30Emails = new Set(signupsLast30d.map(u => u.email));
+    const activatedSet = new Set(activated30dEmails.filter(e => signups30Emails.has(e)));
+    const allBuyersSet = new Set(buyersDistinctAllTime);
+    const buyersAmongSignups = [...signups30Emails].filter(e => allBuyersSet.has(e)).length;
+
+    // ---- Per-character (last 30d)
+    //   uniqueUsers : distinct emails who sent ≥1 msg to this char in 30d
+    //   premiumUsers: of those, how many are currently explodelyPremium
+    //   revenue     : revenue (last 30d) attributed to those users
+    //
+    // Perf: single query to fetch all premium emails up-front, then check
+    // membership locally. Replaces 15 sequential countDocuments calls.
+    const allPremiumEmails = new Set(
+      await users.distinct('email', { explodelyPremium: true })
+    );
+    const perCharacter = perCharacterAgg.map(c => {
+      const emails = c.emails || [];
+      const premiumCnt = emails.reduce((n, e) => n + (allPremiumEmails.has(e) ? 1 : 0), 0);
+      const emailSet = new Set(emails);
+      const rev = saleEvents30d.filter(e => emailSet.has(e.email)).reduce((s, e) => s + eventUsd(e), 0);
+      return {
+        character: c._id,
+        uniqueUsers: c.uniqueUsers,
+        messages: c.messages,
+        premiumUsers: premiumCnt,
+        conversionPct: c.uniqueUsers > 0 ? Math.round((premiumCnt / c.uniqueUsers) * 1000) / 10 : 0,
+        revenue: Math.round(rev)
+      };
+    });
+
+    // ---- Cohort retention (last 8 weekly cohorts, ISO week starts on Monday UTC)
+    function weekStartUTC(d) {
+      const dt = new Date(d);
+      dt.setUTCHours(0, 0, 0, 0);
+      const day = dt.getUTCDay(); // 0 = Sun, 1 = Mon, …
+      const diff = (day === 0 ? -6 : 1 - day);
+      dt.setUTCDate(dt.getUTCDate() + diff);
+      return dt;
+    }
+    const cohortMap = {};
+    for (const u of cohortSignups) {
+      const wDt = weekStartUTC(u.createdAt);
+      const w = wDt.toISOString().slice(0, 10);
+      if (!cohortMap[w]) cohortMap[w] = { weekStart: w, size: 0, signupTime: {} };
+      cohortMap[w].size++;
+      cohortMap[w].signupTime[u.email] = new Date(u.createdAt).getTime();
+    }
+    // cohortMessages is already pre-aggregated: one row per email with
+    // firstMsgAt (= $min createdAt within last 60d).
+    const firstMsgByEmail = {};
+    for (const m of cohortMessages) {
+      firstMsgByEmail[m._id] = new Date(m.firstMsgAt).getTime();
+    }
+    for (const w of Object.values(cohortMap)) {
+      const milestones = { d0: 0, d1: 0, d7: 0, d30: 0 };
+      for (const [email, signupTime] of Object.entries(w.signupTime)) {
+        const firstMsg = firstMsgByEmail[email];
+        if (!firstMsg) continue;
+        const deltaDays = (firstMsg - signupTime) / (24 * 3600 * 1000);
+        if (deltaDays < 0) continue;
+        if (deltaDays <=  1) milestones.d0++;
+        if (deltaDays <=  2) milestones.d1++;
+        if (deltaDays <=  7) milestones.d7++;
+        if (deltaDays <= 30) milestones.d30++;
+      }
+      const ageDays = (now.getTime() - new Date(w.weekStart).getTime()) / (24 * 3600 * 1000);
+      w.d0 = w.size > 0 ? Math.round((milestones.d0 / w.size) * 1000) / 10 : 0;
+      w.d1 = w.size > 0 ? Math.round((milestones.d1 / w.size) * 1000) / 10 : 0;
+      w.d7 = w.size > 0 ? Math.round((milestones.d7 / w.size) * 1000) / 10 : 0;
+      w.d30 = w.size > 0 ? Math.round((milestones.d30 / w.size) * 1000) / 10 : 0;
+      w.complete = { d0: ageDays >= 1, d1: ageDays >= 2, d7: ageDays >= 7, d30: ageDays >= 30 };
+      delete w.signupTime;
+    }
+    const cohorts = Object.values(cohortMap)
+      .sort((a, b) => b.weekStart.localeCompare(a.weekStart))
+      .slice(0, 8);
+
+    res.json({
+      timestamp: now.toISOString(),
+      windowDays: 30,
+      kpis: {
+        signups:  { d1: newUsers24h, d7: newUsers7d, d30: newUsers30d },
+        revenue:  { d1: Math.round(sumUsd(saleEvents24h)), d7: Math.round(sumUsd(saleEvents7d)), d30: Math.round(sumUsd(saleEvents30d)) },
+        salesCount: { d1: saleEvents24h.length, d7: saleEvents7d.length, d30: saleEvents30d.length },
+        paidUsers: { d1: distinctEmails(saleEvents24h), d7: distinctEmails(saleEvents7d), d30: distinctEmails(saleEvents30d) }
+      },
+      totals: {
+        totalUsers,
+        activePremium,
+        totalRevenue: Math.round(totalRevenueAllTime),
+        totalSales: saleEventsAll.length,
+        totalPaidUsers: allBuyersSet.size,
+        arpu: totalUsers > 0 ? Math.round((totalRevenueAllTime / totalUsers) * 100) / 100 : 0,
+        paidConversionRate: totalUsers > 0 ? Math.round((allBuyersSet.size / totalUsers) * 1000) / 10 : 0
+      },
+      timeseries: days,
+      funnel: {
+        signups: newUsers30d,
+        activated: activatedSet.size,
+        buyers: buyersAmongSignups,
+        premium: premiumAmongSignups30d
+      },
+      perCharacter,
+      cohorts,
+      topSpenders: topSpendersAgg.map(t => ({
+        email: t._id, revenue: Math.round(t.revenue), saleCount: t.saleCount, lastBuyAt: t.lastBuyAt
+      })),
+      topChatteurs: topChattersAgg.map(t => ({
+        email: t._id, messages: t.messages, charsCount: t.charsCount, lastMsgAt: t.lastMsgAt
+      }))
+    });
+  } catch (e) {
+    console.error('growth-stats error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/api/admin/email-campaigns", requireAdmin, async (req, res) => {
   try {
     const database = client.db('MyAICrush');
