@@ -23,6 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const key = el.getAttribute('data-i18n');
     const map = {
       "hero-price": "Choisis ton plan — résilie quand tu veux.",
+      "hero-hook-1": "✨ Tout sans flou.",
+      "hero-hook-2": "🎙️ Sa vraie voix.",
+      "hero-hook-3": "📸 Photos illimitées.",
+      "hero-hook-4": "🔞 Mode sans censure.",
+      "hero-hook-5": "💌 Elle réagit aux tiennes.",
+      "hero-hook-6": "👑 Toutes les IA débloquées.",
       "plan-monthly-label": "Mensuel",
       "plan-monthly-per": "/mois",
       "plan-monthly-billed": "Facturé mensuellement",
@@ -273,6 +279,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const key = el.getAttribute('data-i18n');
     const map = {
       "hero-price": "Wähle deinen Plan — jederzeit kündbar.",
+      "hero-hook-1": "✨ Alles unverpixelt.",
+      "hero-hook-2": "🎙️ Ihre echte Stimme.",
+      "hero-hook-3": "📸 Unbegrenzte Fotos.",
+      "hero-hook-4": "🔞 Unzensiert.",
+      "hero-hook-5": "💌 Sie reagiert auf deine.",
+      "hero-hook-6": "👑 Alle KIs freigeschaltet.",
       "plan-monthly-label": "Monatlich",
       "plan-monthly-per": "/Monat",
       "plan-monthly-billed": "Monatlich abgerechnet",

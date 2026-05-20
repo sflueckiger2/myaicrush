@@ -142,6 +142,89 @@
         font-size: 0.8rem;
         margin-top: 4px;
       }
+
+      /* ===== Hero stories carousel (replaces old static hero-media) =====
+         Infinite L->R marquee of 9:16 character clips, each with its own
+         translatable benefit hook overlaid. Mobile-first, no JS animation
+         (pure CSS keyframes), pauses on hover/tap. */
+      .hero-stories {
+        position: relative;
+        width: 100%;
+        max-width: 720px;
+        margin: 16px auto 24px;
+        overflow: hidden;
+        -webkit-mask: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%);
+                mask: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%);
+      }
+      .hero-stories-track {
+        display: flex;
+        gap: 10px;
+        width: max-content;
+        animation: heroMarquee 38s linear infinite;
+        will-change: transform;
+      }
+      .hero-stories-track:hover,
+      .hero-stories-track:active { animation-play-state: paused; }
+      @keyframes heroMarquee {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-50%); }
+      }
+      .story-card {
+        position: relative;
+        flex: 0 0 auto;
+        width: 158px;
+        aspect-ratio: 9 / 16;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #0a0a0a;
+        box-shadow:
+          0 10px 24px rgba(0, 0, 0, 0.45),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+      .story-card video,
+      .story-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .story-card-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.82) 0%,
+          rgba(0, 0, 0, 0.35) 40%,
+          rgba(0, 0, 0, 0.00) 70%
+        );
+        pointer-events: none;
+      }
+      .story-card-hook {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 12px;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.86rem;
+        line-height: 1.18;
+        letter-spacing: 0.1px;
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+      }
+      .story-card-hook .hook-emoji {
+        display: inline-block;
+        margin-right: 4px;
+      }
+      @media (min-width: 480px) {
+        .story-card { width: 178px; }
+        .story-card-hook { font-size: 0.92rem; }
+      }
+      @media (min-width: 768px) {
+        .story-card { width: 200px; }
+      }
+      /* Respect users who prefer reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        .hero-stories-track { animation-duration: 90s; }
+      }
   </style>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FJ5S0H9B1R"></script>
@@ -169,17 +252,11 @@
 <body>
   <div class="container premium-page">
     <h1 class="p-title">Unlock everything. No limits.</h1>
-    <p class="p-description">
-      <u><b>Unblurred</b></u> photos &amp; videos · Voice messages · Unlimited chats — <span style="font-family:'Times New Roman', Times, serif;">A.I</span> that never judges.
-    </p>
     <p class="p-description"><b>⚠️ <u data-i18n="hero-price">Choose your plan — cancel anytime.</u></b></p>
-   
-    <div class="hero-media">
-        <video class="hero-video" autoplay muted loop playsinline>
-          <source src="/images/market/candy-premium-en.mp4" type="video/mp4">
-        </video>
-        <span class="vignette" aria-hidden="true"></span>
-    </div>
+
+    <!-- Hero stories carousel: replaces the old static EN-only video.
+         Continuously scrolls 6 portrait clips L->R with localized hooks. -->
+    <div class="hero-stories" id="hero-stories" aria-label="Premium previews"></div>
 
     <!-- ===== PRICING PLANS (Annual recommended + Monthly decoy) ===== -->
     <div id="pricing-plans" style="display:flex; gap:14px; margin-top:24px; align-items:stretch; flex-wrap:wrap; justify-content:center;">
@@ -459,6 +536,59 @@
 
   <!-- ===== SCRIPTS ===== -->
   <script>
+    // ── Hero stories carousel ──────────────────────────────
+    // 6 portrait clips, each with its own translatable benefit hook.
+    // Cards are duplicated x2 in the DOM so the CSS marquee animation
+    // can loop seamlessly via `translateX(-50%)`.
+    const HERO_STORIES_CDN = "https://img.myaicrush.ai/";
+    const HERO_STORIES = [
+      { name: "Naomi",   src: "images/naomi/naomi3/ae535d7c3b8499daaf4158253bb17ed3.mp4",                            hookKey: "hero-hook-1", hookEn: "✨ Unblurred. Everything." },
+      { name: "Magalie", src: "images/magalie/magalie3/kling_20260116_Image_to_Video_Se_penche__5797_0.mp4",         hookKey: "hero-hook-2", hookEn: "🎙️ Her real voice." },
+      { name: "Aiko",    src: "images/aiko/aiko3/kling_20251031_Image_to_Video_Baisse_dou_5613_0.mp4",               hookKey: "hero-hook-3", hookEn: "📸 Unlimited photos." },
+      { name: "Amber",   src: "images/amber/amber3/kling_20251217_Image_to_Video_Elle_prend_6_0.mp4",                hookKey: "hero-hook-4", hookEn: "🔞 Uncensored mode." },
+      { name: "Nour",    src: "images/nour/nour3/kling_20251111_Image_to_Video_Se_reposit_4333_0.mp4",               hookKey: "hero-hook-5", hookEn: "💌 She reacts to yours." },
+      { name: "Megane",  src: "images/megane/megane3/megane_dressed_video_01.mp4",                                   hookKey: "hero-hook-6", hookEn: "👑 All AIs unlocked." },
+    ];
+
+    function buildHeroStories() {
+      const root = document.getElementById('hero-stories');
+      if (!root) return;
+      const track = document.createElement('div');
+      track.className = 'hero-stories-track';
+      // Duplicate the list for seamless infinite scroll
+      const cards = [...HERO_STORIES, ...HERO_STORIES];
+      const frag = document.createDocumentFragment();
+      cards.forEach((item, i) => {
+        const card = document.createElement('div');
+        card.className = 'story-card';
+        card.setAttribute('aria-label', item.name);
+        const video = document.createElement('video');
+        video.src = HERO_STORIES_CDN + item.src.replace(/^\/+/, '');
+        video.autoplay = true;
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.preload = i < 3 ? 'auto' : 'metadata';
+        const overlay = document.createElement('div');
+        overlay.className = 'story-card-overlay';
+        const hook = document.createElement('div');
+        hook.className = 'story-card-hook';
+        hook.setAttribute('data-i18n', item.hookKey);
+        hook.textContent = item.hookEn;
+        card.append(video, overlay, hook);
+        frag.appendChild(card);
+      });
+      track.appendChild(frag);
+      root.appendChild(track);
+    }
+    // Build immediately: the inline script lives at the end of <body>, so
+    // #hero-stories is already parsed. Building synchronously guarantees the
+    // [data-i18n] hook nodes exist BEFORE i18n-premium.js (module = deferred)
+    // executes and translates them.
+    buildHeroStories();
+
     // ── Disclaimer ──────────────────────────────────────────
     function toggleDisclaimer() {
       document.getElementById('disclaimer-content').classList.toggle('open');
