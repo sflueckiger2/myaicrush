@@ -61,11 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const vcDescJ = vcBenefitJ?.closest("a")?.querySelector("span span:last-child");
   if (vcDescJ) vcDescJ.textContent = "Uploade une photo, obtiens une vidéo de 10 sec. SFW ou sans censure.";
 
-  const bonusTitle = document.getElementById("bonus-tokens-title");
-  if (bonusTitle) bonusTitle.textContent = "Les abonnés Premium reçoivent 30 jetons gratuits chaque mois";
-  const bonusDesc = document.getElementById("bonus-tokens-desc");
-  if (bonusDesc) bonusDesc.textContent = "Crédités automatiquement le 1er du mois. Aucune action requise.";
-
   // ===== TOKEN CARDS — BOUTONS & BADGES =====
   document.querySelectorAll(".token-cta").forEach(btn => {
     if (btn.textContent.trim() === "Buy") btn.textContent = "Acheter";
@@ -290,11 +285,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (vcBenefitJ) { vcBenefitJ.textContent = "9 Tokens = KI-Video aus deinem Foto"; vcBenefitJ.style.background = "linear-gradient(90deg,#f472b6,#a855f7)"; vcBenefitJ.style.webkitBackgroundClip = "text"; vcBenefitJ.style.webkitTextFillColor = "transparent"; }
   const vcDescJ = vcBenefitJ?.closest("a")?.querySelector("span span:last-child");
   if (vcDescJ) vcDescJ.textContent = "Lade ein Foto hoch, erhalte ein 10-Sek-Video. SFW oder unzensiert.";
-
-  const bonusTitle = document.getElementById("bonus-tokens-title");
-  if (bonusTitle) bonusTitle.textContent = "Premium-Abonnenten erhalten jeden Monat 30 Gratis-Tokens";
-  const bonusDesc = document.getElementById("bonus-tokens-desc");
-  if (bonusDesc) bonusDesc.textContent = "Automatisch am 1. des Monats gutgeschrieben. Kein Handeln nötig.";
 
   // ===== TOKEN CARDS — BUTTONS & BADGES =====
   document.querySelectorAll(".token-cta").forEach(btn => {
