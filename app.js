@@ -1964,11 +1964,17 @@ app.get('/characters.json', (req, res) => {
 // Randomness is seeded with the current day + character name, so each
 // visitor sees the same selection during a given day (cache-friendly) but a
 // fresh one every 24h.
+//
+// To force an immediate rotation (e.g. after restocking a character's
+// folder, or to swap mid-day for marketing reasons): bump STORY_ROTATION_SALT
+// AND bump STORY_CACHE_KEY in public/index.html (v3 -> v4 -> ...) so clients
+// invalidate their 24h localStorage cache and refetch immediately.
+const STORY_ROTATION_SALT = 1; // bump to force a global rotation NOW
 app.get('/api/stories', async (req, res) => {
   const fsP = require('fs').promises;
   const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
   const imageExts = /\.(webp|jpg|jpeg|png|gif)$/i;
-  const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+  const daysSinceEpoch = Math.floor(Date.now() / 86400000) + STORY_ROTATION_SALT;
 
   const groups = [];
 
