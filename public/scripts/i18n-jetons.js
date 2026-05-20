@@ -21,6 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const desc = document.querySelector('p.p-description[style*="margin-top"]');
   if (desc) desc.innerHTML = `Les tokens débloquent les <b>extras hot</b> :`;
 
+  // ===== HERO STORIES HOOKS =====
+  const heroHooksFR = {
+    "1": "🔓 Débloque avec des jetons",
+    "2": "🥵 Mode Nympho",
+    "3": "📸 Galerie cachée",
+    "4": "🎙️ Voix coquine",
+    "5": "🔞 Sans censure",
+    "6": "💎 Contenu VIP privé",
+  };
+  document.querySelectorAll(".story-card-hook[data-hook]").forEach(el => {
+    const k = el.getAttribute("data-hook");
+    if (heroHooksFR[k]) el.textContent = heroHooksFR[k];
+  });
+
   // ===== BENEFITS GRID =====
   const benefitSpans = document.querySelectorAll(".benefit-item > span:not(.nympho-badge)");
   const benefitsFR = [
@@ -236,6 +250,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== BESCHREIBUNG =====
   const desc = document.querySelector('p.p-description[style*="margin-top"]');
   if (desc) desc.innerHTML = `Tokens schalten die <b>heißen Extras</b> frei:`;
+
+  // ===== HERO STORIES HOOKS =====
+  const heroHooksDE = {
+    "1": "🔓 Mit Tokens freischalten",
+    "2": "🥵 Nympho-Modus",
+    "3": "📸 Versteckte Galerie",
+    "4": "🎙️ Frivole Stimme",
+    "5": "🔞 Unzensiert",
+    "6": "💎 Privater VIP-Content",
+  };
+  document.querySelectorAll(".story-card-hook[data-hook]").forEach(el => {
+    const k = el.getAttribute("data-hook");
+    if (heroHooksDE[k]) el.textContent = heroHooksDE[k];
+  });
 
   // ===== BENEFITS GRID =====
   const benefitSpans = document.querySelectorAll(".benefit-item > span:not(.nympho-badge)");

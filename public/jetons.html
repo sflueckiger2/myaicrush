@@ -188,14 +188,12 @@
   <div class="container premium-page">
     <h1 class="p-title">Need more tokens?</h1>
     <h2>Unlock the extras. Go further.</h2><br>
-    
-    <center>
-      <video style="width:270px; margin:auto; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autoplay muted loop playsinline class="hanae-image">
-        <source src="/images/market/jetons-promo-en.mp4" type="video/mp4">
-      </video>
-    </center>
 
-    <p class="p-description" style="margin-top: 30px;">Tokens unlock the <b>hot extras</b>:</p>
+    <!-- Hero stories carousel: replaces the EN-only static promo video.
+         Blurred *4 clips tease NSFW content behind the token paywall. -->
+    <div class="hero-stories hero-stories--blurred" id="hero-stories" aria-label="Token previews"></div>
+
+    <p class="p-description" style="margin-top: 24px;">Tokens unlock the <b>hot extras</b>:</p>
 
     <div style="background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(244,114,182,0.08)); border:1px solid rgba(168,85,247,0.25); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px;">
       <span style="font-size:1.4rem;">🎁</span>
@@ -412,6 +410,57 @@
   <script type="module" src="./scripts/stripe-tokens.js"></script>
 
   <script>
+    // ── Hero stories carousel (blurred NSFW tease) ─────────────────
+    // 6 portrait clips pulled from *4/ folders, heavily blurred via
+    // CSS (.hero-stories--blurred). Each card carries its own
+    // translatable hook tied to a token-paid feature.
+    const HERO_STORIES_CDN = "https://img.myaicrush.ai/";
+    const HERO_STORIES = [
+      { name: "Magalie", src: "images/magalie/magalie4/1813e2a3587eb356566ac06fed1d44be.mp4", hookKey: "1", hookEn: "🔓 Unlock with tokens" },
+      { name: "Emilie",  src: "images/emilie/emilie4/01d87baaaa2db827174abaadb1dc864f.mp4",   hookKey: "2", hookEn: "🥵 Nympho mode" },
+      { name: "Megane",  src: "images/megane/megane4/megane_coquin_video_01.mp4",             hookKey: "3", hookEn: "📸 Hidden gallery" },
+      { name: "Pauline", src: "images/pauline/pauline4/pauline_coquin_video_01.mp4",          hookKey: "4", hookEn: "🎙️ Naughty voice" },
+      { name: "Anong",   src: "images/anong/anong4/anong_coquin_video_100.mp4",               hookKey: "5", hookEn: "🔞 Fully uncensored" },
+      { name: "Amara",   src: "images/amara/amara4/amara_coquin_video_1.mp4",                 hookKey: "6", hookEn: "💎 Private VIP content" },
+    ];
+
+    function buildHeroStories() {
+      const root = document.getElementById('hero-stories');
+      if (!root) return;
+      const track = document.createElement('div');
+      track.className = 'hero-stories-track';
+      const cards = [...HERO_STORIES, ...HERO_STORIES]; // duplicated for seamless loop
+      const frag = document.createDocumentFragment();
+      cards.forEach((item, i) => {
+        const card = document.createElement('div');
+        card.className = 'story-card';
+        card.setAttribute('aria-label', item.name);
+        const video = document.createElement('video');
+        video.src = HERO_STORIES_CDN + item.src.replace(/^\/+/, '');
+        video.autoplay = true;
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.preload = i < 3 ? 'auto' : 'metadata';
+        const overlay = document.createElement('div');
+        overlay.className = 'story-card-overlay';
+        const hook = document.createElement('div');
+        hook.className = 'story-card-hook';
+        hook.setAttribute('data-hook', item.hookKey);
+        hook.textContent = item.hookEn;
+        card.append(video, overlay, hook);
+        frag.appendChild(card);
+      });
+      track.appendChild(frag);
+      root.appendChild(track);
+    }
+    // Build immediately: the #hero-stories div is already parsed above
+    // (this script sits at the end of <body>). Building synchronously
+    // guarantees the [data-hook] nodes exist BEFORE i18n-jetons.js runs.
+    buildHeroStories();
+
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.faq-question').forEach(button => {
         button.addEventListener('click', () => {
