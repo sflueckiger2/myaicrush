@@ -2884,8 +2884,8 @@ vapi-widget {
  * routes to the raw stream. */
 .hero-stories--blurred .story-card video,
 .hero-stories--blurred .story-card img {
-  filter: blur(14px) brightness(0.88) saturate(1.05);
-  transform: scale(1.12); /* hide blur edge bleed */
+  filter: blur(7px) brightness(0.95) saturate(1.05);
+  transform: scale(1.06); /* hide blur edge bleed */
   transform-origin: center;
   pointer-events: none;
   user-select: none;
