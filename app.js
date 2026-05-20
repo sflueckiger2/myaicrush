@@ -1125,78 +1125,6 @@ function getExplodelyProductPriceUSD({ isPremium, isAnnual, isLifetime, tokensAm
     return 0;
 }
 
-// =====================================================================
-// Facebook Conversions API (server-side Purchase tracking)
-// ---------------------------------------------------------------------
-// We send Purchase events to Facebook ourselves from the Explodely webhook
-// (server-to-server) so we no longer need Explodely's CAPI integration nor
-// the browser pixel for Purchase. Benefits vs. browser pixel:
-//   • Immune to ad blockers, iOS Safari ITP, tracking restrictions → 100% of
-//     conversions reach Facebook (instead of ~60-80%).
-//   • event_id = Explodely orderId → unique per purchase. If FB receives the
-//     same event twice (e.g. retry, or if Explodely's CAPI is still on during
-//     transition), it auto-deduplicates.
-//   • We have fbp/fbc/email/ip/UA stored on the user record (captured when
-//     they clicked the Explodely CTA) → good attribution match quality.
-// =====================================================================
-const sha256Hex = (val) => crypto.createHash('sha256').update(String(val || '').trim().toLowerCase()).digest('hex');
-
-async function sendFacebookPurchaseCAPI({ email, orderId, eventId, valueUSD, productLabel, fbp, fbc, ipAddress, userAgent, eventTime, eventSourceUrl }) {
-    if (!FACEBOOK_PIXEL_ID || !FACEBOOK_ACCESS_TOKEN) {
-        console.warn("⚠️ FB CAPI not configured (missing FACEBOOK_PIXEL_ID or FACEBOOK_ACCESS_TOKEN env)");
-        return { ok: false, skipped: true };
-    }
-    if (!email || !orderId) {
-        console.warn("⚠️ FB CAPI Purchase skipped: missing email or orderId", { email, orderId });
-        return { ok: false, skipped: true };
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
-    const user_data = {
-        em: [sha256Hex(cleanEmail)],
-        ...(fbp ? { fbp } : {}),
-        ...(fbc ? { fbc } : {}),
-        ...(ipAddress ? { client_ip_address: ipAddress } : {}),
-        ...(userAgent ? { client_user_agent: userAgent } : {}),
-    };
-
-    const custom_data = {
-        currency: "USD",
-        value: Number(valueUSD) || 0,
-        content_ids: [String(productLabel || 'unknown')],
-        content_type: "product",
-        order_id: String(orderId),
-    };
-
-    // event_id is the dedup key. The browser pixel must send the same
-    // value as eventID for FB to merge the two events into one.
-    const finalEventId = String(eventId || orderId);
-
-    const payload = {
-        data: [{
-            event_name: "Purchase",
-            event_time: eventTime || Math.floor(Date.now() / 1000),
-            event_id: finalEventId,
-            action_source: "website",
-            event_source_url: eventSourceUrl || "https://myaicrush.ai/",
-            user_data,
-            custom_data,
-        }],
-        access_token: FACEBOOK_ACCESS_TOKEN,
-    };
-
-    try {
-        const r = await axios.post(FB_API_URL, payload, { timeout: 8000 });
-        console.log(`✅ FB CAPI Purchase sent: orderId=${orderId} eventId=${finalEventId} email=${cleanEmail} value=${valueUSD} USD → fb=${JSON.stringify(r.data)}`);
-        return { ok: true, data: r.data };
-    } catch (err) {
-        const errBody = err.response?.data || err.message;
-        console.error(`❌ FB CAPI Purchase failed for orderId=${orderId}:`, errBody);
-        return { ok: false, error: errBody };
-    }
-}
-
-
 // ===== Fuzzy email matching for typos at checkout =====
 // When a customer mistypes their email on Explodely (e.g. "hotmai.com"
 // instead of "hotmail.com"), we try to recover them so the sale can be
@@ -1376,102 +1304,6 @@ async function attributeSaleToCampaign(database, email, productInfo) {
         console.error('❌ [EMAIL-ATTRIBUTION] error:', e.message);
     }
 }
-
-// ---------------------------------------------------------------------
-// Helper used by the Explodely webhook for each successful sale.
-// Reads fbp/fbc/ip/UA stashed on the user (captured at CTA click time)
-// and fires a server-side Purchase event to Facebook with event_id=orderId.
-// ---------------------------------------------------------------------
-async function fireFbPurchaseFromWebhook(database, email, productInfo) {
-    try {
-        const valueUSD = getExplodelyProductPriceUSD(productInfo);
-        if (!valueUSD || valueUSD <= 0) {
-            console.log(`ℹ️ FB CAPI skipped (value=${valueUSD}) for ${email} order=${productInfo.orderId}`);
-            return;
-        }
-        const userDoc = await database.collection('users').findOne(
-            { email },
-            { projection: { fbTracking: 1 } }
-        );
-        const fbt = userDoc?.fbTracking || {};
-
-        // Prefer the client-generated pendingEventId so it matches what
-        // the browser pixel will send. Fall back to orderId if the user
-        // somehow reached Explodely without going through a tracked CTA
-        // (e.g. shared link, direct purchase, etc.).
-        const eventId = fbt.pendingEventId || String(productInfo.orderId);
-
-        await sendFacebookPurchaseCAPI({
-            email,
-            orderId: productInfo.orderId,
-            eventId, // ← shared with the browser pixel for dedup
-            valueUSD,
-            productLabel: productInfo.label || 'sale',
-            fbp: fbt.fbp || null,
-            fbc: fbt.fbc || null,
-            ipAddress: fbt.ipAddress || null,
-            userAgent: fbt.userAgent || null,
-            eventTime: Math.floor(Date.now() / 1000),
-            eventSourceUrl: "https://myaicrush.ai/",
-        });
-
-        // Clear the pendingEventId so a future purchase by the same user
-        // generates a fresh one (avoids edge case where two purchases get
-        // the same event_id and FB drops the second as a duplicate).
-        if (fbt.pendingEventId) {
-            await database.collection('users').updateOne(
-                { email },
-                { $unset: { 'fbTracking.pendingEventId': "" } }
-            );
-        }
-    } catch (e) {
-        console.error("❌ fireFbPurchaseFromWebhook error:", e.message);
-    }
-}
-
-// ---------------------------------------------------------------------
-// Capture fbp/fbc + email + ip + UA before the user leaves to Explodely.
-// Called by the frontend right before clicking a CTA that goes to
-// explodely.com. We store this on the user record so the Explodely webhook
-// can attach proper Facebook user_data when it fires the Purchase CAPI.
-// ---------------------------------------------------------------------
-app.post("/api/store-fb-tracking", async (req, res) => {
-    try {
-        const email = String(req.body?.email || '').trim().toLowerCase();
-        const fbp = req.body?.fbp ? String(req.body.fbp) : null;
-        const fbc = req.body?.fbc ? String(req.body.fbc) : null;
-        const pendingEventId = req.body?.pendingEventId ? String(req.body.pendingEventId) : null;
-
-        if (!email || !email.includes('@')) {
-            return res.status(400).json({ ok: false, error: 'email required' });
-        }
-
-        const ipAddress = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-            || req.socket?.remoteAddress
-            || null;
-        const userAgent = req.headers['user-agent'] || null;
-
-        const tracking = {
-            fbp,
-            fbc,
-            ipAddress,
-            userAgent,
-            pendingEventId,
-            capturedAt: new Date(),
-        };
-
-        await client.db("MyAICrush").collection("users").updateOne(
-            { email },
-            { $set: { fbTracking: tracking } },
-            { upsert: false } // ne pas créer un user juste pour ça
-        );
-
-        return res.json({ ok: true });
-    } catch (err) {
-        console.error("❌ /api/store-fb-tracking error:", err.message);
-        return res.status(500).json({ ok: false });
-    }
-});
 
 app.post("/webhook/explodely", async (req, res) => {
   try {
@@ -1670,7 +1502,6 @@ app.post("/webhook/explodely", async (req, res) => {
           await explodelyEvents.insertOne({ ...eventKey, action: "annual_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date(), ...typoMatchField });
           console.log(`✅ Premium Annuel Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 30 jetons ignoré)' : '(+30 jetons)'} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isAnnual: true, label: "annual", productId, orderId });
-          await fireFbPurchaseFromWebhook(database, email, { isAnnual: true, label: "annual", productId, orderId });
           continue;
         }
 
@@ -1700,7 +1531,6 @@ app.post("/webhook/explodely", async (req, res) => {
           await explodelyEvents.insertOne({ ...eventKey, action: "lifetime_premium_on", bonusSkipped: alreadyPremium, createdAt: new Date(), ...typoMatchField });
           console.log(`✅ Premium LIFETIME Explodely activé pour ${email} ${alreadyPremium ? '(déjà premium, bonus 100 jetons ignoré)' : '(+100 jetons)'} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isLifetime: true, label: "lifetime", productId, orderId });
-          await fireFbPurchaseFromWebhook(database, email, { isLifetime: true, label: "lifetime", productId, orderId });
           continue;
         }
 
@@ -1724,7 +1554,6 @@ app.post("/webhook/explodely", async (req, res) => {
           await explodelyEvents.insertOne({ ...eventKey, action: "premium_on", bonusSkipped: true, createdAt: new Date(), ...typoMatchField });
           console.log(`✅ Premium Mensuel Explodely activé pour ${email} (pas de bonus jetons sur le mensuel) (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_monthly", productId, orderId });
-          await fireFbPurchaseFromWebhook(database, email, { isPremium: true, label: "premium_monthly", productId, orderId });
           continue;
         }
 
@@ -1748,7 +1577,6 @@ app.post("/webhook/explodely", async (req, res) => {
           await explodelyEvents.insertOne({ ...eventKey, action: "tokens_add", tokens: toAdd, createdAt: new Date(), ...typoMatchField });
           console.log(`💰 +${toAdd} jetons pour ${email} (orderId=${orderId})`);
           await attributeSaleToCampaign(database, email, { tokensAmount: toAdd, label: `tokens_${toAdd}`, productId, orderId });
-          await fireFbPurchaseFromWebhook(database, email, { tokensAmount: toAdd, label: `tokens_${toAdd}`, productId, orderId });
           continue;
         }
 

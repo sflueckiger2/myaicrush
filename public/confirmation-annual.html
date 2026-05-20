@@ -301,7 +301,6 @@
     .disclaimer-content.open { max-height: 2000px; padding-bottom: 20px; }
     .disclaimer-content p { margin-bottom: 10px; }
   </style>
-  <script src="/scripts/fb-tracking.js" defer></script>
 </head>
 <body>
 
@@ -485,26 +484,12 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '2477423972706417');
     fbq('init', '1305416328350589');
-    // Use Explodely's order ID (passed in URL) as event_id so it matches the
-    // event_id Explodely sends server-side via Facebook Conversions API.
-    // When pixel + CAPI carry the same event_id, Facebook auto-deduplicates
-    // and counts the conversion ONCE instead of double.
-    var _fbEventP = new URLSearchParams(window.location.search);
-    var purchaseEventID = _fbEventP.get('orderid') || _fbEventP.get('order_id') || _fbEventP.get('session_id') || ('purchase_' + Date.now());
+    var purchaseEventID = 'purchase_' + Date.now();
     var _fbAmountRaw = new URLSearchParams(window.location.search).get('amount');
     var _fbAmount = parseFloat(_fbAmountRaw);
     if (!_fbAmount || isNaN(_fbAmount) || _fbAmount <= 0) { _fbAmount = 59; }
-    // Pixel + CAPI deduplication. Both this browser pixel AND the
-    // server-side CAPI fired from /webhook/explodely send a Purchase
-    // event sharing the SAME event_id. FB merges them into one
-    // conversion (best Event Match Quality). The shared id is a UUID
-    // generated in /scripts/fb-tracking.js when the user clicked the
-    // Explodely CTA, stashed in localStorage as `fbPendingEventId`.
-    var _fbPendingEventId = null;
-    try { _fbPendingEventId = localStorage.getItem('fbPendingEventId'); } catch (_) {}
-    var _fbFinalEventId = _fbPendingEventId || purchaseEventID;
-    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: _fbFinalEventId });
-    console.log('[FB Purchase] pixel sent', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: _fbFinalEventId, source: _fbPendingEventId ? 'pendingEventId(matches CAPI)' : 'fallback(no CAPI match)' });
+    fbq('track', 'Purchase', { value: _fbAmount, currency: 'USD' }, { eventID: purchaseEventID });
+    console.log('[FB Purchase]', { value: _fbAmount, currency: 'USD', fromUrl: _fbAmountRaw, eventID: purchaseEventID });
   </script>
 
   <!-- TrafficJunky Conversion Pixel (dynamic amount via ?amount= URL param) -->
