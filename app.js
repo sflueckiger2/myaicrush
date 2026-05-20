@@ -8135,6 +8135,342 @@ app.get("/api/admin/growth-stats", requireAdmin, async (req, res) => {
   }
 });
 
+// =====================================================================
+// VIP protection — Feature B
+// =====================================================================
+// Computes the top N lifetime spenders and force-reactivates them in the
+// daily-email pipeline. Used both by the daily cron and by the manual
+// "Re-protect VIPs now" button in the admin dashboard.
+//
+// Note: this intentionally overrides explicit unsubscribes / auto-cleans
+// per product owner's request. Use carefully.
+// =====================================================================
+async function protectTopSpenders(limit = 100) {
+  const database = client.db('MyAICrush');
+  const events = database.collection('explodely_events');
+  const users  = database.collection('users');
+
+  const SALE_ACTIONS = ['premium_on', 'annual_premium_on', 'lifetime_premium_on', 'tokens_add'];
+  const topAgg = await events.aggregate([
+    { $match: { action: { $in: SALE_ACTIONS } } },
+    {
+      $group: {
+        _id: '$email',
+        revenue: {
+          $sum: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$action', 'premium_on'] },          then: 29 },
+                { case: { $eq: ['$action', 'annual_premium_on'] },   then: 59 },
+                { case: { $eq: ['$action', 'lifetime_premium_on'] }, then: 174 },
+                { case: { $eq: ['$action', 'tokens_add'] }, then: {
+                  $switch: {
+                    branches: Object.entries(EXPLODELY_TOKEN_PRICES_USD)
+                      .map(([k, v]) => ({ case: { $eq: ['$tokens', Number(k)] }, then: v })),
+                    default: 0
+                  }
+                } }
+              ],
+              default: 0
+            }
+          }
+        },
+        saleCount: { $sum: 1 },
+        lastBuyAt: { $max: '$createdAt' }
+      }
+    },
+    { $sort: { revenue: -1 } },
+    { $limit: limit }
+  ]).toArray();
+
+  const emails = topAgg.map(t => t._id).filter(Boolean);
+  if (!emails.length) {
+    return { processed: 0, modified: 0, reactivatedUnsubscribed: 0, reactivatedCleaned: 0, emails: [] };
+  }
+
+  // Snapshot BEFORE so we can report what we actually fixed.
+  const before = await users.find(
+    { email: { $in: emails } },
+    { projection: { email: 1, unsubscribedEmail: 1, dailyEmailEligible: 1, dailyEmailCleanedAt: 1 } }
+  ).toArray();
+  const beforeByEmail = Object.fromEntries(before.map(u => [u.email, u]));
+
+  let modified = 0;
+  let reactivatedUnsubscribed = 0;
+  let reactivatedCleaned = 0;
+  const now = new Date();
+
+  for (const t of topAgg) {
+    const email = t._id;
+    if (!email) continue;
+    const b = beforeByEmail[email] || {};
+    // Upsert: create a minimal user record if we somehow don't have one
+    // (shouldn't happen since they paid us, but defensive).
+    const r = await users.updateOne(
+      { email },
+      {
+        $set: {
+          dailyEmailEligible: true,
+          unsubscribedEmail: false,
+          isVipSpender: true,
+          vipLifetimeRevenue: Math.round(t.revenue || 0),
+          vipSaleCount: t.saleCount || 0,
+          vipLastBuyAt: t.lastBuyAt || null,
+          vipLastProtectedAt: now,
+          dailyEmailEligibleSince: b.dailyEmailEligibleSince || now
+        },
+        $unset: { dailyEmailCleanedAt: "" },
+        $setOnInsert: { email, createdAt: now, accountSource: 'vip-import' }
+      },
+      { upsert: true }
+    );
+    if (r.modifiedCount || r.upsertedCount) modified++;
+    if (b.unsubscribedEmail === true)             reactivatedUnsubscribed++;
+    if (b.dailyEmailCleanedAt)                    reactivatedCleaned++;
+  }
+
+  return {
+    processed: emails.length,
+    modified,
+    reactivatedUnsubscribed,
+    reactivatedCleaned,
+    emails
+  };
+}
+
+// Daily auto-protection at 00:30 UTC (≈ 02:30 Lausanne in summer, 01:30 in
+// winter — comfortably before the daily-email job at 01:00 UTC and the
+// afternoon one at 12:00 UTC).
+schedule.scheduleJob('30 0 * * *', async () => {
+  try {
+    const r = await protectTopSpenders(100);
+    console.log(`👑 [VIP-PROTECT] processed=${r.processed} modified=${r.modified} reactivatedUnsub=${r.reactivatedUnsubscribed} reactivatedCleaned=${r.reactivatedCleaned}`);
+  } catch (e) {
+    console.error('👑 [VIP-PROTECT] Fatal:', e.message);
+  }
+});
+console.log('👑 [VIP-PROTECT] Scheduled at 02:30 Lausanne (00:30 UTC)');
+
+app.post("/api/admin/protect-vip-spenders", requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.max(1, Math.min(1000, Number(req.body?.limit) || 100));
+    const r = await protectTopSpenders(limit);
+    res.json({ success: true, ...r });
+  } catch (e) {
+    console.error('protect-vip-spenders error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// =====================================================================
+// Legacy VIP import — Feature C
+// =====================================================================
+// Accepts a list of emails (typically from a pre-Explodely customer export)
+// and upserts each as `isLegacyVip`, eligible for the daily email loop.
+// Like the VIP protection above, this overrides explicit unsubscribes.
+// =====================================================================
+app.post("/api/admin/import-legacy-vips", requireAdmin, async (req, res) => {
+  try {
+    // Accepts EITHER:
+    //   { emails: ["a@b.com", "c@d.com"] }            ← simple list
+    //   { entries: [{ email, amount }, ...], currency: "EUR" } ← with spend
+    const database = client.db('MyAICrush');
+    const users = database.collection('users');
+    const currency = (req.body?.currency || 'EUR').toUpperCase();
+
+    const rawEntries = [];
+    if (Array.isArray(req.body?.entries)) {
+      for (const r of req.body.entries) {
+        if (r && typeof r === 'object') rawEntries.push({ email: r.email, amount: r.amount });
+        else if (typeof r === 'string') rawEntries.push({ email: r, amount: null });
+      }
+    }
+    if (Array.isArray(req.body?.emails)) {
+      for (const e of req.body.emails) {
+        if (typeof e === 'string') rawEntries.push({ email: e, amount: null });
+        else if (e && typeof e === 'object') rawEntries.push({ email: e.email, amount: e.amount });
+      }
+    }
+
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = [];
+    const cleanedMap = new Map();
+    for (const r of rawEntries) {
+      const email = String(r.email || '').trim().toLowerCase();
+      if (!email) continue;
+      if (!EMAIL_RE.test(email)) { invalid.push(email); continue; }
+      // Sum amounts if the same email appears twice (defensive).
+      const amount = Number.isFinite(Number(r.amount)) ? Number(r.amount) : null;
+      const prev = cleanedMap.get(email);
+      if (prev) {
+        if (amount !== null) prev.amount = (prev.amount || 0) + amount;
+      } else {
+        cleanedMap.set(email, { email, amount });
+      }
+    }
+    const cleaned = [...cleanedMap.values()];
+    if (!cleaned.length) {
+      return res.json({ success: true, processed: 0, created: 0, updated: 0, invalid });
+    }
+
+    const emailsOnly = cleaned.map(c => c.email);
+    const existing = await users.find({ email: { $in: emailsOnly } }, { projection: { email: 1 } }).toArray();
+    const existingSet = new Set(existing.map(u => u.email));
+    const now = new Date();
+    let created = 0, updated = 0;
+    for (const { email, amount } of cleaned) {
+      const setFields = {
+        dailyEmailEligible: true,
+        unsubscribedEmail: false,
+        isLegacyVip: true,
+        legacyImportedAt: now
+      };
+      if (amount !== null && amount !== undefined) {
+        setFields.legacyAmount = Math.round(amount * 100) / 100;
+        setFields.legacyAmountCurrency = currency;
+      }
+      const r = await users.updateOne(
+        { email },
+        {
+          $set: setFields,
+          $unset: { dailyEmailCleanedAt: "" },
+          $setOnInsert: {
+            email,
+            createdAt: now,
+            accountSource: 'legacy-vip-import',
+            dailyEmailEligibleSince: now
+          }
+        },
+        { upsert: true }
+      );
+      if (r.upsertedCount) created++;
+      else if (!existingSet.has(email)) created++;
+      else updated++;
+    }
+
+    res.json({ success: true, processed: cleaned.length, created, updated, invalid, currency });
+  } catch (e) {
+    console.error('import-legacy-vips error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// =====================================================================
+// Character ranking — Feature A
+// =====================================================================
+// Returns the list of visible characters ordered by their 30d premium
+// conversion %, using the **Wilson 95% lower-bound** as the sort score.
+// Wilson naturally penalises low-volume signals (e.g. 3/9 → ~12% LB)
+// while preserving solid converters (e.g. 17/38 → ~30% LB), so we don't
+// need an arbitrary min-users threshold.
+//
+// Characters with `new: true` in characters.json (optionally with
+// `newUntil: "YYYY-MM-DD"`) are pinned at the very top regardless of
+// stats — this lets us give freshly-added characters visibility for a
+// controlled window without polluting the ranking after.
+//
+// Cached in-memory for 1h to keep this cheap (called from the public
+// index.html grid builder on every page load).
+// =====================================================================
+const CHARACTER_RANKING_TTL_MS = 60 * 60 * 1000;
+let characterRankingCache = null; // { computedAt, ranking }
+
+// Wilson 95% lower confidence bound of a Bernoulli rate, given k successes
+// out of n trials. Returns 0 when n=0. Output is a proportion in [0, 1].
+function wilsonLowerBound(k, n, z = 1.96) {
+  if (!n || n <= 0) return 0;
+  const phat = k / n;
+  const z2 = z * z;
+  const denom = 1 + z2 / n;
+  const center = phat + z2 / (2 * n);
+  const margin = z * Math.sqrt((phat * (1 - phat) / n) + (z2 / (4 * n * n)));
+  return Math.max(0, (center - margin) / denom);
+}
+
+// Reads the manual "pinned new" list from characters.json.
+// A character is considered pinned if `new === true` and (no newUntil OR
+// newUntil parses to a date >= today). Returns a Set of character names.
+function loadPinnedNewCharacters() {
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, 'characters.json'), 'utf-8');
+    const all = JSON.parse(raw);
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const pinned = new Set();
+    for (const c of all) {
+      if (!c || c.new !== true) continue;
+      if (c.newUntil) {
+        const d = new Date(c.newUntil);
+        if (!isFinite(d.getTime()) || d < today) continue; // expired
+      }
+      if (c.name) pinned.add(c.name);
+    }
+    return pinned;
+  } catch (e) {
+    console.warn('[characters-ranking] could not read characters.json:', e.message);
+    return new Set();
+  }
+}
+
+async function computeCharacterRanking() {
+  const database = client.db('MyAICrush');
+  const users = database.collection('users');
+  const chats = database.collection('chat_messages');
+
+  const d30 = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+
+  const [perCharAgg, allPremiumEmails, pinnedNew] = await Promise.all([
+    chats.aggregate([
+      { $match: { createdAt: { $gte: d30 }, role: 'user' } },
+      { $group: { _id: { character: '$character', email: '$email' } } },
+      { $group: { _id: '$_id.character', uniqueUsers: { $sum: 1 }, emails: { $addToSet: '$_id.email' } } }
+    ]).toArray(),
+    users.distinct('email', { explodelyPremium: true }).then(arr => new Set(arr)),
+    Promise.resolve(loadPinnedNewCharacters())
+  ]);
+
+  const ranking = perCharAgg.map(c => {
+    const premiumCnt = c.emails.reduce((n, e) => n + (allPremiumEmails.has(e) ? 1 : 0), 0);
+    const conversionPct = c.uniqueUsers > 0 ? (premiumCnt / c.uniqueUsers) * 100 : 0;
+    const wilsonLB = wilsonLowerBound(premiumCnt, c.uniqueUsers);
+    return {
+      character: c._id,
+      uniqueUsers30d: c.uniqueUsers,
+      premiumUsers30d: premiumCnt,
+      conversionPct: Math.round(conversionPct * 10) / 10,
+      wilsonLBPct: Math.round(wilsonLB * 1000) / 10, // proportion → percent, 1 decimal
+      isNew: pinnedNew.has(c._id)
+    };
+  });
+
+  // Sort:
+  //   1. Pinned `new: true` characters first (manual override — gives
+  //      freshly-added characters visibility for the curated window)
+  //   2. Among each group, wilsonLB DESC, uniqueUsers DESC as tiebreaker
+  ranking.sort((a, b) => {
+    if (a.isNew !== b.isNew) return a.isNew ? -1 : 1;
+    if (b.wilsonLBPct !== a.wilsonLBPct) return b.wilsonLBPct - a.wilsonLBPct;
+    return b.uniqueUsers30d - a.uniqueUsers30d;
+  });
+
+  return ranking;
+}
+
+app.get('/api/characters-ranking', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (characterRankingCache && (now - characterRankingCache.computedAt) < CHARACTER_RANKING_TTL_MS) {
+      return res.json({ cached: true, computedAt: new Date(characterRankingCache.computedAt).toISOString(), ranking: characterRankingCache.ranking });
+    }
+    const ranking = await computeCharacterRanking();
+    characterRankingCache = { computedAt: now, ranking };
+    res.json({ cached: false, computedAt: new Date(now).toISOString(), ranking });
+  } catch (e) {
+    console.error('characters-ranking error:', e);
+    res.status(500).json({ ranking: [], error: e.message });
+  }
+});
+
 app.get("/api/admin/email-campaigns", requireAdmin, async (req, res) => {
   try {
     const database = client.db('MyAICrush');

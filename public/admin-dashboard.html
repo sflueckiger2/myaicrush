@@ -638,12 +638,118 @@
         </div>
       </div>
 
+      <!-- VIP actions -->
+      <div class="section">
+        <h2>👑 VIP actions</h2>
+        <div class="table-wrap" style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <button id="btn-protect-vips" class="btn-detail" style="padding:8px 16px;font-size:0.82rem;">🛡️ Re-protect top 100 spenders</button>
+          <button id="btn-import-legacy" class="btn-detail" style="padding:8px 16px;font-size:0.82rem;">📥 Import legacy VIPs</button>
+          <span id="vip-action-status" style="color:var(--dim);font-size:0.78rem;"></span>
+        </div>
+        <p style="color:var(--dim);font-size:0.72rem;padding:6px 4px;line-height:1.4;">
+          <b>Re-protect</b>: forces <code>dailyEmailEligible</code> back to <code>true</code> on your top 100 lifetime spenders (overrides unsubscribes / auto-cleans). Runs daily at 02:30 Lausanne automatically.
+          <br><b>Import legacy VIPs</b>: paste a list of emails (one per line) from pre-Explodely customers — they'll be added to the daily email list and tagged <code>isLegacyVip</code>.
+        </p>
+      </div>
+
       <p style="color:var(--dim);font-size:0.72rem;text-align:center;padding-top:12px;">
         Phase 1 dashboard · Phase 2 (UTM/fbclid capture, per-campaign CAC/ROAS) coming next.
       </p>
     `;
 
     drawTimeseriesChart(d.timeseries);
+
+    // Wire VIP action buttons
+    const btnProtect = document.getElementById("btn-protect-vips");
+    const btnImport = document.getElementById("btn-import-legacy");
+    if (btnProtect) btnProtect.addEventListener("click", protectVipSpenders);
+    if (btnImport)  btnImport.addEventListener("click", openLegacyImportModal);
+  }
+
+  // =====================================================================
+  // VIP protection + legacy import (Features B & C)
+  // =====================================================================
+  async function protectVipSpenders() {
+    const status = document.getElementById("vip-action-status");
+    const btn = document.getElementById("btn-protect-vips");
+    if (!confirm("Re-protect the top 100 spenders? This will reset dailyEmailEligible=true and unsubscribedEmail=false, even for people who explicitly unsubscribed.")) return;
+    btn.disabled = true;
+    status.textContent = "⏳ Re-protecting…";
+    status.style.color = "var(--dim)";
+    try {
+      const res = await fetch("/api/admin/protect-vip-spenders", {
+        method: "POST",
+        headers: { "x-admin-email": adminEmail, "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 100 })
+      });
+      const d = await res.json();
+      if (!res.ok || !d.success) {
+        status.textContent = "❌ " + (d.error || "Failed");
+        status.style.color = "var(--red)";
+      } else {
+        status.textContent = `✅ ${d.processed} processed · ${d.modified} updated · ${d.reactivatedUnsubscribed} unsubscribed re-activated · ${d.reactivatedCleaned} auto-cleaned re-activated`;
+        status.style.color = "var(--green)";
+      }
+    } catch (e) {
+      status.textContent = "❌ " + e.message;
+      status.style.color = "var(--red)";
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function openLegacyImportModal() {
+    // Reuse the existing sales-modal shell
+    const modal = document.getElementById("sales-modal");
+    const body  = document.getElementById("sales-modal-body");
+    const title = document.getElementById("sales-modal-title");
+    const meta  = document.getElementById("sales-modal-meta");
+    title.textContent = "Import legacy VIPs";
+    meta.textContent  = "Paste one email per line. They'll be added to the daily email list and tagged isLegacyVip.";
+
+    body.innerHTML = `
+      <textarea id="legacy-emails-input" rows="14" style="width:100%;background:rgba(0,0,0,0.4);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:monospace;font-size:0.85rem;resize:vertical;" placeholder="alice@example.com&#10;bob@example.com&#10;charlie@example.com"></textarea>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+        <button id="legacy-submit" class="btn-detail" style="padding:8px 16px;font-size:0.82rem;">📥 Import</button>
+        <span id="legacy-status" style="color:var(--dim);font-size:0.78rem;"></span>
+      </div>
+    `;
+    modal.classList.add("show");
+
+    document.getElementById("legacy-submit").addEventListener("click", async () => {
+      const ta = document.getElementById("legacy-emails-input");
+      const status = document.getElementById("legacy-status");
+      const submitBtn = document.getElementById("legacy-submit");
+      const raw = (ta.value || "").split(/[\r\n,;\s]+/).map(e => e.trim()).filter(Boolean);
+      if (!raw.length) {
+        status.textContent = "⚠️ Please paste at least one email.";
+        status.style.color = "var(--yellow)";
+        return;
+      }
+      submitBtn.disabled = true;
+      status.textContent = `⏳ Importing ${raw.length} email${raw.length>1?"s":""}…`;
+      status.style.color = "var(--dim)";
+      try {
+        const res = await fetch("/api/admin/import-legacy-vips", {
+          method: "POST",
+          headers: { "x-admin-email": adminEmail, "Content-Type": "application/json" },
+          body: JSON.stringify({ emails: raw })
+        });
+        const d = await res.json();
+        if (!res.ok || !d.success) {
+          status.textContent = "❌ " + (d.error || "Failed");
+          status.style.color = "var(--red)";
+        } else {
+          status.textContent = `✅ ${d.processed} processed · ${d.created} created · ${d.updated} updated${d.invalid?.length ? ` · ${d.invalid.length} invalid (${d.invalid.slice(0,3).join(", ")}${d.invalid.length>3?"…":""})` : ""}`;
+          status.style.color = "var(--green)";
+        }
+      } catch (e) {
+        status.textContent = "❌ " + e.message;
+        status.style.color = "var(--red)";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
   }
 
   function renderFunnelStep(name, value, total, pct) {

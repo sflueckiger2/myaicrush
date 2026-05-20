@@ -3,6 +3,41 @@ import { initializeUIEvents, setupBackButton, generateChatOptions } from './ui.j
 import { loadCharacters } from './data.js';
 import { openProfileModal, closeProfileModal } from './profile.js';
 
+// Re-order characters by 30d premium conversion rate (from
+// /api/characters-ranking). Characters flagged as `isNew` (insufficient
+// sample size) are floated to the top so they're not penalized by
+// near-zero conversion stats. On any failure (network, timeout, server
+// error) we fall back to the original order — never block the grid.
+async function applyCharacterRanking(characters) {
+    try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 2500);
+        const r = await fetch('/api/characters-ranking', { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!r.ok) return characters;
+        const { ranking } = await r.json();
+        if (!Array.isArray(ranking) || !ranking.length) return characters;
+
+        // Build a rank index by character name. Unranked characters keep
+        // their original relative order at the end of the list.
+        const rankIndex = new Map();
+        ranking.forEach((row, i) => rankIndex.set(row.character, i));
+
+        const ranked = [];
+        const unranked = [];
+        for (const c of characters) {
+            if (rankIndex.has(c.name)) ranked.push(c);
+            else unranked.push(c);
+        }
+        ranked.sort((a, b) => rankIndex.get(a.name) - rankIndex.get(b.name));
+        console.log('🏆 Characters re-ordered by /api/characters-ranking (' + ranked.length + ' ranked, ' + unranked.length + ' unranked)');
+        return [...ranked, ...unranked];
+    } catch (e) {
+        console.warn('⚠️ characters-ranking failed, keeping default order:', e.message || e);
+        return characters;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const messages = document.getElementById('messages');
     const sendBtn = document.getElementById('send-btn');
@@ -30,8 +65,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // 🏆 Reorder characters by 30d premium conversion rate. New characters
+    // (<30 unique users in last 30d) are floated to the top to give them a
+    // visibility boost. Failures here are silently swallowed — we fall back
+    // to the default order from characters.json.
+    const orderedCharacters = await applyCharacterRanking(characters);
+
     // ✅ Afficher les options de chat avec les bonnes bannières
-    generateChatOptions(characters, isPremium);
+    generateChatOptions(orderedCharacters, isPremium);
 
     // Cleanup: remove any leftover conv-hide-style from previous navigation
     const staleStyle = document.getElementById("conv-hide-style");
