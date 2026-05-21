@@ -3280,10 +3280,11 @@ vapi-widget {
   background: #fff;
 }
 
-/* Média */
+/* Média — slightly smaller than 400 to keep borderline-quality clips
+   from being upscaled into visible pixelation. */
 .story-media {
   width: 100%;
-  max-width: 400px;
+  max-width: 360px;
   aspect-ratio: 9 / 16;    /* format story */
   object-fit: cover;       /* exactement comme Instagram */
   border-radius: 20px;     /* bords arrondis */
@@ -3294,7 +3295,7 @@ vapi-widget {
 
 .story-media-video {
   width: 100%;
-  max-width: 400px;
+  max-width: 360px;
   aspect-ratio: 9 / 16;
   object-fit: cover;
   border-radius: 20px;

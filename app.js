@@ -1970,6 +1970,75 @@ app.get('/characters.json', (req, res) => {
 // AND bump STORY_CACHE_KEY in public/index.html (v3 -> v4 -> ...) so clients
 // invalidate their 24h localStorage cache and refetch immediately.
 const STORY_ROTATION_SALT = 2; // bump to force a global rotation NOW
+// ---------------------------------------------------------------------------
+// Media dimension probing (lazy, mtime-invalidated in-memory cache).
+//
+// `sharp().metadata()` handles all our still images (webp/jpg/png).
+// For mp4/webm/mov we parse the first ~1MB of the file looking for the
+// `tkhd` (track header) box and read width/height from the last 8 bytes
+// of that box as 16.16 fixed-point. This is enough to discriminate
+// portrait vs landscape without pulling in ffprobe.
+// ---------------------------------------------------------------------------
+const sharpLib = require('sharp');
+const mediaDimsCache = new Map(); // absPath -> { width, height, mtimeMs }
+
+async function readMp4Dimensions(absPath) {
+  let fd;
+  try {
+    fd = await require('fs').promises.open(absPath, 'r');
+    const buf = Buffer.alloc(1024 * 1024);
+    const { bytesRead } = await fd.read(buf, 0, buf.length, 0);
+    // Scan for the ASCII tag "tkhd" then back up 4 bytes to read the
+    // enclosing box size. The width/height are the last 8 bytes of the
+    // box, regardless of the v0/v1 fixed-or-extended duration layout.
+    for (let i = 0; i < bytesRead - 16; i++) {
+      if (buf[i] === 0x74 && buf[i + 1] === 0x6b && buf[i + 2] === 0x68 && buf[i + 3] === 0x64) {
+        const boxStart = i - 4;
+        if (boxStart < 0) continue;
+        const boxSize = buf.readUInt32BE(boxStart);
+        if (boxSize < 84 || boxStart + boxSize > bytesRead) continue;
+        const w = buf.readUInt32BE(boxStart + boxSize - 8) / 65536;
+        const h = buf.readUInt32BE(boxStart + boxSize - 4) / 65536;
+        if (w > 0 && h > 0) return { width: Math.round(w), height: Math.round(h) };
+      }
+    }
+  } catch (_) {
+    // ignore — return null below
+  } finally {
+    if (fd) try { await fd.close(); } catch (_) {}
+  }
+  return null;
+}
+
+async function getMediaDimensions(absPath) {
+  try {
+    const stat = await require('fs').promises.stat(absPath);
+    const cached = mediaDimsCache.get(absPath);
+    if (cached && cached.mtimeMs === stat.mtimeMs) return cached;
+
+    let dims = null;
+    if (/\.(mp4|webm|mov)$/i.test(absPath)) {
+      dims = await readMp4Dimensions(absPath);
+    } else if (/\.(webp|jpg|jpeg|png|gif)$/i.test(absPath)) {
+      const meta = await sharpLib(absPath).metadata();
+      if (meta && meta.width && meta.height) dims = { width: meta.width, height: meta.height };
+    }
+    if (dims) {
+      const entry = { ...dims, mtimeMs: stat.mtimeMs };
+      mediaDimsCache.set(absPath, entry);
+      return entry;
+    }
+  } catch (_) { /* ignore */ }
+  return null;
+}
+
+// Accept tall portraits within roughly 9:16 ±. Rejects 1:1, 4:3, 16:9.
+//   9:16 = 1.78 (target)
+//   2:3  = 1.50 (still OK as "story")
+//   1:2  = 2.00 (a bit too tall but allow up to here)
+const STORY_RATIO_MIN = 1.45;
+const STORY_RATIO_MAX = 2.05;
+
 app.get('/api/stories', async (req, res) => {
   const fsP = require('fs').promises;
   const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
@@ -2003,6 +2072,21 @@ app.get('/api/stories', async (req, res) => {
       continue; // <girl>3 folder doesn't exist for this character
     }
 
+    if (!allMedia.length) continue;
+
+    // Drop landscape / square media. If we cannot probe a given file we
+    // trust it (better to occasionally include than to make a character
+    // appear empty because of a parser miss).
+    // Parallel probe per-character so first cold call doesn't serialise
+    // 50+ disk reads.
+    const probes = await Promise.all(allMedia.map(async (relPath) => {
+      const abs = path.join(__dirname, 'public', relPath);
+      const d = await getMediaDimensions(abs);
+      if (!d) return relPath;
+      const ratio = d.height / d.width;
+      return (ratio >= STORY_RATIO_MIN && ratio <= STORY_RATIO_MAX) ? relPath : null;
+    }));
+    allMedia = probes.filter(Boolean);
     if (!allMedia.length) continue;
 
     // Deterministic daily shuffle (Mulberry32-ish from day+girl).
