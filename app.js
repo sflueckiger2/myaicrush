@@ -1969,7 +1969,7 @@ app.get('/characters.json', (req, res) => {
 // folder, or to swap mid-day for marketing reasons): bump STORY_ROTATION_SALT
 // AND bump STORY_CACHE_KEY in public/index.html (v3 -> v4 -> ...) so clients
 // invalidate their 24h localStorage cache and refetch immediately.
-const STORY_ROTATION_SALT = 1; // bump to force a global rotation NOW
+const STORY_ROTATION_SALT = 2; // bump to force a global rotation NOW
 app.get('/api/stories', async (req, res) => {
   const fsP = require('fs').promises;
   const mediaExts = /\.(webp|jpg|jpeg|png|gif|mp4|webm|mov)$/i;
