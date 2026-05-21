@@ -2014,12 +2014,14 @@ app.get('/api/stories', async (req, res) => {
     const count = 1 + Math.floor(rand() * 3);
     const media = shuffled.slice(0, Math.min(shuffled.length, count));
 
-    // Avatar: prefer backgroundPhoto if it's a still image, else the first
-    // still image among collected media, else fall back to the original
-    // photoPath.
+    // Avatar: prefer backgroundPhoto if it's a still image AND still exists
+    // in the freshly-listed *3 folder (characters.json can drift when files
+    // are renamed, leaving a stale reference that 404s in the browser).
+    // Falls back to the first still image among collected media, else the
+    // original photoPath.
     const bgPhoto = char.backgroundPhoto || '';
     let avatar = bgPhoto;
-    if (!avatar || !imageExts.test(avatar)) {
+    if (!avatar || !imageExts.test(avatar) || !allMedia.includes(avatar)) {
       avatar = allMedia.find(m => imageExts.test(m)) || photoPath;
     }
 
