@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
           planDiscount.textContent = "➡️ Tokens";
         } else if (planText.textContent.trim() === "Premium") {
           planText.textContent = "Premium";
-          planDiscount.textContent = "-83%";
+          planDiscount.textContent = "-50%";
         }
         bannerObserver.disconnect();
       }
@@ -339,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
           planDiscount.textContent = "➡️ Tokens";
         } else if (planText.textContent.trim() === "Premium") {
           planText.textContent = "Premium";
-          planDiscount.textContent = "-83%";
+          planDiscount.textContent = "-50%";
         }
         bannerObserver.disconnect();
       }

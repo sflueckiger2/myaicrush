@@ -1438,6 +1438,7 @@ app.post("/webhook/explodely", async (req, res) => {
     };
 
     const premiumId = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "");
+    const quarterlyId = String(process.env.EXPLODELY_QUARTERLY_PRODUCT_ID || "919733369");
     const annualId = String(process.env.EXPLODELY_ANNUAL_PRODUCT_ID || "");
     const lifetimeId = String(process.env.EXPLODELY_LIFETIME_PRODUCT_ID || "887584369");
 
@@ -1464,6 +1465,7 @@ app.post("/webhook/explodely", async (req, res) => {
       }
 
       const isPremiumProduct = productId === premiumId;
+      const isQuarterlyProduct = productId === quarterlyId;
       const isAnnualProduct = productId === annualId;
       const isLifetimeProduct = productId === lifetimeId;
       const tokensAmount = tokenMapping[productId];
@@ -1557,6 +1559,30 @@ app.post("/webhook/explodely", async (req, res) => {
           continue;
         }
 
+        if (isQuarterlyProduct) {
+          // Quarterly plan ($29 / 3 months): NO bonus tokens (same rule as monthly — tokens
+          // reserved for annual/lifetime to keep the upsell ladder clean).
+          await users.updateOne(
+            { email },
+            {
+              $set: {
+                explodelyPremium: true,
+                explodelyMainOrderId: orderId,
+                explodelyPlan: "quarterly",
+                lastBonusAt: new Date(),
+                bonusSeenByUser: false
+              },
+              $setOnInsert: buildUserDefaultsFromExplodely(email),
+            },
+            { upsert: true }
+          );
+
+          await explodelyEvents.insertOne({ ...eventKey, action: "quarterly_premium_on", bonusSkipped: true, createdAt: new Date(), ...typoMatchField });
+          console.log(`✅ Premium Trimestriel Explodely activé pour ${email} (pas de bonus jetons sur le trimestriel) (orderId=${orderId})`);
+          await attributeSaleToCampaign(database, email, { isPremium: true, label: "premium_quarterly", productId, orderId });
+          continue;
+        }
+
         if (tokensAmount) {
           const toAdd = Number(tokensAmount);
           if (!Number.isFinite(toAdd) || toAdd <= 0) {
@@ -1587,7 +1613,7 @@ app.post("/webhook/explodely", async (req, res) => {
 
       // ---- REFUND-LIKE ----
       if (isRefundLike) {
-        if (isAnnualProduct || isPremiumProduct || isLifetimeProduct) {
+        if (isAnnualProduct || isPremiumProduct || isQuarterlyProduct || isLifetimeProduct) {
           const currentUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
 
           if (currentUser && currentUser.explodelyMainOrderId && currentUser.explodelyMainOrderId !== orderId) {
@@ -1605,8 +1631,16 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          const label = isLifetimeProduct ? "lifetime_premium_off" : (isAnnualProduct ? "annual_premium_off" : "premium_off");
-          const planLabel = isLifetimeProduct ? "lifetime" : (isAnnualProduct ? "annual" : "monthly");
+          const label = isLifetimeProduct
+            ? "lifetime_premium_off"
+            : (isAnnualProduct
+                ? "annual_premium_off"
+                : (isQuarterlyProduct ? "quarterly_premium_off" : "premium_off"));
+          const planLabel = isLifetimeProduct
+            ? "lifetime"
+            : (isAnnualProduct
+                ? "annual"
+                : (isQuarterlyProduct ? "quarterly" : "monthly"));
           await explodelyEvents.insertOne({ ...eventKey, action: label, createdAt: new Date() });
           console.log(`⛔ Premium Explodely désactivé (refund-like) pour ${email} (orderId=${orderId}, type=${planLabel})`);
           continue;
@@ -1658,7 +1692,7 @@ app.post("/webhook/explodely", async (req, res) => {
           console.log(`ℹ️ Cancel event sur lifetime ignoré (lifetime ne peut être que remboursé) pour ${email} (orderId=${orderId})`);
           continue;
         }
-        if (isAnnualProduct || isPremiumProduct) {
+        if (isAnnualProduct || isPremiumProduct || isQuarterlyProduct) {
           const currentUser = await users.findOne({ email }, { projection: { explodelyMainOrderId: 1, explodelyPlan: 1 } });
 
           if (currentUser && currentUser.explodelyMainOrderId && currentUser.explodelyMainOrderId !== orderId && currentUser.explodelyPlan === "annual") {
@@ -1667,7 +1701,12 @@ app.post("/webhook/explodely", async (req, res) => {
             continue;
           }
 
-          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          // Keep access until the end of the current billing period.
+          // Monthly = 30 days, quarterly = 90 days, annual fallback also 30 here
+          // (matches the previous behaviour; Explodely's cancel webhook always
+          // fires near period end so this is a generous floor).
+          const graceDays = isQuarterlyProduct ? 90 : 30;
+          const expiresAt = new Date(Date.now() + graceDays * 24 * 60 * 60 * 1000);
           await users.updateOne(
             { email },
             {
@@ -1677,7 +1716,9 @@ app.post("/webhook/explodely", async (req, res) => {
             { upsert: true }
           );
 
-          const label = isAnnualProduct ? "annual_cancel_keep_access" : "monthly_cancel_keep_access";
+          const label = isAnnualProduct
+            ? "annual_cancel_keep_access"
+            : (isQuarterlyProduct ? "quarterly_cancel_keep_access" : "monthly_cancel_keep_access");
           await explodelyEvents.insertOne({ ...eventKey, action: label, accessUntil: expiresAt, createdAt: new Date() });
           console.log(`⏸️ Abo Explodely annulé pour ${email}, accès maintenu jusqu'au ${expiresAt.toISOString().split("T")[0]} (orderId=${orderId})`);
           continue;
@@ -6609,14 +6650,22 @@ async function supportCancelSubscription(email, explicitOrderId) {
     console.log(`📌 [Support] Using explicit order ID from customer: ${mainOrderId}`);
   }
 
-  // Verify the stored mainOrderId is for the PREMIUM product, not tokens
-  const PREMIUM_PRODUCT_ID = process.env.EXPLODELY_PREMIUM_PRODUCT_ID || "22705532";
+  // Verify the stored mainOrderId is for a subscription product (premium
+  // monthly, quarterly, or annual), not a one-off tokens purchase.
+  const PREMIUM_PRODUCT_ID   = process.env.EXPLODELY_PREMIUM_PRODUCT_ID   || "22705532";
+  const QUARTERLY_PRODUCT_ID = process.env.EXPLODELY_QUARTERLY_PRODUCT_ID || "919733369";
+  const ANNUAL_PRODUCT_ID    = process.env.EXPLODELY_ANNUAL_PRODUCT_ID    || "";
+  const SUBSCRIPTION_PRODUCT_IDS = new Set(
+    [PREMIUM_PRODUCT_ID, QUARTERLY_PRODUCT_ID, ANNUAL_PRODUCT_ID]
+      .filter(Boolean)
+      .map(String)
+  );
   const explodelyEvents = database.collection("explodely_events");
 
   if (mainOrderId && !explicitOrderId) {
     const storedEvent = await explodelyEvents.findOne({ orderId: mainOrderId, email: normalizedEmail });
-    if (storedEvent && storedEvent.productId && String(storedEvent.productId) !== String(PREMIUM_PRODUCT_ID)) {
-      console.log(`⚠️ [Support] Stored mainOrderId ${mainOrderId} is for product ${storedEvent.productId} (tokens), not premium ${PREMIUM_PRODUCT_ID}. Looking for premium order...`);
+    if (storedEvent && storedEvent.productId && !SUBSCRIPTION_PRODUCT_IDS.has(String(storedEvent.productId))) {
+      console.log(`⚠️ [Support] Stored mainOrderId ${mainOrderId} is for product ${storedEvent.productId} (tokens), not a subscription. Looking for subscription order...`);
       mainOrderId = null;
     }
   }
@@ -6625,13 +6674,15 @@ async function supportCancelSubscription(email, explicitOrderId) {
     const allSaleEvents = await explodelyEvents.find({ email: normalizedEmail, eventType: "sale" }).sort({ createdAt: -1 }).limit(10).toArray();
     console.log(`🔍 [Support] All sale events for ${normalizedEmail}:`, JSON.stringify(allSaleEvents.map(e => ({ orderId: e.orderId, productId: e.productId, action: e.action, eventType: e.eventType }))));
 
-    const premiumSaleEvent = allSaleEvents.find(e => String(e.productId) === String(PREMIUM_PRODUCT_ID));
+    const premiumSaleEvent = allSaleEvents.find(e => SUBSCRIPTION_PRODUCT_IDS.has(String(e.productId)));
     if (premiumSaleEvent && premiumSaleEvent.orderId) {
       mainOrderId = premiumSaleEvent.orderId;
     }
 
     if (!mainOrderId) {
-      const premiumOnEvent = allSaleEvents.find(e => e.action === "premium_on");
+      const premiumOnEvent = allSaleEvents.find(
+        e => e.action === "premium_on" || e.action === "quarterly_premium_on" || e.action === "annual_premium_on"
+      );
       if (premiumOnEvent && premiumOnEvent.orderId) {
         mainOrderId = premiumOnEvent.orderId;
       }
@@ -6654,7 +6705,10 @@ async function supportCancelSubscription(email, explicitOrderId) {
       try { d = JSON.parse(rawText); } catch { d = { error: `Non-JSON response: ${rawText.substring(0, 200)}` }; }
       if (!d.error) {
         cancelledExplodely = true;
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        // Grace period until end of current billing cycle: 90d for quarterly, 30d otherwise.
+        const isQuarterlyUser = user.explodelyPlan === "quarterly";
+        const graceDays = isQuarterlyUser ? 90 : 30;
+        const expiresAt = new Date(Date.now() + graceDays * 24 * 60 * 60 * 1000);
         accessContinuesUntil = expiresAt.toISOString().split("T")[0];
         await users.updateOne({ _id: user._id }, { $set: { premiumCancelledAt: new Date(), explodely_expiresAt: expiresAt } });
         const explodelyEvents = database.collection("explodely_events");
@@ -8642,9 +8696,10 @@ app.get("/api/admin/email-campaigns/:id/sales", requireAdmin, async (req, res) =
     }).sort({ createdAt: 1 }).toArray();
 
     const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
-    const lifetimeId = String(process.env.EXPLODELY_LIFETIME_PRODUCT_ID || '887584369');
-    const annualId   = String(process.env.EXPLODELY_ANNUAL_PRODUCT_ID  || '');
-    const premiumId  = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID || '');
+    const lifetimeId  = String(process.env.EXPLODELY_LIFETIME_PRODUCT_ID  || '887584369');
+    const annualId    = String(process.env.EXPLODELY_ANNUAL_PRODUCT_ID    || '');
+    const premiumId   = String(process.env.EXPLODELY_PREMIUM_PRODUCT_ID   || '');
+    const quarterlyId = String(process.env.EXPLODELY_QUARTERLY_PRODUCT_ID || '919733369');
     const tokenIds = {
       [String(process.env.EXPLODELY_TOKEN_10_ID  || '')]: 10,
       [String(process.env.EXPLODELY_TOKEN_50_ID  || '')]: 50,
@@ -8663,10 +8718,11 @@ app.get("/api/admin/email-campaigns/:id/sales", requireAdmin, async (req, res) =
 
       const productId = String(ev.productId || '');
       let label = '', usd = 0;
-      if (productId === lifetimeId)       { label = 'lifetime';        usd = 174; }
-      else if (productId === annualId)    { label = 'annual';          usd = 59;  }
-      else if (productId === premiumId)   { label = 'premium_monthly'; usd = 29;  }
-      else if (tokenIds[productId])       { const t = tokenIds[productId]; label = `tokens_${t}`; usd = getExplodelyProductPriceUSD({ tokensAmount: t }); }
+      if (productId === lifetimeId)        { label = 'lifetime';          usd = 174; }
+      else if (productId === annualId)     { label = 'annual';            usd = 59;  }
+      else if (productId === quarterlyId)  { label = 'premium_quarterly'; usd = 29;  }
+      else if (productId === premiumId)    { label = 'premium_monthly';   usd = 29;  }
+      else if (tokenIds[productId])        { const t = tokenIds[productId]; label = `tokens_${t}`; usd = getExplodelyProductPriceUSD({ tokensAmount: t }); }
       else continue;
       if (usd <= 0) continue;
 

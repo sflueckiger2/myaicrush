@@ -29,16 +29,16 @@ document.addEventListener("DOMContentLoaded", () => {
       "hero-hook-4": "🔞 Mode sans censure.",
       "hero-hook-5": "💌 Elle réagit aux tiennes.",
       "hero-hook-6": "👑 Toutes les IA débloquées.",
-      "plan-monthly-label": "Mensuel",
-      "plan-monthly-per": "/mois",
-      "plan-monthly-billed": "Facturé mensuellement",
+      "plan-monthly-label": "Trimestriel",
+      "plan-monthly-per": "/3 mois",
+      "plan-monthly-billed": "Facturé tous les 3 mois",
       "plan-monthly-tokens": "Pas de jetons bonus",
-      "plan-monthly-btn": "Choisir mensuel",
+      "plan-monthly-btn": "Choisir trimestriel",
       "plan-annual-badge": "🔥 Meilleur prix",
       "plan-annual-label": "Annuel",
-      "plan-annual-old-price": "29 $/mois",
+      "plan-annual-old-price": "9,67 $/mois",
       "plan-annual-per": "/mois",
-      "plan-annual-save": "ÉCONOMISE 83%",
+      "plan-annual-save": "ÉCONOMISE 50%",
       "plan-annual-monthly": "Facturé 59 $/an",
       "plan-annual-tokens": "🎁 +30 jetons / mois",
       "plan-annual-btn": "🔓 ACCÈS ANNUEL",
@@ -48,18 +48,18 @@ document.addEventListener("DOMContentLoaded", () => {
       "plan-lifetime-sub": "Accès pour toujours · Aucun renouvellement",
       "plan-lifetime-tokens": "🎁 +100 jetons / mois",
       "plan-lifetime-btn": "💎 ACCÈS À VIE",
-      "cta-annual-mid": "👑 Accès annuel — 59 $/an (économise 83%)",
-      "cta-monthly-mid": "Ou 29 $/mois",
-      "cta-annual-testi": "🔥 Devenir Premium — 59 $/an (-83%)",
-      "cta-monthly-testi": "Ou 29 $/mois",
+      "cta-annual-mid": "👑 Accès annuel — 59 $/an (économise 50%)",
+      "cta-monthly-mid": "Ou 29 $ / 3 mois",
+      "cta-annual-testi": "🔥 Devenir Premium — 59 $/an (-50%)",
+      "cta-monthly-testi": "Ou 29 $ / 3 mois",
       "cta-final-sub": "",
       "modal-desc": "Dès 4,92 $/mois — vois tout, résilie quand tu veux.",
       "modal-cta": "Accès annuel — 59 $/an",
-      "modal-monthly": "Ou 29 $/mois",
+      "modal-monthly": "Ou 29 $ / 3 mois",
     };
     if (map[key] !== undefined) {
       if (key === "cta-final-sub") {
-        el.innerHTML = `Soit seulement 4,92 $/mois · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Ou 29 $/mois</a>`;
+        el.innerHTML = `Soit seulement 4,92 $/mois · <a href="https://explodely.com/p/919733369" style="color:#9ca3af; text-decoration:underline;">Ou 29 $ / 3 mois</a>`;
       } else {
         el.textContent = map[key];
       }
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const faqItems = [
     {
       q: "Quels sont les plans disponibles ?",
-      a: "Deux plans : <b>Annuel à 59 $/an</b> (4,92 $/mois — économise 83%) ou <b>Mensuel à 29 $/mois</b>. Les deux incluent tout — chats illimités, photos & vidéos sans flou, messages vocaux et toutes les nouvelles IA. Aucun frais caché."
+      a: "Deux plans : <b>Annuel à 59 $/an</b> (4,92 $/mois — économise 50%) ou <b>Trimestriel à 29 $ tous les 3 mois</b> (9,67 $/mois). Les deux incluent tout — chats illimités, photos & vidéos sans flou, messages vocaux et toutes les nouvelles IA. Aucun frais caché."
     },
     {
       q: "Est-ce que je peux résilier à tout moment ?",
@@ -285,16 +285,16 @@ document.addEventListener("DOMContentLoaded", () => {
       "hero-hook-4": "🔞 Unzensiert.",
       "hero-hook-5": "💌 Sie reagiert auf deine.",
       "hero-hook-6": "👑 Alle KIs freigeschaltet.",
-      "plan-monthly-label": "Monatlich",
-      "plan-monthly-per": "/Monat",
-      "plan-monthly-billed": "Monatlich abgerechnet",
+      "plan-monthly-label": "Vierteljährlich",
+      "plan-monthly-per": "/3 Monate",
+      "plan-monthly-billed": "Alle 3 Monate abgerechnet",
       "plan-monthly-tokens": "Keine Bonus-Tokens",
-      "plan-monthly-btn": "Monatlich wählen",
+      "plan-monthly-btn": "Vierteljährlich wählen",
       "plan-annual-badge": "🔥 Bestes Angebot",
       "plan-annual-label": "Jährlich",
-      "plan-annual-old-price": "29 $/Monat",
+      "plan-annual-old-price": "9,67 $/Monat",
       "plan-annual-per": "/Monat",
-      "plan-annual-save": "SPARE 83%",
+      "plan-annual-save": "SPARE 50%",
       "plan-annual-monthly": "59 $/Jahr abgerechnet",
       "plan-annual-tokens": "🎁 +30 Tokens / Monat",
       "plan-annual-btn": "🔓 JAHRESZUGANG",
@@ -304,18 +304,18 @@ document.addEventListener("DOMContentLoaded", () => {
       "plan-lifetime-sub": "Zugang für immer · Keine wiederkehrende Abrechnung",
       "plan-lifetime-tokens": "🎁 +100 Tokens / Monat",
       "plan-lifetime-btn": "💎 LIFETIME HOLEN",
-      "cta-annual-mid": "👑 Jahreszugang — 59 $/Jahr (spare 83%)",
-      "cta-monthly-mid": "Oder 29 $/Monat",
-      "cta-annual-testi": "🔥 Premium werden — 59 $/Jahr (-83%)",
-      "cta-monthly-testi": "Oder 29 $/Monat",
+      "cta-annual-mid": "👑 Jahreszugang — 59 $/Jahr (spare 50%)",
+      "cta-monthly-mid": "Oder 29 $ / 3 Monate",
+      "cta-annual-testi": "🔥 Premium werden — 59 $/Jahr (-50%)",
+      "cta-monthly-testi": "Oder 29 $ / 3 Monate",
       "cta-final-sub": "",
       "modal-desc": "Ab 4,92 $/Monat — sieh alles, jederzeit kündbar.",
       "modal-cta": "Jahreszugang — 59 $/Jahr",
-      "modal-monthly": "Oder 29 $/Monat",
+      "modal-monthly": "Oder 29 $ / 3 Monate",
     };
     if (map[key] !== undefined) {
       if (key === "cta-final-sub") {
-        el.innerHTML = `Das sind nur 4,92 $/Monat · <a href="https://explodely.com/p/22705532" style="color:#9ca3af; text-decoration:underline;">Oder 29 $/Monat</a>`;
+        el.innerHTML = `Das sind nur 4,92 $/Monat · <a href="https://explodely.com/p/919733369" style="color:#9ca3af; text-decoration:underline;">Oder 29 $ / 3 Monate</a>`;
       } else {
         el.textContent = map[key];
       }
@@ -410,7 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const faqItems = [
     {
       q: "Welche Pläne gibt es?",
-      a: "Zwei Pläne: <b>Jährlich für 59 $/Jahr</b> (4,92 $/Monat — spare 83%) oder <b>Monatlich für 29 $/Monat</b>. Beide beinhalten alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs. Keine versteckten Kosten."
+      a: "Zwei Pläne: <b>Jährlich für 59 $/Jahr</b> (4,92 $/Monat — spare 50%) oder <b>Vierteljährlich für 29 $ alle 3 Monate</b> (9,67 $/Monat). Beide beinhalten alles — unbegrenzte Chats, Fotos & Videos unzensiert, Sprachnachrichten und alle neuen KIs. Keine versteckten Kosten."
     },
     {
       q: "Kann ich jederzeit kündigen?",
