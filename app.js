@@ -159,8 +159,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Fireworks model config with automatic fallback ──
 // Both models support reasoning_effort:"none" to behave like instant-reply instruct models
-const FW_PRIMARY_MODEL = "accounts/fireworks/models/qwen3p6-plus";
-const FW_FALLBACK_MODEL = "accounts/fireworks/models/kimi-k2p5";
+// Primary: Kimi K2.5 (stable for chat). Fallback: Qwen 3.7 Plus (successor to deprecated qwen3p6-plus).
+const FW_PRIMARY_MODEL = "accounts/fireworks/models/kimi-k2p5";
+const FW_FALLBACK_MODEL = "accounts/fireworks/models/qwen3p7-plus";
 let fwActiveModel = FW_PRIMARY_MODEL;
 let fwLastAlertSentAt = 0;
 const FW_ALERT_COOLDOWN_MS = 3600_000; // 1 email per hour max
