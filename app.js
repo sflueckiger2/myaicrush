@@ -158,10 +158,10 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Fireworks model config with automatic fallback ──
-// Both models support reasoning_effort:"none" to behave like instant-reply instruct models
-// Primary: Kimi K2.5 (stable for chat). Fallback: Qwen 3.7 Plus (successor to deprecated qwen3p6-plus).
-const FW_PRIMARY_MODEL = "accounts/fireworks/models/kimi-k2p5";
-const FW_FALLBACK_MODEL = "accounts/fireworks/models/qwen3p7-plus";
+// Both models support reasoning_effort:"none" to behave like instant-reply instruct models.
+// Primary: Qwen 3.7 Plus (verified working). Fallback: Kimi K2.6 (successor to deprecated/404 kimi-k2p5).
+const FW_PRIMARY_MODEL = "accounts/fireworks/models/qwen3p7-plus";
+const FW_FALLBACK_MODEL = "accounts/fireworks/models/kimi-k2p6";
 let fwActiveModel = FW_PRIMARY_MODEL;
 let fwLastAlertSentAt = 0;
 const FW_ALERT_COOLDOWN_MS = 3600_000; // 1 email per hour max
@@ -199,6 +199,13 @@ async function fwSendModelAlert(failedModel, errorMsg) {
 function isModelGoneError(err) {
   const status = err?.response?.status || err?.status;
   return status === 404 || status === 422;
+}
+
+// Erreur cote serveur Fireworks (5xx) ou reponse illisible : on tente le modele de secours
+// pour cette requete, sans forcement basculer definitivement le modele actif.
+function isServerError(err) {
+  const status = err?.response?.status || err?.status;
+  return (status >= 500 && status < 600) || err?.code === "ERR_BAD_RESPONSE";
 }
 
 const nodemailer = require("nodemailer");
@@ -3375,7 +3382,9 @@ if (lastImageDescription) {
         // Ajoute le message de l'utilisateur
         const lastMsg = messages[messages.length - 1];
 
-messages.push({ role: "system", content: 'RAPPEL FORMAT: reponds en PLUSIEURS bulles separees par " | ". Ex: "jsuis la | je pense a toi". 2-8 mots par bulle. PAS de long paragraphe.' });
+// NB: rappel envoye en role "user" (et non "system"). Certains modeles Fireworks (ex: qwen3p7-plus)
+// renvoient une erreur 500 des qu'un message "system" apparait apres le premier tour.
+messages.push({ role: "user", content: '(RAPPEL FORMAT: reponds en PLUSIEURS bulles separees par " | ". Ex: "jsuis la | je pense a toi". 2-8 mots par bulle. PAS de long paragraphe.)' });
 
 if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
   messages.push({
@@ -3392,57 +3401,58 @@ if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== message) {
 
 
         let response;
-        const chatModel = fwActiveModel;
+        let chatModel = fwActiveModel;
+        let triedFallback = false;
+        const fwChatPayload = (model) => ({
+          model,
+          messages: messages,
+          max_tokens: 150,
+          temperature: 1.0,
+          top_p: 1.0,
+          frequency_penalty: 0.3,
+          presence_penalty: 0.8,
+          reasoning_effort: "none"
+        });
+        const fwChatOptions = {
+          headers: {
+            Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          timeout: 15000
+        };
         console.log(`🤖 [CHAT-MODEL] Using ${chatModel.split('/').pop()} (active=${fwActiveModel === FW_PRIMARY_MODEL ? 'PRIMARY' : 'FALLBACK'})`);
         for (let _attempt = 0; _attempt < 3; _attempt++) {
           try {
             response = await axios.post(
               'https://api.fireworks.ai/inference/v1/chat/completions',
-              {
-                model: chatModel,
-                messages: messages,
-                max_tokens: 150,
-                temperature: 1.0,
-                top_p: 1.0,
-                frequency_penalty: 0.3,
-                presence_penalty: 0.8,
-                reasoning_effort: "none"
-              },
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
-                  "Content-Type": "application/json"
-                },
-                timeout: 15000
-              }
+              fwChatPayload(chatModel),
+              fwChatOptions
             );
             break;
           } catch (fwErr) {
-            if (isModelGoneError(fwErr) && chatModel === FW_PRIMARY_MODEL && _attempt === 0) {
+            // Bascule vers le modele de secours si le primaire est HS (404/422) ou renvoie un 500.
+            const canFallback = !triedFallback && chatModel === FW_PRIMARY_MODEL && (isModelGoneError(fwErr) || isServerError(fwErr));
+            if (canFallback) {
+              triedFallback = true;
               fwSendModelAlert(FW_PRIMARY_MODEL, fwErr.response?.data?.error?.message || fwErr.message);
-              fwActiveModel = FW_FALLBACK_MODEL;
-              console.log(`🔄 Fireworks chat → fallback: ${FW_FALLBACK_MODEL}`);
-              response = await axios.post(
-                'https://api.fireworks.ai/inference/v1/chat/completions',
-                {
-                  model: FW_FALLBACK_MODEL,
-                  messages: messages,
-                  max_tokens: 150,
-                  temperature: 1.0,
-                  top_p: 1.0,
-                  frequency_penalty: 0.3,
-                  presence_penalty: 0.8,
-                  reasoning_effort: "none"
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${process.env.FIREWORKS_API_KEY}`,
-                    "Content-Type": "application/json"
-                  },
-                  timeout: 15000
-                }
-              );
-              break;
+              // On ne bascule DEFINITIVEMENT (fwActiveModel) que si le modele est vraiment mort (404/422),
+              // pas sur un simple 500 transitoire.
+              if (isModelGoneError(fwErr)) fwActiveModel = FW_FALLBACK_MODEL;
+              chatModel = FW_FALLBACK_MODEL;
+              console.log(`🔄 Fireworks chat → fallback: ${FW_FALLBACK_MODEL} (raison: ${fwErr.response?.status || fwErr.code})`);
+              try {
+                response = await axios.post(
+                  'https://api.fireworks.ai/inference/v1/chat/completions',
+                  fwChatPayload(FW_FALLBACK_MODEL),
+                  fwChatOptions
+                );
+                break;
+              } catch (fbErr) {
+                console.log(`⚠️ Fireworks fallback aussi en echec: ${fbErr.response?.status || fbErr.code || fbErr.message}`);
+                if (_attempt === 2) throw fbErr;
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
+              }
             }
             console.log(`⚠️ Fireworks tentative ${_attempt + 1}/3 échouée: ${fwErr.code || fwErr.message}`);
             if (_attempt === 2) throw fwErr;
